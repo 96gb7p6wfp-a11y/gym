@@ -1,0 +1,45 @@
+name: Build iPhone app for personal signing
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      CI: '1'
+      EXPO_NO_TELEMETRY: '1'
+      EXPO_NO_CACHE: '1'
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - name: Check Xcode toolchain
+        run: xcodebuild -version
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install JavaScript dependencies
+        run: npm ci
+      - name: Check project
+        run: |
+          npm run typecheck
+          npm test
+      - name: Generate native iOS project
+        run: npx expo prebuild --platform ios --no-install
+      - name: Install native dependencies
+        working-directory: ios
+        run: pod install
+      - name: Build unsigned physical-device app
+        run: bash scripts/build-unsigned-ios.sh
+      - name: Upload app for personal signing
+        uses: actions/upload-artifact@v4
+        with:
+          name: Setline-unsigned-iPhone
+          path: artifacts/Setline-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 7

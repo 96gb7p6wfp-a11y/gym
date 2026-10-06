@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Setline",
+    "slug": "setline-iphone",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "platforms": ["ios", "web"],
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "Setline",
+      "favicon": "./assets/icon.png",
+      "themeColor": "#2563eb"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.setline.iphone",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}

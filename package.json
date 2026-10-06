@@ -1,0 +1,41 @@
+{
+  "name": "setline-gym",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "web": "expo start --web",
+    "build": "npm run build:web",
+    "build:web": "expo export --platform web && node scripts/finalize-web.mjs",
+    "ios": "expo start --ios",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "test:web": "playwright test",
+    "preview": "node scripts/serve-web.mjs",
+    "export:ios": "expo export --platform ios",
+    "build:ios": "npx eas-cli@24.11.0 build --platform ios --profile preview",
+    "build:app-store": "npx eas-cli@24.11.0 build --platform ios --profile production"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
+    "expo": "~57.0.27",
+    "expo-status-bar": "~57.0.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-web": "~0.21.0",
+    "react-native-webview": "13.16.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

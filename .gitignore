@@ -1,0 +1,16 @@
+node_modules/
+.expo/
+dist/
+artifacts/
+playwright-report/
+test-results/
+ios/
+android/
+*.ipa
+*.mobileprovision
+*.p12
+*.key
+.env
+.env.*
+!.env.example
+.DS_Store
