@@ -80,7 +80,7 @@ async function resizeMealPhoto(e) {
     URL.revokeObjectURL(t);
   }
 }
-function NutritionView({ bodyWeight: bodyWeight }) {
+function NutritionView({ bodyWeight: bodyWeight, dailyGuidance }) {
   let [selectedDate, setSelectedDate] = React.useState(() =>
     dateKey(new Date()),
   );
@@ -324,6 +324,7 @@ function NutritionView({ bodyWeight: bodyWeight }) {
           </section>
         ))}
       </div>
+      {dailyGuidance?.(selectedDate)}
       <div className={`nutrition-layout`}>
         <section className={`panel nutrition-meals`}>
           <div className={`panel-heading`}>

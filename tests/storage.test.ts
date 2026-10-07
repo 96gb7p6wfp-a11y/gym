@@ -31,6 +31,13 @@ const meal = {
   assumptions: '', confidence: null,
   foods: [{ name: 'Rice and chicken', portion: '1 bowl', calories: 650, protein: 45, carbs: 75, fat: 18 }],
 };
+function extraActivity(id = 'extra-run') {
+  return {
+    id, date: '2026-10-07', type: 'run', name: 'Evening 5 km',
+    durationMinutes: 30, distanceKm: 5, intensity: 'moderate', bodyWeightKg: 68,
+    watchCalories: null, notes: 'Easy extra run', createdAt: 1_791_378_000_000, deletedAt: null as number | null,
+  };
+}
 
 test('training preferences and plan changes survive a new client without sharing mutable objects', async () => {
   const { storage, client } = fixture();
@@ -298,4 +305,133 @@ test('unsupported operations and photo analysis remain local and leave saved dat
     assert.equal(networkCalls, 0);
     assert.equal(storage.getItem(STORAGE_KEY), saved);
   } finally { globalThis.fetch = originalFetch; }
+});
+
+test('extra activities save, edit, delete and restore independently of the daily workout and nutrition', async () => {
+  const { storage, client } = fixture();
+  const changed = { ...profile(), bodyWeight: 68 };
+  const session = workout();
+  await client.request('/api/tracker', { action: 'profile', profile: changed, expectedVersion: 0 });
+  await client.request('/api/tracker', { action: 'session', session, expectedVersion: 0 });
+  await client.request('/api/nutrition', { id: 'meal-one', date: '2026-10-07', payload: meal, expectedVersion: 0 });
+  const activity = extraActivity();
+  assert.deepEqual(await client.request('/api/tracker', { action: 'activity', activity, expectedVersion: 0 }), { version: 1 });
+  activity.notes = 'This unsaved change must not leak';
+  const firstReload = await createLocalClient(storage).request('/api/tracker');
+  const original = extraActivity();
+  assert.deepEqual(firstReload.activities, [{ activity: original, version: 1 }]);
+  const edited = { ...original, durationMinutes: 34, watchCalories: 290 };
+  await client.request('/api/tracker', { action: 'activity', activity: edited, expectedVersion: 1 });
+  const deleted = { ...edited, deletedAt: original.createdAt + 60_000 };
+  await client.request('/api/tracker', { action: 'activity', activity: deleted, expectedVersion: 2 });
+  assert.deepEqual((await createLocalClient(storage).request('/api/tracker')).activities, [{ activity: deleted, version: 3 }]);
+  const restored = { ...deleted, deletedAt: null };
+  await client.request('/api/tracker', { action: 'activity', activity: restored, expectedVersion: 3 });
+  const final = await createLocalClient(storage).request('/api/tracker');
+  assert.deepEqual(final.activities, [{ activity: restored, version: 4 }]);
+  assert.deepEqual(final.profile, changed);
+  assert.equal(final.profileVersion, 1);
+  assert.deepEqual(final.sessions, [{ session, version: 1 }]);
+  assert.deepEqual((await client.request('/api/nutrition')).records, [{ id: 'meal-one', date: '2026-10-07', payload: meal, version: 1 }]);
+});
+
+test('activity optimistic versions reject stale edits and deletes without losing newer data', async () => {
+  const { storage, client } = fixture();
+  const activity = extraActivity();
+  await client.request('/api/tracker', { action: 'activity', activity, expectedVersion: 0 });
+  const secondTab = createLocalClient(storage);
+  await client.request('/api/tracker', { action: 'activity', activity: { ...activity, durationMinutes: 35 }, expectedVersion: 1 });
+  const saved = storage.getItem(STORAGE_KEY);
+  for (const stale of [{ ...activity, notes: 'Stale' }, { ...activity, deletedAt: activity.createdAt + 60_000 }]) {
+    await assert.rejects(secondTab.request('/api/tracker', { action: 'activity', activity: stale, expectedVersion: 1 }), /another tab/);
+    assert.equal(storage.getItem(STORAGE_KEY), saved);
+  }
+});
+
+test('invalid extra activities never overwrite the saved activity or other records', async () => {
+  const { storage, client } = fixture();
+  const activity = extraActivity();
+  await client.request('/api/tracker', { action: 'activity', activity, expectedVersion: 0 });
+  const saved = storage.getItem(STORAGE_KEY);
+  for (const invalid of [
+    { ...activity, date: '2026-02-30' }, { ...activity, type: 'unknown' },
+    { ...activity, durationMinutes: -1 }, { ...activity, distanceKm: -5 },
+    { ...activity, bodyWeightKg: 0 }, { ...activity, watchCalories: -100 },
+    { ...activity, intensity: 'maximum' }, { ...activity, createdAt: Number.NaN },
+  ]) {
+    await assert.rejects(client.request('/api/tracker', { action: 'activity', activity: invalid, expectedVersion: 1 }), /valid extra activity/);
+    assert.equal(storage.getItem(STORAGE_KEY), saved);
+  }
+});
+
+test('version-1 backups preserve activity records and versions including soft-deleted entries', async () => {
+  const { client } = fixture();
+  const activity = extraActivity();
+  const deleted = { ...extraActivity('deleted-cycle'), type: 'cycle', distanceKm: 15, deletedAt: activity.createdAt + 60_000 };
+  await client.request('/api/tracker', { action: 'activity', activity, expectedVersion: 0 });
+  await client.request('/api/tracker', { action: 'activity', activity: deleted, expectedVersion: 0 });
+  const backup = client.exportBackup();
+  assert.equal(JSON.parse(backup).version, 1);
+  const restored = createLocalClient(new MemoryStorage());
+  restored.importBackup(backup);
+  assert.deepEqual(await restored.request('/api/tracker'), await client.request('/api/tracker'));
+  assert.deepEqual(await restored.request('/api/tracker', { action: 'activity', activity: { ...activity, notes: 'Restored on another device' }, expectedVersion: 1 }), { version: 2 });
+});
+
+test('legacy saved state and backups migrate absent activities without losing previous records', async () => {
+  const { storage, client } = fixture();
+  const session = workout();
+  await client.request('/api/tracker', { action: 'session', session, expectedVersion: 0 });
+  await client.request('/api/nutrition', { id: 'lunch', date: '2026-10-07', payload: meal, expectedVersion: 0 });
+  const legacy = JSON.parse(client.exportBackup());
+  delete legacy.data.activities;
+  storage.setItem(STORAGE_KEY, JSON.stringify(legacy.data));
+  const reloaded = createLocalClient(storage);
+  assert.deepEqual((await reloaded.request('/api/tracker')).activities, []);
+  assert.deepEqual((await reloaded.request('/api/tracker')).sessions, [{ session, version: 1 }]);
+  assert.deepEqual((await reloaded.request('/api/nutrition')).records, legacy.data.nutrition);
+  const otherDevice = createLocalClient(new MemoryStorage());
+  otherDevice.importBackup(JSON.stringify(legacy));
+  assert.deepEqual((await otherDevice.request('/api/tracker')).activities, []);
+  assert.deepEqual(await otherDevice.request('/api/nutrition'), await reloaded.request('/api/nutrition'));
+  await reloaded.request('/api/tracker', { action: 'activity', activity: extraActivity(), expectedVersion: 0 });
+  assert.equal(JSON.parse(storage.getItem(STORAGE_KEY)!).schemaVersion, 1);
+  assert.equal(JSON.parse(storage.getItem(STORAGE_KEY)!).activities.length, 1);
+  assert.deepEqual((await reloaded.request('/api/tracker')).sessions, [{ session, version: 1 }]);
+});
+
+test('present invalid activity fields, duplicates and oversized activity backups reject atomically', async () => {
+  const { storage, client } = fixture();
+  await client.request('/api/tracker', { action: 'activity', activity: extraActivity(), expectedVersion: 0 });
+  const saved = storage.getItem(STORAGE_KEY);
+  const backup = JSON.parse(client.exportBackup());
+  for (const activities of [
+    null, {}, 'invalid',
+    [{ activity: { ...extraActivity(), durationMinutes: -1 }, version: 1 }],
+    [{ activity: extraActivity(), version: -1 }],
+    [backup.data.activities[0], backup.data.activities[0]],
+    Array.from({ length: 5001 }, (_, index) => ({ activity: extraActivity(`entry-${index}`), version: 1 })),
+  ]) {
+    const invalid = { ...backup, data: { ...backup.data, activities } };
+    assert.throws(() => client.importBackup(JSON.stringify(invalid)));
+    assert.equal(storage.getItem(STORAGE_KEY), saved);
+  }
+  storage.setItem(STORAGE_KEY, JSON.stringify({ ...backup.data, activities: null }));
+  const corrupt = storage.getItem(STORAGE_KEY);
+  await assert.rejects(client.request('/api/tracker'), /Saved data could not be read/);
+  await assert.rejects(client.request('/api/tracker', { action: 'activity', activity: extraActivity('new'), expectedVersion: 0 }), /Saved data could not be read/);
+  assert.equal(storage.getItem(STORAGE_KEY), corrupt);
+});
+
+test('activity quota failures preserve the last saved version and allow a later retry', async () => {
+  const { storage, client } = fixture();
+  const activity = extraActivity();
+  await client.request('/api/tracker', { action: 'activity', activity, expectedVersion: 0 });
+  const saved = storage.getItem(STORAGE_KEY);
+  storage.failWrites = true;
+  await assert.rejects(client.request('/api/tracker', { action: 'activity', activity: { ...activity, durationMinutes: 32 }, expectedVersion: 1 }), /could not be saved/);
+  assert.equal(storage.getItem(STORAGE_KEY), saved);
+  assert.deepEqual((await client.request('/api/tracker')).activities, [{ activity, version: 1 }]);
+  storage.failWrites = false;
+  assert.deepEqual(await client.request('/api/tracker', { action: 'activity', activity: { ...activity, durationMinutes: 32 }, expectedVersion: 1 }), { version: 2 });
 });

@@ -1,4 +1,5 @@
 import { DEFAULT_PROFILE, NutritionPayloadSchema, ProfileSchema, SessionSchema } from './domain.js';
+import { ExtraActivitySchema, type ActivityRecord } from './activities.ts';
 
 export const STORAGE_KEY = 'setline.gym.v1';
 const MAX_BACKUP_BYTES = 10 * 1024 * 1024;
@@ -13,6 +14,7 @@ interface LocalState {
   profileVersion: number;
   sessions: SessionRecord[];
   nutrition: NutritionRecord[];
+  activities: ActivityRecord[];
 }
 
 function object(value: unknown): value is RecordValue {
@@ -37,11 +39,21 @@ function parseNutrition(value: unknown): NutritionRecord {
   if (!result.success) throw new Error('Enter valid nutrition amounts before saving.');
   return { id: value.id, date: value.date, payload: result.data, version: value.version };
 }
+function parseActivity(value: unknown): ActivityRecord {
+  if (!object(value) || !version(value.version)) throw new Error('A saved extra activity is invalid.');
+  const result = ExtraActivitySchema.safeParse(value.activity);
+  if (!result.success) throw new Error('A saved extra activity is invalid.');
+  return { activity: result.data, version: value.version };
+}
 function parseState(value: unknown): LocalState {
   if (!object(value) || value.schemaVersion !== 1 || !version(value.profileVersion) || !Array.isArray(value.sessions) || !Array.isArray(value.nutrition)) {
     throw new Error('This is not a supported Setline backup.');
   }
-  if (value.sessions.length > 5000 || value.nutrition.length > 10000) throw new Error('This backup contains too many records.');
+  // Older version-1 backups and saved data predate extra activities. Only an
+  // absent field migrates to an empty list; a present invalid field must fail.
+  const rawActivities = Object.hasOwn(value, 'activities') ? value.activities : [];
+  if (!Array.isArray(rawActivities)) throw new Error('The saved extra activities are invalid.');
+  if (value.sessions.length > 5000 || value.nutrition.length > 10000 || rawActivities.length > 5000) throw new Error('This backup contains too many records.');
   const profile = ProfileSchema.safeParse(value.profile);
   if (!profile.success) throw new Error('The saved training plan is invalid.');
   const sessions = value.sessions.map((entry): SessionRecord => {
@@ -51,13 +63,14 @@ function parseState(value: unknown): LocalState {
     return { session: session.data, version: entry.version };
   });
   const nutrition = value.nutrition.map(parseNutrition);
+  const activities = rawActivities.map(parseActivity);
   if (sessions.filter((entry) => entry.session.status === 'active').length > 1) {
     throw new Error('The backup contains more than one active workout.');
   }
-  if (new Set(sessions.map((entry) => entry.session.id)).size !== sessions.length || new Set(nutrition.map((entry) => entry.id)).size !== nutrition.length) {
+  if (new Set(sessions.map((entry) => entry.session.id)).size !== sessions.length || new Set(nutrition.map((entry) => entry.id)).size !== nutrition.length || new Set(activities.map((entry) => entry.activity.id)).size !== activities.length) {
     throw new Error('The backup contains duplicate records.');
   }
-  return { schemaVersion: 1, profile: profile.data, profileVersion: value.profileVersion, sessions, nutrition };
+  return { schemaVersion: 1, profile: profile.data, profileVersion: value.profileVersion, sessions, nutrition, activities };
 }
 
 /** The reference's request contract, implemented entirely in this device's storage. */
@@ -66,7 +79,7 @@ export function createLocalClient(storage: StoragePort) {
     let raw: string | null;
     try { raw = storage.getItem(STORAGE_KEY); }
     catch { throw new Error('Device storage is unavailable. Allow site storage in your browser, then retry.'); }
-    if (raw === null) return { schemaVersion: 1, profile: clone(ProfileSchema.parse(defaultProfile)), profileVersion: 0, sessions: [], nutrition: [] };
+    if (raw === null) return { schemaVersion: 1, profile: clone(ProfileSchema.parse(defaultProfile)), profileVersion: 0, sessions: [], nutrition: [], activities: [] };
     try { return parseState(JSON.parse(raw)); }
     catch { throw new Error('Saved data could not be read. Restore a valid Setline backup in Settings, or export a recovery copy before resetting.'); }
   }
@@ -85,7 +98,7 @@ export function createLocalClient(storage: StoragePort) {
     const state = read(defaultProfile);
     if (payload === undefined) {
       return path === '/api/tracker'
-        ? clone({ profile: state.profile, profileVersion: state.profileVersion, sessions: state.sessions })
+        ? clone({ profile: state.profile, profileVersion: state.profileVersion, sessions: state.sessions, activities: state.activities })
         : clone({ records: state.nutrition, photoAnalysisReady: false });
     }
     if (!object(payload)) throw new Error('The data to save is invalid.');
@@ -109,6 +122,15 @@ export function createLocalClient(storage: StoragePort) {
       }
       nextVersion = (existing?.version ?? 0) + 1;
       state.sessions = [{ session, version: nextVersion }, ...state.sessions.filter((entry) => entry.session.id !== session.id)];
+    } else if (path === '/api/tracker' && payload.action === 'activity') {
+      const parsed = ExtraActivitySchema.safeParse(payload.activity);
+      if (!parsed.success) throw new Error('Enter valid extra activity values before saving.');
+      const activity = parsed.data;
+      const existing = state.activities.find((entry) => entry.activity.id === activity.id);
+      assertVersion(payload.expectedVersion, existing?.version ?? 0);
+      if (!existing && state.activities.length >= 5000) throw new Error('Too many extra activities are saved. Export a backup before removing old records.');
+      nextVersion = (existing?.version ?? 0) + 1;
+      state.activities = [{ activity, version: nextVersion }, ...state.activities.filter((entry) => entry.activity.id !== activity.id)];
     } else if (path === '/api/nutrition') {
       if (typeof payload.id !== 'string') throw new Error('The nutrition record is invalid.');
       const existing = state.nutrition.find((entry) => entry.id === payload.id);

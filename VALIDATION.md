@@ -8,9 +8,9 @@ website/iPhone wrapper and native build configuration have been removed.
 | --- | --- |
 | Clean `npm ci` | Passed; 123 packages installed, resolved dependencies recorded in `package-lock.json` |
 | `npm run typecheck` | Passed |
-| `npm test` | Passed: 31 tests, zero failures or skips |
+| `npm test` | Passed: 60 tests, zero failures or skips |
 | `npm run build` | Passed; TypeScript check, Vite production bundle and generated service worker |
-| `npm run test:web` | Passed: 15 real Chromium application workflows in 55.4 seconds, zero failures |
+| `npm run test:web` | Passed: 18 real Chromium application workflows in 59.2 seconds, zero failures |
 | Development server | Passed; HTTP 200 for the Vite page and React entry module |
 | Visual comparison | Home and plan screenshots reviewed; original appearance retained with local app icon |
 | Standalone dependency review | Passed; no iframe, former-host dependency, remote workout API, remote nutrition API or remote app assets |
@@ -41,6 +41,20 @@ screen coordinates. Long plan and meal forms are checked on a short screen too.
 The dialog body scrolls independently; the close button remains outside it, and
 the modal's bounds exclude all four safe-area insets.
 
+Extra-activity checks cover a 5 km run (61 kg → approximately 305 active kcal),
+cycling added while editing a saved workout, correct dates, edit/delete/restore,
+watch overrides including zero, weekly/history/progress/nutrition integration,
+offline saves and backups. Old version-1 state and backups remain compatible.
+Cancelled workouts and deleted extras are excluded from daily energy totals.
+
+Training and nutrition guidance considers the day's scheduled and recorded load,
+while keeping planned time separate from completed time and preserving saved
+nutrition targets. Tests cover leg/jump/volleyball and recovery contexts, gradual
+cardio progression, protein/carbohydrate ranges, and longer-session fueling.
+Public reference links are included; live retrieval of these reference pages was
+blocked with HTTP 403 in the cloud environment. No external service is used to
+generate the recommendations or calculate activity energy.
+
 The production worker precaches the complete local app, including charts and
 exercise data. Failed installs do not activate a partial cache. Updates wait for
 older app tabs to close, and cleanup removes only Setline app caches. Workouts,
@@ -48,7 +62,7 @@ plans and nutrition use the local storage key `setline.gym.v1`; network access i
 not required to save them.
 
 The final production output contains 12 precached files. The main JavaScript
-bundle is 883.24 kB (259.89 kB gzip), and CSS is 177.92 kB (28.30 kB gzip). Vite
+bundle is 906.06 kB (267.12 kB gzip), and CSS is 183.70 kB (29.54 kB gzip). Vite
 reports its standard large-chunk advisory; the build completes successfully.
 
 The reusable cloud install/start configuration was saved as a draft. Publishing

@@ -17,10 +17,29 @@ or native iPhone signing is required.
 - **My plan:** edit days and movements, sets/targets/rest, logging mode and preparation.
 - **Settings:** body weight, default rest, home-screen installation, validated backup
   export/import, recovery export and confirmed local-data reset.
+- **Extra activities:** dated runs, rides, walks, swimming and custom activities
+  outside the recurring plan. Log distance, duration and effort, preview active
+  calories, edit/delete/restore and include them in History and weekly Progress.
+  Activities can also be added while editing a saved workout for that workout's date.
+- **Training and nutrition guidance:** expandable recommendations based on the
+  selected day's plan and logged activity, including leg/jump/volleyball load,
+  recovery, protein/carbohydrate ranges, long-session fueling and hydration.
 
-Workout data, plans, preferences and nutrition are stored in this browser/device
+Workout data, extra activities, plans, preferences and nutrition are stored in this browser/device
 under `setline.gym.v1`. They persist across reloads and can be used offline after
 one successful online load. No demo workout history is inserted.
+
+Running with a distance uses approximately 1 active kcal per kilogram per kilometre
+for level continuous running. Other entries use effort-based MET assumptions minus
+resting energy. An entered watch active-energy reading replaces the estimate,
+including zero. Each activity stores its logging body weight, so later preference
+changes do not rewrite old estimates. Log additional time only once: activity
+calories should not duplicate a workout or a watch reading covering that workout.
+
+Guidance references ISSN/ACSM sports nutrition, the CDC talk test and concurrent
+training research. These are general starting ranges for adults who train; they
+do not automatically change saved calorie or macro targets. Sources and estimate
+methods are visible in the app and all calculations work offline.
 
 Automatic meal-photo analysis is not configured: it requires a separate AI service.
 The original optional photo workflow is retained with an explicit availability
@@ -64,6 +83,7 @@ browser storage can remove access to it. Export a backup in Settings before movi
 phones, changing deployment domains or clearing site data. Import replaces current
 local data only after confirmation and validation. Invalid backups never overwrite
 saved data. If saved data is damaged, a recovery copy can be exported before reset.
+Existing version-1 data and backups without extra activities remain compatible.
 Browser storage quotas/private browsing rules still apply; save failures are shown
 rather than silently reported as saved.
 
@@ -90,6 +110,8 @@ See `VALIDATION.md` for the performed checks and limitations.
 `src/App.jsx`, `NutritionView.jsx`, `domain.js`, `components/ui.jsx` and
 `reference.css` preserve the reference's application behavior and appearance.
 `storage.ts` provides validated local persistence; `DataSettings.tsx` provides
-backups and reset; `main.tsx` mounts React. `public` contains local icons, manifest
+backups and reset; `activities.ts` and `ExtraActivities.tsx` implement dated extra
+activity logging; `coaching.ts` and `DailyGuidance.tsx` provide general sports
+guidance; `main.tsx` mounts React. `public` contains local icons, manifest
 and worker registration, and `scripts/finalize-web.mjs` generates the production
 service worker. The prior iPhone/website wrapper has been removed.

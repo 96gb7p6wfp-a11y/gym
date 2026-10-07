@@ -1,4 +1,8 @@
 import { DataSettings } from "./DataSettings";
+import { ExtraActivities } from "./ExtraActivities";
+import { ActivityHistory } from "./ActivityHistory";
+import { DailyGuidance } from "./DailyGuidance";
+import { estimateActivity } from "./activities";
 import { requestLocal } from "./storage";
 import * as React from "react";
 import { toast, Toaster } from "sonner";
@@ -102,6 +106,7 @@ function GymApp({
 } = {}) {
   let [profile, setProfile] = React.useState(DEFAULT_PROFILE);
   let [sessions, setSessions] = React.useState([]);
+  let [activityRecords, setActivityRecords] = React.useState([]);
   let [loaded, setLoaded] = React.useState(!1);
   let [saving, setSaving] = React.useState(!1);
   let [loadError, setLoadError] = React.useState(``);
@@ -162,6 +167,7 @@ function GymApp({
       setProfile(t);
       profileVersionRef.current = e.profileVersion;
       setSessions(n);
+      setActivityRecords(e.activities ?? []);
       sessionsRef.current = n;
       setLoaded(!0);
       let i = n.find((e) => e.status === `active`);
@@ -278,6 +284,36 @@ function GymApp({
       e.date >= dateKey(weekStart) && e.date <= dateKey(addDays(weekStart, 6)),
   );
   let currentSession = viewingSession;
+  let workoutDate = currentSession?.date ?? selectedDate;
+  let weekActivities = activityRecords.filter(({ activity }) =>
+    activity.deletedAt === null && activity.date >= dateKey(weekStart) &&
+    activity.date <= dateKey(addDays(weekStart, 6)),
+  );
+  let extraWeekMinutes = weekActivities.reduce((sum, { activity }) => sum + activity.durationMinutes, 0);
+  let extraWeekCalories = weekActivities.reduce((sum, { activity }) => sum + estimateActivity(activity).calories, 0);
+  async function saveExtraActivity(activity, expectedVersion) {
+    if (!(await flushPendingWrites())) {
+      throw new Error(`Save your workout changes before updating extra activities.`);
+    }
+    const saved = await requestTracker({ action: `activity`, activity, expectedVersion });
+    setActivityRecords((records) => [
+      { activity, version: saved.version },
+      ...records.filter((record) => record.activity.id !== activity.id),
+    ]);
+  }
+  function guidanceForDate(date) {
+    const planDay = profile.plan[(new Date(`${date}T12:00:00`).getDay() + 6) % 7];
+    const dailyActivities = activityRecords.filter(({ activity }) => activity.date === date && activity.deletedAt === null).map(({ activity }) => activity);
+    const daySessions = sessions.filter((session) => session.date === date && [`active`, `completed`].includes(session.status));
+    const trainingMinutes = daySessions.reduce((sum, session) => sum + sessionDuration(session, now) / 6e4, 0);
+    const totalMinutes = trainingMinutes + dailyActivities.reduce((sum, activity) => sum + activity.durationMinutes, 0);
+    const totalCalories = daySessions.reduce((sum, session) => sum + getCalories(session, now), 0) + dailyActivities.reduce((sum, activity) => sum + estimateActivity(activity).calories, 0);
+    return <DailyGuidance input={{ date, bodyWeightKg: profile.bodyWeight,
+      plannedKind: planDay.kind, plannedName: planDay.name,
+      plannedTrainingMinutes: planDay.minutes,
+      extraActivities: dailyActivities, completedTrainingMinutes: trainingMinutes,
+    }} minutes={totalMinutes} calories={totalCalories} />;
+  }
   let totalSets =
     currentSession?.exercises.reduce((e, t) => e + t.logs.length, 0) ??
     selectedPlan.exercises.reduce((e, t) => e + t.sets, 0);
@@ -1010,7 +1046,9 @@ function GymApp({
                     </button>
                   )}
                 </div>
-                {currentSession ? (
+                {editingHistoryId ? (
+                  <p className={`editing-save-note`}>{`Changes save automatically. Extra activities below are logged for ${formatDate(workoutDate)}, ${workoutDate.slice(0, 4)}.`}</p>
+                ) : currentSession ? (
                   <Progress
                     className={`workout-progress`}
                     value={totalSets ? (doneSets / totalSets) * 100 : 0}
@@ -1034,6 +1072,13 @@ function GymApp({
                   >{`View log`}</button>
                 </div>
               )}
+              <ExtraActivities
+                date={workoutDate}
+                bodyWeight={profile.bodyWeight}
+                records={activityRecords}
+                onSave={saveExtraActivity}
+                disabled={!loaded}
+              />
               <PreparationChecklist
                 items={
                   currentSession?.warmup ??
@@ -1217,7 +1262,7 @@ function GymApp({
                         : weekCompletedSessions.reduce(
                             (e, t) => e + sessionDuration(t) / 6e4,
                             0,
-                          ),
+                          ) + extraWeekMinutes,
                     )}
                     loaded={loaded}
                   />
@@ -1261,7 +1306,7 @@ function GymApp({
                         : weekCompletedSessions.reduce(
                             (e, t) => e + getCalories(t),
                             0,
-                          ),
+                          ) + extraWeekCalories,
                     )}
                     loaded={loaded}
                   />
@@ -1277,6 +1322,7 @@ function GymApp({
                   }}
                 >{`How calories are estimated`}</button>
               </section>
+              {guidanceForDate(workoutDate)}
               <section className={`panel rest-panel`}>
                 <div className={`panel-heading`}>
                   <h3>{`Rest timer`}</h3>
@@ -1511,8 +1557,18 @@ function GymApp({
               )}
             </ReactJSX.Fragment>
           )}
+          {!recentlyDeletedOpen && <ActivityHistory records={activityRecords} bodyWeight={profile.bodyWeight} onSave={saveExtraActivity} disabled={!loaded} />}
         </TabsContent>
         <TabsContent value={`progress`}>
+          <section className={`panel extra-progress`} aria-label={`Extra activity progress`}>
+            <h3>{`Extra activity progress`}</h3>
+            <p className={`small-note`}>{`${formatDate(dateKey(weekStart), !0)} – ${formatDate(dateKey(addDays(weekStart, 6)), !0)} · Recorded outside your workout sessions`}</p>
+            <div className={`daily-training-total`}>
+              <span><strong>{weekActivities.length}</strong>{` extra activities`}</span>
+              <span><strong>{formatNumber(extraWeekMinutes)}</strong>{` minutes`}</span>
+              <span><strong>{formatNumber(extraWeekCalories)}</strong>{` active kcal`}</span>
+            </div>
+          </section>
           <div className={`progress-picker`}>
             <label htmlFor={`progress-exercise`}>{`Movement`}</label>
             <Select
@@ -1647,7 +1703,7 @@ function GymApp({
           )}
         </TabsContent>
         <TabsContent value={`nutrition`}>
-          <NutritionView bodyWeight={profile.bodyWeight} />
+          <NutritionView bodyWeight={profile.bodyWeight} dailyGuidance={guidanceForDate} />
         </TabsContent>
         <TabsContent value={`plan`}>
           <p
@@ -2024,6 +2080,7 @@ function GymApp({
                   <p>{selectedHistory.notes}</p>
                 </div>
               )}
+              <ExtraActivities date={selectedHistory.date} bodyWeight={profile.bodyWeight} records={activityRecords} onSave={saveExtraActivity} readOnly />
               <button
                 className={`btn secondary full`}
                 onClick={() => {

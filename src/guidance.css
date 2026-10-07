@@ -1,0 +1,23 @@
+.daily-guidance { margin-top: 18px; }
+.daily-training-total { display: flex; flex-wrap: wrap; gap: 10px 20px; margin: 16px 0; padding: 14px; border-radius: 12px; background: var(--soft, #f2f5ee); }
+.daily-training-total span { font-size: 13px; color: var(--sub, #68766d); }
+.daily-training-total strong { color: var(--ink, #151c19); font-size: 20px; margin-right: 4px; }
+.guidance-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.guidance-columns h4 { font-size: 14px; font-weight: 650; margin-bottom: 8px; }
+.guidance-columns ul, .guidance-sources ul { padding-left: 18px; list-style: disc; }
+.guidance-columns li { margin: 8px 0; font-size: 13px; line-height: 1.6; color: var(--sub, #68766d); }
+.guidance-sources { margin-top: 12px; font-size: 12px; line-height: 1.6; }
+.guidance-sources summary, .activity-history-day summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.guidance-sources a { text-decoration: underline; }
+.guidance-advice > summary { cursor: pointer; min-height: 44px; font-size: 13px; font-weight: 650; padding: 12px 0; }
+.activity-history { margin-top: 22px; }
+.activity-history h2 { font-size: 18px; font-weight: 650; margin-bottom: 8px; }
+.activity-history-day { margin-top: 14px; border-top: 1px solid var(--border, #e1e6e3); }
+.activity-history-day summary { padding: 12px 0; font-size: 13px; font-weight: 600; gap: 8px; }
+.activity-history-day summary::before { content: '+'; font-size: 20px; }
+.activity-history-day[open] summary::before { content: '−'; }
+.activity-history-day .extra-activities { box-shadow: none; margin-top: 0; }
+.extra-progress { margin: 18px 0; }
+.extra-progress .daily-training-total { margin-bottom: 0; }
+.editing-save-note { color: #d4dfd6; font-size: 12px; line-height: 1.6; margin-top: 18px; }
+@media (max-width: 760px) { .guidance-columns { grid-template-columns: 1fr; gap: 14px; } }
