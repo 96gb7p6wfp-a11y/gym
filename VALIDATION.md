@@ -1,45 +1,65 @@
-# Validation record
+# Standalone app validation
 
-Prepared for a Vercel web/PWA deployment. The optional native iPhone project is
-retained. No Vercel deployment, signed iOS binary or phone installation is claimed.
+Validation performed in the Linux cloud workspace on 2026-10-07. This repository
+contains the full React + Vite Setline gym app and an installable PWA. The previous
+website/iPhone wrapper and native build configuration have been removed.
 
 | Check | Result |
 | --- | --- |
-| Dependency installation | Passed; exact resolved versions recorded in `package-lock.json` |
+| Clean `npm ci` | Passed; 123 packages installed, resolved dependencies recorded in `package-lock.json` |
 | `npm run typecheck` | Passed |
-| `npm test` | Passed: six test groups, zero failures, zero skips |
-| `npm run build:web` | Passed; exports JavaScript, CSS, HTML, public assets, manifest and generated service worker into `dist` |
-| `npm run test:web` | Passed: six Chromium browser scenarios, zero failures; mobile layout, install dialog, sharing, reload, manifest/icons and cached offline shell |
-| `npm run export:ios` | Passed; Metro produced an iOS JavaScript/assets bundle |
-| `npx expo prebuild --platform ios --no-install` | Passed; generated the native Setline Xcode project, app icon, Info.plist and Podfile |
-| Website inspection | Blocked by this cloud's outbound proxy: CONNECT HTTP 403 |
-| CocoaPods / Xcode compilation | Not run; Linux workspace has no Xcode toolchain |
-| Signed physical-device build | Not run; Expo/Apple signing account setup required |
-| iPhone functional checks | Not run; requires signed installation on an iPhone |
-| Unsigned build helper syntax | Passed: `bash -n scripts/build-unsigned-ios.sh` |
-| GitHub workflow structure | YAML parsed; verified manual-only trigger and read-only repository permission |
-| Unsigned GitHub macOS build | Workflow added; native compilation not executed here |
+| `npm test` | Passed: 31 tests, zero failures or skips |
+| `npm run build` | Passed; TypeScript check, Vite production bundle and generated service worker |
+| `npm run test:web` | Passed: 13 real Chromium application workflows in 57.2 seconds, zero failures |
+| Development server | Passed; HTTP 200 for the Vite page and React entry module |
+| Visual comparison | Home and plan screenshots reviewed; original appearance retained with local app icon |
+| Standalone dependency review | Passed; no iframe, former-host dependency, remote workout API, remote nutrition API or remote app assets |
+| PWA configuration | Local manifest, 192/512 px normal and maskable icons, 180 px Apple touch icon, standalone/fullscreen display modes and worker registration included |
+| iPhone layout | Mobile navigation, 16 px form controls, `viewport-fit=cover` and top/bottom/horizontal safe-area padding included |
+| Vercel configuration | Repository-root Vite build, `npm ci`, `dist` output, SPA navigation fallback and worker/manifest cache headers included |
+| Reference verification | Hosted app HTML, styles and assets retrieved over verified HTTPS; original seven-day training plan and Tuesday primer retained |
 
-The web/PWA provides home-screen installation, reload, sharing, an embedded gym
-website, an always-visible original-site link and an offline app shell. The optional
-native app provides safe areas, back/forward navigation, Reload, the iOS share sheet
-and retry after network/process failure. Site features, iframe permission, login
-and storage behavior remain unverified because the site could not be reached here.
-These wrappers do not include the original gym website's source or backend.
+The unit tests cover workout validation, completed-set counts, volume, timers,
+calorie estimates, jump measurements, history prefill, date boundaries and
+nutrition totals. Persistence checks cover saved plans/workouts/meals/preferences,
+version conflicts, invalid values, one active workout, storage failures, corrupted
+data recovery, portable backups, import validation and resetting only Setline data.
 
-Browser tests use a mocked gym response and the system Chromium executable.
-Playwright's offline network emulation is preserved for cached reloads; a
-documented navigator-status fixture handles Chromium resetting `navigator.onLine`
-after a service-worker navigation. No real iPhone/Safari test is claimed.
+Browser tests use the built standalone application with real local storage and
+service-worker caching. They cover all five views at 390 px and 320 px widths;
+logging, finishing, editing, deleting and restoring workouts; paused workout
+reload/resume; editable plans; progress charts; jump/timed movements; meal/weight/
+target logging; preferences; iPhone installation instructions; manifest/icons;
+offline app reload and workout saving; and backup export/import/reset. Tests also
+check for browser runtime errors, iframes and requests to the former backend.
 
-Required site and GitHub API network destinations were saved in the cloud
-environment draft. Draft saving does not apply runtime network access; activation
-requires review/save in environment settings followed by environment publication.
+The production worker precaches the complete local app, including charts and
+exercise data. Failed installs do not activate a partial cache. Updates wait for
+older app tabs to close, and cleanup removes only Setline app caches. Workouts,
+plans and nutrition use the local storage key `setline.gym.v1`; network access is
+not required to save them.
 
-The website connection remained TLS-verified; certificate checks were not bypassed.
-No account credentials were requested in chat or saved into the app.
+The final production output contains 12 precached files. The main JavaScript
+bundle is 883.49 kB (259.94 kB gzip), and CSS is 176.41 kB (27.99 kB gzip). Vite
+reports its standard large-chunk advisory; the build completes successfully.
 
-See `README.md` for Mac/Xcode personal signing, EAS internal distribution, or
-`WINDOWS-INSTALL.md` for free Windows personal signing after a cloud unsigned build.
-The cloud can retain dependencies and generated files. Vercel builds the web/PWA
-from the committed source with `npm ci` and `npm run build:web`.
+The reusable cloud install/start configuration was saved as a draft. Publishing
+that environment draft is separate from running the validated app or deploying
+the repository to Vercel.
+
+## Practical limits
+
+- Chromium checks emulate phone-sized screens. A physical iPhone/Safari
+  installation has not been tested in this workspace.
+- Vercel deployment is configured, but no live Vercel deployment is claimed.
+  Import/connect the repository to Vercel as described in `README.md`.
+- Optional automatic meal-photo analysis needs a separate AI service and is
+  visibly unavailable. Manual nutrition logging works locally and offline.
+- Existing logs from the original site's cloud account are not copied. Saved data
+  stays on the current device and origin; use Settings backups to move it.
+- Browser storage availability and quotas still apply. Failed saves produce an
+  error, and invalid backups do not overwrite existing data.
+
+No Apple signing account, native iOS wrapper or weekly certificate renewal is
+required for the PWA. Install the deployed HTTPS app using Safari's **Share → Add
+to Home Screen** action.

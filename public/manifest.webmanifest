@@ -2,12 +2,13 @@
   "id": "/",
   "name": "Setline",
   "short_name": "Setline",
-  "description": "A home-screen app for your hosted Setline gym website.",
+  "description": "Plan workouts, log exercises, and track your strength progress with Setline.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "display_override": ["fullscreen", "standalone"],
+  "background_color": "#151c19",
+  "theme_color": "#151c19",
   "lang": "en",
   "icons": [
     {

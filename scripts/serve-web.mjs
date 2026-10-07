@@ -45,7 +45,16 @@ createServer(async (request, response) => {
       response.end('Forbidden');
       return;
     }
-    if ((await stat(filename)).isDirectory()) filename = path.join(filename, 'index.html');
+    try {
+      if ((await stat(filename)).isDirectory()) filename = path.join(filename, 'index.html');
+    } catch (error) {
+      // Match Vercel's SPA fallback while allowing missing assets to return 404.
+      if ((error.code === 'ENOENT' || error.code === 'ENOTDIR') && !path.extname(pathname)) {
+        filename = path.join(root, 'index.html');
+      } else {
+        throw error;
+      }
+    }
     filename = await realpath(filename);
     if (!isWithinRoot(filename)) {
       response.writeHead(403);
@@ -63,4 +72,4 @@ createServer(async (request, response) => {
     response.writeHead(status, { 'Content-Type': 'text/plain; charset=utf-8' });
     response.end(status === 404 ? 'Not found' : status === 400 ? 'Invalid path' : 'Unable to serve file');
   }
-}).listen(port, host, () => console.log(`Serving exported Setline files on ${host}:${port}`));
+}).listen(port, host, () => console.log(`Serving Setline on ${host}:${port}`));

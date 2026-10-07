@@ -1,43 +1,16 @@
 import { createHash } from 'node:crypto';
-import { cp, readFile, readdir, writeFile } from 'node:fs/promises';
+import { readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const projectRoot = fileURLToPath(new URL('../', import.meta.url));
 const outputDir = path.resolve(process.argv[2] ?? path.join(projectRoot, 'dist'));
-const publicDir = path.join(projectRoot, 'public');
-const markerStart = '<!-- setline-pwa:start -->';
-const markerEnd = '<!-- setline-pwa:end -->';
 const workerFilename = 'service-worker.js';
 const cachePrefix = 'setline-pwa-';
 
-// Keep the exported HTML (with Expo's injected bundle) if a public template is
-// added later. Recopy only the other public files, never a worker from a prior build.
-await cp(publicDir, outputDir, {
-  recursive: true,
-  filter: (source) => !['index.html', workerFilename].includes(path.relative(publicDir, source)),
-});
-const indexPath = path.join(outputDir, 'index.html');
-let html = await readFile(indexPath, 'utf8');
-const oldMarkerStart = html.indexOf(markerStart);
-if (oldMarkerStart !== -1) {
-  const oldMarkerEnd = html.indexOf(markerEnd, oldMarkerStart);
-  if (oldMarkerEnd === -1) throw new Error('The previous Setline PWA HTML block is incomplete.');
-  html = html.slice(0, oldMarkerStart) + html.slice(oldMarkerEnd + markerEnd.length);
-}
-if (!html.includes('</head>')) throw new Error('The Expo export is missing an HTML head.');
-const metadata = `${markerStart}
-<link rel="manifest" href="/manifest.webmanifest" />
-<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="Setline" />
-<meta name="mobile-web-app-capable" content="yes" />
-<meta name="theme-color" content="#2563eb" />
-<script src="/register-sw.js" defer></script>
-${markerEnd}`;
-html = html.replace('</head>', `${metadata}</head>`);
-await writeFile(indexPath, html);
+// Vite builds index.html and copies public/. Metadata belongs in the source HTML;
+// this step only adds a worker derived from the finished, immutable build files.
+await readFile(path.join(outputDir, 'index.html'));
 
 async function listFiles(directory, relative = '') {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -78,7 +51,8 @@ self.addEventListener('install', (event) => {
       await caches.delete(CACHE_NAME);
       throw error;
     }
-    await self.skipWaiting();
+    // Let an older open app finish using its existing asset version. The update
+    // activates when those tabs close, so a session never loses its cached files.
   })());
 });
 
@@ -101,11 +75,11 @@ self.addEventListener('fetch', (event) => {
         const response = await fetch(request);
         if (response.status < 500) return response;
       } catch {
-        // A cached shell can explain the missing connection. It cannot cache the remote gym.
+        // The local bundle and persisted workout data remain usable offline.
       }
       const cache = await caches.open(CACHE_NAME);
       return await cache.match('/index.html') || await cache.match('/offline.html') ||
-        new Response('Setline needs an internet connection. Please reconnect and reload.', {
+        new Response('Setline has not finished downloading. Reconnect once, then reopen the app.', {
           status: 503,
           headers: { 'Content-Type': 'text/plain; charset=utf-8' },
         });
@@ -122,4 +96,4 @@ self.addEventListener('fetch', (event) => {
 });
 `;
 await writeFile(path.join(outputDir, workerFilename), worker);
-console.log(`Finalized Setline PWA: ${files.length} shell files, cache ${cachePrefix}${version}.`);
+console.log(`Finalized Setline PWA: ${files.length} app files, cache ${cachePrefix}${version}.`);
