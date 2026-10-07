@@ -10,7 +10,7 @@ website/iPhone wrapper and native build configuration have been removed.
 | `npm run typecheck` | Passed |
 | `npm test` | Passed: 31 tests, zero failures or skips |
 | `npm run build` | Passed; TypeScript check, Vite production bundle and generated service worker |
-| `npm run test:web` | Passed: 13 real Chromium application workflows in 57.2 seconds, zero failures |
+| `npm run test:web` | Passed: 15 real Chromium application workflows in 55.4 seconds, zero failures |
 | Development server | Passed; HTTP 200 for the Vite page and React entry module |
 | Visual comparison | Home and plan screenshots reviewed; original appearance retained with local app icon |
 | Standalone dependency review | Passed; no iframe, former-host dependency, remote workout API, remote nutrition API or remote app assets |
@@ -33,6 +33,14 @@ target logging; preferences; iPhone installation instructions; manifest/icons;
 offline app reload and workout saving; and backup export/import/reset. Tests also
 check for browser runtime errors, iframes and requests to the former backend.
 
+Modal regressions recreate the reported tall Volleyball summary with 120 minutes
+and zero completed sets. Portrait, landscape and small-screen checks simulate
+iPhone safe-area insets, scroll content to the bottom, verify the 44 px close
+button stays at the same visible position, and dismiss with a touch at its actual
+screen coordinates. Long plan and meal forms are checked on a short screen too.
+The dialog body scrolls independently; the close button remains outside it, and
+the modal's bounds exclude all four safe-area insets.
+
 The production worker precaches the complete local app, including charts and
 exercise data. Failed installs do not activate a partial cache. Updates wait for
 older app tabs to close, and cleanup removes only Setline app caches. Workouts,
@@ -40,7 +48,7 @@ plans and nutrition use the local storage key `setline.gym.v1`; network access i
 not required to save them.
 
 The final production output contains 12 precached files. The main JavaScript
-bundle is 883.49 kB (259.94 kB gzip), and CSS is 176.41 kB (27.99 kB gzip). Vite
+bundle is 883.24 kB (259.89 kB gzip), and CSS is 177.92 kB (28.30 kB gzip). Vite
 reports its standard large-chunk advisory; the build completes successfully.
 
 The reusable cloud install/start configuration was saved as a draft. Publishing

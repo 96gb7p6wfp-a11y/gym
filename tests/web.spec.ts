@@ -48,6 +48,48 @@ async function closeDialog(dialog: Locator) {
   await expect(dialog).not.toBeVisible();
 }
 
+async function setSafeAreas(page: Page, top: number, bottom: number, left = 0, right = 0) {
+  await page.evaluate(({ top, bottom, left, right }) => {
+    for (const [side, value] of Object.entries({ top, bottom, left, right })) {
+      document.documentElement.style.setProperty(`--app-safe-area-${side}`, `${value}px`);
+    }
+  }, { top, bottom, left, right });
+}
+
+async function verifyPinnedClose(page: Page, dialog: Locator, top: number, bottom: number, left = 0, right = 0) {
+  const viewport = page.viewportSize()!;
+  const close = dialog.getByRole('button', { name: 'Close', exact: true });
+  await expect(close).toBeVisible();
+  await expect.poll(() => dialog.evaluate((element) =>
+    element.getAnimations().filter((animation) => animation.playState === 'running').length,
+  )).toBe(0);
+  const bounds = await dialog.boundingBox();
+  const before = await close.boundingBox();
+  expect(bounds).not.toBeNull();
+  expect(before).not.toBeNull();
+  expect(bounds!.y).toBeGreaterThanOrEqual(top + 15);
+  expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(viewport.height - bottom - 15);
+  expect(bounds!.x).toBeGreaterThanOrEqual(left + 15);
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(viewport.width - right - 15);
+  expect(before!.width).toBeGreaterThanOrEqual(44);
+  expect(before!.height).toBeGreaterThanOrEqual(44);
+  const scroll = dialog.locator('[data-slot="dialog-scroll"]');
+  await scroll.evaluate((element) => { element.scrollTop = element.scrollHeight; });
+  await expect.poll(() => scroll.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  const after = await close.boundingBox();
+  expect(after).not.toBeNull();
+  expect(after!.y).toBeCloseTo(before!.y, 0);
+  const point = { x: after!.x + after!.width / 2, y: after!.y + after!.height / 2 };
+  expect(await close.evaluate((element, point) => {
+    const target = document.elementFromPoint(point.x, point.y);
+    return target !== null && element.contains(target);
+  }, point)).toBe(true);
+  // Tap its actual screen coordinates; locator.click() could hide a broken
+  // layout by automatically scrolling an off-screen button back into view.
+  await page.touchscreen.tap(point.x, point.y);
+  await expect(dialog).not.toBeVisible();
+}
+
 async function waitForPersistedText(page: Page, text: string) {
   await expect.poll(() => page.evaluate(({ key, text }) => localStorage.getItem(key)?.includes(text) ?? false, {
     key: STORE_KEY, text,
@@ -190,6 +232,41 @@ test('preserves a paused active workout across reload, resumes it, and cancels i
   await page.reload();
   await selectTab(page, 'History');
   await expect(page.getByText('0 completed workouts', { exact: true })).toBeVisible();
+});
+
+test('keeps the close button tappable while a tall Volleyball log scrolls in iPhone safe areas', async ({ page }) => {
+  await page.getByRole('button', { name: /^Tue / }).click();
+  await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await closeDialog(await finishWorkout(page, '120'));
+  const toastClose = page.getByRole('button', { name: 'Close toast', exact: true });
+  if (await toastClose.isVisible()) await toastClose.click();
+  await selectTab(page, 'History');
+  const history = page.getByRole('button', { name: /^Volleyball / });
+  for (const size of [
+    { width: 390, height: 844, top: 59, bottom: 34, left: 0, right: 0 },
+    { width: 844, height: 390, top: 0, bottom: 21, left: 59, right: 59 },
+    { width: 320, height: 568, top: 20, bottom: 0, left: 0, right: 0 },
+  ]) {
+    await page.setViewportSize({ width: size.width, height: size.height });
+    await setSafeAreas(page, size.top, size.bottom, size.left, size.right);
+    await history.click();
+    const summary = page.getByRole('dialog', { name: 'Volleyball', exact: true });
+    await expect(summary).toContainText(/120\s*minutes/);
+    await expect(summary).toContainText('Ankle Knee-to-Wall');
+    await verifyPinnedClose(page, summary, size.top, size.bottom, size.left, size.right);
+    await expect(history).toBeVisible();
+  }
+});
+
+test('keeps long plan and meal forms dismissible after scrolling on a short phone screen', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 500 });
+  await setSafeAreas(page, 59, 34);
+  await selectTab(page, 'My plan');
+  await page.getByRole('button', { name: 'Edit Monday', exact: true }).click();
+  await verifyPinnedClose(page, page.getByRole('dialog', { name: 'Edit Monday', exact: true }), 59, 34);
+  await selectTab(page, 'Nutrition');
+  await page.getByRole('button', { name: 'Add meal', exact: true }).click();
+  await verifyPinnedClose(page, page.getByRole('dialog', { name: 'Add a meal', exact: true }), 59, 34);
 });
 
 test('validates and persists editable day plans without changing an existing workout', async ({ page }) => {

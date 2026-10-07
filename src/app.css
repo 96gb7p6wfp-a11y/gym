@@ -8,6 +8,61 @@
 .app-recovery { max-width: 460px; margin: 10vh auto; padding: 28px; display: grid; gap: 18px; }
 /* Keep form controls readable without Safari's focus zoom. */
 @media (max-width: 600px) { input, select, textarea { font-size: 16px; } }
+:root {
+  --app-safe-area-top: env(safe-area-inset-top, 0px);
+  --app-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --app-safe-area-left: env(safe-area-inset-left, 0px);
+  --app-safe-area-right: env(safe-area-inset-right, 0px);
+}
+
+/* The close button stays outside the scrollable body of every dialog. */
+.app-dialog {
+  --dialog-max-width: 512px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 !important;
+  overflow: hidden;
+  top: calc((100dvh + var(--app-safe-area-top) - var(--app-safe-area-bottom)) / 2);
+  left: calc((100% + var(--app-safe-area-left) - var(--app-safe-area-right)) / 2);
+  width: calc(100% - 32px - var(--app-safe-area-left) - var(--app-safe-area-right)) !important;
+  max-width: var(--dialog-max-width) !important;
+  max-height: calc(100dvh - 32px - var(--app-safe-area-top) - var(--app-safe-area-bottom));
+}
+.app-dialog.history-dialog, .app-dialog.plan-dialog { --dialog-max-width: 680px; }
+.app-dialog.nutrition-dialog { --dialog-max-width: 620px; }
+.dialog-scroll {
+  display: grid;
+  gap: 19px;
+  min-height: 0;
+  padding: 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.dialog-scroll > [data-slot="dialog-header"] { padding-right: 40px; }
+.dialog-close-button {
+  position: absolute;
+  z-index: 1;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink, #151c19);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.dialog-close-button svg { width: 20px; height: 20px; pointer-events: none; }
+.dialog-close-button:focus-visible { outline: 2px solid var(--ink, #151c19); outline-offset: -4px; }
+@media (max-width: 760px) {
+  .dialog-scroll { gap: 18px; padding: 22px 18px; }
+}
+
 /* Keep content clear of the iPhone notch in standalone and landscape views. */
 .app-shell {
   padding-left: env(safe-area-inset-left, 0px);
