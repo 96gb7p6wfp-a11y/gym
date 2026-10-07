@@ -7,6 +7,15 @@ function isCalendarDate(value: string): boolean {
 }
 
 /** Extra activities are dated logs, separate from the recurring training plan. */
+export const ImportSourceSchema = z.object({
+  provider: z.enum(['strava', 'adidas', 'file']),
+  format: z.enum(['gpx', 'tcx', 'csv', 'fit']),
+  externalId: z.string().min(1).max(120).optional(),
+  startedAt: z.string().datetime({ offset: true }).optional(),
+  originalCalories: z.number().finite().min(0).max(20_000).optional(),
+  fingerprint: z.string().min(1).max(200),
+});
+
 export const ExtraActivitySchema = z.object({
   id: z.string().min(1).max(100),
   date: z.string().refine(isCalendarDate, 'Choose a valid calendar date.'),
@@ -20,6 +29,7 @@ export const ExtraActivitySchema = z.object({
   notes: z.string().max(1_000),
   createdAt: z.number().finite().positive(),
   deletedAt: z.number().finite().positive().nullable(),
+  importSource: ImportSourceSchema.optional(),
 });
 
 export type ExtraActivity = z.infer<typeof ExtraActivitySchema>;

@@ -1,0 +1,45 @@
+.activity-import { margin-top: 22px; padding: 22px; border: 1px solid var(--border, #dce2df); border-radius: 18px; background: #fff; min-width: 0; }
+.activity-import-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.activity-import-heading h2 { margin: 0; font-size: 20px; font-weight: 700; color: var(--ink, #151c19); }
+.activity-import-heading p { margin: 8px 0 0; max-width: 350px; color: var(--sub, #65736b); font-size: 13px; line-height: 1.6; }
+.activity-import-heading button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; flex-shrink: 0; }
+.activity-import-success { margin: 12px 0 0; color: #426027; font-size: 13px; line-height: 1.6; }
+.app-dialog.activity-import-dialog { --dialog-max-width: 640px; }
+.activity-import-help { color: var(--sub, #65736b); font-size: 13px; line-height: 1.65; }
+.activity-import-help summary { min-height: 44px; padding-top: 12px; cursor: pointer; }
+.activity-import-help p { margin: 10px 0 0; }
+.activity-import-help strong { color: var(--ink, #151c19); font-weight: 650; }
+.activity-import-picker { min-width: 0; padding: 16px; border: 1px dashed #a5b397; border-radius: 12px; background: #f6f8f1; }
+.activity-import-file-label { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 650; margin-bottom: 12px; }
+.activity-import-picker input { width: 100%; min-width: 0; font-size: 16px; min-height: 44px; overflow: hidden; }
+.activity-import-picker input::file-selector-button { min-height: 44px; padding: 8px 12px; margin: 0 10px 4px 0; border: 1px solid #bdc9b0; border-radius: 8px; background: #fff; color: var(--ink, #151c19); font: inherit; cursor: pointer; }
+.activity-import-picker p, .activity-import-footnote { margin: 10px 0 0; color: var(--sub, #65736b); font-size: 12px; line-height: 1.6; }
+.activity-import-status { margin: 0; color: var(--sub, #65736b); font-size: 13px; }
+.activity-import-error { margin: 0; color: #aa372b; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.activity-import-error p { margin: 0 0 8px; }
+.activity-import-error p:last-child { margin-bottom: 0; }
+.activity-import-form { display: grid; gap: 18px; min-width: 0; }
+.activity-import-preview-heading h3 { margin: 0; font-size: 16px; font-weight: 650; }
+.activity-import-preview-heading p { margin: 8px 0 0; color: var(--sub, #65736b); font-size: 13px; line-height: 1.6; }
+.activity-import-previews { display: grid; gap: 16px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.activity-import-row { padding: 16px; min-width: 0; border: 1px solid #dce2df; border-radius: 12px; background: #f7f9f4; }
+.activity-import-row.is-duplicate { background: #f4f5f3; }
+.activity-import-check { display: flex; gap: 10px; align-items: center; min-height: 44px; cursor: pointer; color: var(--ink, #151c19); font-weight: 650; font-size: 15px; }
+.activity-import-check input { width: 22px; height: 22px; flex-shrink: 0; accent-color: #536d33; }
+.activity-import-check span { min-width: 0; overflow-wrap: anywhere; }
+.activity-import-row.is-duplicate .activity-import-check { cursor: default; }
+.activity-import-source { margin: 8px 0; color: var(--sub, #65736b); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.activity-import-warning { margin: 8px 0; color: #775418; font-size: 12px; line-height: 1.6; }
+.activity-import-fields { display: grid; gap: 12px; margin-top: 14px; min-width: 0; }
+.activity-import-fields label { display: grid; gap: 7px; min-width: 0; font-size: 12px; font-weight: 600; }
+.activity-import-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; min-width: 0; }
+.activity-import-fields input, .activity-import-fields select { width: 100%; min-width: 0; min-height: 44px; padding: 10px 11px; border: 1px solid #dce2df; border-radius: 9px; background: #fff; color: var(--ink, #151c19); font: inherit; font-size: 16px; font-weight: 400; }
+.activity-import-fields input:focus-visible, .activity-import-fields select:focus-visible, .activity-import-picker input:focus-visible, .activity-import-check input:focus-visible { outline: 2px solid #718745; outline-offset: 2px; }
+.activity-import-energy { margin: 14px 0 8px; font-size: 12px; color: var(--sub, #65736b); }
+.activity-import-energy strong { font-size: 16px; color: var(--ink, #151c19); font-weight: 700; }
+.activity-import-warnings { margin: 10px 0 0; padding-left: 18px; color: var(--sub, #65736b); font-size: 12px; line-height: 1.6; }
+.activity-import-warnings li + li { margin-top: 5px; }
+.activity-import-save { min-height: 48px; }
+.activity-import button:disabled, .activity-import-save:disabled { opacity: .6; cursor: default; }
+@media (max-width: 440px) { .activity-import { padding: 18px; } .activity-import-heading { align-items: flex-start; } }
+@media (max-width: 360px) { .activity-import-grid { grid-template-columns: minmax(0, 1fr); } .activity-import-heading button { width: 100%; } .activity-import-row { padding: 12px; } }

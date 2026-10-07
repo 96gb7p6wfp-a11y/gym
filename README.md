@@ -24,6 +24,19 @@ or native iPhone signing is required.
 - **Training and nutrition guidance:** expandable recommendations based on the
   selected day's plan and logged activity, including leg/jump/volleyball load,
   recovery, protein/carbohydrate ranges, long-session fueling and hydration.
+- **Before and after training:** two short reminders with food examples, meal
+  timing, hydration, cool-down and sleep, including a lighter recovery-day version.
+- **Exercise guides:** expandable local instructions for every original exercise,
+  warm-up and cool-down, with technique, working muscles, common mistakes,
+  precautions and a link to find a video demonstration. Custom movements receive
+  a general checklist and keep your saved coaching cue.
+- **Activity imports:** GPX, TCX, FIT and Strava CSV exports, with editable previews,
+  duplicate checks and local batch saving. Imported activities join your daily
+  totals, History and Progress without changing the recurring plan.
+- **Weekly report:** completed workouts, planned gym days, sets, volume, extra
+  running/cycling distances, active energy, comparisons with the previous week,
+  short analysis and next-week suggestions. Logged meals show a partial protein
+  summary; unrecorded meals are unknown. Reports can be downloaded as JSON.
 
 Workout data, extra activities, plans, preferences and nutrition are stored in this browser/device
 under `setline.gym.v1`. They persist across reloads and can be used offline after
@@ -40,6 +53,28 @@ Guidance references ISSN/ACSM sports nutrition, the CDC talk test and concurrent
 training research. These are general starting ranges for adults who train; they
 do not automatically change saved calorie or macro targets. Sources and estimate
 methods are visible in the app and all calculations work offline.
+
+## Import from Strava or Adidas Running
+
+In **Workout → Import activities**, choose exported GPX, TCX, FIT or CSV files,
+review the date, moving minutes, distance, effort and body weight, then import.
+Strava provides GPX/original-file exports per activity and an activities CSV in
+its account archive. For Adidas Running, request your account data export and
+choose supported activity files from it. Export formats vary; JSON and ZIP files
+are not supported. Extract archives first. Generic CSV files need explicit time
+and distance units, such as `duration_minutes` and `distance_km`.
+
+Files are processed entirely on this device, including offline. No account login,
+OAuth connection or automatic synchronization is configured. Up to 10 files of
+10 MB each and 500 activities can be reviewed in one batch. GPS route points are
+used to calculate summaries but are not stored. GPX elapsed time can include stops;
+adjust the preview to match moving time. Exact duplicates are skipped; similar
+manual entries require review. Deleted imports can be restored in History.
+
+Unlabelled source calories can include resting energy and remain informational.
+Only explicitly labelled active calories replace the app's active-energy estimate.
+Import each activity once and avoid adding a separate record for time already
+included in a workout. Import details survive editing and local backup export.
 
 Automatic meal-photo analysis is not configured: it requires a separate AI service.
 The original optional photo workflow is retained with an explicit availability
@@ -115,3 +150,6 @@ activity logging; `coaching.ts` and `DailyGuidance.tsx` provide general sports
 guidance; `main.tsx` mounts React. `public` contains local icons, manifest
 and worker registration, and `scripts/finalize-web.mjs` generates the production
 service worker. The prior iPhone/website wrapper has been removed.
+`activity-import.ts`, `fit-import.ts` and `ActivityImport.tsx` handle local activity
+files; `exercise-guides.ts` and `ExerciseGuide.tsx` provide movement instructions;
+`weekly-report.ts` and `WeeklyReport.tsx` generate reports from saved data.

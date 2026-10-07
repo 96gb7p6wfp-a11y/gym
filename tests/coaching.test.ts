@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { ExtraActivity } from '../src/activities.ts';
-import { getDailyGuidance, type DailyGuidanceInput } from '../src/coaching.ts';
+import { getDailyGuidance, getShortRoutine, type DailyGuidanceInput } from '../src/coaching.ts';
 
 function activity(overrides: Partial<ExtraActivity> = {}): ExtraActivity {
   return {
@@ -146,4 +146,26 @@ test('sources expose public references and callers cannot mutate the shared sour
   assert.ok(first.sources.every((source) => /^https:\/\//.test(source.url)));
   first.sources[0].url = 'https://example.test';
   assert.notEqual(guidance().sources[0].url, first.sources[0].url);
+});
+
+test('short pre/post reminders give simple food, hydration and recovery steps before logging', () => {
+  const input: DailyGuidanceInput = { date: '2026-10-07', bodyWeightKg: 80,
+    plannedKind: 'strength', plannedName: 'Lower Strength', plannedTrainingMinutes: 65,
+    extraActivities: [], completedTrainingMinutes: 0 };
+  const before = structuredClone(input);
+  const routine = getShortRoutine(input);
+  assert.match(routine.before, /1–3 h before.*oats.*banana.*Drink to thirst/);
+  assert.match(routine.after, /Cool down.*rice.*tofu.*20–40 g protein.*sleep/);
+  assert.ok(routine.before.length <= 180 && routine.after.length <= 180);
+  assert.deepEqual(input, before);
+});
+
+test('recovery reminders stay simple and switch when actual hard activity is added', () => {
+  const input: DailyGuidanceInput = { date: '2026-10-07', bodyWeightKg: 80,
+    plannedKind: 'recovery', plannedName: 'Recovery', plannedTrainingMinutes: 120,
+    extraActivities: [], completedTrainingMinutes: 0 };
+  assert.match(getShortRoutine(input).before, /No special workout snack/);
+  assert.match(getShortRoutine(input).after, /Optional easy walking.*7–9 hours/);
+  assert.match(getShortRoutine({ ...input, extraActivities: [activity({ type: 'cycle', intensity: 'hard', durationMinutes: 90 })] }).before, /30–60 g carbs\/hour/);
+  assert.doesNotMatch(getShortRoutine({ ...input, extraActivities: [activity({ deletedAt: 2, intensity: 'hard' }), activity({ date: '2026-10-08', intensity: 'hard' })] }).before, /30–60/);
 });

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DEFAULT_PROFILE, createSession, stopSessionTimers } from '../src/domain.js';
 import { createLocalClient, STORAGE_KEY } from '../src/storage.ts';
+import type { ActivityRecord } from '../src/activities.ts';
 
 class MemoryStorage {
   values = new Map<string, string>();
@@ -37,6 +38,23 @@ function extraActivity(id = 'extra-run') {
     durationMinutes: 30, distanceKm: 5, intensity: 'moderate', bodyWeightKg: 68,
     watchCalories: null, notes: 'Easy extra run', createdAt: 1_791_378_000_000, deletedAt: null as number | null,
   };
+}
+function importedActivity(id = 'imported-run', startedAt?: string) {
+  return {
+    ...extraActivity(id),
+    importSource: {
+      provider: 'strava', format: 'fit', externalId: `strava-${id}`,
+      ...(startedAt ? { startedAt } : {}), originalCalories: 430,
+      fingerprint: `activity-${id}`,
+    },
+  };
+}
+class CountingMemoryStorage extends MemoryStorage {
+  writes = 0;
+  override setItem(key: string, value: string) {
+    this.writes++;
+    super.setItem(key, value);
+  }
 }
 
 test('training preferences and plan changes survive a new client without sharing mutable objects', async () => {
@@ -434,4 +452,221 @@ test('activity quota failures preserve the last saved version and allow a later 
   assert.deepEqual((await client.request('/api/tracker')).activities, [{ activity, version: 1 }]);
   storage.failWrites = false;
   assert.deepEqual(await client.request('/api/tracker', { action: 'activity', activity: { ...activity, durationMinutes: 32 }, expectedVersion: 1 }), { version: 2 });
+});
+
+test('activity import saves the whole batch in one write and preserves unrelated local records', async () => {
+  const storage = new CountingMemoryStorage();
+  const client = createLocalClient(storage);
+  const changed = { ...profile(), bodyWeight: 72 };
+  const session = workout();
+  const existingActivity = extraActivity('manual-walk');
+  await client.request('/api/tracker', { action: 'profile', profile: changed, expectedVersion: 0 });
+  await client.request('/api/tracker', { action: 'session', session, expectedVersion: 0 });
+  await client.request('/api/nutrition', { id: 'import-day-lunch', date: '2026-10-07', payload: meal, expectedVersion: 0 });
+  await client.request('/api/tracker', { action: 'activity', activity: existingActivity, expectedVersion: 0 });
+  const writesBeforeImport = storage.writes;
+  const first = importedActivity('first');
+  const second = { ...importedActivity('second'), type: 'cycle', name: 'Afternoon ride', distanceKm: 16 };
+  const result = await client.request('/api/tracker', { action: 'activity-batch', activities: [first, second] });
+  assert.equal(storage.writes, writesBeforeImport + 1);
+  assert.deepEqual(result, { activities: [{ activity: first, version: 1 }, { activity: second, version: 1 }] });
+  first.notes = 'Unsaved input mutation';
+  (result.activities as Array<{ activity: ReturnType<typeof importedActivity> }>)[0].activity.importSource.fingerprint = 'Unsaved response mutation';
+  const reloaded = await createLocalClient(storage).request('/api/tracker');
+  assert.deepEqual(reloaded.activities, [
+    { activity: importedActivity('first'), version: 1 },
+    { activity: second, version: 1 },
+    { activity: existingActivity, version: 1 },
+  ]);
+  assert.deepEqual(reloaded.profile, changed);
+  assert.equal(reloaded.profileVersion, 1);
+  assert.deepEqual(reloaded.sessions, [{ session, version: 1 }]);
+  assert.deepEqual((await client.request('/api/nutrition')).records, [{ id: 'import-day-lunch', date: '2026-10-07', payload: meal, version: 1 }]);
+});
+
+test('invalid import cardinality or a later invalid activity never writes part of a batch', async () => {
+  const storage = new CountingMemoryStorage();
+  const client = createLocalClient(storage);
+  await client.request('/api/tracker', { action: 'activity', activity: extraActivity(), expectedVersion: 0 });
+  const saved = storage.getItem(STORAGE_KEY);
+  const writes = storage.writes;
+  for (const activities of [undefined, null, {}, [], Array.from({ length: 501 }, (_, index) => importedActivity(`many-${index}`))]) {
+    await assert.rejects(client.request('/api/tracker', { action: 'activity-batch', activities }), /1 and 500/);
+    assert.equal(storage.getItem(STORAGE_KEY), saved);
+    assert.equal(storage.writes, writes);
+  }
+  for (const invalid of [
+    { ...importedActivity('invalid'), date: '2026-02-30' },
+    { ...importedActivity('invalid'), durationMinutes: Number.NaN },
+    { ...importedActivity('invalid'), distanceKm: -3 },
+  ]) {
+    await assert.rejects(client.request('/api/tracker', { action: 'activity-batch', activities: [importedActivity('valid-first'), invalid] }), /Review valid activity/);
+    assert.equal(storage.getItem(STORAGE_KEY), saved);
+    assert.equal(storage.writes, writes);
+  }
+});
+
+test('a 500-activity import is supported and all returned versions start at one', async () => {
+  const storage = new CountingMemoryStorage();
+  const client = createLocalClient(storage);
+  const activities = Array.from({ length: 500 }, (_, index) => importedActivity(`max-${index}`));
+  const result = await client.request('/api/tracker', { action: 'activity-batch', activities });
+  assert.equal(storage.writes, 1);
+  assert.deepEqual(result.activities, activities.map((activity) => ({ activity, version: 1 })));
+  assert.deepEqual((await createLocalClient(storage).request('/api/tracker')).activities, result.activities);
+});
+
+test('import rejects duplicate activity IDs against existing data and within the batch', async () => {
+  const { storage, client } = fixture();
+  await client.request('/api/tracker', { action: 'activity', activity: extraActivity('saved-id'), expectedVersion: 0 });
+  const saved = storage.getItem(STORAGE_KEY);
+  for (const activities of [
+    [importedActivity('valid-first'), importedActivity('saved-id')],
+    [importedActivity('same-id'), { ...importedActivity('other-id'), id: 'same-id' }],
+  ]) {
+    await assert.rejects(client.request('/api/tracker', { action: 'activity-batch', activities }), /already saved/);
+    assert.equal(storage.getItem(STORAGE_KEY), saved);
+  }
+});
+
+test('source fingerprints prevent duplicate imports across files, providers and soft-deleted records', async () => {
+  const { storage, client } = fixture();
+  const deleted = { ...importedActivity('deleted-source'), deletedAt: 1_791_378_060_000 };
+  await client.request('/api/tracker', { action: 'activity', activity: deleted, expectedVersion: 0 });
+  const saved = storage.getItem(STORAGE_KEY);
+  const fromAnotherFile = importedActivity('different-file');
+  fromAnotherFile.importSource = { ...fromAnotherFile.importSource, provider: 'adidas', format: 'gpx', fingerprint: deleted.importSource.fingerprint };
+  const repeatedInBatch = importedActivity('batch-second');
+  repeatedInBatch.importSource = { ...repeatedInBatch.importSource, fingerprint: importedActivity('batch-first').importSource.fingerprint };
+  for (const activities of [[importedActivity('unique-first'), fromAnotherFile], [importedActivity('batch-first'), repeatedInBatch]]) {
+    await assert.rejects(client.request('/api/tracker', { action: 'activity-batch', activities }), /already saved/);
+    assert.equal(storage.getItem(STORAGE_KEY), saved);
+  }
+  assert.deepEqual((await client.request('/api/tracker')).activities, [{ activity: deleted, version: 1 }]);
+});
+
+test('external IDs prevent repeat imports for their provider but may overlap between providers', async () => {
+  const { storage, client } = fixture();
+  const existing = importedActivity('saved-source');
+  await client.request('/api/tracker', { action: 'activity-batch', activities: [existing] });
+  const saved = storage.getItem(STORAGE_KEY);
+  const repeat = importedActivity('changed-fingerprint');
+  repeat.importSource.externalId = existing.importSource.externalId;
+  const firstInBatch = importedActivity('first-in-batch');
+  const secondInBatch = importedActivity('second-in-batch');
+  secondInBatch.importSource.externalId = firstInBatch.importSource.externalId;
+  for (const activities of [[importedActivity('valid-first'), repeat], [firstInBatch, secondInBatch]]) {
+    await assert.rejects(client.request('/api/tracker', { action: 'activity-batch', activities }), /already saved/);
+    assert.equal(storage.getItem(STORAGE_KEY), saved);
+  }
+  const otherProvider = { ...repeat, importSource: { ...repeat.importSource, provider: 'adidas' } };
+  assert.deepEqual(await client.request('/api/tracker', { action: 'activity-batch', activities: [otherProvider] }), {
+    activities: [{ activity: otherProvider, version: 1 }],
+  });
+});
+
+test('import start instants block differently timed re-exports while distinct seconds and types remain valid', async () => {
+  const { storage, client } = fixture();
+  const deleted = {
+    ...importedActivity('original-fit', '2026-10-07T17:30:00.500+02:00'),
+    deletedAt: 1_791_378_060_000,
+  };
+  await client.request('/api/tracker', { action: 'activity-batch', activities: [deleted] });
+  const saved = storage.getItem(STORAGE_KEY);
+  const fromOtherTab = createLocalClient(storage);
+  const reexported = {
+    ...importedActivity('reexport-gpx', '2026-10-07T15:30:00.900Z'),
+    durationMinutes: 37,
+    importSource: { ...importedActivity('reexport-gpx', '2026-10-07T15:30:00.900Z').importSource, format: 'gpx', provider: 'adidas' },
+  };
+  await assert.rejects(fromOtherTab.request('/api/tracker', { action: 'activity-batch', activities: [importedActivity('valid-first'), reexported] }), /already saved/);
+  assert.equal(storage.getItem(STORAGE_KEY), saved);
+  const firstInBatch = importedActivity('same-start-first', '2026-10-07T16:00:00Z');
+  const secondInBatch = {
+    ...importedActivity('same-start-second', '2026-10-07T18:00:00+02:00'),
+    durationMinutes: 45,
+  };
+  await assert.rejects(client.request('/api/tracker', { action: 'activity-batch', activities: [firstInBatch, secondInBatch] }), /already saved/);
+  assert.equal(storage.getItem(STORAGE_KEY), saved);
+  const distinctSecond = importedActivity('different-second', '2026-10-07T15:30:01Z');
+  const distinctType = { ...importedActivity('same-instant-bike', '2026-10-07T15:30:00Z'), type: 'cycle' };
+  const result = await client.request('/api/tracker', { action: 'activity-batch', activities: [distinctSecond, distinctType] });
+  assert.deepEqual(result.activities, [{ activity: distinctSecond, version: 1 }, { activity: distinctType, version: 1 }]);
+  assert.equal(((await client.request('/api/tracker')).activities as ActivityRecord[]).length, 3);
+});
+
+test('an import cannot exceed the 5,000-record capacity or partially fill remaining space', async () => {
+  const storage = new CountingMemoryStorage();
+  const client = createLocalClient(storage);
+  const backup = JSON.parse(client.exportBackup());
+  backup.data.activities = Array.from({ length: 4999 }, (_, index) => ({ activity: extraActivity(`existing-${index}`), version: 1 }));
+  client.importBackup(JSON.stringify(backup));
+  const saved = storage.getItem(STORAGE_KEY);
+  const writes = storage.writes;
+  await assert.rejects(client.request('/api/tracker', { action: 'activity-batch', activities: [importedActivity('last-one'), importedActivity('over-limit')] }), /Too many extra activities/);
+  assert.equal(storage.getItem(STORAGE_KEY), saved);
+  assert.equal(storage.writes, writes);
+  await client.request('/api/tracker', { action: 'activity-batch', activities: [importedActivity('last-one')] });
+  assert.equal(((await client.request('/api/tracker')).activities as ActivityRecord[]).length, 5000);
+  const full = storage.getItem(STORAGE_KEY);
+  await assert.rejects(client.request('/api/tracker', { action: 'activity-batch', activities: [importedActivity('over-limit')] }), /Too many extra activities/);
+  assert.equal(storage.getItem(STORAGE_KEY), full);
+});
+
+test('import quota failure leaves every existing record intact and the same batch can be retried', async () => {
+  const { storage, client } = fixture();
+  await client.request('/api/tracker', { action: 'activity', activity: extraActivity(), expectedVersion: 0 });
+  const saved = storage.getItem(STORAGE_KEY);
+  const activities = [importedActivity('retry-first'), importedActivity('retry-second')];
+  storage.failWrites = true;
+  await assert.rejects(client.request('/api/tracker', { action: 'activity-batch', activities }), /could not be saved/);
+  assert.equal(storage.getItem(STORAGE_KEY), saved);
+  assert.deepEqual((await client.request('/api/tracker')).activities, [{ activity: extraActivity(), version: 1 }]);
+  storage.failWrites = false;
+  assert.deepEqual(await client.request('/api/tracker', { action: 'activity-batch', activities }), {
+    activities: activities.map((activity) => ({ activity, version: 1 })),
+  });
+});
+
+test('import provenance survives edits, version-1 backups and duplicate checking on a fresh device', async () => {
+  const { client } = fixture();
+  const original = importedActivity('imported-run', '2026-10-07T17:30:00+02:00');
+  original.importSource.originalCalories = 0;
+  await client.request('/api/tracker', { action: 'activity-batch', activities: [original] });
+  const edited = { ...original, name: 'Corrected exported run', durationMinutes: 32, watchCalories: 310, notes: 'Changed after import' };
+  await client.request('/api/tracker', { action: 'activity', activity: edited, expectedVersion: 1 });
+  const restored = createLocalClient(new MemoryStorage());
+  restored.importBackup(client.exportBackup());
+  assert.deepEqual((await restored.request('/api/tracker')).activities, [{ activity: edited, version: 2 }]);
+  const reimport = importedActivity('new-import-id');
+  reimport.importSource.fingerprint = original.importSource.fingerprint;
+  await assert.rejects(restored.request('/api/tracker', { action: 'activity-batch', activities: [reimport] }), /already saved/);
+  assert.deepEqual((await restored.request('/api/tracker')).activities, [{ activity: edited, version: 2 }]);
+});
+
+test('invalid import provenance is rejected before storage or backup replacement', async () => {
+  const { storage, client } = fixture();
+  await client.request('/api/tracker', { action: 'activity', activity: extraActivity(), expectedVersion: 0 });
+  const saved = storage.getItem(STORAGE_KEY);
+  const backup = JSON.parse(client.exportBackup());
+  const source = importedActivity().importSource;
+  for (const importSource of [
+    { ...source, provider: 'unknown' }, { ...source, format: 'exe' },
+    { ...source, fingerprint: '' }, { ...source, externalId: '' },
+    { ...source, startedAt: 'not-a-date' }, { ...source, originalCalories: -1 },
+    { ...source, originalCalories: Number.POSITIVE_INFINITY },
+  ]) {
+    const invalid = { ...importedActivity(), importSource };
+    await assert.rejects(client.request('/api/tracker', { action: 'activity-batch', activities: [importedActivity('valid-first'), invalid] }), /Review valid activity/);
+    const corruptBackup = { ...backup, data: { ...backup.data, activities: [{ activity: invalid, version: 1 }] } };
+    assert.throws(() => client.importBackup(JSON.stringify(corruptBackup)), /saved extra activity/);
+    assert.equal(storage.getItem(STORAGE_KEY), saved);
+  }
+});
+
+test('an activity import never overwrites unreadable existing local data', async () => {
+  const { storage, client } = fixture();
+  storage.setItem(STORAGE_KEY, '{unreadable');
+  await assert.rejects(client.request('/api/tracker', { action: 'activity-batch', activities: [importedActivity()] }), /Saved data could not be read/);
+  assert.equal(storage.getItem(STORAGE_KEY), '{unreadable');
 });

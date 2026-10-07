@@ -1,0 +1,67 @@
+.exercise-guide {
+  min-width: 0;
+  max-width: 100%;
+  margin-top: .65rem;
+  color: #344039;
+  font-size: .9rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  border: 1px solid #dfe6dd;
+  border-radius: 12px;
+  background: #f7f9f3;
+}
+.exercise-guide > summary {
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: .65rem .85rem;
+  color: #384d2e;
+  cursor: pointer;
+  font-weight: 600;
+}
+.exercise-guide > summary:focus-visible,
+.exercise-guide__content > a:focus-visible {
+  outline: 2px solid #6a8c43;
+  outline-offset: 3px;
+}
+.exercise-guide__content {
+  min-width: 0;
+  padding: 0 .85rem .85rem;
+  border-top: 1px solid #e3e9df;
+}
+.exercise-guide .exercise-guide__content > p { margin: .85rem 0; }
+.exercise-guide .exercise-guide__content strong {
+  display: block;
+  margin-bottom: .15rem;
+  color: #1d2921;
+  font-size: .9rem;
+}
+.exercise-guide .exercise-guide__steps,
+.exercise-guide .exercise-guide__mistakes ul {
+  margin: .8rem 0;
+  padding-left: 1.35rem;
+  list-style-position: outside;
+}
+.exercise-guide .exercise-guide__steps { list-style-type: decimal; }
+.exercise-guide .exercise-guide__mistakes ul { list-style-type: disc; }
+.exercise-guide .exercise-guide__steps > li,
+.exercise-guide .exercise-guide__mistakes li {
+  display: list-item;
+  border: 0;
+  margin: .35rem 0;
+  padding: 0 0 0 .15rem;
+  font-size: inherit;
+  line-height: inherit;
+}
+.exercise-guide__content > a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  max-width: 100%;
+  gap: .3rem;
+  color: #405e29;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.exercise-guide__custom { color: #657268; font-size: .85rem; }
+.exercise-guide--compact { font-size: .85rem; }
+.exercise-guide--compact > summary { font-size: .85rem; }

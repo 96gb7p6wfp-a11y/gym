@@ -1,16 +1,19 @@
 import { getDailyGuidance } from './coaching';
+import { ShortRoutine } from './ShortRoutine';
 import './guidance.css';
 
-export function DailyGuidance({ input, minutes, calories }: {
+export function DailyGuidance({ input, minutes, calories, includeRoutine = true }: {
   input: Parameters<typeof getDailyGuidance>[0];
   minutes: number;
   calories: number;
+  includeRoutine?: boolean;
 }) {
   const guidance = getDailyGuidance(input);
   return (
     <section className="panel daily-guidance" aria-label="Training and nutrition guidance">
       <div className="panel-heading"><h3>Training & nutrition guidance</h3></div>
       <p className="small-note">{input.date} · {input.plannedName}</p>
+      {includeRoutine && <ShortRoutine input={input} />}
       <div className="daily-training-total" aria-label="Daily training total">
         <span><strong>{Math.round(minutes * 10) / 10}</strong> recorded minutes</span>
         <span><strong>{Math.round(calories)}</strong> active kcal · workouts + extras</span>

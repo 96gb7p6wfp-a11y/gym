@@ -2,6 +2,10 @@ import { DataSettings } from "./DataSettings";
 import { ExtraActivities } from "./ExtraActivities";
 import { ActivityHistory } from "./ActivityHistory";
 import { DailyGuidance } from "./DailyGuidance";
+import { ShortRoutine } from "./ShortRoutine";
+import { ActivityImport } from "./ActivityImport";
+import { ExerciseGuide } from "./ExerciseGuide";
+import { WeeklyReport } from "./WeeklyReport";
 import { estimateActivity } from "./activities";
 import { requestLocal } from "./storage";
 import * as React from "react";
@@ -107,6 +111,8 @@ function GymApp({
   let [profile, setProfile] = React.useState(DEFAULT_PROFILE);
   let [sessions, setSessions] = React.useState([]);
   let [activityRecords, setActivityRecords] = React.useState([]);
+  let [reportNutrition, setReportNutrition] = React.useState(undefined);
+  let [reportNutritionError, setReportNutritionError] = React.useState(``);
   let [loaded, setLoaded] = React.useState(!1);
   let [saving, setSaving] = React.useState(!1);
   let [loadError, setLoadError] = React.useState(``);
@@ -301,18 +307,28 @@ function GymApp({
       ...records.filter((record) => record.activity.id !== activity.id),
     ]);
   }
-  function guidanceForDate(date) {
+  async function importExtraActivities(activities) {
+    if (!(await flushPendingWrites())) {
+      throw new Error(`Save your workout changes before importing activities.`);
+    }
+    const saved = await requestTracker({ action: `activity-batch`, activities });
+    setActivityRecords((records) => [...saved.activities, ...records]);
+  }
+  function dailyContext(date) {
     const planDay = profile.plan[(new Date(`${date}T12:00:00`).getDay() + 6) % 7];
     const dailyActivities = activityRecords.filter(({ activity }) => activity.date === date && activity.deletedAt === null).map(({ activity }) => activity);
     const daySessions = sessions.filter((session) => session.date === date && [`active`, `completed`].includes(session.status));
     const trainingMinutes = daySessions.reduce((sum, session) => sum + sessionDuration(session, now) / 6e4, 0);
     const totalMinutes = trainingMinutes + dailyActivities.reduce((sum, activity) => sum + activity.durationMinutes, 0);
     const totalCalories = daySessions.reduce((sum, session) => sum + getCalories(session, now), 0) + dailyActivities.reduce((sum, activity) => sum + estimateActivity(activity).calories, 0);
-    return <DailyGuidance input={{ date, bodyWeightKg: profile.bodyWeight,
+    return { input: { date, bodyWeightKg: profile.bodyWeight,
       plannedKind: planDay.kind, plannedName: planDay.name,
       plannedTrainingMinutes: planDay.minutes,
       extraActivities: dailyActivities, completedTrainingMinutes: trainingMinutes,
-    }} minutes={totalMinutes} calories={totalCalories} />;
+    }, minutes: totalMinutes, calories: totalCalories };
+  }
+  function guidanceForDate(date, includeRoutine = true) {
+    return <DailyGuidance {...dailyContext(date)} includeRoutine={includeRoutine} />;
   }
   let totalSets =
     currentSession?.exercises.reduce((e, t) => e + t.logs.length, 0) ??
@@ -661,6 +677,19 @@ function GymApp({
       }),
       `vibrate` in navigator && navigator.vibrate([150, 80, 150]));
   }, [restEndsAt, now]);
+  async function loadReportNutrition() {
+    try {
+      const saved = await requestLocal(`/api/nutrition`);
+      setReportNutrition(saved.records);
+      setReportNutritionError(``);
+    } catch (error) {
+      setReportNutrition(undefined);
+      setReportNutritionError(error instanceof Error ? error.message : `Nutrition logs could not load.`);
+    }
+  }
+  React.useEffect(() => {
+    if (loaded && tab === `progress`) void loadReportNutrition();
+  }, [tab, loaded]);
   void 0;
   let allExercises = Array.from(
     new Map(
@@ -1079,6 +1108,8 @@ function GymApp({
                 onSave={saveExtraActivity}
                 disabled={!loaded}
               />
+              <ActivityImport bodyWeight={profile.bodyWeight} records={activityRecords} onImport={importExtraActivities} disabled={!loaded} />
+              <ShortRoutine input={dailyContext(workoutDate).input} />
               <PreparationChecklist
                 items={
                   currentSession?.warmup ??
@@ -1184,6 +1215,7 @@ function GymApp({
                             </span>
                           </p>
                           {e.cue && <p className={`exercise-cue`}>{e.cue}</p>}
+                          <ExerciseGuide exercise={e} compact />
                         </div>
                         <span className={`planned-last`}>
                           {r
@@ -1322,7 +1354,7 @@ function GymApp({
                   }}
                 >{`How calories are estimated`}</button>
               </section>
-              {guidanceForDate(workoutDate)}
+              {guidanceForDate(workoutDate, false)}
               <section className={`panel rest-panel`}>
                 <div className={`panel-heading`}>
                   <h3>{`Rest timer`}</h3>
@@ -1560,6 +1592,8 @@ function GymApp({
           {!recentlyDeletedOpen && <ActivityHistory records={activityRecords} bodyWeight={profile.bodyWeight} onSave={saveExtraActivity} disabled={!loaded} />}
         </TabsContent>
         <TabsContent value={`progress`}>
+          <WeeklyReport sessions={sessions} activities={activityRecords} plan={profile.plan} bodyWeight={profile.bodyWeight} initialWeek={dateKey(weekStart)} nutritionRecords={reportNutrition} />
+          {reportNutritionError && <p className={`nutrition-error`} role={`alert`}>{reportNutritionError} <button className={`text-button`} onClick={() => void loadReportNutrition()}>{`Retry nutrition logs`}</button></p>}
           <section className={`panel extra-progress`} aria-label={`Extra activity progress`}>
             <h3>{`Extra activity progress`}</h3>
             <p className={`small-note`}>{`${formatDate(dateKey(weekStart), !0)} – ${formatDate(dateKey(addDays(weekStart, 6)), !0)} · Recorded outside your workout sessions`}</p>
@@ -2062,6 +2096,7 @@ function GymApp({
                         className={`small-note`}
                       >{`Reps and time are entered per side.`}</p>
                     )}
+                    <ExerciseGuide exercise={e} />
                   </section>
                 ))}
               <PreparationChecklist
@@ -2329,6 +2364,7 @@ function PreparationChecklist({
                   <strong>{e.name}</strong>
                   <span className={`routine-target`}>{e.target}</span>
                   {e.cue && <p>{e.cue}</p>}
+                  <ExerciseGuide exercise={e} compact />
                 </div>
               </li>
             ))}
@@ -2355,6 +2391,7 @@ function PlanDayDetails({ plan: plan }) {
             <div>
               <span>{e.name}</span>
               {e.cue && <p className={`exercise-cue`}>{e.cue}</p>}
+              <ExerciseGuide exercise={e} compact />
               <p className={`small-note`}>
                 {e.rest ? `Rest ${e.rest}s` : `No set rest`}
                 {e.measurement ? ` · ${measurementLabel(e)}` : ``}
@@ -2468,6 +2505,7 @@ function ExerciseTracker({
       {expanded && (
         <div className={`exercise-body`}>
           {exercise.cue && <p className={`exercise-cue`}>{exercise.cue}</p>}
+          <ExerciseGuide exercise={exercise} />
           {exercise.measurement && (
             <p className={`small-note`}>
               {measurementLabel(exercise)}

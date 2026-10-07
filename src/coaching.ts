@@ -16,6 +16,24 @@ export interface DailyGuidance {
   sources: { label: string; url: string }[];
 }
 
+/** Two short, practical reminders shown before opening a training log. */
+export function getShortRoutine(input: DailyGuidanceInput): { before: string; after: string } {
+  const activities = input.extraActivities.filter(activity => activity.date === input.date && activity.deletedAt === null);
+  const recovery = input.plannedKind === 'recovery' || /\brecovery\b/i.test(input.plannedName);
+  const trainingToday = !recovery || input.completedTrainingMinutes > 0 || activities.some(activity => activity.durationMinutes >= 30 || activity.intensity === 'hard');
+  if (!trainingToday) return {
+    before: 'Keep regular balanced meals and drink to thirst. No special workout snack is needed today.',
+    after: 'Optional easy walking or gentle mobility. Keep meals regular and aim for 7–9 hours of sleep.',
+  };
+  const longEndurance = activities.some(activity => ['run', 'cycle', 'swim'].includes(activity.type) && activity.durationMinutes > 60 && activity.intensity === 'hard');
+  return {
+    before: longEndurance
+      ? '1–3 h before: oats or toast + yogurt. Bring water; for a hard session over 60 min, practice 30–60 g carbs/hour.'
+      : '1–3 h before: oats or toast + yogurt or eggs. If starting soon, a banana is a light option. Drink to thirst.',
+    after: 'Cool down gently for 5 min. Next meal: rice or potatoes + fish, tofu or eggs; aim for 20–40 g protein. Rehydrate and prioritize sleep.',
+  };
+}
+
 const SOURCES = [
   {
     label: 'ISSN position stand: protein and exercise (2017)',

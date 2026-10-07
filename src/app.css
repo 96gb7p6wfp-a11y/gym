@@ -82,4 +82,10 @@
     left: max(18px, env(safe-area-inset-left, 0px));
     right: max(18px, env(safe-area-inset-right, 0px));
   }
+  /* Focus and scroll-to-control must leave room for the navigation and rest bar. */
+  html { scroll-padding-bottom: calc(170px + var(--app-safe-area-bottom)); }
+  .exercise-card button, .exercise-card input, .exercise-card [role="checkbox"] {
+    scroll-margin-bottom: 12px;
+  }
 }
+.movement-timer { min-height: 44px; touch-action: manipulation; }

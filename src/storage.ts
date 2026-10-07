@@ -122,6 +122,46 @@ export function createLocalClient(storage: StoragePort) {
       }
       nextVersion = (existing?.version ?? 0) + 1;
       state.sessions = [{ session, version: nextVersion }, ...state.sessions.filter((entry) => entry.session.id !== session.id)];
+    } else if (path === '/api/tracker' && payload.action === 'activity-batch') {
+      if (!Array.isArray(payload.activities) || payload.activities.length < 1 || payload.activities.length > 500) {
+        throw new Error('Choose between 1 and 500 activities to import.');
+      }
+      const parsed = payload.activities.map((item) => ExtraActivitySchema.safeParse(item));
+      if (parsed.some((item) => !item.success)) throw new Error('Review valid activity dates, durations and distances before importing.');
+      const incoming = parsed.map((item) => {
+        if (!item.success) throw new Error('An imported activity is invalid.');
+        return item.data;
+      });
+      if (state.activities.length + incoming.length > 5000) throw new Error('Too many extra activities are saved. Export a backup before importing more.');
+      const seenIds = new Set(state.activities.map((entry) => entry.activity.id));
+      const seenSources = new Set(state.activities.flatMap(({ activity }) => activity.importSource ? [activity.importSource.fingerprint] : []));
+      const seenExternalIds = new Set(state.activities.flatMap(({ activity }) => activity.importSource?.externalId ? [`${activity.importSource.provider}:${activity.importSource.externalId}`] : []));
+      // Re-exports can differ in moving versus elapsed duration. Match the
+      // recorded instant too, using seconds and type so separate activities in
+      // the same minute or a multisport session remain distinct.
+      const startKey = (activity: ActivityRecord['activity']) => activity.importSource?.startedAt
+        ? `${Math.floor(new Date(activity.importSource.startedAt).getTime() / 1000)}:${activity.type}`
+        : null;
+      const seenStarts = new Set(state.activities.flatMap(({ activity }) => {
+        const key = startKey(activity);
+        return key ? [key] : [];
+      }));
+      for (const activity of incoming) {
+        const source = activity.importSource;
+        const externalId = source?.externalId ? `${source.provider}:${source.externalId}` : null;
+        const recordedStart = startKey(activity);
+        if (seenIds.has(activity.id) || (source && seenSources.has(source.fingerprint)) || (externalId && seenExternalIds.has(externalId)) || (recordedStart && seenStarts.has(recordedStart))) {
+          throw new Error('One of these activities is already saved. Refresh the preview and remove duplicates.');
+        }
+        seenIds.add(activity.id);
+        if (source) seenSources.add(source.fingerprint);
+        if (externalId) seenExternalIds.add(externalId);
+        if (recordedStart) seenStarts.add(recordedStart);
+      }
+      const records = incoming.map((activity) => ({ activity, version: 1 }));
+      state.activities = [...records, ...state.activities];
+      write(state);
+      return { activities: clone(records) };
     } else if (path === '/api/tracker' && payload.action === 'activity') {
       const parsed = ExtraActivitySchema.safeParse(payload.activity);
       if (!parsed.success) throw new Error('Enter valid extra activity values before saving.');

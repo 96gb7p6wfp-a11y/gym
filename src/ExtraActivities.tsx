@@ -32,6 +32,7 @@ type ActivityDraft = {
   bodyWeight: string;
   watchCalories: string;
   notes: string;
+  importSource?: ExtraActivity['importSource'];
 };
 
 function activityName(type: ExtraActivity['type']): string {
@@ -67,6 +68,7 @@ function recordDraft(activity: ExtraActivity): ActivityDraft {
     bodyWeight: String(activity.bodyWeightKg),
     watchCalories: activity.watchCalories === null ? '' : String(activity.watchCalories),
     notes: activity.notes,
+    importSource: activity.importSource,
   };
 }
 
@@ -84,6 +86,7 @@ function parseDraft(draft: ActivityDraft) {
     watchCalories: draft.watchCalories.trim() === '' ? null : Number(draft.watchCalories),
     notes: draft.notes,
     deletedAt: null,
+    ...(draft.importSource ? { importSource: draft.importSource } : {}),
   });
 }
 
@@ -217,6 +220,7 @@ export function ExtraActivities({
                   <strong>{Math.round(result.calories)} active kcal</strong>
                   <span>{activity.watchCalories !== null ? 'Watch reading' : 'Rough estimate'}</span>
                 </p>
+                {activity.importSource && <p className="extra-field-help">Imported from {activity.importSource.provider === 'file' ? activity.importSource.format.toUpperCase() : activity.importSource.provider === 'adidas' ? 'Adidas Running' : 'Strava'}.</p>}
                 <details className="extra-estimate-details">
                   <summary>How this is calculated</summary>
                   <p>{result.method}</p>
