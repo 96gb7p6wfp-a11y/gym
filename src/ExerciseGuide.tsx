@@ -13,6 +13,12 @@ export function ExerciseGuide({ exercise, compact = false }: ExerciseGuideProps)
       <summary>How to do {exercise.name}</summary>
       <div className="exercise-guide__content">
         {guide.isGeneric && <p className="exercise-guide__custom">Custom movement: general guidance</p>}
+        <div className="exercise-guide__loading">
+          <strong>Load &amp; reps · {guide.loading.label}</strong>
+          {guide.loading.target && <p className="exercise-guide__target">Your target: {guide.loading.target}</p>}
+          <p>{guide.loading.advice}</p>
+          {guide.loading.progression && <p>{guide.loading.progression}</p>}
+        </div>
         <ol className="exercise-guide__steps">
           {guide.steps.map((step, index) => <li key={index}>{step}</li>)}
         </ol>

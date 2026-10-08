@@ -4,6 +4,17 @@ export interface GuideExercise {
   mode?: string;
   cue?: string;
   group?: string;
+  target?: string;
+}
+
+export type LoadingCategory = 'strength' | 'control' | 'power' | 'core' | 'carry' | 'preparation' | 'recovery' | 'general';
+
+export interface ExerciseLoadingGuidance {
+  category: LoadingCategory;
+  label: string;
+  target?: string;
+  advice: string;
+  progression?: string;
 }
 
 export interface ExerciseGuideContent {
@@ -13,9 +24,10 @@ export interface ExerciseGuideContent {
   caution: string;
   demonstration: { label: string; url: string };
   isGeneric: boolean;
+  loading: ExerciseLoadingGuidance;
 }
 
-type Technique = Omit<ExerciseGuideContent, 'demonstration' | 'isGeneric'>;
+type Technique = Pick<ExerciseGuideContent, 'steps' | 'feel' | 'mistakes' | 'caution'>;
 const techniques = new Map<string, Technique>();
 
 function normalizedName(name: string): string {
@@ -444,15 +456,124 @@ register(['Pec Stretch'], [
   'Forcing the arm far behind you.', 'Shrugging or arching the back to increase the stretch.'
 ], 'Use a lower elbow position if needed. Stop for shoulder pain, tingling or numbness.');
 
+type LoadingAdvice = Omit<ExerciseLoadingGuidance, 'target'>;
+const loadingAdvice = new Map<string, LoadingAdvice>();
+const controlledProgression = 'When every set reaches the top of your rep range with clean technique and about 2 good reps left, add the smallest available weight increment.';
+
+function registerLoading(names: string[], advice: LoadingAdvice): void {
+  for (const name of names) loadingAdvice.set(normalizedName(name), advice);
+}
+
+registerLoading([
+  'Hack Squat', 'Romanian Deadlift', 'RDL', 'Bulgarian Split Squat',
+  'Machine Chest Press / Bench Press', 'Machine Chest Press', 'Incline Dumbbell Press',
+  'Neutral-Grip Lat Pulldown', 'Neutral-Grip Lat Pulldown / Pull-up', 'Chest-Supported Row',
+  'Landmine Press / Machine Shoulder Press',
+], {
+  category: 'strength', label: 'Challenging load, clean reps',
+  advice: 'Use a challenging load within your saved rep range. Control every rep and finish with about 2 good reps left; heavier does not mean rushing.',
+  progression: controlledProgression,
+});
+
+registerLoading([
+  'Cable Lateral Raise', 'Reverse Pec Deck', 'Biceps Curl', 'Hammer Curl', 'Triceps Pushdown',
+  'Face Pull', 'Leg Curl', 'Standing Calf Raise', 'Tibialis Raise',
+], {
+  category: 'control', label: 'Control first',
+  advice: 'Choose a manageable load or difficulty for your saved reps, with a comfortable full range and no swinging, bouncing or shortened reps. Keep about 2 good reps left.',
+  progression: controlledProgression,
+});
+
+registerLoading(['Cable External Rotation'], {
+  category: 'control', label: 'Very light shoulder work',
+  advice: 'Use very light resistance and slow, smooth reps. Keep the elbow still; reduce the load if your torso or neck takes over.',
+  progression: controlledProgression,
+});
+
+registerLoading(['Medicine Ball Spike Slam', 'Medicine Ball Rotational Throw', 'Medicine Ball Overhead Throw / Slam'], {
+  category: 'power', label: 'Light and fast',
+  advice: 'Use a light ball that lets each rep stay fast. Reset and recover between efforts; stop the set when speed or coordination drops.',
+});
+
+registerLoading(['Approach Jump', 'Pogo Jump', 'Arm-Swing Jump', 'Countermovement Jump', 'Broad Jump'], {
+  category: 'power', label: 'Fast take-off, controlled landing',
+  advice: 'Keep jumps at bodyweight and follow the saved reps or time. Recover between efforts; stop when speed, jump height or landing quality drops.',
+});
+
+registerLoading(['Penultimate Step Drill'], {
+  category: 'power', label: 'Coordination before speed',
+  advice: 'Practice coordinated steps at bodyweight, then build speed. Reset between reps and stop before timing or balance deteriorates.',
+});
+
+registerLoading(['Pallof Press', 'Side Plank', 'Copenhagen Plank'], {
+  category: 'core', label: 'Steady posture and breathing',
+  advice: 'Use a difficulty that lets you keep posture and breathe for your saved reps or time. End the set when posture slips; build control before adding resistance.',
+});
+
+registerLoading(['Farmer Carry', 'Farmer’s Carry', "Farmer's Carry", 'Farmers Carry', 'Suitcase Carry', 'Farmer Walk'], {
+  category: 'carry', label: 'Steady steps and posture',
+  advice: 'Use a load you can carry for the saved time or distance without leaning or losing grip. Walk steadily and end the set when posture or grip slips.',
+});
+
+registerLoading([
+  'Band / Cable External Rotation', 'Light Face Pull', 'Wall Slide', 'Thoracic Rotation',
+  'Light Pulldown / Press', 'Light Squat / Hinge Warm-up', 'Ankle Knee-to-Wall', 'Leg Swings',
+  'Walking Lunge + Rotation', '90/90 Hip Switch', 'Bodyweight Squat', 'Easy Pogo', 'Progressive Jumps',
+], {
+  category: 'preparation', label: 'Prepare without fatigue',
+  advice: 'Stay light and comfortable. Build range or speed gradually, follow your saved target and finish feeling ready for training rather than tired.',
+});
+
+registerLoading([
+  'Easy walk', 'Ankle, hip & thoracic mobility', 'Gastrocnemius Stretch', 'Soleus Stretch',
+  'Hip Flexor Stretch', 'Hamstring Stretch', 'Glute Stretch', 'Lat Stretch', 'Pec Stretch',
+], {
+  category: 'recovery', label: 'Easy recovery',
+  advice: 'Keep the effort easy and stretches gentle for your saved time. Breathe normally; extra load or pushing into discomfort is unnecessary.',
+});
+
+registerLoading(['Volleyball practice'], {
+  category: 'power', label: 'Practice quality',
+  advice: 'Follow your team coach’s session. Take water breaks and reduce effort when approach timing, coordination or landing quality drops.',
+});
+
+/** Use the current name and target, never a retained key or a blanket heavy/low-rep rule. */
+export function getExerciseLoadingGuidance(exercise: GuideExercise): ExerciseLoadingGuidance {
+  const saved = loadingAdvice.get(normalizedName(exercise.name));
+  const target = exercise.target?.trim() || undefined;
+  // A custom timed version of a lift needs duration advice, not rep-range progression.
+  if (exercise.mode === 'timed' && saved && ['strength', 'control'].includes(saved.category)) {
+    return {
+      category: 'general', label: 'Controlled timed effort', target,
+      advice: 'Use an easy-to-control load for your saved duration. Keep breathing and end the set when posture or technique changes; do not use rep-range progression for timed sets.',
+    };
+  }
+  if (exercise.mode === 'bodyweight' && saved && ['strength', 'control'].includes(saved.category)) {
+    return {
+      ...saved, target,
+      advice: 'Choose a bodyweight variation you can control through your saved reps, without swinging or shortening the range. Keep about 2 good reps left.',
+      progression: 'Once every set reaches the top of your rep range with clean technique and about 2 good reps left, try a slightly harder variation.',
+    };
+  }
+  return {
+    ...(saved ?? {
+      category: 'general', label: 'Learn the movement first',
+      advice: 'Start with light effort and confirm technique with a qualified coach. Follow your saved reps, time or distance; keep control before adding difficulty.',
+    }),
+    target,
+  };
+}
+
 /** Name matching deliberately ignores saved keys: a renamed movement needs new instructions. */
 export function getExerciseGuide(exercise: GuideExercise): ExerciseGuideContent {
   const name = exercise.name.trim() || 'this exercise';
   const technique = techniques.get(normalizedName(name));
+  const loading = getExerciseLoadingGuidance(exercise);
   const demonstration = {
     label: 'Find a video demonstration',
     url: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${name} exercise technique`)}`,
   };
-  if (technique) return { ...structuredClone(technique), demonstration, isGeneric: false };
+  if (technique) return { ...structuredClone(technique), demonstration, loading, isGeneric: false };
 
   const cue = exercise.cue?.trim();
   return {
@@ -465,6 +586,7 @@ export function getExerciseGuide(exercise: GuideExercise): ExerciseGuideContent 
     mistakes: ['Adding load before learning the movement.', 'Copying a different exercise because its name or equipment looks similar.'],
     caution: 'Stop for sharp pain, dizziness or loss of control. The search link is a starting point; check that the demonstration matches your exercise.',
     demonstration,
+    loading,
     isGeneric: true,
   };
 }

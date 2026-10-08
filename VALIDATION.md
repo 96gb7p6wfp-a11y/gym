@@ -1,6 +1,6 @@
 # Standalone app validation
 
-Validation performed in the Linux cloud workspace on 2026-10-07. This repository
+Validation performed in the Linux cloud workspace on 2026-10-08. This repository
 contains the full React + Vite Setline gym app and an installable PWA. The previous
 website/iPhone wrapper and native build configuration have been removed.
 
@@ -8,11 +8,11 @@ website/iPhone wrapper and native build configuration have been removed.
 | --- | --- |
 | Clean `npm ci` | Passed; 132 packages installed, resolved dependencies recorded in `package-lock.json` |
 | `npm run typecheck` | Passed |
-| `npm test` | Passed: 137 tests, zero failures or skips |
+| `npm test` | Passed: 168 tests, zero failures or skips |
 | `npm run build` | Passed; TypeScript check, Vite production bundle and generated service worker |
-| `npm run test:web` | Passed: 22 real Chromium application workflows in the final full run, zero failures |
+| `npm run test:web` | Passed: 36 real Chromium application workflows in the final full run, zero failures (1.8 minutes) |
 | Development server | Passed; HTTP 200 for the Vite page and React entry module |
-| Visual comparison | Home, plan, daily tips, exercise guides, imports and weekly report screenshots reviewed; original appearance retained with local app icon |
+| Visual review | Production Nutrition screenshot at 390 px and reminder checklist at 320 px reviewed; prior home/plan/guide/import/report reference comparison retained |
 | Standalone dependency review | Passed; no iframe, former-host dependency, remote workout API, remote nutrition API or remote app assets |
 | PWA configuration | Local manifest, 192/512 px normal and maskable icons, 180 px Apple touch icon, standalone/fullscreen display modes and worker registration included |
 | iPhone layout | Mobile navigation, 16 px form controls, `viewport-fit=cover` and top/bottom/horizontal safe-area padding included |
@@ -24,6 +24,34 @@ calorie estimates, jump measurements, history prefill, date boundaries and
 nutrition totals. Persistence checks cover saved plans/workouts/meals/preferences,
 version conflicts, invalid values, one active workout, storage failures, corrupted
 data recovery, portable backups, import validation and resetting only Setline data.
+
+Decimal-entry regressions type both `12.5` and `12,5` with real keystrokes,
+preserve intermediate separators, reload the stored fractional value and verify
+12.5 kg × 8 reps produces 100 kg of volume. Invalid and empty mandatory weights
+cannot reuse a prior value or complete a set; zero and optional bodyweight loads
+are handled separately.
+
+Loading guidance preserves each current exercise's rep/time target and separates
+main lifts, controlled accessories, very light shoulder work, fast power drills,
+core, carries, warm-up and recovery. Tests exclude heavy progression for renamed
+custom movements, timed variants and jumps.
+
+The daily calculator checks adult inputs, supports decimal-comma weight and an
+unspecified equation, and keeps profile saving separate from applying targets.
+Its confirmed personal starting estimate is 3,000 kcal with 128 g protein,
+80 g fat and 442 g carbs. Activity is already included. Existing meals, goal
+weight, chosen targets and historical workout body weights are preserved.
+Older profiles retain their saved weight and can explicitly load the shared
+setup details. Volleyball timing saves independently and drives short food tips
+for Tuesday/Friday in Europe/Berlin.
+
+Reminder checks cover strict optional-field migration, dates, duplicate entries,
+optimistic versions, invalid backups, capacity and storage failures. Meal saving
+does not record supplement intake. Taken/Later/Undo are date-specific and
+survive reload. New medicines retain prescribed instructions without guessed
+frequency; changed instructions clear confirmation. Confirmed clock-time cues
+work while the Nutrition view is open, in Berlin time. No background push or
+closed-app notification service is configured.
 
 Browser tests use the built standalone application with real local storage and
 service-worker caching. They cover all five views at 390 px and 320 px widths;
@@ -48,7 +76,7 @@ regression checks the entire button bounds and actual hit points at its center,
 top and bottom without forcing a manual scroll or weakening timer assertions.
 Five consecutive repetitions passed with two browser workers in 32.3 seconds.
 
-Extra-activity checks cover a 5 km run (61 kg → approximately 305 active kcal),
+Extra-activity checks cover a 5 km run (64 kg → approximately 320 active kcal),
 cycling added while editing a saved workout, correct dates, edit/delete/restore,
 watch overrides including zero, weekly/history/progress/nutrition integration,
 offline saves and backups. Old version-1 state and backups remain compatible.
@@ -101,13 +129,21 @@ plans and nutrition use the local storage key `setline.gym.v1`; network access i
 not required to save them.
 
 The final production output contains 13 precached files. The main JavaScript
-bundle is 1,042.86 kB (313.18 kB gzip), the lazy FIT decoder is 431.69 kB
-(64.30 kB gzip), and CSS is 192.62 kB (30.94 kB gzip). Vite
+bundle is 1,076.27 kB (322.69 kB gzip), the lazy FIT decoder is 431.69 kB
+(64.30 kB gzip), and CSS is 197.45 kB (31.82 kB gzip). Vite
 reports its standard large-chunk advisory; the build completes successfully.
 
 The reusable cloud install/start configuration was saved as a draft. Publishing
 that environment draft is separate from running the validated app or deploying
 the repository to Vercel.
+
+Official Doppelherz and dm product-label requests returned CONNECT HTTP 403,
+including the retry after official domains were added to the saved environment
+network draft. Manufacturer serving instructions were not verified. D3 strength
+(2,500 IU = 62.5 µg), the zinc product ingredients and reported once-daily zinc/
+magnesium frequency come from the user. K2 amount, omega-3 variant and elemental
+magnesium serving remain awaiting label confirmation in the reminder UI. Saving
+the domain draft did not establish runtime network access or publication.
 
 ## Practical limits
 

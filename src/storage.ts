@@ -1,5 +1,6 @@
 import { DEFAULT_PROFILE, NutritionPayloadSchema, ProfileSchema, SessionSchema } from './domain.js';
 import { ExtraActivitySchema, type ActivityRecord } from './activities.ts';
+import { defaultReminderState, isTrackable, ReminderSchema, ReminderEntrySchema, type ReminderState, type ReminderRecord, type ReminderEntryRecord } from './reminders.ts';
 
 export const STORAGE_KEY = 'setline.gym.v1';
 const MAX_BACKUP_BYTES = 10 * 1024 * 1024;
@@ -15,6 +16,7 @@ interface LocalState {
   sessions: SessionRecord[];
   nutrition: NutritionRecord[];
   activities: ActivityRecord[];
+  reminders: ReminderState;
 }
 
 function object(value: unknown): value is RecordValue {
@@ -45,6 +47,24 @@ function parseActivity(value: unknown): ActivityRecord {
   if (!result.success) throw new Error('A saved extra activity is invalid.');
   return { activity: result.data, version: value.version };
 }
+function parseReminders(value: unknown): ReminderState {
+  if (!object(value) || !Array.isArray(value.items) || !Array.isArray(value.entries) || value.items.length > 200 || value.entries.length > 20000) throw new Error('The saved reminders are invalid.');
+  const items = value.items.map((item): ReminderRecord => {
+    if (!object(item) || !version(item.version)) throw new Error('A saved reminder is invalid.');
+    const parsed = ReminderSchema.safeParse(item.reminder);
+    if (!parsed.success) throw new Error('A saved reminder is invalid.');
+    return { reminder: parsed.data, version: item.version };
+  });
+  const entries = value.entries.map((item): ReminderEntryRecord => {
+    if (!object(item) || !version(item.version)) throw new Error('A saved reminder entry is invalid.');
+    const parsed = ReminderEntrySchema.safeParse(item.entry);
+    if (!parsed.success) throw new Error('A saved reminder entry is invalid.');
+    return { entry: parsed.data, version: item.version };
+  });
+  const ids = new Set(items.map(({ reminder }) => reminder.id));
+  if (ids.size !== items.length || new Set(entries.map(({ entry }) => entry.id)).size !== entries.length || entries.some(({ entry }) => !ids.has(entry.reminderId))) throw new Error('The saved reminders contain duplicate or unknown records.');
+  return { items, entries };
+}
 function parseState(value: unknown): LocalState {
   if (!object(value) || value.schemaVersion !== 1 || !version(value.profileVersion) || !Array.isArray(value.sessions) || !Array.isArray(value.nutrition)) {
     throw new Error('This is not a supported Setline backup.');
@@ -64,13 +84,16 @@ function parseState(value: unknown): LocalState {
   });
   const nutrition = value.nutrition.map(parseNutrition);
   const activities = rawActivities.map(parseActivity);
+  // Only absent fields migrate. Present malformed reminder data must not be
+  // silently replaced, either on startup or while importing a backup.
+  const reminders = Object.hasOwn(value, 'reminders') ? parseReminders(value.reminders) : defaultReminderState();
   if (sessions.filter((entry) => entry.session.status === 'active').length > 1) {
     throw new Error('The backup contains more than one active workout.');
   }
   if (new Set(sessions.map((entry) => entry.session.id)).size !== sessions.length || new Set(nutrition.map((entry) => entry.id)).size !== nutrition.length || new Set(activities.map((entry) => entry.activity.id)).size !== activities.length) {
     throw new Error('The backup contains duplicate records.');
   }
-  return { schemaVersion: 1, profile: profile.data, profileVersion: value.profileVersion, sessions, nutrition, activities };
+  return { schemaVersion: 1, profile: profile.data, profileVersion: value.profileVersion, sessions, nutrition, activities, reminders };
 }
 
 /** The reference's request contract, implemented entirely in this device's storage. */
@@ -79,7 +102,7 @@ export function createLocalClient(storage: StoragePort) {
     let raw: string | null;
     try { raw = storage.getItem(STORAGE_KEY); }
     catch { throw new Error('Device storage is unavailable. Allow site storage in your browser, then retry.'); }
-    if (raw === null) return { schemaVersion: 1, profile: clone(ProfileSchema.parse(defaultProfile)), profileVersion: 0, sessions: [], nutrition: [], activities: [] };
+    if (raw === null) return { schemaVersion: 1, profile: clone(ProfileSchema.parse(defaultProfile)), profileVersion: 0, sessions: [], nutrition: [], activities: [], reminders: defaultReminderState() };
     try { return parseState(JSON.parse(raw)); }
     catch { throw new Error('Saved data could not be read. Restore a valid Setline backup in Settings, or export a recovery copy before resetting.'); }
   }
@@ -94,16 +117,38 @@ export function createLocalClient(storage: StoragePort) {
 
   async function request(path: string, payload?: unknown, defaultProfile: unknown = DEFAULT_PROFILE): Promise<RecordValue> {
     if (path === '/api/nutrition/analyze') throw new Error('Automatic photo analysis is unavailable in this offline app. Add foods and nutrition amounts manually.');
-    if (path !== '/api/tracker' && path !== '/api/nutrition') throw new Error('Unknown local data operation.');
+    if (path !== '/api/tracker' && path !== '/api/nutrition' && path !== '/api/reminders') throw new Error('Unknown local data operation.');
     const state = read(defaultProfile);
     if (payload === undefined) {
-      return path === '/api/tracker'
+      return path === '/api/reminders' ? clone(state.reminders) as unknown as RecordValue : path === '/api/tracker'
         ? clone({ profile: state.profile, profileVersion: state.profileVersion, sessions: state.sessions, activities: state.activities })
         : clone({ records: state.nutrition, photoAnalysisReady: false });
     }
     if (!object(payload)) throw new Error('The data to save is invalid.');
     let nextVersion: number;
-    if (path === '/api/tracker' && payload.action === 'profile') {
+    if (path === '/api/reminders' && payload.action === 'reminder') {
+      const parsed = ReminderSchema.safeParse(payload.reminder);
+      if (!parsed.success) throw new Error('Enter valid reminder instructions and a confirmed schedule.');
+      const reminder = parsed.data;
+      const existing = state.reminders.items.find((item) => item.reminder.id === reminder.id);
+      assertVersion(payload.expectedVersion, existing?.version ?? 0);
+      if (!existing && state.reminders.items.length >= 200) throw new Error('Too many reminders are saved. Edit or pause an existing reminder.');
+      nextVersion = (existing?.version ?? 0) + 1;
+      state.reminders.items = [{ reminder, version: nextVersion }, ...state.reminders.items.filter((item) => item.reminder.id !== reminder.id)];
+    } else if (path === '/api/reminders' && payload.action === 'entry') {
+      const parsed = ReminderEntrySchema.safeParse(payload.entry);
+      if (!parsed.success) throw new Error('Enter a valid reminder date and status.');
+      const entry = parsed.data;
+      const item = state.reminders.items.find((item) => item.reminder.id === entry.reminderId);
+      if (!item) throw new Error('This reminder no longer exists. Reload the app.');
+      if (entry.status === 'taken' && !isTrackable(item.reminder)) throw new Error('Confirm the label or prescription and once-daily schedule before recording this reminder.');
+      const existing = state.reminders.entries.find((item) => item.entry.id === entry.id);
+      assertVersion(payload.expectedVersion, existing?.version ?? 0);
+      if (entry.status === 'taken' && existing?.entry.status === 'taken') throw new Error('This reminder is already marked taken for this date. Undo it before correcting the record.');
+      if (!existing && state.reminders.entries.length >= 20000) throw new Error('Too many reminder entries are saved. Export a backup before adding more.');
+      nextVersion = (existing?.version ?? 0) + 1;
+      state.reminders.entries = [{ entry, version: nextVersion }, ...state.reminders.entries.filter((item) => item.entry.id !== entry.id)];
+    } else if (path === '/api/tracker' && payload.action === 'profile') {
       assertVersion(payload.expectedVersion, state.profileVersion);
       const profile = ProfileSchema.safeParse(payload.profile);
       if (!profile.success) throw new Error('Enter a valid training plan and preferences.');

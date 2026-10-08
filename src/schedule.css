@@ -1,0 +1,7 @@
+.training-schedule { margin-bottom: 20px; }
+.training-schedule h2 { font-size: 19px; margin: 0 0 10px; }
+.training-schedule p { margin: 5px 0; }
+.training-schedule summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+.training-schedule form { display: grid; gap: 12px; margin-top: 8px; }
+.training-schedule input { min-height: 44px; min-width: 0; width: 100%; box-sizing: border-box; }
+.training-schedule button { min-height: 44px; }

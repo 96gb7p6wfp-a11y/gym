@@ -1,0 +1,26 @@
+.reminder-panel { padding: 20px; margin: 20px 0; border: 1px solid #dfe5df; border-radius: 20px; background: #fff; color: #182019; }
+.reminder-panel h2 { font-size: 20px; font-weight: 700; margin: 0 0 6px; }
+.reminder-panel h3 { font-size: 18px; font-weight: 700; margin: 0; }
+.reminder-panel p { line-height: 1.5; margin: 4px 0; overflow-wrap: anywhere; }
+.reminder-panel__heading, .reminder-panel__row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.reminder-panel__heading > div, .reminder-panel__row > div { min-width: 0; }
+.reminder-panel__heading p, .reminder-panel__row p, .reminder-panel__note { font-size: 13px; color: #637068; }
+.reminder-panel button { min-height: 44px; padding: 8px 12px; border: 1px solid #d8dfd8; border-radius: 12px; background: #f5f7f2; font-size: 14px; font-weight: 600; color: #233020; touch-action: manipulation; flex-shrink: 0; }
+.reminder-panel button:disabled { opacity: .55; }
+.reminder-panel__list { list-style: none; margin: 16px 0 0; padding: 0; }
+.reminder-panel__item { border-top: 1px solid #e4e9e2; padding: 14px 0; }
+.reminder-panel__item:last-child { padding-bottom: 0; }
+.reminder-panel__meal { background: #edf7df; border-radius: 12px; padding: 12px; margin-top: 12px; font-size: 14px; line-height: 1.5; }
+.reminder-panel__instructions summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-size: 13px; text-decoration: underline; }
+.reminder-panel__instructions p { font-size: 13px; color: #5b685c; }
+.reminder-panel__actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.reminder-panel__actions span { flex: 1 1 120px; font-size: 13px; }
+.reminder-panel .reminder-panel__take, .reminder-panel__form-actions button[type=submit] { background: #d3f98a; border-color: #c4e975; }
+.reminder-panel__form { border-top: 1px solid #dfe5df; margin-top: 18px; padding-top: 18px; display: grid; gap: 14px; }
+.reminder-panel__form label { display: grid; gap: 6px; font-size: 14px; }
+.reminder-panel__form input:not([type=checkbox]), .reminder-panel__form textarea, .reminder-panel__form select { min-height: 44px; width: 100%; min-width: 0; border: 1px solid #cbd5c9; border-radius: 10px; background: #fff; padding: 10px; font: inherit; font-size: 16px; color: inherit; }
+.reminder-panel__form .reminder-panel__check { display: flex; align-items: flex-start; line-height: 1.5; }
+.reminder-panel__check input { width: 22px; height: 22px; flex-shrink: 0; margin-top: 2px; }
+.reminder-panel__form-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.reminder-panel__error { color: #973521; font-size: 14px; line-height: 1.5; margin-top: 10px; }
+@media (max-width: 360px) { .reminder-panel { padding: 14px; } .reminder-panel__heading { flex-wrap: wrap; } }

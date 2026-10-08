@@ -7,6 +7,9 @@ import { Plus } from "lucide-react";
 import { Pencil } from "lucide-react";
 import { Utensils } from "lucide-react";
 import * as ReactJSX from "react/jsx-runtime";
+import NutritionCalculator from "./NutritionCalculator";
+import RemindersPanel from "./RemindersPanel";
+import { simpleFoodGuidance } from "./nutrition-goals";
 import {
   DEFAULT_NUTRITION_TARGETS,
   MealSchema,
@@ -80,7 +83,7 @@ async function resizeMealPhoto(e) {
     URL.revokeObjectURL(t);
   }
 }
-function NutritionView({ bodyWeight: bodyWeight, dailyGuidance }) {
+function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile, onNutritionProfileChange, volleyballSchedule }) {
   let [selectedDate, setSelectedDate] = React.useState(() =>
     dateKey(new Date()),
   );
@@ -104,6 +107,7 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance }) {
   );
   let [weightInput, setWeightInput] = React.useState(``);
   let [weightError, setWeightError] = React.useState(``);
+  let [mealSavedToken, setMealSavedToken] = React.useState(null);
   let newMealIdRef = React.useRef(newId());
   let cameraInputRef = React.useRef(null);
   let fileInputRef = React.useRef(null);
@@ -185,6 +189,7 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance }) {
         },
         editingMeal?.version ?? 0,
       );
+      setMealSavedToken(current => ({ date: mealDate, sequence: (current?.sequence ?? 0) + 1 }));
       setMealDraft(null);
       setEditingMeal(null);
     } catch (e) {
@@ -241,6 +246,15 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance }) {
   let todayWeightRecord = records.find(
     (e) => e.id === `weight-` + selectedDate,
   );
+  let foodGuidance = simpleFoodGuidance(selectedDate, volleyballSchedule);
+  async function applyEstimatedTargets(estimate) {
+    let result = NutritionTargetsSchema.safeParse({ ...targets, calories: estimate.calories, protein: estimate.protein, carbs: estimate.carbs, fat: estimate.fat });
+    if (!result.success) throw new Error(`Check your target values.`);
+    setSaving(!0);
+    try {
+      await saveNutritionRecord({ id: `targets`, date: selectedDate, payload: result.data }, targetsRecord?.version ?? 0);
+    } finally { setSaving(!1); }
+  }
   return (
     <div className={`nutrition-view`}>
       {loadError && (
@@ -324,7 +338,15 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance }) {
           </section>
         ))}
       </div>
+      <NutritionCalculator
+        profile={nutritionProfile}
+        bodyWeight={bodyWeight}
+        disabled={!loaded || saving || !onNutritionProfileChange}
+        onProfileSave={onNutritionProfileChange}
+        onApplyTargets={applyEstimatedTargets}
+      />
       {dailyGuidance?.(selectedDate)}
+      <RemindersPanel date={selectedDate} mealSavedToken={mealSavedToken} />
       <div className={`nutrition-layout`}>
         <section className={`panel nutrition-meals`}>
           <div className={`panel-heading`}>
@@ -420,7 +442,7 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance }) {
             </p>
             <p
               className={`small-note`}
-            >{`Targets are your choices. The app doesn’t prescribe a calorie intake or automatically add workout calories to it.`}</p>
+            >{`Targets are editable starting points. The app doesn’t automatically add workout calories to them.`}</p>
           </section>
           <section className={`panel`}>
             <h3>{`Weight check-in`}</h3>
@@ -507,11 +529,12 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance }) {
                 )}
               </p>
             )}
+            <p className={`small-note`}>{`Aim for roughly 0.1–0.2 kg/week. Compare weekly averages; if there is no gradual gain after 2–3 weeks, add 100–150 kcal/day.`}</p>
           </section>
-          <section className={`panel nutrition-guidance`}>
-            <h3>{`Fuel for volleyball`}</h3>
-            <p>{`Use the log to understand your eating pattern alongside your energy, recovery, and training performance.`}</p>
-            <p>{`Carbohydrates, protein, and hydration all matter for fueling and recovery.`}</p>
+          <section className={`panel nutrition-guidance nutrition-simple-fuel`}>
+            <h3>{`Simple food plan`}</h3>
+            <p><strong>{`Before: `}</strong>{foodGuidance.before}</p>
+            <p><strong>{`After: `}</strong>{foodGuidance.after}</p>
             <a
               className={`text-button`}
               href={`https://www.ausport.gov.au/ais/nutrition/performance-nutrition-hq-modules`}

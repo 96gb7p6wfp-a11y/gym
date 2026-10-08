@@ -14,6 +14,17 @@ or native iPhone signing is required.
 - **History:** completed workout summaries, editing, deletion, undo and restoration.
 - **Progress:** exercise comparisons, personal bests and charts from your own logs.
 - **Nutrition:** multi-food meals, calories/macros, daily weight entries and targets.
+- **Daily nutrition estimate:** editable age, height, body weight, activity and
+  surplus calculate a gradual weight-gain starting target. Calculation details
+  and daily targets save separately; existing meals, weight logs and chosen
+  targets are preserved until explicitly changed. The confirmed new-install
+  profile is 18, male, 180 cm and 64 kg, with four gym and two volleyball sessions.
+- **Volleyball schedule:** Tuesday and Friday, 20:00–22:00 Europe/Berlin, with
+  editable times and short meal guidance that follows the selected date.
+- **Reminders:** supplement and medication instructions in Nutrition, with separate
+  Taken/Later/Undo records for each date. Saving a meal prompts relevant pending
+  reminders without marking a dose taken. Confirmed clock reminders show a cue
+  while the view is open. Reminders, history and settings are included in backups.
 - **My plan:** edit days and movements, sets/targets/rest, logging mode and preparation.
 - **Settings:** body weight, default rest, home-screen installation, validated backup
   export/import, recovery export and confirmed local-data reset.
@@ -30,6 +41,8 @@ or native iPhone signing is required.
   warm-up and cool-down, with technique, working muscles, common mistakes,
   precautions and a link to find a video demonstration. Custom movements receive
   a general checklist and keep your saved coaching cue.
+  Load and rep advice distinguishes main lifts, controlled accessories, power,
+  core and mobility while preserving each exercise's actual prescribed target.
 - **Activity imports:** GPX, TCX, FIT and Strava CSV exports, with editable previews,
   duplicate checks and local batch saving. Imported activities join your daily
   totals, History and Progress without changing the recurring plan.
@@ -41,6 +54,30 @@ or native iPhone signing is required.
 Workout data, extra activities, plans, preferences and nutrition are stored in this browser/device
 under `setline.gym.v1`. They persist across reloads and can be used offline after
 one successful online load. No demo workout history is inserted.
+
+Workout weights accept typed decimal dots or commas (`12.5` or `12,5`), keep the
+separator while typing, and save the fractional value. Invalid entries cannot
+reuse an old weight or complete a set. Zero and an empty input remain distinct.
+
+The nutrition calculator uses Mifflin–St Jeor resting energy × usual activity +
+an editable surplus, rounded to 100 kcal. The initial personal estimate is about
+3,000 kcal, 128 g protein, 80 g fat and 442 g carbs daily. It includes habitual
+training; imported or logged activity calories are not added again. Protein uses
+2 g/kg, fat approximately 24% of energy, and carbs the remainder. These are
+adjustable adult starting estimates. Compare weekly average morning weights over
+2–3 weeks before changing intake by roughly 100–150 kcal/day. Older saved profiles
+and historical logging weights are retained; shared setup details can be loaded
+and explicitly saved in the calculator.
+
+Reminders record label or prescribed instructions, rather than recommend doses.
+The zinc product is user-confirmed once daily (15 mg zinc, 100 mg histidine and
+19 mg cysteine). D3 + K2, omega-3 and Magnesium 500 remain awaiting exact label
+confirmation, with the known information in their editable instructions. Brand
+names and pack strengths do not establish a daily serving. Other medication
+frequencies stay as instructions; confirmed once-daily schedules can be tracked.
+Changing instructions or frequency clears confirmation. No medicines are invented.
+The checklist works locally and offline; background iPhone alerts/Web Push are
+not configured. Service-worker timers are not used to promise closed-app alerts.
 
 Running with a distance uses approximately 1 active kcal per kilogram per kilometre
 for level continuous running. Other entries use effort-based MET assumptions minus

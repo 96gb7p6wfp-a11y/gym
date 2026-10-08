@@ -855,6 +855,21 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     ).length(7),
     bodyWeight: zNumber().finite().min(20).max(400),
     restSeconds: zNumber().int().min(15).max(600),
+    nutrition: zObject({
+      age: zNumber().int().min(18).max(100),
+      heightCm: zNumber().finite().min(100).max(250),
+      sex: zEnum([`male`, `female`, `unspecified`]),
+      activityFactor: zNumber().finite().min(1.2).max(2.4),
+      surplusKcal: zNumber().finite().min(0).max(500),
+    }).optional(),
+    volleyballSchedule: zObject({
+      days: zArray(zNumber().int().min(0).max(6)).min(1).max(7)
+        .refine((days) => new Set(days).size === days.length),
+      startTime: zString().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
+      endTime: zString().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
+      timeZone: zLiteral(`Europe/Berlin`),
+    }).refine((schedule) => schedule.endTime > schedule.startTime,
+      `The end time must be after the start time.`).optional(),
   }),
   SetLogSchema = zObject({
     id: zString().min(1).max(80),
@@ -946,8 +961,10 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
   ],
   DEFAULT_PROFILE = {
     plan: DEFAULT_WEEKLY_PLAN.map(withPreparation),
-    bodyWeight: 61,
+    bodyWeight: 64,
     restSeconds: 90,
+    nutrition: { age: 18, heightCm: 180, sex: `male`, activityFactor: 1.65, surplusKcal: 200 },
+    volleyballSchedule: { days: [1, 4], startTime: `20:00`, endTime: `22:00`, timeZone: `Europe/Berlin` },
   };
 function elapsedTime(e, t, n = Date.now()) {
   return Math.max(0, e + (t === null ? 0 : n - t));

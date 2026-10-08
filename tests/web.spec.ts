@@ -26,7 +26,7 @@ async function startMonday(page: Page) {
 }
 
 async function logWeightSet(page: Page, kilograms: string, reps: string, set = 1, movement = MOVEMENT) {
-  await page.getByRole('spinbutton', { name: `${movement} set ${set} weight in kilograms`, exact: true }).fill(kilograms);
+  await page.getByRole('textbox', { name: `${movement} set ${set} weight in kilograms`, exact: true }).fill(kilograms);
   await page.getByRole('spinbutton', { name: `${movement} set ${set} reps`, exact: true }).fill(reps);
   await page.getByRole('checkbox', { name: `Complete ${movement} set ${set}`, exact: true }).check();
 }
@@ -234,7 +234,7 @@ test('preserves a paused active workout across reload, resumes it, and cancels i
   await waitForPersistedText(page, 'Paused session survives reload.');
   await page.reload();
   await expect(page.getByRole('button', { name: 'Resume workout', exact: true })).toBeVisible();
-  await expect(page.getByRole('spinbutton', { name: `${MOVEMENT} set 1 weight in kilograms`, exact: true })).toHaveValue('7');
+  await expect(page.getByRole('textbox', { name: `${MOVEMENT} set 1 weight in kilograms`, exact: true })).toHaveValue('7');
   await expect(page.getByRole('checkbox', { name: `Complete ${MOVEMENT} set 1`, exact: true })).toBeChecked();
   await expect(page.getByLabel('Workout notes', { exact: true })).toHaveValue('Paused session survives reload.');
   await page.getByRole('button', { name: 'Resume workout', exact: true }).click();
@@ -302,24 +302,24 @@ test('logs a five-kilometre run independently and includes it in history, progre
   await page.getByRole('button', { name: /^Sat / }).click();
   const run = await addExtraActivity(page, 'run', '30', '5', 'easy');
   const activityDate = await run.getByLabel('Activity date', { exact: true }).inputValue();
-  await expect(run.locator('.extra-live-estimate')).toContainText('305 active kcal');
+  await expect(run.locator('.extra-live-estimate')).toContainText('320 active kcal');
   await run.getByRole('button', { name: 'Save activity', exact: true }).click();
   const panel = page.getByRole('region', { name: 'Extra activities', exact: true });
   await expect(panel.getByRole('article', { name: 'Running activity', exact: true })).toContainText('5 km');
-  await expect(panel).toContainText('305 active kcal');
+  await expect(panel).toContainText('320 active kcal');
   const metrics = page.locator('.session-stats .stats-grid');
-  await expect(metrics.locator('.stat').filter({ hasText: 'Active kcal' }).locator('strong')).toHaveText('305');
+  await expect(metrics.locator('.stat').filter({ hasText: 'Active kcal' }).locator('strong')).toHaveText('320');
   await expect(metrics.locator('.stat').filter({ hasText: 'Minutes' }).locator('strong')).toHaveText('30');
   await expect(metrics.locator('.stat').filter({ hasText: 'Sets done' }).locator('strong')).toHaveText('0');
   const guidance = page.getByRole('region', { name: 'Training and nutrition guidance', exact: true });
   await guidance.locator('.guidance-advice > summary').click();
   await expect(guidance.getByRole('heading', { name: 'Training & recovery', exact: true })).toBeVisible();
   await expect(guidance).toContainText('Preserve your recovery day');
-  await expect(guidance).toContainText('85–122 g/day');
+  await expect(guidance).toContainText('90–128 g/day');
   const savedPlan = await page.evaluate(() => JSON.parse(localStorage.getItem('setline.gym.v1')!).profile.plan);
   await page.reload();
   await page.getByRole('button', { name: /^Sat / }).click();
-  await expect(panel).toContainText('305 active kcal');
+  await expect(panel).toContainText('320 active kcal');
   await selectTab(page, 'History');
   const history = page.getByRole('region', { name: 'Extra activity history', exact: true });
   await history.locator('summary').filter({ hasText: activityDate }).click();
@@ -328,12 +328,12 @@ test('logs a five-kilometre run independently and includes it in history, progre
   const edit = page.getByRole('dialog', { name: 'Edit activity', exact: true });
   await edit.getByLabel('Distance · km · optional', { exact: true }).fill('6');
   await edit.getByRole('button', { name: 'Save activity', exact: true }).click();
-  await expect(history).toContainText('366 active kcal');
+  await expect(history).toContainText('384 active kcal');
   await selectTab(page, 'Progress');
-  await expect(page.getByRole('region', { name: 'Extra activity progress', exact: true })).toContainText('366');
+  await expect(page.getByRole('region', { name: 'Extra activity progress', exact: true })).toContainText('384');
   await selectTab(page, 'Nutrition');
   await page.getByLabel('Nutrition date', { exact: true }).fill(activityDate);
-  await expect(guidance.locator('[aria-label="Daily training total"]')).toContainText('366');
+  await expect(guidance.locator('[aria-label="Daily training total"]')).toContainText('384');
   await expect(page.locator('.nutrient-card').first()).toContainText('No target set');
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('setline.gym.v1')!).profile.plan)).toEqual(savedPlan);
 });
@@ -348,21 +348,21 @@ test('adds cycling to the saved workout date during editing and can delete and r
   const cycle = await addExtraActivity(page, 'cycle', '45', '15');
   const date = await cycle.getByLabel('Activity date', { exact: true }).inputValue();
   expect(new Date(`${date}T12:00:00`).getDay()).toBe(2);
-  await expect(cycle.locator('.extra-live-estimate')).toContainText('279 active kcal');
+  await expect(cycle.locator('.extra-live-estimate')).toContainText('292 active kcal');
   await cycle.getByRole('button', { name: 'Save activity', exact: true }).click();
   const panel = page.getByRole('region', { name: 'Extra activities', exact: true });
-  await expect(panel).toContainText('279 active kcal');
+  await expect(panel).toContainText('292 active kcal');
   const guidance = page.getByRole('region', { name: 'Training and nutrition guidance', exact: true });
   await expect(guidance).toContainText('Volleyball already loads your legs');
   await expect(guidance).toContainText('165 minutes');
-  await expect(guidance.locator('[aria-label="Daily training total"]')).toContainText('663');
+  await expect(guidance.locator('[aria-label="Daily training total"]')).toContainText('695');
   page.once('dialog', (dialog) => dialog.accept());
   await panel.getByRole('button', { name: 'Delete Cycling', exact: true }).click();
   await expect(panel.getByRole('article', { name: 'Cycling activity', exact: true })).toHaveCount(0);
-  await expect(guidance.locator('[aria-label="Daily training total"]')).toContainText('384');
+  await expect(guidance.locator('[aria-label="Daily training total"]')).toContainText('403');
   await panel.locator('summary').filter({ hasText: 'Recently deleted activities' }).click();
   await panel.getByRole('button', { name: 'Restore Cycling', exact: true }).click();
-  await expect(panel).toContainText('279 active kcal');
+  await expect(panel).toContainText('292 active kcal');
   await panel.getByRole('button', { name: 'Edit Cycling', exact: true }).click();
   const edit = page.getByRole('dialog', { name: 'Edit activity', exact: true });
   await edit.getByLabel('Watch active calories · optional', { exact: true }).fill('0');
@@ -383,7 +383,7 @@ test('logs and exports an extra activity offline without altering the recurring 
   await walk.getByRole('button', { name: 'Save activity', exact: true }).click();
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: /^Mon / }).click();
-  await expect(page.getByRole('region', { name: 'Extra activities', exact: true })).toContainText('38 active kcal');
+  await expect(page.getByRole('region', { name: 'Extra activities', exact: true })).toContainText('40 active kcal');
   const preferences = await openPreferences(page);
   const downloadPromise = page.waitForEvent('download');
   await preferences.getByRole('button', { name: 'Export backup', exact: true }).click();
@@ -440,7 +440,7 @@ test('validates and persists editable day plans without changing an existing wor
 test('charts completed workout progress and excludes unchecked heavy sets', async ({ page }) => {
   await startMonday(page);
   await logWeightSet(page, '6', '4');
-  await page.getByRole('spinbutton', { name: `${MOVEMENT} set 2 weight in kilograms`, exact: true }).fill('100');
+  await page.getByRole('textbox', { name: `${MOVEMENT} set 2 weight in kilograms`, exact: true }).fill('100');
   await page.getByRole('spinbutton', { name: `${MOVEMENT} set 2 reps`, exact: true }).fill('99');
   await closeDialog(await finishWorkout(page));
   await page.getByRole('button', { name: 'Previous week', exact: true }).click();
@@ -689,7 +689,7 @@ test('exports a portable backup, rejects invalid imports, and restores after a c
   await selectTab(page, 'History');
   await expect(page.getByText('0 completed workouts', { exact: true })).toBeVisible();
   preferences = await openPreferences(page);
-  await expect(preferences.getByLabel('Body weight · kg', { exact: true })).toHaveValue('61');
+  await expect(preferences.getByLabel('Body weight · kg', { exact: true })).toHaveValue('64');
   page.once('dialog', (dialog) => dialog.accept());
   await Promise.all([
     page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
@@ -716,7 +716,7 @@ test('reviews a GPX run, keeps imported metadata when editing, and skips a repea
   await expect(preview.getByLabel('Duration · minutes', { exact: true })).toHaveValue('40');
   await expect(preview.getByLabel('Distance · km · optional', { exact: true })).toHaveValue('5');
   await expect(preview).toContainText('Source calories: 900 kcal');
-  await expect(preview).toContainText('305 active kcal');
+  await expect(preview).toContainText('320 active kcal');
   await preview.getByLabel('Name', { exact: true }).fill('Reviewed morning run');
   await preview.getByLabel('Duration · minutes', { exact: true }).fill('30');
   await dialog.getByRole('button', { name: 'Import 1 selected activity', exact: true }).click();
@@ -725,12 +725,12 @@ test('reviews a GPX run, keeps imported metadata when editing, and skips a repea
   const extras = page.getByRole('region', { name: 'Extra activities', exact: true });
   await expect(extras).toContainText('Reviewed morning run');
   await expect(extras).toContainText('Imported from Adidas Running');
-  await expect(extras).toContainText('305 active kcal');
+  await expect(extras).toContainText('320 active kcal');
   await extras.getByRole('button', { name: 'Edit Reviewed morning run', exact: true }).click();
   const edit = page.getByRole('dialog', { name: 'Edit activity', exact: true });
   await edit.getByLabel('Distance · km · optional', { exact: true }).fill('6');
   await edit.getByRole('button', { name: 'Save activity', exact: true }).click();
-  await expect(extras).toContainText('366 active kcal');
+  await expect(extras).toContainText('384 active kcal');
   await page.reload();
   await page.getByRole('button', { name: /^Mon / }).click();
   await expect(extras).toContainText('Reviewed morning run');
@@ -773,7 +773,7 @@ test('imports a Strava CSV offline and downloads a weekly report from saved work
   const run = dialog.getByRole('article', { name: 'Import preview 1', exact: true });
   const ride = dialog.getByRole('article', { name: 'Import preview 2', exact: true });
   await expect(run.getByLabel('Duration · minutes', { exact: true })).toHaveValue('30');
-  await expect(run).toContainText('305 active kcal');
+  await expect(run).toContainText('320 active kcal');
   await expect(ride).toContainText('200 active kcal');
   await expect(ride).toContainText('imported active energy');
   await dialog.getByRole('button', { name: 'Import 2 selected activities', exact: true }).click();
@@ -793,7 +793,7 @@ test('imports a Strava CSV offline and downloads a weekly report from saved work
   await expect(page.getByRole('button', { name: /Recovery lunch/ })).toBeVisible();
   await selectTab(page, 'Progress');
   const report = page.getByRole('region', { name: 'Weekly training report', exact: true });
-  await expect(report.locator('.weekly-report-metrics strong')).toHaveText(['1', '130', '1/4', '855']);
+  await expect(report.locator('.weekly-report-metrics strong')).toHaveText(['1', '130', '1/4', '870']);
   await expect(report).toContainText('1 completed set');
   await expect(report).toContainText('24 kg volume');
   await expect(report).toContainText('2 extra activities');
@@ -805,7 +805,7 @@ test('imports a Strava CSV offline and downloads a weekly report from saved work
   await report.getByRole('button', { name: 'Previous report week', exact: true }).click();
   await expect(report.locator('.weekly-report-metrics strong')).toHaveText(['0', '0', '0/4', '0']);
   await report.getByRole('button', { name: 'Next report week', exact: true }).click();
-  await expect(report.locator('.weekly-report-metrics strong')).toHaveText(['1', '130', '1/4', '855']);
+  await expect(report.locator('.weekly-report-metrics strong')).toHaveText(['1', '130', '1/4', '870']);
   const downloadPromise = page.waitForEvent('download');
   await report.getByRole('button', { name: 'Download weekly report', exact: true }).click();
   const download = await downloadPromise;
@@ -815,7 +815,7 @@ test('imports a Strava CSV offline and downloads a weekly report from saved work
   expect(exported.report).toMatchObject({
     weekStart: date,
     completedPlannedGymDays: 1,
-    totals: { workouts: 1, minutes: 130, completedSets: 1, volumeKg: 24, extraActivities: 2, activeCalories: 855, runKm: 5, cycleKm: 12 },
+    totals: { workouts: 1, minutes: 130, completedSets: 1, volumeKg: 24, extraActivities: 2, activeCalories: 870, runKm: 5, cycleKm: 12 },
     nutrition: { available: true, mealLoggedDays: 1, mealsLogged: 1, meanLoggedProteinGrams: 30 },
   });
   expect(exported.report.insights.length).toBeGreaterThan(0);
@@ -907,7 +907,7 @@ test('decodes an actual FIT binary from the cached app offline and rejects a dam
   await expect(preview.getByLabel('Date', { exact: true })).toHaveValue(date);
   await expect(preview.getByLabel('Duration · minutes', { exact: true })).toHaveValue('30');
   await expect(preview.getByLabel('Distance · km · optional', { exact: true })).toHaveValue('5');
-  await expect(preview).toContainText('305 active kcal');
+  await expect(preview).toContainText('320 active kcal');
   await expect(preview).toContainText('Source calories: 450 kcal');
   await preview.getByLabel('Name', { exact: true }).fill('Imported FIT run');
   await dialog.getByRole('button', { name: 'Import 1 selected activity', exact: true }).click();
@@ -917,7 +917,7 @@ test('decodes an actual FIT binary from the cached app offline and rejects a dam
   const extras = page.getByRole('region', { name: 'Extra activities', exact: true });
   await expect(extras).toContainText('Imported FIT run');
   await expect(extras).toContainText('Imported from Strava');
-  await expect(extras).toContainText('305 active kcal');
+  await expect(extras).toContainText('320 active kcal');
   const records = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!).activities, STORE_KEY);
   expect(records).toHaveLength(1);
   expect(records[0].activity).toMatchObject({ type: 'run', date, durationMinutes: 30, distanceKm: 5, watchCalories: null });

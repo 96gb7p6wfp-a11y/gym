@@ -1,0 +1,11 @@
+.weight-input-field {
+  display: grid;
+  gap: 4px;
+}
+
+.weight-input-error {
+  max-width: 84px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: #a33b36;
+}

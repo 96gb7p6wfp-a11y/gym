@@ -3,9 +3,12 @@ import { ExtraActivities } from "./ExtraActivities";
 import { ActivityHistory } from "./ActivityHistory";
 import { DailyGuidance } from "./DailyGuidance";
 import { ShortRoutine } from "./ShortRoutine";
+import { TrainingSchedule } from "./TrainingSchedule";
 import { ActivityImport } from "./ActivityImport";
 import { ExerciseGuide } from "./ExerciseGuide";
 import { WeeklyReport } from "./WeeklyReport";
+import { DecimalWeightInput } from "./DecimalWeightInput";
+import { isValidWorkoutWeight } from "./workout-weight";
 import { estimateActivity } from "./activities";
 import { requestLocal } from "./storage";
 import * as React from "react";
@@ -134,7 +137,7 @@ function GymApp({
   let [discardOpen, setDiscardOpen] = React.useState(!1);
   let [settingsOpen, setSettingsOpen] = React.useState(!1);
   let [settingsDraft, setSettingsDraft] = React.useState({
-    bodyWeight: 61,
+    bodyWeight: DEFAULT_PROFILE.bodyWeight,
     restSeconds: 90,
   });
   let [installOpen, setInstallOpen] = React.useState(!1);
@@ -433,7 +436,7 @@ function GymApp({
           i.done &&
             (e.mode === `timed` ? !(i.seconds ?? 0) : !(i.reps ?? 0)) &&
             (i.done = !1),
-          i.done && e.mode === `weight` && i.kg === null && (i.done = !1),
+          i.done && e.mode === `weight` && !isValidWorkoutWeight(i.kg) && (i.done = !1),
           i
         );
       }),
@@ -521,8 +524,12 @@ function GymApp({
       );
       return;
     }
-    if (n && i.mode === `weight` && a.kg === null) {
+    if (n && i.mode === `weight` && !isValidWorkoutWeight(a.kg)) {
       toast.error(`Enter the weight you used. Use 0 for no added weight.`);
+      return;
+    }
+    if (n && a.kg !== null && !isValidWorkoutWeight(a.kg)) {
+      toast.error(`Enter a weight between 0 and 2,000 kg.`);
       return;
     }
     let s = Date.now();
@@ -614,6 +621,23 @@ function GymApp({
       );
     } finally {
       setProfileSaving(!1);
+    }
+  }
+  async function saveNutritionProfile(values) {
+    const { bodyWeightKg, ...nutrition } = values;
+    if (!(await saveProfile({ ...profile, bodyWeight: bodyWeightKg, nutrition }))) {
+      throw new Error(`Your nutrition profile could not be saved. Check the values or reload and retry.`);
+    }
+    return true;
+  }
+  const volleyballSchedule = profile.volleyballSchedule ?? DEFAULT_PROFILE.volleyballSchedule;
+  async function saveVolleyballSchedule(schedule) {
+    const plan = profile.plan.map((day, index) => schedule.days.includes(index)
+      ? { ...day, note: day.note.replace(/(Club training · )\d{2}:\d{2}[–-]\d{2}:\d{2}/,
+        `$1${schedule.startTime}–${schedule.endTime}`) }
+      : day);
+    if (!(await saveProfile({ ...profile, plan, volleyballSchedule: schedule }))) {
+      throw new Error(`Your training times could not be saved. Reload and retry.`);
     }
   }
   let actionsRef = React.useRef({
@@ -969,7 +993,7 @@ function GymApp({
                     className={extraSessionVisible ? `` : `chosen`}
                     aria-pressed={!extraSessionVisible}
                     onClick={() => setExtraSessionVisible(!1)}
-                  >{`Volleyball · 20:00`}</button>
+                  >{`Volleyball · ${volleyballSchedule.startTime}`}</button>
                   <button
                     className={extraSessionVisible ? `chosen` : ``}
                     aria-pressed={extraSessionVisible}
@@ -1110,6 +1134,8 @@ function GymApp({
               />
               <ActivityImport bodyWeight={profile.bodyWeight} records={activityRecords} onImport={importExtraActivities} disabled={!loaded} />
               <ShortRoutine input={dailyContext(workoutDate).input} />
+              {volleyballSchedule.days.includes(selectedDay) && !extraSessionVisible &&
+                <TrainingSchedule schedule={volleyballSchedule} onSave={saveVolleyballSchedule} compact />}
               <PreparationChecklist
                 items={
                   currentSession?.warmup ??
@@ -1737,9 +1763,12 @@ function GymApp({
           )}
         </TabsContent>
         <TabsContent value={`nutrition`}>
-          <NutritionView bodyWeight={profile.bodyWeight} dailyGuidance={guidanceForDate} />
+          <NutritionView bodyWeight={profile.bodyWeight} dailyGuidance={guidanceForDate}
+            nutritionProfile={profile.nutrition}
+            onNutritionProfileChange={saveNutritionProfile} volleyballSchedule={volleyballSchedule} />
         </TabsContent>
         <TabsContent value={`plan`}>
+          <TrainingSchedule schedule={volleyballSchedule} onSave={saveVolleyballSchedule} />
           <p
             className={`plan-intro`}
           >{`Four gym days, two volleyball sessions, a Tuesday technique primer and Saturday recovery. Main jump session on Sunday.`}</p>
@@ -2456,6 +2485,7 @@ function ExerciseTracker({
 }) {
   let [expanded, setExpanded] = React.useState(index === 0);
   let [removeConfirmationOpen, setRemoveConfirmationOpen] = React.useState(!1);
+  let invalidWeightInputs = React.useRef(new Set());
   let doneCount = exercise.logs.filter((e) => e.done).length;
   let bestCurrentSet = topSet(exercise);
   let bestPreviousSet = topSet(last?.exercise);
@@ -2568,21 +2598,21 @@ function ExerciseTracker({
                     </TableCell>
                     {!exercise.measurement && exercise.mode !== `timed` && (
                       <TableCell>
-                        <input
-                          className={`set-input`}
-                          type={`number`}
-                          min={`0`}
-                          max={`2000`}
-                          step={`0.5`}
-                          inputMode={`decimal`}
+                        <DecimalWeightInput
                           placeholder={
                             exercise.mode === `bodyweight` ? `BW` : `—`
                           }
-                          aria-label={`${exercise.name} set ${n + 1} weight in kilograms`}
-                          value={t.kg ?? ``}
-                          onChange={(e) =>
+                          label={`${exercise.name} set ${n + 1} weight in kilograms`}
+                          value={t.kg}
+                          onValidityChange={(valid) => {
+                            valid
+                              ? invalidWeightInputs.current.delete(t.id)
+                              : invalidWeightInputs.current.add(t.id);
+                          }}
+                          onChange={(kg, valid) =>
                             onSet(t.id, {
-                              kg: parseAmount(e.target.value),
+                              kg,
+                              ...(!valid ? { done: !1 } : {}),
                             })
                           }
                         />
@@ -2663,7 +2693,13 @@ function ExerciseTracker({
                         className={`set-check`}
                         checked={t.done}
                         aria-label={`Complete ${exercise.name} set ${n + 1}`}
-                        onCheckedChange={(e) => onDone(t.id, e === !0)}
+                        onCheckedChange={(e) => {
+                          if (e === !0 && invalidWeightInputs.current.has(t.id)) {
+                            toast.error(`Enter a weight between 0 and 2,000 kg using . or ,`);
+                            return;
+                          }
+                          onDone(t.id, e === !0);
+                        }}
                       />
                     </TableCell>
                   </TableRow>

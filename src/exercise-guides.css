@@ -63,5 +63,13 @@
   text-underline-offset: 3px;
 }
 .exercise-guide__custom { color: #657268; font-size: .85rem; }
+.exercise-guide__loading {
+  margin: .85rem 0;
+  padding: .7rem;
+  border-radius: 8px;
+  background: #edf2e6;
+}
+.exercise-guide .exercise-guide__loading > p { margin: .4rem 0 0; }
+.exercise-guide .exercise-guide__target { font-weight: 600; }
 .exercise-guide--compact { font-size: .85rem; }
 .exercise-guide--compact > summary { font-size: .85rem; }
