@@ -109,3 +109,23 @@ test('quota failure and invalid dates keep every existing reminder and nutrition
   assert.equal(storage.getItem(STORAGE_KEY), original);
   assert.equal((await state(client)).entries.length, 1);
 });
+
+test('dose text and food timing round-trip in backups while old instructions and taken history stay unchanged', async () => {
+  const { client } = fixture();
+  const old = await state(client);
+  await client.request('/api/reminders', { action: 'entry', entry: entry(), expectedVersion: 0 });
+  const medicine: Reminder = {
+    id: 'prescribed', name: 'My medicine', kind: 'medicine', instructions: 'Use exactly as prescribed.',
+    dosageText: 'Dose from my prescription', foodRelation: 'after', timing: 'time', time: '22:30',
+    schedule: 'once-daily', enabled: true, confirmed: true,
+  };
+  await client.request('/api/reminders', { action: 'reminder', reminder: medicine, expectedVersion: 0 });
+  const restored = fixture();
+  restored.client.importBackup(client.exportBackup());
+  const saved = await state(restored.client);
+  assert.deepEqual(saved.items.find(({ reminder }) => reminder.id === 'prescribed')!.reminder, medicine);
+  assert.deepEqual(saved.items.filter(({ reminder }) => reminder.id !== 'prescribed'), old.items);
+  assert.deepEqual(saved.entries, (await state(client)).entries);
+  assert.equal(saved.entries[0].entry.status, 'taken');
+  assert.equal(Object.hasOwn(saved.items.find(({ reminder }) => reminder.id === 'zinc')!.reminder, 'dosageText'), false);
+});

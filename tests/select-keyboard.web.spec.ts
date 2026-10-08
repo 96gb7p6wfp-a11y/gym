@@ -2,11 +2,12 @@ import { expect, test } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'One set at a time.', exact: true })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Today', exact: true })).toHaveAttribute('data-state', 'active');
 });
 
 test('keeps movement dropdown keyboard navigation and restores focus after selection and escape', async ({ page }) => {
   await page.getByRole('tab', { name: 'Progress', exact: true }).click();
+  await page.getByRole('button', { name: 'Strength', exact: true }).click();
   const trigger = page.getByRole('combobox', { name: 'Movement', exact: true });
   await trigger.focus();
   await page.keyboard.press('ArrowDown');
@@ -46,7 +47,8 @@ test('keeps movement dropdown keyboard navigation and restores focus after selec
 
 test('keeps a plan dropdown visible and selectable inside a dialog on a narrow phone', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
-  await page.getByRole('tab', { name: 'My plan', exact: true }).click();
+  await page.getByRole('tab', { name: 'More', exact: true }).click();
+  await page.getByRole('button', { name: 'Training plan', exact: true }).click();
   await page.getByRole('button', { name: 'Edit Monday', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Edit Monday', exact: true });
   const trigger = dialog.locator('.plan-exercise-editor').first().getByRole('combobox');

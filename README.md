@@ -7,13 +7,18 @@ or native iPhone signing is required.
 
 ## Features
 
-- **Workout:** original seven-day gym/volleyball/recovery plan, extra Tuesday jump
+- **Today:** today's session, one main action, compact week navigation, next
+  volleyball session and a quiet nutrition snapshot.
+- **Train:** focused exercise and current-set controls, previous performance,
+  quick completion and automatic advancement. All-set editing and the original
+  seven-day gym/volleyball/recovery plan remain available, including the Tuesday jump
   primer, week/day navigation, warm-up and cool-down checklists, exercise cues,
   weights/reps/time/RIR, jump measurements, session and movement timers, automatic
   rest timer, notes, intensity and calorie estimates/watch calories.
-- **History:** completed workout summaries, editing, deletion, undo and restoration.
-- **Progress:** exercise comparisons, personal bests and charts from your own logs.
-- **Nutrition:** multi-food meals, calories/macros, daily weight entries and targets.
+- **Progress:** a compact weight/consistency/strength overview, detailed charts,
+  personal bests, History with editing/deletion/restoration, and weekly reports.
+- **Nutrition:** calories and protein remaining, quick multi-food meals, recent
+  meals, saved foods, daily weight entries and targets.
 - **Daily nutrition estimate:** editable age, height, body weight, activity and
   surplus calculate a gradual weight-gain starting target. Calculation details
   and daily targets save separately; existing meals, weight logs and chosen
@@ -21,11 +26,13 @@ or native iPhone signing is required.
   profile is 18, male, 180 cm and 64 kg, with four gym and two volleyball sessions.
 - **Volleyball schedule:** Tuesday and Friday, 20:00–22:00 Europe/Berlin, with
   editable times and short meal guidance that follows the selected date.
-- **Reminders:** supplement and medication instructions in Nutrition, with separate
+- **Routine:** supplement and medication instructions in More, with separate
   Taken/Later/Undo records for each date. Saving a meal prompts relevant pending
   reminders without marking a dose taken. Confirmed clock reminders show a cue
-  while the view is open. Reminders, history and settings are included in backups.
-- **My plan:** edit days and movements, sets/targets/rest, logging mode and preparation.
+  while Routine is open. Optional dosage text and before/with/after-food timing
+  preserve older records. Reminders, history and settings are included in backups.
+- **Training plan:** in More or via Today/Train; edit days and movements,
+  sets/targets/rest, logging mode and preparation.
 - **Settings:** body weight, default rest, home-screen installation, validated backup
   export/import, recovery export and confirmed local-data reset.
 - **Extra activities:** dated runs, rides, walks, swimming and custom activities
@@ -93,7 +100,7 @@ methods are visible in the app and all calculations work offline.
 
 ## Import from Strava or Adidas Running
 
-In **Workout → Import activities**, choose exported GPX, TCX, FIT or CSV files,
+In **More → Import activities** or **Train → Activities**, choose exported GPX, TCX, FIT or CSV files,
 review the date, moving minutes, distance, effort and body weight, then import.
 Strava provides GPX/original-file exports per activity and an activities CSV in
 its account archive. For Adidas Running, request your account data export and
@@ -114,8 +121,8 @@ Import each activity once and avoid adding a separate record for time already
 included in a workout. Import details survive editing and local backup export.
 
 Automatic meal-photo analysis is not configured: it requires a separate AI service.
-The original optional photo workflow is retained with an explicit availability
-message; all manual meal/weight/nutrient logging works offline.
+The optional photo workflow stays hidden until that service is available;
+all manual meal/weight/nutrient logging works offline.
 
 ## Run and build
 
@@ -179,8 +186,11 @@ See `VALIDATION.md` for the performed checks and limitations.
 
 ## Structure
 
-`src/App.jsx`, `NutritionView.jsx`, `domain.js`, `components/ui.jsx` and
-`reference.css` preserve the reference's application behavior and appearance.
+`src/App.jsx` coordinates the five sections and preserves the original workout
+mutations. `TodayView.jsx`, `FocusedWorkout.tsx` and `ProgressOverview.tsx` provide
+the focused views. `components/design.tsx`, `premium.css` and the existing sheet
+components provide the shared visual system; see [DESIGN.md](DESIGN.md).
+`NutritionView.jsx` and `domain.js` retain the existing nutrition and training rules.
 `storage.ts` provides validated local persistence; `DataSettings.tsx` provides
 backups and reset; `activities.ts` and `ExtraActivities.tsx` implement dated extra
 activity logging; `coaching.ts` and `DailyGuidance.tsx` provide general sports

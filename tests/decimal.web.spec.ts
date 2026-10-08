@@ -5,9 +5,21 @@ const STORE_KEY = 'setline.gym.v1';
 
 async function startWorkout(page: Page, day = 'Mon') {
   await page.goto('/');
+  await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: new RegExp(`^${day} `) }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Finish workout', exact: true })).toBeVisible();
+  await openAllSets(page);
+}
+
+async function openAllSets(page: Page) {
+  const button = page.getByRole('button', { name: 'All sets', exact: true });
+  if (await button.isVisible()) await button.click();
+}
+
+async function openHistory(page: Page) {
+  await page.getByRole('tab', { name: 'Progress', exact: true }).click();
+  await page.getByRole('button', { name: 'History', exact: true }).click();
 }
 
 function weightInput(page: Page) {
@@ -34,6 +46,8 @@ for (const separator of ['.', ',']) {
     await expect.poll(() => page.evaluate((key) => localStorage.getItem(key)?.includes('"kg":12.5') ?? false, STORE_KEY)).toBe(true);
 
     await page.reload();
+    await page.getByRole('tab', { name: 'Train', exact: true }).click();
+    await openAllSets(page);
     await expect(weightInput(page)).toHaveValue('12.5');
     await expect(completed).toBeChecked();
     await page.getByRole('button', { name: 'Finish workout', exact: true }).click();
@@ -45,7 +59,7 @@ for (const separator of ['.', ',']) {
     await expect(summary.getByRole('cell', { name: '12.5 kg', exact: true })).toBeVisible();
     await summary.getByRole('button', { name: 'Close', exact: true }).click();
     await page.reload();
-    await page.getByRole('tab', { name: 'History', exact: true }).click();
+    await openHistory(page);
     await expect(page.getByRole('button', { name: /^Gym / })).toContainText('100 kg total volume');
   });
 }
@@ -75,6 +89,8 @@ test('invalid and empty weight never complete a set using its old weight, while 
   await expect(completed).toBeChecked();
   await expect.poll(() => page.evaluate((key) => localStorage.getItem(key)?.includes('"kg":0') ?? false, STORE_KEY)).toBe(true);
   await page.reload();
+  await page.getByRole('tab', { name: 'Train', exact: true }).click();
+  await openAllSets(page);
   await expect(weightInput(page)).toHaveValue('0');
   await expect(completed).toBeChecked();
 });
@@ -82,7 +98,9 @@ test('invalid and empty weight never complete a set using its old weight, while 
 test('bodyweight sets allow no added load but block an invalid optional load', async ({ page }) => {
   await startWorkout(page, 'Wed');
   const movement = 'Tibialis Raise';
-  await page.getByRole('button', { name: new RegExp(movement) }).click();
+  await page.locator('summary').filter({ hasText: /^Movements/ }).click();
+  await page.getByRole('button', { name: `Train ${movement}`, exact: true }).click();
+  await openAllSets(page);
   const weight = page.getByRole('textbox', { name: `${movement} set 1 weight in kilograms`, exact: true });
   const completed = page.getByRole('checkbox', { name: `Complete ${movement} set 1`, exact: true });
   await page.getByRole('spinbutton', { name: `${movement} set 1 reps`, exact: true }).fill('15');

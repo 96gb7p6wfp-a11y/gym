@@ -78,3 +78,34 @@ test('foreground time cues use Berlin civil time and skip other dates, deferred 
   zinc.confirmed = false;
   assert.equal(timeReminders(state, '2026-10-08', new Date('2026-10-08T20:30:00Z')).length, 0);
 });
+
+test('optional dose and food timing preserve old records and never confirm a schedule', () => {
+  const old = defaultReminderState().items[0].reminder;
+  assert.deepEqual(ReminderSchema.parse(old), old);
+  assert.equal(Object.hasOwn(ReminderSchema.parse(old), 'foodRelation'), false);
+  assert.equal(Object.hasOwn(ReminderSchema.parse(old), 'dosageText'), false);
+  const recorded = ReminderSchema.parse({ ...old, dosageText: '  15 mg as labelled  ', foodRelation: 'after', confirmed: false });
+  assert.equal(recorded.dosageText, '15 mg as labelled');
+  assert.equal(recorded.confirmed, false);
+  assert.equal(isTrackable(recorded), false);
+  assert.equal(timingLabel(recorded), 'After a meal');
+  assert.equal(ReminderSchema.safeParse({ ...old, foodRelation: 'anytime' }).success, false);
+  assert.equal(ReminderSchema.safeParse({ ...old, dosageText: 'x'.repeat(161) }).success, false);
+});
+
+test('food instructions can accompany a chosen clock while meal and time cues keep their distinct schedules', () => {
+  const state = defaultReminderState();
+  const zinc = state.items[0].reminder;
+  zinc.foodRelation = 'before';
+  assert.equal(timingLabel(zinc), 'Before a meal');
+  assert.deepEqual(mealReminders(state, '2026-10-08').map((item) => item.id), ['zinc']);
+  zinc.timing = 'evening';
+  zinc.foodRelation = 'after';
+  assert.equal(timingLabel(zinc), 'After your evening meal');
+  zinc.timing = 'time';
+  zinc.time = '22:30';
+  assert.equal(timingLabel(zinc), 'At 22:30 · after food');
+  assert.equal(mealReminders(state, '2026-10-08').length, 0);
+  assert.deepEqual(timeReminders(state, '2026-10-08', new Date('2026-10-08T20:30:00Z')).map((item) => item.id), ['zinc']);
+  assert.equal(state.entries.length, 0);
+});

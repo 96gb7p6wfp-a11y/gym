@@ -44,7 +44,7 @@ export default function NutritionCalculator({ profile, bodyWeight, disabled, onP
   }
   function loadSharedDetails() {
     setDraft(toDraft(PERSONAL_NUTRITION_START));
-    setMessage('Shared details loaded. Save when ready.'); setError('');
+    setMessage('Your details are ready. Save to apply.'); setError('');
   }
   async function save(applyTargets: boolean) {
     if (busy || disabled) return;
@@ -58,12 +58,12 @@ export default function NutritionCalculator({ profile, bodyWeight, disabled, onP
       const saved = await onProfileSave(input);
       if (saved === false) throw new Error('Your calculation details could not be saved.');
       if (applyTargets && result) await onApplyTargets(result);
-      setMessage(applyTargets ? 'Daily targets saved. Your existing meals and weight logs are unchanged.' : 'Calculation details saved. Your daily targets are unchanged.');
+      setMessage(applyTargets ? 'Daily targets saved.' : 'Calculation details saved.');
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not save. Try again.'); }
     finally { setBusy(false); }
   }
   return <section className="panel nutrition-calculator" aria-labelledby="nutrition-calculator-heading">
-    <div className="panel-heading"><h3 id="nutrition-calculator-heading">Daily weight-gain estimate</h3><span className="small-label">Starting point</span></div>
+    <div className="panel-heading"><h3 id="nutrition-calculator-heading">Suggested targets</h3><span className="small-label">Muscle gain</span></div>
     {estimate ? <>
       <strong className="nutrition-calculator__calories">{estimate.calories.toLocaleString('en-GB')} <span>kcal/day</span></strong>
       <dl className="nutrition-calculator__macros">
@@ -72,7 +72,7 @@ export default function NutritionCalculator({ profile, bodyWeight, disabled, onP
         <div><dt>Fat</dt><dd>{estimate.fat} g</dd></div>
       </dl>
     </> : <p>Choose an energy equation and valid details below, or edit your targets manually.</p>}
-    <p className="small-note">Activity level already includes gym and volleyball. Logged workout calories are not added again.</p>
+    <p className="small-note">Includes your gym and volleyball schedule.</p>
     {!profile && <button className="text-button nutrition-calculator__shared" disabled={busy} onClick={loadSharedDetails}>Use my shared details (18 years, 180 cm, 64 kg)</button>}
     <details className="nutrition-calculator__details">
       <summary>Edit calculation details</summary>
@@ -93,11 +93,12 @@ export default function NutritionCalculator({ profile, bodyWeight, disabled, onP
       </div>
     </details>
     <button className="btn full" disabled={disabled || busy || !estimate} onClick={() => void save(true)}>{busy ? 'Saving…' : 'Use these daily targets'}</button>
-    <p className="small-note">This replaces your chosen daily targets only when you tap the button. You can edit them afterward.</p>
+    <p className="small-note">Apply when ready. You can adjust later.</p>
     {error && <p className="nutrition-error" role="alert">{error}</p>}
     {message && <p className="small-note" role="status">{message}</p>}
     <details className="nutrition-calculator__details">
       <summary>How the estimate works</summary>
+      <p>Activity already includes gym and volleyball. Logged workout calories are not added again.</p>
       {estimate && <p>Resting energy ≈ {estimate.bmr} kcal. × activity level {draft.activityFactor} ≈ {estimate.maintenanceKcal} kcal maintenance. + {draft.surplusKcal} kcal, rounded to 100 kcal.</p>}
       <p>Protein ≈ 2 g/kg; a useful range is 1.6–2.2 g/kg. Fat ≈ 24% of calories. Carbs = (calories − protein × 4 − fat × 9) ÷ 4.</p>
       <p>Compare weekly average morning weights. Aim for roughly 0.1–0.2 kg/week. If there is no gradual gain after 2–3 weeks, add 100–150 kcal/day; if gain stays much faster, reduce slightly.</p>

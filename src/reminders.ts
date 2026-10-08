@@ -13,6 +13,9 @@ export const ReminderSchema = z.object({
   name: z.string().trim().min(1).max(120),
   kind: z.enum(['supplement', 'medicine']),
   instructions: z.string().trim().min(1).max(1000),
+  // Optional fields keep older local records and backups unchanged.
+  dosageText: z.string().trim().max(160).optional(),
+  foodRelation: z.enum(['before', 'with', 'after']).optional(),
   schedule: z.enum(['once-daily', 'instructions-only']),
   timing: z.enum(['meal', 'evening', 'time', 'instructions']),
   time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable(),
@@ -78,6 +81,13 @@ export function timeReminders(state: ReminderState, date: string, now: Date): Re
   return state.items.map(({ reminder }) => reminder).filter((reminder) => isTrackable(reminder) && reminder.timing === 'time' && reminder.time !== null && reminder.time <= clock && reminderStatus(state, reminder.id, date) === 'pending');
 }
 export function timingLabel(reminder: Reminder): string {
+  if (reminder.foodRelation) {
+    const relation = { before: 'Before', with: 'With', after: 'After' }[reminder.foodRelation];
+    if (reminder.timing === 'meal') return `${relation} a meal`;
+    if (reminder.timing === 'evening') return `${relation} your evening meal`;
+    if (reminder.timing === 'time') return `At ${reminder.time} · ${relation.toLowerCase()} food`;
+    return `${relation} food · Follow your recorded instructions`;
+  }
   if (reminder.timing === 'meal') return 'With a meal';
   if (reminder.timing === 'evening') return 'With your evening meal';
   if (reminder.timing === 'time') return `At ${reminder.time}`;

@@ -33,6 +33,7 @@ for (const screen of [
       }
     }, screen);
     await page.getByRole('tab', { name: 'Progress', exact: true }).tap();
+    await page.getByRole('button', { name: 'Strength', exact: true }).tap();
     const trigger = page.getByRole('combobox', { name: 'Movement', exact: true });
     await trigger.tap();
     const list = page.getByRole('listbox');
@@ -75,14 +76,16 @@ for (const screen of [
     await expect(page.getByRole('heading', { name: lastName, exact: true })).toBeVisible();
 
     // Closing the menu releases its body scroll lock.
+    await expect.poll(() => page.evaluate(() => document.body.hasAttribute('data-scroll-locked'))).toBe(false);
+    await page.getByRole('tab', { name: 'Train', exact: true }).click();
     const restoredY = await page.evaluate(() => window.scrollY);
     const x = size.width / 2, y = size.height / 2;
     await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
     for (let step = 1; step <= 10; step++) {
       await page.waitForTimeout(20);
-      await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y + step * 15 }] });
+      await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y - step * 15 }] });
     }
     await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(restoredY - 40);
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(restoredY + 40);
   });
 }

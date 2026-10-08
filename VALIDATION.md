@@ -8,11 +8,12 @@ website/iPhone wrapper and native build configuration have been removed.
 | --- | --- |
 | Clean `npm ci` | Passed; 132 packages installed, resolved dependencies recorded in `package-lock.json` |
 | `npm run typecheck` | Passed |
-| `npm test` | Passed: 168 tests, zero failures or skips |
+| `npm test` | Passed: 171 tests, zero failures or skips |
 | `npm run build` | Passed; TypeScript check, Vite production bundle and generated service worker |
-| `npm run test:web` | Passed: 41 real Chromium application workflows in the final full run, zero failures (2.1 minutes) |
+| `npm run test:web` | Passed: 50 real Chromium application workflows, zero failures (2.3 minutes) |
+| Final PWA metadata check | Passed: installation, manifest/icons and offline workout workflows rerun after the launch-color update (3 checks) |
 | Development server | Passed; HTTP 200 for the Vite page and React entry module |
-| Visual review | Production Movement popup at 390 px with 59/34 px safe areas reviewed; prior nutrition/reminder and home/plan/guide/import/report comparison retained |
+| Visual review | Redesigned Today, Train, focused workout, Progress, Nutrition, More, Routine, plan and report reviewed; small-phone rest controls and desktop layout checked |
 | Standalone dependency review | Passed; no iframe, former-host dependency, remote workout API, remote nutrition API or remote app assets |
 | PWA configuration | Local manifest, 192/512 px normal and maskable icons, 180 px Apple touch icon, standalone/fullscreen display modes and worker registration included |
 | iPhone layout | Mobile navigation, 16 px form controls, `viewport-fit=cover` and top/bottom/horizontal safe-area padding included |
@@ -24,6 +25,29 @@ calorie estimates, jump measurements, history prefill, date boundaries and
 nutrition totals. Persistence checks cover saved plans/workouts/meals/preferences,
 version conflicts, invalid values, one active workout, storage failures, corrupted
 data recovery, portable backups, import validation and resetting only Setline data.
+
+## Premium interface regression checks
+
+The five sections are Today, Train, Progress, Nutrition and More. History and
+weekly reports live in Progress; the plan, Routine and data tools remain
+accessible through More. Known session names use display aliases without changing
+saved plan titles or exercise keys. Existing local storage is retained.
+
+New browser checks cover focused decimal entry, completion-driven advancement,
+prefill only into empty sets, invalid-set rejection, rest-bar hit areas, recent
+meal and saved-food reuse with distinct record IDs, direct weight check-in,
+recorded weight trends, direct import sheets and report-week synchronization.
+Editing a saved timed workout cannot affect a separate active workout. Changed
+routine instructions clear confirmation and cannot retain a hardcoded zinc dose.
+
+Phone checks include 320×568 and 390×844 viewports with top/bottom safe areas;
+the primary Today action is reachable above navigation without scrolling.
+The week selector has one horizontal scroll area. All five screens also pass
+1280 px desktop containment checks. Existing touch, keyboard, modal, offline,
+backup/restore, schedule and persistence regressions remain in the suite.
+PWA launch colors match the light interface and the iOS status-bar setting uses
+dark text appropriate for that background. Manifest ID, scope, icon paths,
+installation mode, service-worker registration and storage key remain stable.
 
 Decimal-entry regressions type both `12.5` and `12,5` with real keystrokes,
 preserve intermediate separators, reload the stored fractional value and verify
@@ -60,7 +84,7 @@ optimistic versions, invalid backups, capacity and storage failures. Meal saving
 does not record supplement intake. Taken/Later/Undo are date-specific and
 survive reload. New medicines retain prescribed instructions without guessed
 frequency; changed instructions clear confirmation. Confirmed clock-time cues
-work while the Nutrition view is open, in Berlin time. No background push or
+work while Routine is open, in Berlin time. No background push or
 closed-app notification service is configured.
 
 Browser tests use the built standalone application with real local storage and
@@ -139,8 +163,8 @@ plans and nutrition use the local storage key `setline.gym.v1`; network access i
 not required to save them.
 
 The final production output contains 13 precached files. The main JavaScript
-bundle is 1,076.44 kB (322.74 kB gzip), the lazy FIT decoder is 431.69 kB
-(64.30 kB gzip), and CSS is 198.25 kB (31.96 kB gzip). Vite
+bundle is 1,109.35 kB (331.59 kB gzip), the lazy FIT decoder is 431.69 kB
+(64.30 kB gzip), and CSS is 244.23 kB (39.84 kB gzip). Vite
 reports its standard large-chunk advisory; the build completes successfully.
 
 The reusable cloud install/start configuration was saved as a draft. Publishing
@@ -161,8 +185,8 @@ the domain draft did not establish runtime network access or publication.
   installation has not been tested in this workspace.
 - Vercel deployment is configured, but no live Vercel deployment is claimed.
   Import/connect the repository to Vercel as described in `README.md`.
-- Optional automatic meal-photo analysis needs a separate AI service and is
-  visibly unavailable. Manual nutrition logging works locally and offline.
+- Optional automatic meal-photo analysis needs a separate AI service and remains
+  hidden until configured. Manual nutrition logging works locally and offline.
 - Strava/Adidas Running import uses exported GPX, TCX, FIT or compatible CSV files;
   automatic account synchronization/OAuth is not configured. ZIP archives must be
   extracted first, and JSON exports are unsupported. Activities must fit the app's

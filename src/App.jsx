@@ -1,3 +1,10 @@
+import { TodayView } from "./TodayView";
+import { FocusedWorkout } from "./FocusedWorkout";
+import { ProgressOverview } from "./ProgressOverview";
+import { RemindersPanel } from "./RemindersPanel";
+import { shortSessionName } from "./presentation";
+import { PageHeader, BottomNavigation, SegmentedControl, MenuRow } from "./components/design";
+import { House, Ellipsis, ArrowLeft, Upload, ShieldCheck } from "lucide-react";
 import { DataSettings } from "./DataSettings";
 import { ExtraActivities } from "./ExtraActivities";
 import { ActivityHistory } from "./ActivityHistory";
@@ -119,7 +126,14 @@ function GymApp({
   let [loaded, setLoaded] = React.useState(!1);
   let [saving, setSaving] = React.useState(!1);
   let [loadError, setLoadError] = React.useState(``);
-  let [tab, setTab] = React.useState(`workout`);
+  let [tab, setTab] = React.useState(`today`);
+  React.useEffect(() => { window.scrollTo({ top: 0, behavior: `instant` }); }, [tab]);
+  let [progressView, setProgressView] = React.useState(`overview`);
+  let [progressReportWeek, setProgressReportWeek] = React.useState(() => dateKey(startOfWeek(new Date(`${initialDate}T12:00:00`))));
+  let [moreView, setMoreView] = React.useState(`menu`);
+  let [routineDate, setRoutineDate] = React.useState(initialDate);
+  let [nutritionAction, setNutritionAction] = React.useState(null);
+  let [importOpen, setImportOpen] = React.useState(false);
   let [today, setToday] = React.useState(initialDate);
   let [weekStart, setWeekStart] = React.useState(() =>
     startOfWeek(new Date(`${initialDate}T12:00:00`)),
@@ -298,8 +312,14 @@ function GymApp({
     activity.deletedAt === null && activity.date >= dateKey(weekStart) &&
     activity.date <= dateKey(addDays(weekStart, 6)),
   );
-  let extraWeekMinutes = weekActivities.reduce((sum, { activity }) => sum + activity.durationMinutes, 0);
+  let reportWeekActivities = activityRecords.filter(({ activity }) =>
+    activity.deletedAt === null && activity.date >= progressReportWeek &&
+    activity.date <= dateKey(addDays(new Date(`${progressReportWeek}T12:00:00`), 6)),
+  );
   let extraWeekCalories = weekActivities.reduce((sum, { activity }) => sum + estimateActivity(activity).calories, 0);
+  let extraWeekMinutes = weekActivities.reduce((sum, { activity }) => sum + activity.durationMinutes, 0);
+  let reportExtraMinutes = reportWeekActivities.reduce((sum, { activity }) => sum + activity.durationMinutes, 0);
+  let reportExtraCalories = reportWeekActivities.reduce((sum, { activity }) => sum + estimateActivity(activity).calories, 0);
   async function saveExtraActivity(activity, expectedVersion) {
     if (!(await flushPendingWrites())) {
       throw new Error(`Save your workout changes before updating extra activities.`);
@@ -463,7 +483,7 @@ function GymApp({
         ),
         !0,
       );
-      setTab(`workout`);
+      setTab(`train`);
       setEditingHistoryId(null);
     }
   }
@@ -481,7 +501,7 @@ function GymApp({
           setRestEndsAt(null)));
   }
   function toggleMovementTimer(e) {
-    if (!activeSession) return;
+    if (!activeSession || editingHistoryId) return;
     let t = Date.now();
     queueSession(
       {
@@ -587,7 +607,7 @@ function GymApp({
     setFinishSaving(!1);
     setFinishOpen(!1);
     setRestEndsAt(null);
-    r && (toast.success(`Workout saved. Nice work.`), setSelectedHistory(n));
+    r && (toast.success(`Workout complete`), setSelectedHistory(n));
   }
   async function saveProfile(e) {
     let t = ProfileSchema.safeParse(e);
@@ -712,7 +732,7 @@ function GymApp({
     }
   }
   React.useEffect(() => {
-    if (loaded && tab === `progress`) void loadReportNutrition();
+    if (loaded && [`today`, `progress`].includes(tab)) void loadReportNutrition();
   }, [tab, loaded]);
   void 0;
   let allExercises = Array.from(
@@ -768,8 +788,88 @@ function GymApp({
       : progressExercise?.mode === `timed`
         ? `Total time · sec`
         : `Total reps`;
+  function openPlan() { setMoreView(`plan`); setTab(`more`); }
+  function openSettings() {
+    setSettingsDraft({ bodyWeight: profile.bodyWeight, restSeconds: profile.restSeconds });
+    setSettingsOpen(true);
+  }
+  const hour = Number(new Intl.DateTimeFormat(`en-GB`, { timeZone: `Europe/Berlin`, hour: `numeric`, hourCycle: `h23` }).format(new Date(now)));
+  const greeting = hour < 12 ? `Good morning` : hour < 18 ? `Good afternoon` : `Good evening`;
+  const weekSelector = <div className="compact-week">
+          <div className={`week-heading`}>
+            <div className={`week-control`}>
+              <button
+                className={`icon-button`}
+                aria-label={`Previous week`}
+                onClick={() => setWeekStart(addDays(weekStart, -7))}
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <span>
+                {formatDate(dateKey(weekStart), !0)}
+                {` – `}
+                {formatDate(dateKey(addDays(weekStart, 6)), !0)}
+              </span>
+              <button
+                className={`icon-button`}
+                aria-label={`Next week`}
+                onClick={() => setWeekStart(addDays(weekStart, 7))}
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+            <button
+              className={`text-button`}
+              onClick={() => {
+                let e = new Date();
+                setWeekStart(startOfWeek(e));
+                setSelectedDay((e.getDay() + 6) % 7);
+              }}
+            >{`Today`}</button>
+          </div>
+          <div className={`week-strip`} aria-label={`Choose a training day`}>
+            {profile.plan.map((e, t) => {
+              let n = dateKey(addDays(weekStart, t));
+              let r = completedSessions.some((e) => e.date === n);
+              let i = currentSession
+                ? currentSession.date === n
+                : selectedDay === t;
+              return (
+                <button
+                  className={`day-cell ${i ? `selected` : ``} ${n === today ? `today` : ``}`}
+                  aria-pressed={i}
+                  onClick={() => {
+                    if (activeSession) {
+                      toast(
+                        `Finish your current workout before choosing another day. Your weekly plan is in More.`,
+                      );
+                      return;
+                    }
+                    setSelectedDay(t);
+                    setEditingHistoryId(null);
+                  }}
+                  key={t}
+                >
+                  <span className={`day-top`}>
+                    {WEEKDAYS[t].slice(0, 3)}
+                    {r ? (
+                      <Check size={14} />
+                    ) : (
+                      <span className={`today-mark`} />
+                    )}
+                  </span>
+                  <strong>{addDays(weekStart, t).getDate()}</strong>
+                  <span className={`day-name`}>{shortSessionName(e.name)}</span>
+                  <span className={`day-type ${e.kind}`}>
+                    {sessionKindLabel(e.kind)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+  </div>;
   return (
-    <Tabs value={tab} onValueChange={setTab} className={`app-shell`}>
+    <Tabs value={tab} onValueChange={setTab} className={`app-shell ${currentSession && tab === `train` ? `is-training` : ``} ${restEndsAt !== null ? `has-rest` : ``}`}>
       <Toaster
         position={`top-center`}
         theme={`light`}
@@ -819,83 +919,19 @@ function GymApp({
             <span className={`brand-dot`}>{`.`}</span>
           </span>
         </div>
-        <TabsList className={`app-nav`} aria-label={`Gym tracker views`}>
-          <TabsTrigger value={`workout`}>
-            <Dumbbell />
-            <span>{`Workout`}</span>
-          </TabsTrigger>
-          <TabsTrigger value={`history`}>
-            <RotateCcwClock />
-            <span>{`History`}</span>
-          </TabsTrigger>
-          <TabsTrigger value={`progress`}>
-            <ChartColumn />
-            <span>{`Progress`}</span>
-          </TabsTrigger>
-          <TabsTrigger value={`nutrition`}>
-            <Utensils />
-            <span>{`Nutrition`}</span>
-          </TabsTrigger>
-          <TabsTrigger value={`plan`}>
-            <ListChecks />
-            <span>{`My plan`}</span>
-          </TabsTrigger>
-        </TabsList>
-        <button
-          className={`icon-button settings-button`}
-          aria-label={`Settings`}
-          onClick={() => {
-            setSettingsDraft({
-              bodyWeight: profile.bodyWeight,
-              restSeconds: profile.restSeconds,
-            });
-            setSettingsOpen(!0);
-          }}
-        >
-          <Settings2 size={20} />
-        </button>
+        <BottomNavigation onSelect={(next) => { if (next === `more`) setMoreView(`menu`); if (next === `progress`) setProgressView(`overview`); }} items={[
+          { value: `today`, label: `Today`, icon: <House /> },
+          { value: `train`, label: `Train`, icon: <Dumbbell /> },
+          { value: `progress`, label: `Progress`, icon: <ChartColumn /> },
+          { value: `nutrition`, label: `Nutrition`, icon: <Utensils /> },
+          { value: `more`, label: `More`, icon: <Ellipsis /> },
+        ]} />
       </header>
       <main className={`workspace`}>
-        <div className={`page-heading`}>
-          <div>
-            <p className={`eyebrow`}>{`YOUR TRAINING NOTEBOOK`}</p>
-            <h1>
-              {tab === `workout`
-                ? `One set at a time.`
-                : tab === `history`
-                  ? `Your workout history.`
-                  : tab === `progress`
-                    ? `See your progress.`
-                    : tab === `nutrition`
-                      ? `Fuel your training.`
-                      : `Your weekly plan.`}
-            </h1>
-          </div>
-          <span
-            hidden={tab === `nutrition`}
-            className={`sync-state`}
-            aria-live={`polite`}
-          >
-            {loadError ? (
-              loaded ? (
-                `Save needs attention`
-              ) : (
-                `Connection needs attention`
-              )
-            ) : loaded ? (
-              saving || profileSaving ? (
-                `Saving…`
-              ) : (
-                <ReactJSX.Fragment>
-                  <CheckCheck size={16} />
-                  {` All changes saved`}
-                </ReactJSX.Fragment>
-              )
-            ) : (
-              `Connecting…`
-            )}
-          </span>
-        </div>
+        <PageHeader title={tab === `today` ? greeting : tab === `train` ? `Train` : tab === `progress` ? `Progress` : tab === `nutrition` ? `Nutrition` : moreView === `plan` ? `Training plan` : moreView === `routine` ? `Routine` : `More`}
+          eyebrow={tab === `today` ? new Date(`${selectedDate}T12:00:00`).toLocaleDateString(`en-GB`, { weekday: `long`, day: `numeric`, month: `long` }) : undefined}
+          subtitle={tab === `progress` ? `Small steps. Real progress.` : undefined} />
+        {(saving || profileSaving) && <span className="sync-state" role="status">Saving…</span>}
         {loadError && tab !== `nutrition` && (
           <div className={`error-banner`} role={`alert`}>
             <p>{loadError}</p>
@@ -909,78 +945,16 @@ function GymApp({
             </div>
           </div>
         )}
-        <TabsContent value={`workout`}>
-          <div className={`week-heading`}>
-            <div className={`week-control`}>
-              <button
-                className={`icon-button`}
-                aria-label={`Previous week`}
-                onClick={() => setWeekStart(addDays(weekStart, -7))}
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <span>
-                {formatDate(dateKey(weekStart), !0)}
-                {` – `}
-                {formatDate(dateKey(addDays(weekStart, 6)), !0)}
-              </span>
-              <button
-                className={`icon-button`}
-                aria-label={`Next week`}
-                onClick={() => setWeekStart(addDays(weekStart, 7))}
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
-            <button
-              className={`text-button`}
-              onClick={() => {
-                let e = new Date();
-                setWeekStart(startOfWeek(e));
-                setSelectedDay((e.getDay() + 6) % 7);
-              }}
-            >{`Today`}</button>
-          </div>
-          <div className={`week-strip`} aria-label={`Choose a training day`}>
-            {profile.plan.map((e, t) => {
-              let n = dateKey(addDays(weekStart, t));
-              let r = completedSessions.some((e) => e.date === n);
-              let i = currentSession
-                ? currentSession.date === n
-                : selectedDay === t;
-              return (
-                <button
-                  className={`day-cell ${i ? `selected` : ``} ${n === today ? `today` : ``}`}
-                  aria-pressed={i}
-                  onClick={() => {
-                    if (activeSession) {
-                      toast(
-                        `Your current workout is still in progress. You can browse other days in My plan.`,
-                      );
-                      return;
-                    }
-                    setSelectedDay(t);
-                    setEditingHistoryId(null);
-                  }}
-                  key={t}
-                >
-                  <span className={`day-top`}>
-                    {WEEKDAYS[t].slice(0, 3)}
-                    {r ? (
-                      <Check size={14} />
-                    ) : (
-                      <span className={`today-mark`} />
-                    )}
-                  </span>
-                  <strong>{addDays(weekStart, t).getDate()}</strong>
-                  <span className={`day-name`}>{e.name}</span>
-                  <span className={`day-type ${e.kind}`}>
-                    {sessionKindLabel(e.kind)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+        <TabsContent value="today">
+          <TodayView date={selectedDate} plan={selectedPlan} session={activeSession} completed={dayCompletedSession} daySelector={weekSelector}
+            activities={activityRecords} nutrition={reportNutrition} volleyballSchedule={volleyballSchedule}
+            disabled={!loaded || saving || !!loadError} onStart={startWorkout} onTrain={() => setTab(`train`)}
+            onViewLog={setSelectedHistory} onNutrition={() => setTab(`nutrition`)} onPlan={openPlan}
+            onActivity={() => { setTab(`train`); requestAnimationFrame(() => { const tools = document.querySelector(`.train-activities`); if (tools) { tools.open = true; tools.scrollIntoView({ block: `start`, behavior: `smooth` }); } }); }} />
+        </TabsContent>
+        <TabsContent value={`train`}>
+          {!currentSession && weekSelector}
+          {!currentSession && <button className="text-button train-plan-link" onClick={openPlan}>Weekly plan <ChevronRight size={15} /></button>}
           <div className={`workout-grid`}>
             <section className={`workout-main`}>
               {!currentSession && profile.plan[selectedDay].extraSession && (
@@ -1001,7 +975,7 @@ function GymApp({
                   >{`Jump primer · 16:15`}</button>
                 </div>
               )}
-              <div className={`session-card`}>
+              <div className={`session-card ${currentSession ? `session-card--active` : ``}`}>
                 <div className={`session-card-top`}>
                   <span className={`session-tag`}>
                     <SessionKindIcon
@@ -1023,7 +997,7 @@ function GymApp({
                 </div>
                 <div className={`session-card-main`}>
                   <div>
-                    <h2>{currentSession?.name ?? selectedPlan.name}</h2>
+                    <h2>{shortSessionName(currentSession?.name ?? selectedPlan.name)}</h2>
                     <p>
                       {currentSession
                         ? `${doneSets} of ${totalSets} sets complete`
@@ -1056,7 +1030,8 @@ function GymApp({
                         )}
                       </button>
                       <button
-                        className={`btn lime`}
+                        className={`btn secondary`}
+                        aria-label="Finish workout"
                         onClick={() => {
                           setFinishMinutes(
                             String(
@@ -1077,7 +1052,7 @@ function GymApp({
                         }}
                       >
                         <Check size={18} />
-                        {` Finish workout`}
+                        {` Finish`}
                       </button>
                     </div>
                   ) : (
@@ -1108,7 +1083,7 @@ function GymApp({
                     aria-label={`Completed sets`}
                   />
                 ) : (
-                  <p className={`session-note`}>{selectedPlan.note}</p>
+                  <details className="session-note"><summary>Session focus</summary><p>{selectedPlan.note}</p></details>
                 )}
               </div>
               {dayCompletedSession && !currentSession && (
@@ -1125,55 +1100,14 @@ function GymApp({
                   >{`View log`}</button>
                 </div>
               )}
-              <ExtraActivities
-                date={workoutDate}
-                bodyWeight={profile.bodyWeight}
-                records={activityRecords}
-                onSave={saveExtraActivity}
-                disabled={!loaded}
-              />
-              <ActivityImport bodyWeight={profile.bodyWeight} records={activityRecords} onImport={importExtraActivities} disabled={!loaded} />
-              <ShortRoutine input={dailyContext(workoutDate).input} />
-              {volleyballSchedule.days.includes(selectedDay) && !extraSessionVisible &&
-                <TrainingSchedule schedule={volleyballSchedule} onSave={saveVolleyballSchedule} compact />}
-              <PreparationChecklist
-                items={
-                  currentSession?.warmup ??
-                  (currentSession ? void 0 : selectedPlan.warmup)
-                }
-                phase={`warmup`}
-                kind={currentSession?.kind ?? selectedPlan.kind}
-                onToggle={
-                  currentSession
-                    ? (e, t) => togglePreparation(`warmup`, e, t)
-                    : void 0
-                }
-                key={`${currentSession?.id ?? selectedDate}-${selectedPlan.name}-warmup`}
-              />
-              <div className={`section-line`}>
-                <h3>{currentSession ? `Exercise log` : `Today’s exercises`}</h3>
-                {currentSession ? (
-                  <span className={`muted`}>
-                    {currentSession.exercises.length}
-                    {` movements`}
-                  </span>
-                ) : (
-                  <button
-                    className={`text-button`}
-                    disabled={!loaded}
-                    onClick={() => {
-                      editPlanDay(selectedDay, extraSessionVisible);
-                    }}
-                  >
-                    <Pencil size={14} />
-                    {` Edit day`}
-                  </button>
-                )}
-              </div>
+              {!currentSession && <div className="section-line"><h3>Exercises</h3><button className="text-button" disabled={!loaded} onClick={() => editPlanDay(selectedDay, extraSessionVisible)}><Pencil size={14} /> Edit day</button></div>}
               {currentSession ? (
-                <div className={`exercise-list`}>
-                  {currentSession.exercises.map((e, t) => (
+                <FocusedWorkout sessionId={currentSession.id} exercises={currentSession.exercises} now={now} editing={!!editingHistoryId}
+                  previous={(exercise) => previousExercise(completedSessions, exercise.key, currentSession.date, currentSession.id)}
+                  onSet={updateSet} onDone={markSetDone} onTimer={toggleMovementTimer}
+                  renderAllSets={(e, t) => (
                     <ExerciseTracker
+                      defaultExpanded
                       exercise={e}
                       index={t}
                       now={now}
@@ -1211,8 +1145,7 @@ function GymApp({
                       }
                       key={`${currentSession.id}-${e.key}`}
                     />
-                  ))}
-                </div>
+                  )} />
               ) : (
                 <div className={`planned-list`}>
                   {selectedPlan.exercises.map((e, t) => {
@@ -1240,7 +1173,6 @@ function GymApp({
                               {e.group}
                             </span>
                           </p>
-                          {e.cue && <p className={`exercise-cue`}>{e.cue}</p>}
                           <ExerciseGuide exercise={e} compact />
                         </div>
                         <span className={`planned-last`}>
@@ -1262,11 +1194,37 @@ function GymApp({
                   )}
                 </div>
               )}
+              <details className="train-activities"><summary>Activities</summary>
+              <ExtraActivities
+                date={workoutDate}
+                bodyWeight={profile.bodyWeight}
+                records={activityRecords}
+                onSave={saveExtraActivity}
+                disabled={!loaded}
+              />
+              <ActivityImport bodyWeight={profile.bodyWeight} records={activityRecords} onImport={importExtraActivities} disabled={!loaded} />
+              </details>
+              <PreparationChecklist
+                items={
+                  currentSession?.warmup ??
+                  (currentSession ? void 0 : selectedPlan.warmup)
+                }
+                compact
+                phase={`warmup`}
+                kind={currentSession?.kind ?? selectedPlan.kind}
+                onToggle={
+                  currentSession
+                    ? (e, t) => togglePreparation(`warmup`, e, t)
+                    : void 0
+                }
+                key={`${currentSession?.id ?? selectedDate}-${selectedPlan.name}-warmup`}
+              />
               <PreparationChecklist
                 items={
                   currentSession?.cooldown ??
                   (currentSession ? void 0 : selectedPlan.cooldown)
                 }
+                compact
                 phase={`cooldown`}
                 kind={currentSession?.kind ?? selectedPlan.kind}
                 onToggle={
@@ -1278,6 +1236,7 @@ function GymApp({
               />
               {currentSession && (
                 <div className={`workout-notes`}>
+                  <details><summary>Workout notes</summary>
                   <label htmlFor={`workout-notes`}>{`Workout notes`}</label>
                   <textarea
                     id={`workout-notes`}
@@ -1291,6 +1250,7 @@ function GymApp({
                       }))
                     }
                   />
+                  </details>
                   {activeSession && (
                     <button
                       className={`text-button danger`}
@@ -1300,7 +1260,8 @@ function GymApp({
                 </div>
               )}
             </section>
-            <aside className={`workout-side`}>
+            <aside className="workout-side">
+              <details className="train-secondary"><summary>Session details</summary>
               <section className={`panel session-stats`}>
                 <div className={`panel-heading`}>
                   <h3>{currentSession ? `This session` : `This week`}</h3>
@@ -1380,7 +1341,8 @@ function GymApp({
                   }}
                 >{`How calories are estimated`}</button>
               </section>
-              {guidanceForDate(workoutDate, false)}
+              </details>
+              <details className="train-secondary"><summary>Rest timer</summary>
               <section className={`panel rest-panel`}>
                 <div className={`panel-heading`}>
                   <h3>{`Rest timer`}</h3>
@@ -1439,197 +1401,22 @@ function GymApp({
                   className={`small-note`}
                 >{`Starts after each completed gym set. Keep the app open for the rest alert.`}</p>
               </section>
-              <section className={`week-summary`}>
-                <span
-                  className={`small-label`}
-                >{`YOUR WEEK, AT A GLANCE`}</span>
-                <p>
-                  <strong>
-                    {
-                      new Set(
-                        weekCompletedSessions
-                          .filter((e) => e.kind === `strength`)
-                          .map((e) => e.date),
-                      ).size
-                    }
-                  </strong>
-                  <span>{`gym days recorded`}</span>
-                  <span className={`week-goal`}>
-                    {`/ `}
-                    {profile.plan.filter((e) => e.kind === `strength`).length}
-                    {` planned`}
-                  </span>
-                </p>
-                <div className={`mini-week`}>
-                  {profile.plan.map((e, t) => (
-                    <span
-                      className={
-                        completedSessions.some(
-                          (e) => e.date === dateKey(addDays(weekStart, t)),
-                        )
-                          ? `logged`
-                          : e.kind === `strength`
-                            ? `gym-day`
-                            : ``
-                      }
-                      title={WEEKDAYS[t]}
-                      key={t}
-                    >
-                      {WEEKDAYS[t][0]}
-                    </span>
-                  ))}
-                </div>
-                <button
-                  className={`text-button`}
-                  onClick={() => setInstallOpen(!0)}
-                >{`Add Setline to your iPhone`}</button>
-              </section>
+              </details>
+              <details className="train-secondary"><summary>Fuel &amp; recovery</summary>
+                <ShortRoutine input={dailyContext(workoutDate).input} />
+                {guidanceForDate(workoutDate, false)}
+              </details>
             </aside>
           </div>
         </TabsContent>
-        <TabsContent value={`history`}>
-          <div
-            className={`history-views`}
-            role={`group`}
-            aria-label={`Workout records`}
-          >
-            <button
-              className={recentlyDeletedOpen ? `` : `chosen`}
-              aria-pressed={!recentlyDeletedOpen}
-              onClick={() => setRecentlyDeletedOpen(!1)}
-            >{`History`}</button>
-            <button
-              className={recentlyDeletedOpen ? `chosen` : ``}
-              aria-pressed={recentlyDeletedOpen}
-              onClick={() => setRecentlyDeletedOpen(!0)}
-            >
-              {`Recently deleted`}
-              {deletedSessions.length ? ` (${deletedSessions.length})` : ``}
-            </button>
-          </div>
-          {recentlyDeletedOpen ? (
-            <section className={`panel deleted-records`}>
-              <h2>{`Recently deleted`}</h2>
-              <p
-                className={`small-note`}
-              >{`Deleted workouts are excluded from history and progress. Restore a record to bring it back.`}</p>
-              {deletedSessions.length ? (
-                deletedSessions.map((e) => (
-                  <div className={`deleted-record`} key={e.id}>
-                    <div>
-                      <h3>{e.name}</h3>
-                      <p>
-                        {formatDate(e.date)}
-                        {` `}
-                        {e.date.slice(0, 4)}
-                        {` · `}
-                        {formatNumber(sessionDuration(e) / 6e4)}
-                        {` min · `}
-                        {completedSets(e)}
-                        {` sets`}
-                      </p>
-                    </div>
-                    <button
-                      className={`btn secondary`}
-                      disabled={mutatingRecordId !== null}
-                      onClick={() =>
-                        void changeSessionStatus(e.id, `completed`)
-                      }
-                    >
-                      {mutatingRecordId === e.id ? `Restoring…` : `Restore`}
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <p className={`empty-trash`}>{`No deleted workouts.`}</p>
-              )}
-            </section>
-          ) : (
-            <ReactJSX.Fragment>
-              <div className={`history-top`}>
-                <span className={`muted`}>
-                  {completedSessions.length}
-                  {` completed workouts`}
-                </span>
-                <span
-                  className={`muted`}
-                >{`Your saved sets, weights, and times`}</span>
-              </div>
-              {completedSessions.length ? (
-                <div className={`history-grid`}>
-                  {completedSessions.map((e) => (
-                    <button
-                      className={`history-card`}
-                      onClick={() => setSelectedHistory(e)}
-                      key={e.id}
-                    >
-                      <div className={`history-card-top`}>
-                        <span className={`kind-badge ${e.kind}`}>
-                          <SessionKindIcon kind={e.kind} size={16} />
-                          {sessionKindLabel(e.kind)}
-                        </span>
-                        <span>
-                          {formatDate(e.date, !0)}
-                          {` `}
-                          {e.date.slice(0, 4)}
-                        </span>
-                      </div>
-                      <h2>{e.name}</h2>
-                      <p>{WEEKDAYS[e.day]}</p>
-                      <div className={`history-metrics`}>
-                        <span>
-                          <Clock3 size={15} />
-                          {formatNumber(sessionDuration(e) / 6e4)}
-                          {` min`}
-                        </span>
-                        <span>
-                          <Dumbbell size={15} />
-                          {completedSets(e)}
-                          {` sets`}
-                        </span>
-                        <span>
-                          <Flame size={15} />
-                          {getCalories(e)}
-                          {` kcal`}
-                          {e.watchCalories === null ? ` est.` : ``}
-                        </span>
-                      </div>
-                      <div className={`history-volume`}>
-                        {formatNumber(estimatedCalories(e.exercises))}
-                        {` `}
-                        <span>{`kg total volume`}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className={`empty-state large`}>
-                  <RotateCcwClock size={34} />
-                  <h2>{`Your first workout starts the story.`}</h2>
-                  <p>{`Finish a session to see every set and your workout summary here.`}</p>
-                  <button
-                    className={`btn`}
-                    onClick={() => setTab(`workout`)}
-                  >{`Open workout`}</button>
-                </div>
-              )}
-            </ReactJSX.Fragment>
-          )}
-          {!recentlyDeletedOpen && <ActivityHistory records={activityRecords} bodyWeight={profile.bodyWeight} onSave={saveExtraActivity} disabled={!loaded} />}
-        </TabsContent>
-        <TabsContent value={`progress`}>
-          <WeeklyReport sessions={sessions} activities={activityRecords} plan={profile.plan} bodyWeight={profile.bodyWeight} initialWeek={dateKey(weekStart)} nutritionRecords={reportNutrition} />
-          {reportNutritionError && <p className={`nutrition-error`} role={`alert`}>{reportNutritionError} <button className={`text-button`} onClick={() => void loadReportNutrition()}>{`Retry nutrition logs`}</button></p>}
-          <section className={`panel extra-progress`} aria-label={`Extra activity progress`}>
-            <h3>{`Extra activity progress`}</h3>
-            <p className={`small-note`}>{`${formatDate(dateKey(weekStart), !0)} – ${formatDate(dateKey(addDays(weekStart, 6)), !0)} · Recorded outside your workout sessions`}</p>
-            <div className={`daily-training-total`}>
-              <span><strong>{weekActivities.length}</strong>{` extra activities`}</span>
-              <span><strong>{formatNumber(extraWeekMinutes)}</strong>{` minutes`}</span>
-              <span><strong>{formatNumber(extraWeekCalories)}</strong>{` active kcal`}</span>
-            </div>
-          </section>
-          <div className={`progress-picker`}>
+        <TabsContent value="progress">
+          <SegmentedControl label="Progress views" value={progressView} onChange={(view) => { setProgressView(view); if (view === `history`) setRecentlyDeletedOpen(false); }} options={[
+            { value: `overview`, label: `Overview` }, { value: `strength`, label: `Strength` },
+            { value: `history`, label: `History` }, { value: `week`, label: `Your week` },
+          ]} />
+          {progressView === `overview` && <ProgressOverview sessions={sessions} activities={activityRecords} plan={profile.plan} bodyWeight={profile.bodyWeight} nutritionRecords={reportNutrition} today={today}
+            onViewStrength={() => setProgressView(`strength`)} onViewHistory={() => setProgressView(`history`)} onViewWeek={() => setProgressView(`week`)} onLogWeight={() => { setNutritionAction(`weight`); setTab(`nutrition`); }} />}
+          {progressView === `strength` && <>          <div className={`progress-picker`}>
             <label htmlFor={`progress-exercise`}>{`Movement`}</label>
             <Select
               value={progressExercise?.key}
@@ -1761,17 +1548,162 @@ function GymApp({
                 })}
             </section>
           )}
+</>}
+          {progressView === `history` && <>
+          <div
+            className={`history-views`}
+            role={`group`}
+            aria-label={`Workout records`}
+          >
+            <button
+              className={recentlyDeletedOpen ? `` : `chosen`}
+              aria-pressed={!recentlyDeletedOpen}
+              onClick={() => setRecentlyDeletedOpen(!1)}
+            >{`All workouts`}</button>
+            <button
+              className={recentlyDeletedOpen ? `chosen` : ``}
+              aria-pressed={recentlyDeletedOpen}
+              onClick={() => setRecentlyDeletedOpen(!0)}
+            >
+              {`Recently deleted`}
+              {deletedSessions.length ? ` (${deletedSessions.length})` : ``}
+            </button>
+          </div>
+          {recentlyDeletedOpen ? (
+            <section className={`panel deleted-records`}>
+              <h2>{`Recently deleted`}</h2>
+              <p
+                className={`small-note`}
+              >{`Deleted workouts are excluded from history and progress. Restore a record to bring it back.`}</p>
+              {deletedSessions.length ? (
+                deletedSessions.map((e) => (
+                  <div className={`deleted-record`} key={e.id}>
+                    <div>
+                      <h3>{e.name}</h3>
+                      <p>
+                        {formatDate(e.date)}
+                        {` `}
+                        {e.date.slice(0, 4)}
+                        {` · `}
+                        {formatNumber(sessionDuration(e) / 6e4)}
+                        {` min · `}
+                        {completedSets(e)}
+                        {` sets`}
+                      </p>
+                    </div>
+                    <button
+                      className={`btn secondary`}
+                      disabled={mutatingRecordId !== null}
+                      onClick={() =>
+                        void changeSessionStatus(e.id, `completed`)
+                      }
+                    >
+                      {mutatingRecordId === e.id ? `Restoring…` : `Restore`}
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <p className={`empty-trash`}>{`No deleted workouts.`}</p>
+              )}
+            </section>
+          ) : (
+            <ReactJSX.Fragment>
+              <div className={`history-top`}>
+                <span className={`muted`}>
+                  {completedSessions.length}
+                  {` completed workouts`}
+                </span>
+                <span
+                  className={`muted`}
+                >{`Your saved sets, weights, and times`}</span>
+              </div>
+              {completedSessions.length ? (
+                <div className={`history-grid`}>
+                  {completedSessions.map((e) => (
+                    <button
+                      className={`history-card`}
+                      onClick={() => setSelectedHistory(e)}
+                      key={e.id}
+                    >
+                      <div className={`history-card-top`}>
+                        <span className={`kind-badge ${e.kind}`}>
+                          <SessionKindIcon kind={e.kind} size={16} />
+                          {sessionKindLabel(e.kind)}
+                        </span>
+                        <span>
+                          {formatDate(e.date, !0)}
+                          {` `}
+                          {e.date.slice(0, 4)}
+                        </span>
+                      </div>
+                      <h2>{e.name}</h2>
+                      <p>{WEEKDAYS[e.day]}</p>
+                      <div className={`history-metrics`}>
+                        <span>
+                          <Clock3 size={15} />
+                          {formatNumber(sessionDuration(e) / 6e4)}
+                          {` min`}
+                        </span>
+                        <span>
+                          <Dumbbell size={15} />
+                          {completedSets(e)}
+                          {` sets`}
+                        </span>
+                        <span>
+                          <Flame size={15} />
+                          {getCalories(e)}
+                          {` kcal`}
+                          {e.watchCalories === null ? ` est.` : ``}
+                        </span>
+                      </div>
+                      <div className={`history-volume`}>
+                        {formatNumber(estimatedCalories(e.exercises))}
+                        {` `}
+                        <span>{`kg total volume`}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className={`empty-state large`}>
+                  <RotateCcwClock size={34} />
+                  <h2>{`Your first workout starts the story.`}</h2>
+                  <p>{`Finish a session to see every set and your workout summary here.`}</p>
+                  <button
+                    className={`btn`}
+                    onClick={() => setTab(`train`)}
+                  >{`Open workout`}</button>
+                </div>
+              )}
+            </ReactJSX.Fragment>
+          )}
+          {!recentlyDeletedOpen && <ActivityHistory records={activityRecords} bodyWeight={profile.bodyWeight} onSave={saveExtraActivity} disabled={!loaded} />}
+</>}
+          {progressView === `week` && <>
+          <WeeklyReport sessions={sessions} activities={activityRecords} plan={profile.plan} bodyWeight={profile.bodyWeight} initialWeek={dateKey(weekStart)} nutritionRecords={reportNutrition} onWeekChange={setProgressReportWeek} />
+          {reportNutritionError && <p className={`nutrition-error`} role={`alert`}>{reportNutritionError} <button className={`text-button`} onClick={() => void loadReportNutrition()}>{`Retry nutrition logs`}</button></p>}
+<details className="report-activity-details"><summary>Activity totals</summary>          <section className={`panel extra-progress`} aria-label={`Extra activity progress`}>
+            <h3>{`Extra activity progress`}</h3>
+            <p className={`small-note`}>{`${formatDate(progressReportWeek, !0)} – ${formatDate(dateKey(addDays(new Date(`${progressReportWeek}T12:00:00`), 6)), !0)} · Recorded outside your workout sessions`}</p>
+            <div className={`daily-training-total`}>
+              <span><strong>{reportWeekActivities.length}</strong>{` extra activities`}</span>
+              <span><strong>{formatNumber(reportExtraMinutes)}</strong>{` minutes`}</span>
+              <span><strong>{formatNumber(reportExtraCalories)}</strong>{` active kcal`}</span>
+            </div>
+          </section>
+</details></>}
         </TabsContent>
-        <TabsContent value={`nutrition`}>
+        <TabsContent value="nutrition">
           <NutritionView bodyWeight={profile.bodyWeight} dailyGuidance={guidanceForDate}
             nutritionProfile={profile.nutrition}
-            onNutritionProfileChange={saveNutritionProfile} volleyballSchedule={volleyballSchedule} />
-        </TabsContent>
-        <TabsContent value={`plan`}>
-          <TrainingSchedule schedule={volleyballSchedule} onSave={saveVolleyballSchedule} />
-          <p
-            className={`plan-intro`}
-          >{`Four gym days, two volleyball sessions, a Tuesday technique primer and Saturday recovery. Main jump session on Sunday.`}</p>
+            onNutritionProfileChange={saveNutritionProfile} volleyballSchedule={volleyballSchedule} initialAction={nutritionAction} onActionHandled={() => setNutritionAction(null)} onOpenRoutine={(date) => { setRoutineDate(date); setMoreView(`routine`); setTab(`more`); }} />
+</TabsContent>
+        <TabsContent value="more">
+          {moreView !== `menu` && <button className="text-button subpage-back" onClick={() => setMoreView(`menu`)}><ArrowLeft size={17} /> More</button>}
+          {moreView === `plan` && <>
+          <details className="plan-schedule"><summary>Volleyball schedule <span>{volleyballSchedule.startTime}–{volleyballSchedule.endTime}</span></summary><TrainingSchedule schedule={volleyballSchedule} onSave={saveVolleyballSchedule} /></details>
+          <p className="plan-intro">Four gym days. Two volleyball nights. Room to recover.</p>
+          <details className="plan-program"><summary>Jump training block</summary>
           <section className={`panel program-overview`}>
             <div className={`panel-heading`}>
               <h2>{`Your 8-week jump block`}</h2>
@@ -1790,6 +1722,7 @@ function GymApp({
               className={`small-note`}
             >{`Use these phases to adjust your sessions; set counts stay editable. Every two weeks, record body weight in Nutrition, CMJ height and your highest approach-jump touch. Test in the same place, shoes, warm-up and approach distance. Aim for gradual muscle gain while staying fast and springy.`}</p>
           </section>
+          </details>
           <div className={`plan-grid`}>
             {profile.plan.map((e, t) => (
               <section className={`panel plan-card`} key={t}>
@@ -1802,7 +1735,10 @@ function GymApp({
                     {sessionKindLabel(e.kind)}
                   </span>
                 </div>
-                <PlanDayDetails plan={e} />
+                <details className="plan-day-details">
+                  <summary><strong>{shortSessionName(e.name)}</strong><span>{e.kind === `sport` ? `${volleyballSchedule.startTime}–${volleyballSchedule.endTime}` : `${e.minutes} min`}</span><ChevronRight size={17} /></summary>
+                  <PlanDayDetails plan={e} />
+                </details>
                 <button
                   className={`btn secondary full`}
                   disabled={!loaded}
@@ -1814,7 +1750,7 @@ function GymApp({
                 </button>
                 {e.extraSession && (
                   <div className={`extra-session-plan`}>
-                    <PlanDayDetails plan={e.extraSession} />
+                    <details className="plan-day-details"><summary>{shortSessionName(e.extraSession.name)}<ChevronRight size={16} /></summary><PlanDayDetails plan={e.extraSession} /></details>
                     <button
                       className={`btn secondary full`}
                       disabled={!loaded}
@@ -1828,6 +1764,23 @@ function GymApp({
               </section>
             ))}
           </div>
+</>}
+          {moreView === `routine` && <RemindersPanel showHeading={false} date={routineDate} onDateChange={setRoutineDate} />}
+          {moreView === `menu` && <div className="more-menu">
+            <div className="more-profile"><span className="eyebrow">YOUR FOCUS</span><h2>Stronger. Higher.</h2><p>Muscle gain &amp; volleyball performance</p></div>
+            <div className="menu-group">
+              <MenuRow title="Training plan" subtitle="Your week, with room to recover" icon={<ListChecks size={21} />} onClick={openPlan} />
+              <MenuRow title="Routine" subtitle="Supplements & medication" icon={<CheckCheck size={21} />} onClick={() => setMoreView(`routine`)} />
+              <MenuRow title="Settings" subtitle="Body weight & rest preferences" icon={<Settings2 size={21} />} onClick={openSettings} />
+            </div>
+            <div className="menu-group">
+              <MenuRow title="Import activities" subtitle="Strava, Adidas Running & watch exports" icon={<Upload size={21} />} onClick={() => setImportOpen(true)} />
+              <MenuRow title="Backup & data" subtitle="Keep a copy of your training" icon={<ShieldCheck size={21} />} onClick={openSettings} />
+              <MenuRow title="Install Setline" subtitle="Add to your iPhone Home Screen" icon={<House size={21} />} onClick={() => setInstallOpen(true)} />
+            </div>
+            <p className="more-footer">Made for one set at a time.</p>
+            <ActivityImport bodyWeight={profile.bodyWeight} records={activityRecords} onImport={importExtraActivities} disabled={!loaded} open={importOpen} onOpenChange={setImportOpen} hideLauncher />
+          </div>}
         </TabsContent>
       </main>
       {restEndsAt !== null && (
@@ -2149,7 +2102,7 @@ function GymApp({
                 className={`btn secondary full`}
                 onClick={() => {
                   setEditingHistoryId(selectedHistory.id);
-                  setTab(`workout`);
+                  setTab(`train`);
                   setWeekStart(
                     startOfWeek(new Date(`${selectedHistory.date}T12:00:00`)),
                   );
@@ -2406,7 +2359,7 @@ function PreparationChecklist({
 function PlanDayDetails({ plan: plan }) {
   return (
     <ReactJSX.Fragment>
-      <h2>{plan.name}</h2>
+      <h2>{shortSessionName(plan.name)}</h2>
       <p className={`muted`}>
         {`About `}
         {plan.minutes}
@@ -2482,8 +2435,9 @@ function ExerciseTracker({
   onTimer: onTimer,
   onAdd: onAdd,
   onRemove: onRemove,
+  defaultExpanded = false,
 }) {
-  let [expanded, setExpanded] = React.useState(index === 0);
+  let [expanded, setExpanded] = React.useState(defaultExpanded || index === 0);
   let [removeConfirmationOpen, setRemoveConfirmationOpen] = React.useState(!1);
   let invalidWeightInputs = React.useRef(new Set());
   let doneCount = exercise.logs.filter((e) => e.done).length;

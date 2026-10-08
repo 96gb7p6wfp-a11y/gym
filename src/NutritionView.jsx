@@ -4,11 +4,11 @@ import { ChevronLeft } from "lucide-react";
 import { ChevronRight } from "lucide-react";
 import { Camera } from "lucide-react";
 import { Plus } from "lucide-react";
-import { Pencil } from "lucide-react";
 import { Utensils } from "lucide-react";
 import * as ReactJSX from "react/jsx-runtime";
 import NutritionCalculator from "./NutritionCalculator";
-import RemindersPanel from "./RemindersPanel";
+import { MealRoutineCue } from "./RemindersPanel";
+import "./nutrition-premium.css";
 import { simpleFoodGuidance } from "./nutrition-goals";
 import {
   DEFAULT_NUTRITION_TARGETS,
@@ -83,7 +83,7 @@ async function resizeMealPhoto(e) {
     URL.revokeObjectURL(t);
   }
 }
-function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile, onNutritionProfileChange, volleyballSchedule }) {
+function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile, onNutritionProfileChange, volleyballSchedule, onOpenRoutine, initialAction, onActionHandled }) {
   let [selectedDate, setSelectedDate] = React.useState(() =>
     dateKey(new Date()),
   );
@@ -102,6 +102,9 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
   let [photoError, setPhotoError] = React.useState(``);
   let [analyzing, setAnalyzing] = React.useState(!1);
   let [targetsOpen, setTargetsOpen] = React.useState(!1);
+  let [profileOpen, setProfileOpen] = React.useState(!1);
+  let [weightOpen, setWeightOpen] = React.useState(!1);
+  React.useEffect(() => { if (initialAction === `weight`) { setWeightOpen(true); onActionHandled?.(); } }, [initialAction, onActionHandled]);
   let [targetsDraft, setTargetsDraft] = React.useState(
     DEFAULT_NUTRITION_TARGETS,
   );
@@ -156,6 +159,29 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
   }
   let currentWeekWeight = averageWeight(0, 6);
   let previousWeekWeight = averageWeight(7, 13);
+  let recentMeals = React.useMemo(() => {
+    const seen = new Set();
+    return [...records].filter(record => record.payload.kind === `meal`)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .filter(record => {
+        const key = JSON.stringify([record.payload.name, record.payload.foods]);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).slice(0, 6);
+  }, [records]);
+  let savedFoods = React.useMemo(() => {
+    const seen = new Set();
+    return [...records].filter(record => record.payload.kind === `meal`)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .flatMap(record => record.payload.foods)
+      .filter(food => {
+        const key = JSON.stringify(food);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).slice(0, 20);
+  }, [records]);
   async function saveNutritionRecord(e, t) {
     let n = await requestNutrition(`/api/nutrition`, {
       ...e,
@@ -247,6 +273,34 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
     (e) => e.id === `weight-` + selectedDate,
   );
   let foodGuidance = simpleFoodGuidance(selectedDate, volleyballSchedule);
+  function reuseMeal(record) {
+    newMealIdRef.current = newId();
+    setEditingMeal(null);
+    setMealDate(selectedDate);
+    setMealDraft({ ...structuredClone(record.payload), source: `manual`, assumptions: ``, confidence: null });
+    setDraftError(``);
+  }
+  function reuseFood(food) {
+    if (!mealDraft) return;
+    const blank = mealDraft.foods.length === 1 && !mealDraft.foods[0].name.trim();
+    if (!blank && mealDraft.foods.length >= 30) return;
+    setMealDraft({ ...mealDraft, foods: blank ? [structuredClone(food)] : [...mealDraft.foods, structuredClone(food)] });
+  }
+  async function saveWeight() {
+    setWeightError(``);
+    const kg = weightInput.trim() === `` ? Number.NaN : Number(weightInput.replace(`,`, `.`));
+    if (!Number.isFinite(kg) || kg < 20 || kg > 400) {
+      setWeightError(`Enter a weight between 20 and 400 kg.`);
+      return;
+    }
+    setSaving(!0);
+    try {
+      await saveNutritionRecord({ id: `weight-` + selectedDate, date: selectedDate, payload: { kind: `weight`, kg } }, todayWeightRecord?.version ?? 0);
+      setWeightInput(``);
+    } catch (error) {
+      setWeightError(error instanceof Error ? error.message : `Couldn’t save.`);
+    } finally { setSaving(!1); }
+  }
   async function applyEstimatedTargets(estimate) {
     let result = NutritionTargetsSchema.safeParse({ ...targets, calories: estimate.calories, protein: estimate.protein, carbs: estimate.carbs, fat: estimate.fat });
     if (!result.success) throw new Error(`Check your target values.`);
@@ -266,284 +320,71 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
           >{`Retry`}</button>
         </div>
       )}
-      <div className={`nutrition-toolbar`}>
-        <div className={`nutrition-date`}>
-          <button
-            className={`icon-button`}
-            aria-label={`Previous nutrition day`}
-            onClick={() =>
-              setSelectedDate(
-                dateKey(addDays(new Date(selectedDate + `T12:00:00`), -1)),
-              )
-            }
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <label>
-            <span className={`sr-only`}>{`Nutrition date`}</span>
-            <input
-              type={`date`}
-              value={selectedDate}
-              onChange={(e) => {
-                e.target.value && setSelectedDate(e.target.value);
-              }}
-            />
-          </label>
-          <button
-            className={`icon-button`}
-            aria-label={`Next nutrition day`}
-            onClick={() =>
-              setSelectedDate(
-                dateKey(addDays(new Date(selectedDate + `T12:00:00`), 1)),
-              )
-            }
-          >
-            <ChevronRight size={18} />
-          </button>
-        </div>
-        <div className={`nutrition-actions`}>
-          <button
-            className={`btn secondary`}
-            onClick={() => {
-              setPhotoDialogOpen(!0);
-              setPhotoError(``);
-            }}
-          >
-            <Camera size={17} />
-            {` Meal photo`}
-          </button>
-          <button className={`btn`} onClick={addMeal}>
-            <Plus size={17} />
-            {` Add meal`}
-          </button>
+      <div className="nutrition-toolbar">
+        <div className="nutrition-date">
+          <button className="icon-button" aria-label="Previous nutrition day" onClick={() => setSelectedDate(dateKey(addDays(new Date(selectedDate + `T12:00:00`), -1)))}><ChevronLeft size={18} /></button>
+          <label><span className="sr-only">Nutrition date</span><input type="date" value={selectedDate} onChange={event => event.target.value && setSelectedDate(event.target.value)} /></label>
+          <button className="icon-button" aria-label="Next nutrition day" onClick={() => setSelectedDate(dateKey(addDays(new Date(selectedDate + `T12:00:00`), 1)))}><ChevronRight size={18} /></button>
         </div>
       </div>
-      <div className={`nutrition-totals`}>
-        {NUTRIENT_KEYS.map((e) => (
-          <section className={`panel nutrient-card`} key={e}>
-            <span className={`small-label`}>{NUTRIENT_LABELS[e]}</span>
-            <strong>{roundNutrient(dailyTotals[e])}</strong>
-            <span className={`muted`}>
-              {targets[e] === null
-                ? `No target set`
-                : `of ${targets[e]} ${e === `calories` ? `kcal` : `g`}`}
-            </span>
-            {targets[e] !== null && targets[e] > 0 && (
-              <progress
-                value={Math.min(dailyTotals[e], targets[e])}
-                max={targets[e]}
-                aria-label={NUTRIENT_LABELS[e] + ` daily progress`}
-              />
-            )}
-          </section>
-        ))}
-      </div>
-      <NutritionCalculator
-        profile={nutritionProfile}
-        bodyWeight={bodyWeight}
-        disabled={!loaded || saving || !onNutritionProfileChange}
-        onProfileSave={onNutritionProfileChange}
-        onApplyTargets={applyEstimatedTargets}
-      />
-      {dailyGuidance?.(selectedDate)}
-      <RemindersPanel date={selectedDate} mealSavedToken={mealSavedToken} />
-      <div className={`nutrition-layout`}>
-        <section className={`panel nutrition-meals`}>
-          <div className={`panel-heading`}>
-            <h2>
-              {formatDate(selectedDate)}
-              {` · meals`}
-            </h2>
-            <span className={`muted`}>
-              {mealsForDay.length}
-              {` logged`}
-            </span>
+      <section className="nutrition-totals nutrition-daily" aria-label="Daily nutrition">
+        <div className="nutrition-daily__energy">
+          <span className="small-label">Calories</span>
+          <div className="nutrition-daily__number"><strong>{roundNutrient(targets.calories === null ? dailyTotals.calories : Math.max(0, targets.calories - dailyTotals.calories)).toLocaleString('en-GB')}</strong><span>{targets.calories === null ? 'kcal logged' : 'kcal left'}</span></div>
+          <p className="muted">{roundNutrient(dailyTotals.calories).toLocaleString('en-GB')}{targets.calories === null ? ' logged · No target set' : ` of ${targets.calories} kcal`}</p>
+          {targets.calories !== null && targets.calories > 0 && <progress value={Math.min(dailyTotals.calories, targets.calories)} max={targets.calories} aria-label="Calories · kcal daily progress" />}
+        </div>
+        <div className="nutrition-daily__protein">
+          <div><span className="small-label">Protein</span><strong>{roundNutrient(dailyTotals.protein)}<span>{targets.protein === null ? ' g logged' : ` / ${targets.protein} g`}</span></strong></div>
+          {targets.protein !== null && <span className="nutrition-daily__left">{roundNutrient(Math.max(0, targets.protein - dailyTotals.protein))} g left</span>}
+          {targets.protein !== null && targets.protein > 0 && <progress value={Math.min(dailyTotals.protein, targets.protein)} max={targets.protein} aria-label="Protein · g daily progress" />}
+        </div>
+        <div className="nutrition-daily__macros">{['carbs', 'fat'].map(key => <div key={key}><span>{key === 'carbs' ? 'Carbs' : 'Fat'}</span><strong>{roundNutrient(dailyTotals[key])}<span>{targets[key] === null ? ' g' : ` / ${targets[key]} g`}</span></strong></div>)}</div>
+        {targets.calories === null && <button type="button" className="text-button" onClick={() => setProfileOpen(true)}>Set daily targets</button>}
+      </section>
+      <button type="button" className="btn full nutrition-log-action" onClick={addMeal}><Plus size={19} />Log meal</button>
+      <MealRoutineCue date={selectedDate} mealSavedToken={mealSavedToken} onOpenRoutine={() => onOpenRoutine?.(selectedDate)} />
+      <section className="nutrition-meals" aria-labelledby="nutrition-meals-heading">
+        <div className="panel-heading"><h2 id="nutrition-meals-heading">Meals</h2><span className="muted">{mealsForDay.length} logged</span></div>
+        {mealsForDay.length ? mealsForDay.map(record => {
+          const meal = record.payload;
+          const nutrients = sumNutrients(meal.foods);
+          return <button type="button" className="nutrition-meal" onClick={() => { setEditingMeal(record); setMealDate(record.date); setMealDraft(structuredClone(meal)); setDraftError(``); }} key={record.id}>
+            <div><strong>{meal.name}</strong><small>{meal.foods.map(food => food.name).join(', ')}</small></div>
+            <div><strong>{roundNutrient(nutrients.calories)} kcal</strong><small>{roundNutrient(nutrients.protein)} g protein</small></div>
+            <ChevronRight size={17} aria-hidden="true" />
+          </button>;
+        }) : <div className="nutrition-empty"><Utensils size={23} aria-hidden="true" /><div><strong>{loaded ? 'Your meals start here' : 'Loading your meals…'}</strong><p>Log what you eat. Build your day.</p></div></div>}
+      </section>
+      <div className="nutrition-tools">
+        <button type="button" className="nutrition-tool-row" onClick={() => setProfileOpen(true)}><span><strong>Targets</strong><small>Your daily goals & profile</small></span><ChevronRight size={18} aria-hidden="true" /></button>
+        <button type="button" className="nutrition-tool-row" onClick={() => { setWeightError(``); setWeightOpen(true); }}><span><strong>Weight check-in</strong><small>{latestWeightRecord?.payload.kind === 'weight' ? `${latestWeightRecord.payload.kg} kg · latest` : `${bodyWeight} kg · profile`}</small></span><ChevronRight size={18} aria-hidden="true" /></button>
+        <details className="nutrition-simple-fuel">
+          <summary><span><strong>Fuel for training</strong><small>Before & after your session</small></span><ChevronRight size={18} aria-hidden="true" /></summary>
+          <div className="nutrition-fuel-content"><p><strong>Before</strong>{foodGuidance.before}</p><p><strong>After</strong>{foodGuidance.after}</p>
+            {dailyGuidance?.(selectedDate)}
+            <a className="text-button" href="https://www.ausport.gov.au/ais/nutrition/performance-nutrition-hq-modules" target="_blank" rel="noreferrer">Nutrition guide</a>
           </div>
-          {mealsForDay.length ? (
-            mealsForDay.map((e) => {
-              let t = e.payload;
-              let n = sumNutrients(t.foods);
-              return (
-                <button
-                  className={`nutrition-meal`}
-                  onClick={() => {
-                    setEditingMeal(e);
-                    setMealDate(e.date);
-                    setMealDraft(structuredClone(t));
-                    setDraftError(``);
-                  }}
-                  key={e.id}
-                >
-                  <div>
-                    <strong>{t.name}</strong>
-                    <small>{t.foods.map((e) => e.name).join(`, `)}</small>
-                    <span className={`muted`}>
-                      {t.source === `photo`
-                        ? `Photo estimate · reviewed`
-                        : `Entered manually`}
-                    </span>
-                  </div>
-                  <div>
-                    <strong>
-                      {roundNutrient(n.calories)}
-                      {` kcal`}
-                    </strong>
-                    <small>
-                      {roundNutrient(n.protein)}
-                      {` g protein · `}
-                      {roundNutrient(n.carbs)}
-                      {` g carbs`}
-                    </small>
-                    <Pencil size={15} />
-                  </div>
-                </button>
-              );
-            })
-          ) : (
-            <div className={`empty-state`}>
-              <Utensils size={30} />
-              <h3>
-                {loaded
-                  ? `What did you eat today?`
-                  : `Load your log to see saved meals.`}
-              </h3>
-              <p>{`Enter a meal or use a photo estimate, then review the portions.`}</p>
-              <button
-                className={`text-button`}
-                onClick={addMeal}
-              >{`Add your first meal`}</button>
-            </div>
-          )}
-          <p
-            className={`small-note`}
-          >{`Totals reflect what you logged. Photo estimates and entered amounts may differ from actual intake.`}</p>
-        </section>
-        <aside className={`nutrition-sidebar`}>
-          <section className={`panel`}>
-            <div className={`panel-heading`}>
-              <h3>{`Your targets`}</h3>
-              <button
-                className={`text-button`}
-                onClick={() => {
-                  setTargetsDraft({
-                    ...targets,
-                  });
-                  setDraftError(``);
-                  setTargetsOpen(!0);
-                }}
-              >{`Edit`}</button>
-            </div>
-            <p>{`Goal: gain weight while supporting volleyball and strength training.`}</p>
-            <p className={`muted`}>
-              {`Goal weight: `}
-              {targets.goalWeight === null
-                ? `choose when you’re ready`
-                : `${targets.goalWeight} kg`}
-            </p>
-            <p
-              className={`small-note`}
-            >{`Targets are editable starting points. The app doesn’t automatically add workout calories to them.`}</p>
-          </section>
-          <section className={`panel`}>
-            <h3>{`Weight check-in`}</h3>
-            <p className={`muted`}>
-              {latestWeightRecord &&
-              latestWeightRecord.payload.kind === `weight`
-                ? `Latest: ${latestWeightRecord.payload.kg} kg · ${formatDate(latestWeightRecord.date)}`
-                : `Workout profile: ${bodyWeight} kg`}
-            </p>
-            <label className={`field-label`}>
-              {`Body weight · kg`}
-              <input
-                type={`number`}
-                min={`20`}
-                max={`400`}
-                step={`0.1`}
-                value={weightInput}
-                placeholder={
-                  todayWeightRecord?.payload.kind === `weight`
-                    ? String(todayWeightRecord.payload.kg)
-                    : `e.g. 61.0`
-                }
-                onChange={(e) => setWeightInput(e.target.value)}
-              />
-            </label>
-            <p className={`small-note`}>
-              {`Save for `}
-              {formatDate(selectedDate)}
-              {`. Use similar conditions for each check-in.`}
-            </p>
-            {weightError && (
-              <p className={`nutrition-error`} role={`alert`}>
-                {weightError}
-              </p>
-            )}
-            <button
-              className={`btn secondary full`}
-              disabled={!loaded || saving || !weightInput}
-              onClick={async () => {
-                setWeightError(``);
-                let e = Number(weightInput);
-                if (!Number.isFinite(e) || e < 20 || e > 400) {
-                  setWeightError(`Enter a weight between 20 and 400 kg.`);
-                  return;
-                }
-                setSaving(!0);
-                try {
-                  await saveNutritionRecord(
-                    {
-                      id: `weight-` + selectedDate,
-                      date: selectedDate,
-                      payload: {
-                        kind: `weight`,
-                        kg: e,
-                      },
-                    },
-                    todayWeightRecord?.version ?? 0,
-                  );
-                  setWeightInput(``);
-                } catch (e) {
-                  setWeightError(
-                    e instanceof Error ? e.message : `Couldn’t save.`,
-                  );
-                } finally {
-                  setSaving(!1);
-                }
-              }}
-            >{`Save weight`}</button>
-            {currentWeekWeight !== null && (
-              <p className={`nutrition-weight-average`}>
-                <strong>
-                  {roundNutrient(currentWeekWeight)}
-                  {` kg`}
-                </strong>
-                {` · average of recorded check-ins in the last 7 days`}
-                {previousWeekWeight !== null && (
-                  <small>
-                    {roundNutrient(currentWeekWeight - previousWeekWeight) >= 0
-                      ? `+`
-                      : ``}
-                    {roundNutrient(currentWeekWeight - previousWeekWeight)}
-                    {` kg compared with the previous 7 days`}
-                  </small>
-                )}
-              </p>
-            )}
-            <p className={`small-note`}>{`Aim for roughly 0.1–0.2 kg/week. Compare weekly averages; if there is no gradual gain after 2–3 weeks, add 100–150 kcal/day.`}</p>
-          </section>
-          <section className={`panel nutrition-guidance nutrition-simple-fuel`}>
-            <h3>{`Simple food plan`}</h3>
-            <p><strong>{`Before: `}</strong>{foodGuidance.before}</p>
-            <p><strong>{`After: `}</strong>{foodGuidance.after}</p>
-            <a
-              className={`text-button`}
-              href={`https://www.ausport.gov.au/ais/nutrition/performance-nutrition-hq-modules`}
-              target={`_blank`}
-              rel={`noreferrer`}
-            >{`AIS performance nutrition guide`}</a>
-          </section>
-        </aside>
+        </details>
+        {photoAnalysisReady && <button type="button" className="nutrition-tool-row" onClick={() => { setPhotoDialogOpen(true); setPhotoError(``); }}><span><strong>Meal photo</strong><small>Estimate, then review</small></span><Camera size={18} aria-hidden="true" /></button>}
       </div>
+      <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
+        <DialogContent className="app-dialog nutrition-dialog nutrition-targets-sheet">
+          <DialogHeader><DialogTitle>Daily targets</DialogTitle><DialogDescription>Fuel muscle gain and volleyball.</DialogDescription></DialogHeader>
+          <div className="nutrition-targets-summary"><div><span className="small-label">Your goals</span><p>{targets.calories === null ? 'No target set' : `${targets.calories} kcal · ${targets.protein ?? '–'} g protein`}</p><small className="muted">{targets.goalWeight === null ? 'Goal weight is optional' : `Goal weight: ${targets.goalWeight} kg`}</small></div><button type="button" className="text-button" onClick={() => { setTargetsDraft({ ...targets }); setDraftError(``); setProfileOpen(false); setTargetsOpen(true); }}>Edit targets</button></div>
+          <NutritionCalculator profile={nutritionProfile} bodyWeight={bodyWeight} disabled={!loaded || saving || !onNutritionProfileChange} onProfileSave={onNutritionProfileChange} onApplyTargets={applyEstimatedTargets} />
+        </DialogContent>
+      </Dialog>
+      <Dialog open={weightOpen} onOpenChange={setWeightOpen}>
+        <DialogContent className="app-dialog nutrition-dialog">
+          <DialogHeader><DialogTitle>Weight check-in</DialogTitle><DialogDescription>{formatDate(selectedDate)} · Use similar conditions each time.</DialogDescription></DialogHeader>
+          <label className="field-label">Body weight · kg<input type="text" inputMode="decimal" value={weightInput} placeholder={todayWeightRecord?.payload.kind === 'weight' ? String(todayWeightRecord.payload.kg) : String(bodyWeight)} onChange={event => setWeightInput(event.target.value)} /></label>
+          {weightError && <p className="nutrition-error" role="alert">{weightError}</p>}
+          <button type="button" className="btn full" disabled={!loaded || saving || !weightInput} onClick={() => void saveWeight()}>{saving ? 'Saving…' : 'Save weight'}</button>
+          {currentWeekWeight !== null && <div className="nutrition-weight-average"><strong>{roundNutrient(currentWeekWeight)} kg</strong><span>7-day average</span>{previousWeekWeight !== null && <small>{currentWeekWeight - previousWeekWeight >= 0 ? '+' : ''}{roundNutrient(currentWeekWeight - previousWeekWeight)} kg vs last week</small>}</div>}
+          <p className="small-note">Aim for 0.1–0.2 kg/week. If your average stays flat for 2–3 weeks, add 100–150 kcal/day.</p>
+        </DialogContent>
+      </Dialog>
       <Dialog
         open={photoDialogOpen}
         onOpenChange={(e) => {
@@ -653,11 +494,15 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
             <DialogDescription>
               {mealDraft?.source === `photo`
                 ? `Check the food, portions, and totals before saving. These are approximate amounts.`
-                : `Use food labels or your own estimates. Enter values for the whole serving.`}
+                : `Enter values for the whole portion.`}
             </DialogDescription>
           </DialogHeader>
           {mealDraft && (
             <ReactJSX.Fragment>
+              {!editingMeal && recentMeals.length > 0 && <details className="nutrition-quick-add">
+                <summary>Recent meals</summary>
+                <div className="nutrition-quick-add__list">{recentMeals.map(record => <button type="button" key={record.id} onClick={() => reuseMeal(record)}><span>{record.payload.name}</span><small>{roundNutrient(sumNutrients(record.payload.foods).calories)} kcal</small></button>)}</div>
+              </details>}
               <label className={`field-label`}>
                 {`Meal name`}
                 <input
@@ -669,14 +514,6 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
                       name: e.target.value,
                     })
                   }
-                />
-              </label>
-              <label className={`field-label`}>
-                {`Meal date`}
-                <input
-                  type={`date`}
-                  value={mealDate}
-                  onChange={(e) => setMealDate(e.target.value)}
                 />
               </label>
               {mealDraft.source === `photo` && (
@@ -742,6 +579,8 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
                           max={`20000`}
                           step={`0.1`}
                           value={e[n]}
+                          inputMode={`decimal`}
+                          onFocus={event => event.target.select()}
                           onChange={(e) =>
                             setMealDraft({
                               ...mealDraft,
@@ -772,6 +611,11 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
                   )}
                 </section>
               ))}
+              {savedFoods.length > 0 && <details className="nutrition-quick-add">
+                <summary>Saved foods</summary>
+                <p className="small-note">From your food log. Check the portion before saving.</p>
+                <div className="nutrition-quick-add__list">{savedFoods.map((food, index) => <button type="button" key={index} disabled={mealDraft.foods.length >= 30 && Boolean(mealDraft.foods[0].name.trim())} onClick={() => reuseFood(food)}><span>{food.name}<small>{food.portion}</small></span><small>{roundNutrient(food.calories)} kcal</small></button>)}</div>
+              </details>}
               <button
                 className={`btn secondary`}
                 disabled={mealDraft.foods.length >= 30}
@@ -782,7 +626,10 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
                   })
                 }
               >{`Add another food`}</button>
-              <label className={`field-label`}>
+              <details className="nutrition-quick-add nutrition-meal-details">
+                <summary>Meal details</summary>
+                <label className="field-label">Meal date<input type="date" value={mealDate} onChange={event => setMealDate(event.target.value)} /></label>
+                <label className={`field-label`}>
                 {`Meal notes`}
                 <textarea
                   maxLength={1e3}
@@ -794,7 +641,8 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
                     })
                   }
                 />
-              </label>
+                </label>
+              </details>
               <div className={`nutrition-draft-total`}>
                 {`Total: `}
                 {roundNutrient(sumNutrients(mealDraft.foods).calories)}

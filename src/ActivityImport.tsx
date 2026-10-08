@@ -21,6 +21,9 @@ export interface ActivityImportProps {
   records: ActivityRecord[];
   onImport: (activities: ExtraActivity[]) => Promise<void>;
   disabled?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideLauncher?: boolean;
 }
 
 type ImportRow = {
@@ -84,10 +87,15 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Could not read this activity file.';
 }
 
-export function ActivityImport({ bodyWeight, records, onImport, disabled = false }: ActivityImportProps) {
+export function ActivityImport({ bodyWeight, records, onImport, disabled = false, open: controlledOpen, onOpenChange, hideLauncher = false }: ActivityImportProps) {
   const id = useId();
   const parsingId = useRef(0);
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  function setOpen(next: boolean) {
+    setInternalOpen(next);
+    onOpenChange?.(next);
+  }
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [reading, setReading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -197,7 +205,7 @@ export function ActivityImport({ bodyWeight, records, onImport, disabled = false
 
   return (
     <section className="activity-import" aria-label="Activity imports">
-      <div className="activity-import-heading">
+      {!hideLauncher && <div className="activity-import-heading">
         <div>
           <h2>Import activities</h2>
           <p>Add exported Strava or Adidas Running activities to their recorded dates.</p>
@@ -205,7 +213,7 @@ export function ActivityImport({ bodyWeight, records, onImport, disabled = false
         <button type="button" className="btn secondary" disabled={disabled || saving} onClick={() => { setSaveError(''); setOpen(true); }}>
           <Download size={18} aria-hidden="true" /> Import activities
         </button>
-      </div>
+      </div>}
       {success && <p className="activity-import-success" role="status">{success}</p>}
       <Dialog open={open} onOpenChange={changeOpen}>
         <DialogContent className="app-dialog activity-import-dialog">

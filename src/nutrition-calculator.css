@@ -1,8 +1,8 @@
-.nutrition-calculator { min-width: 0; }
+.nutrition-calculator.panel { min-width: 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
 .nutrition-calculator__calories { display: block; margin: 16px 0; font-size: 2rem; line-height: 1.15; }
 .nutrition-calculator__calories span { font-size: 1rem; font-weight: 500; }
 .nutrition-calculator__macros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0 0 16px; }
-.nutrition-calculator__macros dt { font-size: .85rem; color: #717974; }
+.nutrition-calculator__macros dt { font-size: .85rem; color: var(--sub, #737c75); }
 .nutrition-calculator__macros dd { margin: 4px 0 0; font-weight: 700; font-size: 1.15rem; }
 .nutrition-calculator__details { margin: 12px 0; }
 .nutrition-calculator__details summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; font-weight: 600; }
@@ -10,7 +10,7 @@
 .nutrition-calculator__details[open] summary::before { transform: rotate(90deg); }
 .nutrition-calculator__details p, .nutrition-calculator__details li { font-size: .9rem; line-height: 1.5; }
 .nutrition-calculator__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 10px 0; }
-.nutrition-calculator__fields input, .nutrition-calculator__fields select { min-width: 0; width: 100%; min-height: 44px; font-family: inherit; font-size: 16px; border: 1px solid var(--border, #dfe5df); border-radius: 9px; background: #fff; padding: 10px 12px; }
+.nutrition-calculator__fields input, .nutrition-calculator__fields select { min-width: 0; width: 100%; min-height: 48px; font-family: inherit; font-size: 16px; border: 1px solid var(--line, #e7e9e2); border-radius: 12px; background: var(--surface, #fff); padding: 10px 12px; }
 .nutrition-calculator__wide { grid-column: 1 / -1; }
 .nutrition-calculator__actions { display: flex; flex-direction: column; align-items: stretch; gap: 8px; margin: 12px 0; }
 .nutrition-calculator__actions button { min-height: 44px; }

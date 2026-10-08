@@ -1,0 +1,33 @@
+.progress-overview { display: grid; gap: 28px; }
+.progress-weight-summary { min-width: 0; padding: 24px; border-radius: 24px; background: var(--surface, #fff); }
+.progress-summary-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.progress-summary-heading h2, .progress-focus-insights h2 { margin: 0; font-size: 19px; font-weight: 650; letter-spacing: -.025em; color: var(--ink, #17221b); }
+.progress-check-in { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 14px; color: var(--accent-ink, #36502a); background: var(--accent, #cde7ad); font-size: 14px; font-weight: 650; white-space: nowrap; }
+.progress-weight-value { display: flex; align-items: baseline; gap: 8px; margin: 12px 0 8px; font-variant-numeric: tabular-nums; }
+.progress-weight-value strong { font-size: clamp(40px, 9vw, 52px); font-weight: 650; line-height: 1.1; letter-spacing: -.045em; color: var(--ink, #17221b); }
+.progress-weight-value > span { font-size: 19px; color: var(--sub, #737c75); }
+.progress-weight-caption { display: grid; gap: 5px; color: var(--sub, #737c75); font-size: 14px; line-height: 1.5; }
+.progress-weight-caption > span:first-child { color: var(--ink, #17221b); }
+.progress-weight-chart { display: block; width: 100%; height: 100px; margin-top: 14px; overflow: visible; }
+.progress-weight-baseline { fill: none; stroke: var(--line, #e6eae5); stroke-width: 1; }
+.progress-weight-line { fill: none; stroke: var(--accent-ink, #36502a); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.progress-weight-dot { fill: var(--accent-ink, #36502a); }
+.progress-focus-insights { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; padding: 0 4px; }
+.progress-focus-insights > section { min-width: 0; }
+.progress-insight-label { margin: 0 0 6px; font-size: 13px; color: var(--sub, #737c75); }
+.progress-insight-value { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; min-height: 43px; margin-top: 15px; font-size: 27px; line-height: 1.2; font-weight: 650; letter-spacing: -.03em; color: var(--ink, #17221b); font-variant-numeric: tabular-nums; }
+.progress-insight-value > span { font-size: 14px; font-weight: 500; letter-spacing: 0; color: var(--sub, #737c75); }
+.progress-insight-note, .progress-insight-context { margin: 5px 0 0; font-size: 14px; line-height: 1.5; color: var(--sub, #737c75); overflow-wrap: anywhere; }
+.progress-insight-context { margin-top: 8px; }
+.progress-consistency-days { display: flex; gap: 4px; margin-top: 15px; }
+.progress-consistency-days span { display: grid; flex: 1; min-width: 0; max-width: 24px; place-items: center; height: 25px; border-radius: 7px; font-size: 11px; color: var(--sub, #737c75); background: var(--surface, #fff); }
+.progress-consistency-days .recorded { background: var(--accent, #cde7ad); color: var(--accent-ink, #36502a); }
+.progress-inline-link { display: inline-flex; align-items: center; justify-content: flex-start; gap: 4px; min-height: 44px; padding: 0; margin-top: 8px; font-size: 14px; font-weight: 650; border: 0; background: transparent; color: var(--accent-ink, #36502a); }
+.progress-overview-links { display: grid; border-top: 1px solid var(--line, #e6eae5); }
+.progress-overview-links > button { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 76px; padding: 16px 4px; border: 0; border-bottom: 1px solid var(--line, #e6eae5); background: transparent; color: var(--ink, #17221b); text-align: left; }
+.progress-overview-links strong, .progress-overview-links small { display: block; }
+.progress-overview-links strong { font-size: 16px; font-weight: 600; }
+.progress-overview-links small { margin-top: 4px; font-size: 14px; color: var(--sub, #737c75); }
+.progress-overview button:focus-visible { outline: 2px solid var(--accent-ink, #36502a); outline-offset: 3px; }
+@media (min-width: 760px) { .progress-focus-insights { gap: 44px; padding: 0 24px; } .progress-overview-links { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; } }
+@media (max-width: 350px) { .progress-weight-summary { padding: 20px; } .progress-focus-insights { gap: 14px; } .progress-insight-value { font-size: 24px; } .progress-consistency-days { gap: 2px; } }

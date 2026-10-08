@@ -1,10 +1,20 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, createSession, stopSessionTimers } from '../src/domain.js';
+
+async function openTargets(page: Page) {
+  await page.getByRole('button', { name: /^Targets/, exact: false }).click();
+  await expect(page.getByRole('dialog', { name: 'Daily targets', exact: true })).toBeVisible();
+}
+
+async function closeTargets(page: Page) {
+  await page.getByRole('dialog', { name: 'Daily targets', exact: true }).getByRole('button', { name: 'Close', exact: true }).click();
+}
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
   await page.getByRole('tab', { name: 'Nutrition', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Daily weight-gain estimate', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Nutrition', exact: true })).toBeVisible();
+  await openTargets(page);
 });
 
 test('calculated targets require an explicit action and preserve existing meals and goal weight', async ({ page }) => {
@@ -12,14 +22,14 @@ test('calculated targets require an explicit action and preserve existing meals 
   await expect(calculator).toContainText('3,000 kcal/day');
   await expect(calculator).toContainText('128 g');
   await expect(calculator).toContainText('442 g');
-  await page.locator('.nutrition-sidebar').getByRole('button', { name: 'Edit', exact: true }).click();
+  await page.getByRole('button', { name: 'Edit targets', exact: true }).click();
   const targetDialog = page.getByRole('dialog', { name: 'Your nutrition targets', exact: true });
   for (const [label, value] of [['Calories · kcal', '2800'], ['Protein · g', '120'], ['Carbs · g', '350'], ['Fat · g', '80'], ['Goal weight · kg', '68']]) {
     await targetDialog.getByLabel(label, { exact: true }).fill(value);
   }
   await targetDialog.getByRole('button', { name: 'Save targets', exact: true }).click();
   await expect(page.locator('.nutrition-totals')).toContainText('of 2800 kcal');
-  await page.getByRole('button', { name: 'Add meal', exact: true }).click();
+  await page.getByRole('button', { name: 'Log meal', exact: true }).click();
   const meal = page.getByRole('dialog', { name: 'Add a meal', exact: true });
   await meal.getByLabel('Meal name', { exact: true }).fill('Yogurt and oats');
   await meal.getByLabel('Food 1', { exact: true }).fill('Yogurt');
@@ -29,6 +39,7 @@ test('calculated targets require an explicit action and preserve existing meals 
   await meal.getByRole('button', { name: 'Save meal', exact: true }).click();
   await expect(page.locator('.nutrition-meals')).toContainText('Yogurt and oats');
   await expect(page.locator('.nutrition-totals')).toContainText('of 2800 kcal');
+  await openTargets(page);
   await calculator.getByRole('button', { name: 'Use these daily targets', exact: true }).click();
   await expect(calculator.getByRole('status')).toContainText('Daily targets saved');
   await expect(page.locator('.nutrition-totals')).toContainText('of 3000 kcal');
@@ -36,6 +47,7 @@ test('calculated targets require an explicit action and preserve existing meals 
   await page.getByRole('tab', { name: 'Nutrition', exact: true }).click();
   await expect(page.locator('.nutrition-totals')).toContainText('of 3000 kcal');
   await expect(page.locator('.nutrition-meals')).toContainText('Yogurt and oats');
+  await openTargets(page);
   await expect(page.getByText('Goal weight: 68 kg', { exact: true })).toBeVisible();
 });
 
@@ -55,6 +67,7 @@ test('calculation details support decimal-comma body weight and reject invalid a
   await expect(page.locator('.nutrition-totals')).toContainText('No target set');
   await page.reload();
   await page.getByRole('tab', { name: 'Nutrition', exact: true }).click();
+  await openTargets(page);
   await calculator.getByText('Edit calculation details', { exact: true }).click();
   await expect(calculator.getByLabel('Weight for calculation · kg', { exact: true })).toHaveValue('64.5');
   await expect(calculator.getByLabel('Age', { exact: true })).toHaveValue('19');
@@ -62,9 +75,11 @@ test('calculation details support decimal-comma body weight and reject invalid a
 });
 
 test('food guidance follows the selected volleyball date and stays compact on small iPhones', async ({ page }) => {
+  await closeTargets(page);
   await page.setViewportSize({ width: 320, height: 568 });
   await page.getByLabel('Nutrition date', { exact: true }).fill('2026-10-06');
   const fuel = page.locator('.nutrition-simple-fuel');
+  await fuel.locator(':scope > summary').click();
   await expect(fuel).toContainText('20:00–22:00');
   await expect(fuel).toContainText('18:00–19:00');
   await expect(fuel).toContainText('After 22:00');
@@ -82,6 +97,7 @@ test('choosing an unspecified equation preserves privacy and allows manual targe
   await expect(calculator.getByRole('status')).toContainText('Calculation details saved');
   await page.reload();
   await page.getByRole('tab', { name: 'Nutrition', exact: true }).click();
+  await openTargets(page);
   await expect(calculator).toContainText('edit your targets manually');
   await calculator.getByText('Edit calculation details', { exact: true }).click();
   await expect(calculator.getByLabel('Energy equation', { exact: true })).toHaveValue('unspecified');
@@ -100,6 +116,7 @@ test('older profiles explicitly load the shared details while historical workout
   }, { profile: legacyProfile, historical });
   await page.reload();
   await page.getByRole('tab', { name: 'Nutrition', exact: true }).click();
+  await openTargets(page);
   const calculator = page.locator('.nutrition-calculator');
   await expect(calculator).toContainText('2,900 kcal/day');
   await calculator.getByRole('button', { name: 'Use my shared details (18 years, 180 cm, 64 kg)', exact: true }).click();
