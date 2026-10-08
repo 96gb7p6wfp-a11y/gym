@@ -15,6 +15,33 @@
   --app-safe-area-right: env(safe-area-inset-right, 0px);
 }
 
+/* A fixed popup with one scroll owner avoids Radix's item-aligned expansion,
+   which resets scrollTop during touch gestures on long movement lists. */
+[data-slot="select-content"] {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: min(var(--radix-select-content-available-height, 100dvh), 480px,
+    calc(100dvh - 32px - var(--app-safe-area-top) - var(--app-safe-area-bottom)));
+  min-width: min(var(--radix-select-trigger-width, 8rem),
+    calc(100vw - 32px - var(--app-safe-area-left) - var(--app-safe-area-right)));
+  max-width: min(var(--radix-select-content-available-width, 100vw),
+    calc(100vw - 32px - var(--app-safe-area-left) - var(--app-safe-area-right)));
+}
+[data-slot="select-viewport"] {
+  min-height: 0;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+[data-slot="select-item"] { min-height: 44px; white-space: normal; }
+[data-slot="select-scroll-up-button"], [data-slot="select-scroll-down-button"] {
+  flex-shrink: 0;
+}
+
 /* The close button stays outside the scrollable body of every dialog. */
 .app-dialog {
   --dialog-max-width: 512px;

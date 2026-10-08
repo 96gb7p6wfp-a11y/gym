@@ -10,9 +10,9 @@ website/iPhone wrapper and native build configuration have been removed.
 | `npm run typecheck` | Passed |
 | `npm test` | Passed: 168 tests, zero failures or skips |
 | `npm run build` | Passed; TypeScript check, Vite production bundle and generated service worker |
-| `npm run test:web` | Passed: 36 real Chromium application workflows in the final full run, zero failures (1.8 minutes) |
+| `npm run test:web` | Passed: 41 real Chromium application workflows in the final full run, zero failures (2.1 minutes) |
 | Development server | Passed; HTTP 200 for the Vite page and React entry module |
-| Visual review | Production Nutrition screenshot at 390 px and reminder checklist at 320 px reviewed; prior home/plan/guide/import/report reference comparison retained |
+| Visual review | Production Movement popup at 390 px with 59/34 px safe areas reviewed; prior nutrition/reminder and home/plan/guide/import/report comparison retained |
 | Standalone dependency review | Passed; no iframe, former-host dependency, remote workout API, remote nutrition API or remote app assets |
 | PWA configuration | Local manifest, 192/512 px normal and maskable icons, 180 px Apple touch icon, standalone/fullscreen display modes and worker registration included |
 | iPhone layout | Mobile navigation, 16 px form controls, `viewport-fit=cover` and top/bottom/horizontal safe-area padding included |
@@ -30,6 +30,16 @@ preserve intermediate separators, reload the stored fractional value and verify
 12.5 kg × 8 reps produces 100 kg of volume. Invalid and empty mandatory weights
 cannot reuse a prior value or complete a set; zero and optional bodyweight loads
 are handled separately.
+
+Movement dropdown regressions use real browser touch input, rather than setting
+scroll positions or using a mouse wheel. The old production build failed at both
+390 px and 320 px: its item-aligned menu repeatedly reset the scroll position.
+The fixed popup has one scrolling viewport, bounded dimensions and collision
+padding for iPhone safe areas. Tests swipe down and back up, reach and select the
+last option, keep the background stationary and verify page scrolling resumes
+after selection. Coverage includes 390×844, 320×568 and 844×390 screens with
+portrait/horizontal safe-area insets, keyboard navigation and selection inside
+the plan editor.
 
 Loading guidance preserves each current exercise's rep/time target and separates
 main lifts, controlled accessories, very light shoulder work, fast power drills,
@@ -129,8 +139,8 @@ plans and nutrition use the local storage key `setline.gym.v1`; network access i
 not required to save them.
 
 The final production output contains 13 precached files. The main JavaScript
-bundle is 1,076.27 kB (322.69 kB gzip), the lazy FIT decoder is 431.69 kB
-(64.30 kB gzip), and CSS is 197.45 kB (31.82 kB gzip). Vite
+bundle is 1,076.44 kB (322.74 kB gzip), the lazy FIT decoder is 431.69 kB
+(64.30 kB gzip), and CSS is 198.25 kB (31.96 kB gzip). Vite
 reports its standard large-chunk advisory; the build completes successfully.
 
 The reusable cloud install/start configuration was saved as a draft. Publishing

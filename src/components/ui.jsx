@@ -1,6 +1,7 @@
 import { twMerge } from "tailwind-merge";
 import { clsx } from "clsx";
 import * as ReactJSX from "react/jsx-runtime";
+import { useLayoutEffect, useState } from "react";
 import { Slot as SlotPrimitiveSlot } from "@radix-ui/react-slot";
 import { Root as DialogPrimitiveRoot } from "@radix-ui/react-dialog";
 import { Portal as DialogPrimitivePortal } from "@radix-ui/react-dialog";
@@ -362,31 +363,45 @@ function SelectTrigger({
 function SelectContent({
   className: e,
   children: t,
-  position: n = `item-aligned`,
-  align: r = `center`,
+  position: n = `popper`,
+  align: r = `start`,
   ...i
 }) {
+  const readCollisionPadding = () => {
+    const style = getComputedStyle(document.documentElement);
+    return Object.fromEntries([`top`, `right`, `bottom`, `left`].map(side => [
+      side, 16 + Math.max(0, parseFloat(style.getPropertyValue(`--app-safe-area-${side}`)) || 0),
+    ]));
+  };
+  const [collisionPadding, setCollisionPadding] = useState(readCollisionPadding);
+  useLayoutEffect(() => {
+    const update = () => setCollisionPadding(readCollisionPadding());
+    update();
+    window.addEventListener(`resize`, update);
+    window.visualViewport?.addEventListener(`resize`, update);
+    return () => {
+      window.removeEventListener(`resize`, update);
+      window.visualViewport?.removeEventListener(`resize`, update);
+    };
+  }, []);
   return (
     <SelectPrimitivePortal>
       <SelectPrimitiveContent
         data-slot={`select-content`}
         className={cn(
-          `relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95`,
-          n === `popper` &&
-            `data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1`,
+          `relative z-50 origin-(--radix-select-content-transform-origin) rounded-md border bg-popover text-popover-foreground shadow-md data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95`,
           e,
         )}
         position={n}
         align={r}
+        sideOffset={4}
+        collisionPadding={collisionPadding}
         {...i}
       >
         <SelectScrollUpButton />
         <SelectPrimitiveViewport
-          className={cn(
-            `p-1`,
-            n === `popper` &&
-              `h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1`,
-          )}
+          data-slot={`select-viewport`}
+          className={`p-1`}
         >
           {t}
         </SelectPrimitiveViewport>
