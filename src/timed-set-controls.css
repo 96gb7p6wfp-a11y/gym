@@ -1,0 +1,30 @@
+.timed-set-controls { min-width: 0; }
+.timed-set-duration { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.timed-set-duration__label { color: var(--sub, #778077); font-size: 14px; }
+.timed-set-duration__adjust { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.timed-set-duration__adjust > button { display: flex; align-items: center; justify-content: center; flex: 0 0 46px; width: 46px; min-height: 48px; border-radius: 14px; background: var(--canvas, #f3f4ef); color: var(--ink, #18221b); }
+.timed-set-duration__value { display: flex; align-items: center; justify-content: center; gap: 3px; min-width: 0; min-height: 48px; padding: 0 8px; border-radius: 14px; background: var(--canvas, #f3f4ef); }
+.timed-set-duration__value .set-input { width: 54px; min-width: 0; height: 48px; padding: 6px 0; border: 0; background: transparent; color: var(--ink, #18221b); font-size: 23px; font-weight: 650; letter-spacing: -.025em; text-align: center; border-radius: 8px; appearance: textfield; }
+.timed-set-duration__value .set-input::-webkit-inner-spin-button, .timed-set-duration__value .set-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.timed-set-duration__value > span { color: var(--sub, #778077); font-size: 12px; }
+.timed-set-controls--long .timed-set-duration__value .set-input { width: 80px; }
+.timed-set-timer { margin-top: 16px; text-align: center; }
+.timed-set-timer__clock { color: var(--ink, #18221b); font-size: clamp(42px, 11vw, 54px); font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -.045em; line-height: 1.12; }
+.timed-set-timer.is-complete .timed-set-timer__clock { color: var(--accent-ink, #375630); }
+.timed-set-timer__status { min-height: 18px; margin: 6px 0 14px; color: var(--sub, #778077); font-size: 12px; }
+.timed-set-timer__actions { display: flex; gap: 8px; }
+.timed-set-timer__toggle, .timed-set-timer__reset { display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 14px; background: var(--canvas, #f3f4ef); color: var(--ink, #18221b); }
+.timed-set-timer__toggle { flex: 1; gap: 7px; font-size: 15px; font-weight: 600; }
+.timed-set-timer__reset { flex: 0 0 48px; width: 48px; }
+.timed-set-timer__toggle:active, .timed-set-timer__reset:active, .timed-set-duration__adjust > button:active { background: var(--accent, #cde7ad); color: var(--accent-ink, #283c20); }
+.timed-set-controls button:disabled { opacity: .4; }
+.timed-set-controls button:focus-visible, .timed-set-controls input:focus-visible, .timed-set-stopwatch > summary:focus-visible { outline: 2px solid var(--accent-ink, #375630); outline-offset: 3px; }
+.timed-set-stopwatch > summary { display: flex; align-items: center; gap: 7px; min-height: 44px; margin-top: 8px; color: var(--sub, #778077); font-size: 13px; cursor: pointer; list-style: none; }
+.timed-set-stopwatch > summary::-webkit-details-marker { display: none; }
+@media (max-width: 359px) {
+  .timed-set-duration { gap: 8px; }
+  .timed-set-duration__adjust { gap: 4px; }
+  .timed-set-duration__adjust > button { width: 44px; flex-basis: 44px; }
+  .timed-set-duration__value { padding: 0 4px; }
+  .timed-set-duration__value .set-input { width: 42px; }
+}

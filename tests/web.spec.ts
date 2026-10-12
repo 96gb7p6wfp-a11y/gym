@@ -580,6 +580,9 @@ test('records jump measurements and timed movement sets', async ({ page }) => {
   }), timerPoints), 'The full movement timer tap area must stay above the fixed rest bar and navigation').toBe(true);
   await stopTimer.click();
   await expect(page.getByRole('button', { name: 'Start timer for Pogo Jump', exact: true })).toBeVisible();
+  // The stopwatch records elapsed work; a manual correction stays authoritative.
+  await page.getByRole('spinbutton', { name: 'Pogo Jump set 1 seconds', exact: true }).fill('');
+  await page.getByRole('spinbutton', { name: 'Pogo Jump set 1 seconds', exact: true }).fill('15');
   await page.getByRole('checkbox', { name: 'Complete Pogo Jump set 1', exact: true }).check();
   const summary = await finishWorkout(page);
   await expect(summary).toContainText(/3\s*sets/);

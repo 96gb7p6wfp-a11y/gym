@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Check, ChevronRight, Pause, Play, RotateCcw, Timer } from 'lucide-react';
+import { Check, ChevronRight, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { DecimalWeightInput } from './DecimalWeightInput';
 import { ExerciseGuide } from './ExerciseGuide';
-import { formatDuration, formatElapsedTime, measurementLabel } from './domain';
+import { measurementLabel } from './domain';
+import { TimedSetControls } from './TimedSetControls';
+import type { TimedSetAction } from './timed-sets';
+import { findComplexPair, firstUnfinishedStep, nextStepAfterCompletion } from './training-flow';
 import './focused-workout.css';
 
 export interface FocusedSetLog {
@@ -29,6 +32,7 @@ export interface FocusedExercise {
   logs: FocusedSetLog[];
   elapsedMs: number;
   runningSince: number | null;
+  timerSetId?: string | null;
 }
 
 export interface FocusedWorkoutProps {
@@ -39,7 +43,7 @@ export interface FocusedWorkoutProps {
   previous: (exercise: FocusedExercise) => { exercise: { logs: FocusedSetLog[] } } | null;
   onSet: (exerciseKey: string, setId: string, patch: Partial<FocusedSetLog>) => void;
   onDone: (exerciseKey: string, setId: string, done: boolean) => void;
-  onTimer: (exerciseKey: string) => void;
+  onTimer: (exerciseKey: string, options?: TimedSetAction) => void;
   renderAllSets: (exercise: FocusedExercise, index: number) => ReactNode;
 }
 
@@ -60,20 +64,30 @@ function previousLabel(exercise: FocusedExercise, log: FocusedSetLog | undefined
 
 /** The existing session mutations remain the only source of workout data. */
 export function FocusedWorkout({ sessionId, editing = false, exercises, now, previous, onSet, onDone, onTimer, renderAllSets }: FocusedWorkoutProps) {
-  const initialExercise = exercises.find((exercise) => exercise.logs.some((log) => !log.done)) ?? exercises[0];
+  const initialStep = firstUnfinishedStep(exercises);
+  const initialExercise = exercises.find(exercise => exercise.key === initialStep?.exerciseKey) ?? exercises[0];
   const [exerciseKey, setExerciseKey] = useState(initialExercise?.key);
-  const [setId, setSetId] = useState<string | null>(null);
+  const [setId, setSetId] = useState<string | null>(initialStep?.setId ?? null);
   const [allSetsOpen, setAllSetsOpen] = useState(false);
   const [movementsOpen, setMovementsOpen] = useState(false);
   const invalidWeightInputs = useRef(new Set<string>());
   const pendingCompletion = useRef<{ exerciseKey: string; setId: string } | null>(null);
+  const exerciseCard = useRef<HTMLElement | null>(null);
+  const shownExercise = useRef(exerciseKey);
 
   useEffect(() => {
-    const first = exercises.find((exercise) => exercise.logs.some((log) => !log.done)) ?? exercises[0];
-    setExerciseKey(first?.key);
-    setSetId(null);
+    if (shownExercise.current === exerciseKey) return;
+    shownExercise.current = exerciseKey;
+    exerciseCard.current?.scrollIntoView({ block: 'start', behavior: 'instant' });
+  }, [exerciseKey]);
+
+  useEffect(() => {
+    const first = firstUnfinishedStep(exercises);
+    setExerciseKey(first?.exerciseKey ?? exercises[0]?.key);
+    setSetId(first?.setId ?? null);
     setAllSetsOpen(false);
     pendingCompletion.current = null;
+    invalidWeightInputs.current.clear();
     // A restored or different workout starts at its first unfinished set.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
@@ -99,14 +113,11 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
         if (nextSet.reps == null && completed.reps != null) patch.reps = completed.reps;
         if (Object.keys(patch).length) onSet(current.key, nextSet.id, patch);
       }
-      setSetId(nextSet.id);
-      return;
     }
-    const nextExercise = [...exercises.slice(index + 1), ...exercises.slice(0, index)]
-      .find((exercise) => exercise.logs.some((log) => !log.done));
-    if (nextExercise) {
-      setExerciseKey(nextExercise.key);
-      setSetId(nextExercise.logs.find((log) => !log.done)!.id);
+    const next = nextStepAfterCompletion(exercises, current.key, completed.id);
+    if (next) {
+      setExerciseKey(next.exerciseKey);
+      setSetId(next.setId);
     }
   }, [editing, exercises, onSet]);
 
@@ -117,11 +128,21 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
     ?? exercise.logs.find((entry) => !entry.done) ?? exercise.logs[0];
   const setIndex = exercise.logs.findIndex((entry) => entry.id === log.id);
   const previousLogs = previous(exercise)?.exercise.logs.filter((entry) => entry.done) ?? [];
-  const timedInMinutes = exercise.mode === 'timed' && exercise.target.includes('min');
+  const pair = findComplexPair(exercises, exercise.key);
+  const rounds = pair ? Math.max(pair.first.logs.length, pair.second.logs.length) : 0;
   const allDone = exercises.every((entry) => entry.logs.every((entry) => entry.done));
-  const nextExercise = exercises.slice(exerciseIndex + 1).find((entry) => entry.logs.some((entry) => !entry.done));
+  const anticipated = nextStepAfterCompletion(exercises.map(entry => entry.key === exercise.key
+    ? { ...entry, logs: entry.logs.map(set => set.id === log.id ? { ...set, done: true } : set) } : entry), exercise.key, log.id);
+  const nextExercise = exercises.find(entry => entry.key === anticipated?.exerciseKey);
+
+  function pauseMovementTimer() {
+    const running = exercises.find(entry => entry.runningSince != null);
+    if (running) onTimer(running.key, running.timerSetId
+      ? { action: 'pause', setId: running.timerSetId } : undefined);
+  }
 
   function selectExercise(entry: FocusedExercise) {
+    pauseMovementTimer();
     pendingCompletion.current = null;
     setExerciseKey(entry.key);
     setSetId(null);
@@ -140,14 +161,30 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
 
   return (
     <div className="focused-workout" data-session-id={sessionId}>
-      <section className="focused-exercise" aria-label="Current exercise">
-        <div className="focused-exercise__eyebrow">
+      <section className="focused-exercise" aria-label="Current exercise" ref={exerciseCard}>
+        {pair && <div className="focused-pair" role="group" aria-label={`Complex pair ${pair.label}`}>
+          <div className="focused-pair__heading"><div><span>Complex {pair.label}</span><strong>Round {setIndex + 1} <span>of {rounds}</span></strong></div>
+            <button type="button" className="focused-exercise__text-action" aria-expanded={allSetsOpen}
+              onClick={() => { pendingCompletion.current = null; setAllSetsOpen(!allSetsOpen); }}>{allSetsOpen ? 'Current set' : 'All sets'}</button>
+          </div>
+          <div className="focused-pair__steps">{[pair.first, pair.second].map((entry, index) => {
+            const roundLog = entry.logs[setIndex];
+            return <button type="button" key={entry.key} aria-label={`View ${entry.name} in pair ${pair.label}`}
+              aria-pressed={entry.key === exercise.key} disabled={!roundLog}
+              onClick={() => { pauseMovementTimer(); pendingCompletion.current = null; setExerciseKey(entry.key); setSetId(roundLog?.id ?? null); setAllSetsOpen(false); }}>
+              <span className="focused-pair__position">{roundLog?.done ? <Check size={15} aria-hidden="true" /> : `${pair.label}${index + 1}`}</span>
+              <span><strong>{entry.name}</strong></span>
+            </button>;
+          })}</div>
+          <p>{exercise.rest > 0 ? `${exercise.rest % 60 === 0 ? `${exercise.rest / 60} min` : `${exercise.rest} sec`} rest between steps` : 'Follow your planned rest'}</p>
+        </div>}
+        {!pair && <div className="focused-exercise__eyebrow">
           <span>{allDone ? 'All sets complete' : `${exercise.group} · ${exerciseIndex + 1} of ${exercises.length}`}</span>
           <button type="button" className="focused-exercise__text-action" aria-expanded={allSetsOpen}
             onClick={() => { pendingCompletion.current = null; setAllSetsOpen(!allSetsOpen); }}>
             {allSetsOpen ? 'Current set' : 'All sets'}
           </button>
-        </div>
+        </div>}
         <h2 className="focused-exercise__name">{exercise.name}</h2>
         <p className="focused-exercise__target">{exercise.target}{exercise.perSide ? ' / side' : ''}</p>
         {allSetsOpen ? (
@@ -158,8 +195,13 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
               <strong>Set {setIndex + 1} <span>of {exercise.logs.length}</span></strong>
               <span className="focused-exercise__previous">Previous <b>{previousLabel(exercise, previousLogs[setIndex])}</b></span>
             </div>
+            {exercise.mode === 'timed' ? <TimedSetControls key={`${exercise.key}-${log.id}`} setId={log.id}
+              seconds={log.seconds} target={exercise.target} exerciseKey={exercise.key} exerciseName={exercise.name}
+              elapsedMs={exercise.elapsedMs} runningSince={exercise.runningSince} timerSetId={exercise.timerSetId ?? null}
+              now={now} editing={editing} setNumber={setIndex + 1} done={log.done}
+              onSecondsChange={seconds => onSet(exercise.key, log.id, { seconds })} onTimer={onTimer} /> :
             <div className="focused-set-controls" key={`${exercise.key}-${log.id}`}>
-              {!exercise.measurement && exercise.mode !== 'timed' && (
+              {!exercise.measurement && (
                 <label className="focused-set-field">
                   <span>{exercise.mode === 'bodyweight' ? 'Added weight' : 'Weight'} <small>kg</small></span>
                   <DecimalWeightInput value={log.kg} placeholder={exercise.mode === 'bodyweight' ? 'BW' : '0'}
@@ -169,18 +211,15 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                 </label>
               )}
               <label className="focused-set-field">
-                <span>{exercise.mode === 'timed' ? 'Duration' : 'Reps'}{exercise.mode === 'timed' && <small>{timedInMinutes ? 'min' : 'sec'}</small>}</span>
+                <span>Reps</span>
                 <input className="set-input" type="number" min="0"
-                  max={exercise.mode === 'timed' ? timedInMinutes ? 1440 : 86400 : 1000}
-                  step={timedInMinutes ? '0.1' : '1'} inputMode={timedInMinutes ? 'decimal' : 'numeric'}
+                  max={1000} step="1" inputMode="numeric"
                   placeholder={exercise.target.match(/\d+/)?.[0] ?? '0'}
-                  aria-label={`${exercise.name} set ${setIndex + 1} ${exercise.mode === 'timed' ? timedInMinutes ? 'minutes' : 'seconds' : 'reps'}`}
-                  value={exercise.mode === 'timed' ? log.seconds == null ? '' : number(log.seconds / (timedInMinutes ? 60 : 1)).replace(/,/g, '') : log.reps ?? ''}
+                  aria-label={`${exercise.name} set ${setIndex + 1} reps`}
+                  value={log.reps ?? ''}
                   onChange={(event) => {
-                    const next = amount(event.target.value, exercise.mode === 'timed' ? timedInMinutes ? 1440 : 86400 : 1000);
-                    onSet(exercise.key, log.id, exercise.mode === 'timed'
-                      ? { seconds: next == null ? null : next * (timedInMinutes ? 60 : 1) }
-                      : { reps: next == null ? null : Math.trunc(next) });
+                    const next = amount(event.target.value, 1000);
+                    onSet(exercise.key, log.id, { reps: next == null ? null : Math.trunc(next) });
                   }} />
               </label>
               {exercise.measurement && (
@@ -192,16 +231,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                     onChange={(event) => onSet(exercise.key, log.id, { measurementCm: amount(event.target.value, 1000) })} />
                 </label>
               )}
-            </div>
-            {exercise.mode === 'timed' && !editing && (
-              <button type="button" className={`focused-movement-timer${exercise.runningSince != null ? ' is-running' : ''}`}
-                onClick={() => onTimer(exercise.key)} aria-label={`${exercise.runningSince == null ? 'Start' : 'Stop'} timer for ${exercise.name}`}>
-                <Timer size={18} aria-hidden="true" />
-                <strong>{formatElapsedTime(formatDuration(exercise, now))}</strong>
-                <span>{exercise.runningSince == null ? 'Start timer' : 'Stop timer'}</span>
-                {exercise.runningSince == null ? <Play size={16} aria-hidden="true" /> : <Pause size={16} aria-hidden="true" />}
-              </button>
-            )}
+            </div>}
             <button type="button" className={`btn focused-complete-set${log.done ? ' secondary' : ''}`}
               aria-label={`${log.done ? 'Undo' : 'Complete'} ${exercise.name} set ${setIndex + 1}`} onClick={completeSet}>
               {log.done ? <RotateCcw size={19} aria-hidden="true" /> : <Check size={20} aria-hidden="true" />}
@@ -211,7 +241,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
               {exercise.logs.map((entry, index) => (
                 <button type="button" key={entry.id} className={`${entry.id === log.id ? ' is-current' : ''}${entry.done ? ' is-done' : ''}`}
                   aria-label={`View ${exercise.name} set ${index + 1}${entry.done ? ', complete' : ''}`}
-                  aria-pressed={entry.id === log.id} onClick={() => { pendingCompletion.current = null; setSetId(entry.id); }}>
+                  aria-pressed={entry.id === log.id} onClick={() => { pauseMovementTimer(); pendingCompletion.current = null; setSetId(entry.id); }}>
                   {entry.done ? <Check size={15} aria-hidden="true" /> : index + 1}
                 </button>
               ))}
@@ -235,7 +265,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
           })}
         </div>
       </details>
-      {nextExercise && <p className="focused-workout__next">Up next <span>{nextExercise.name}</span></p>}
+      {nextExercise && <p className="focused-workout__next">{pair && findComplexPair(exercises, nextExercise.key)?.startIndex === pair.startIndex ? `Next in pair · round ${anticipated?.round}` : 'Up next'}<span>{nextExercise.name}</span></p>}
       {allDone && <p className="focused-workout__finished" role="status">All sets complete. Finish when you’re ready.</p>}
     </div>
   );

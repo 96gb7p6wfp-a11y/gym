@@ -23,7 +23,17 @@ timer logic and validation. Focused controls advance only after the saved state
 marks a set complete. Detailed set editing remains available. Nutrition never
 silently replaces saved targets or adds estimated exercise calories to them.
 
+Explicit A1/A2 and B1/B2 complex pairs share one card and alternate by round.
+Both names and the current round stay visible; each movement keeps its planned
+rest and its own logs. New values carry only into empty sets of that same movement.
+Short timed work uses a large countdown with the planned duration, quick
+adjustment, pause, resume and reset. Each timer belongs to one set and survives
+refresh. Reaching zero never checks off work automatically. Long activities keep
+manual minutes and an optional stopwatch. Touch states preserve readable button
+contrast. Research and dated customer feedback are in
+[WORKOUT_UX_RESEARCH.md](docs/WORKOUT_UX_RESEARCH.md).
+
 The storage key remains `setline.gym.v1`. No records are cleared or recreated.
-Optional routine fields accept older records and backups. Closed-app reminders
+Optional routine and timer fields accept older records and backups. Closed-app reminders
 require a push service; the app honestly provides an in-app schedule. Photo
 analysis is hidden when its optional service is unavailable.

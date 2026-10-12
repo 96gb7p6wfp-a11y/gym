@@ -15,6 +15,9 @@ or native iPhone signing is required.
   primer, week/day navigation, warm-up and cool-down checklists, exercise cues,
   weights/reps/time/RIR, jump measurements, session and movement timers, automatic
   rest timer, notes, intensity and calorie estimates/watch calories.
+  Complex pairs alternate by round in one view while keeping prescribed rest.
+  Short timed movements have a per-set countdown with quick duration adjustment,
+  pause/resume/reset and explicit completion; longer activities retain manual minutes.
 - **Progress:** a compact weight/consistency/strength overview, detailed charts,
   personal bests, History with editing/deletion/restoration, and weekly reports.
 - **Nutrition:** calories and protein remaining, quick multi-food meals, recent

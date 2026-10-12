@@ -884,6 +884,16 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     logs: zArray(SetLogSchema).min(1).max(30),
     elapsedMs: zNumber().min(0).max(6048e5),
     runningSince: zNumber().finite().min(0).nullable(),
+    timerSetId: zString().min(1).max(100).nullable().optional(),
+  }).superRefine((exercise, context) => {
+    if (exercise.timerSetId != null &&
+      !exercise.logs.some((log) => log.id === exercise.timerSetId)) {
+      context.addIssue({
+        code: ZodIssueCode.custom,
+        path: [`timerSetId`],
+        message: `The timer must belong to a set in this exercise.`,
+      });
+    }
   }),
   SessionSchema = zObject({
     id: zString().uuid(),

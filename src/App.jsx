@@ -16,6 +16,7 @@ import { ExerciseGuide } from "./ExerciseGuide";
 import { WeeklyReport } from "./WeeklyReport";
 import { DecimalWeightInput } from "./DecimalWeightInput";
 import { isValidWorkoutWeight } from "./workout-weight";
+import { applyTimedSetAction, recordedTimedSetSeconds } from "./timed-sets";
 import { estimateActivity } from "./activities";
 import { requestLocal } from "./storage";
 import * as React from "react";
@@ -443,9 +444,11 @@ function GymApp({
       setMutatingRecordId(null);
     }
   }
-  function updateSet(e, t, n) {
+  function updateSet(e, t, n, manualTime = !1) {
     updateExercise(e, (e) => ({
       ...e,
+      ...(manualTime && Object.hasOwn(n, `seconds`) && e.timerSetId === t
+        ? { timerSetId: null, elapsedMs: 0, runningSince: null } : {}),
       logs: e.logs.map((r) => {
         if (r.id !== t) return r;
         let i = {
@@ -500,14 +503,30 @@ function GymApp({
         : (queueSession(stopSessionTimers(activeSession, `active`), !0),
           setRestEndsAt(null)));
   }
-  function toggleMovementTimer(e) {
+  function toggleMovementTimer(e, options, keepRest = !1) {
     if (!activeSession || editingHistoryId) return;
+    const latest = sessionsRef.current.find(session => session.id === activeSession.id);
+    if (!latest || latest.status !== `active`) return;
     let t = Date.now();
+    if (options) {
+      const exercise = latest.exercises.find(entry => entry.key === e);
+      if (!exercise || exercise.mode !== `timed`) return;
+      const updated = applyTimedSetAction(exercise, options, t);
+      if (updated === exercise) return;
+      queueSession({
+        ...latest,
+        runningSince: options.action === `start` ? latest.runningSince ?? t : latest.runningSince,
+        exercises: latest.exercises.map(entry => entry.key === e ? updated
+          : options.action === `start` ? { ...entry, elapsedMs: elapsedTime(entry.elapsedMs, entry.runningSince, t), runningSince: null } : entry),
+      }, !0);
+      if (options.action === `start` && !keepRest) setRestEndsAt(null);
+      return;
+    }
     queueSession(
       {
-        ...activeSession,
-        runningSince: activeSession.runningSince ?? t,
-        exercises: activeSession.exercises.map((n) =>
+        ...latest,
+        runningSince: latest.runningSince ?? t,
+        exercises: latest.exercises.map((n) =>
           n.key === e
             ? {
                 ...n,
@@ -524,6 +543,18 @@ function GymApp({
       !0,
     );
   }
+  function toggleSetStopwatch(key) {
+    const latest = sessionsRef.current.find(session => session.id === activeSession?.id);
+    const exercise = latest?.exercises.find(entry => entry.key === key);
+    if (!exercise || editingHistoryId) return;
+    if (exercise.mode !== `timed` || (exercise.runningSince !== null && !exercise.timerSetId)) {
+      toggleMovementTimer(key);
+      return;
+    }
+    const set = exercise.runningSince !== null
+      ? exercise.logs.find(log => log.id === exercise.timerSetId) : exercise.logs.find(log => !log.done);
+    if (set) toggleMovementTimer(key, { action: exercise.runningSince === null ? `start` : `pause`, setId: set.id }, !0);
+  }
   function markSetDone(e, t, n) {
     let r = sessionsRef.current.find(
       (e) => e.id === (editingHistoryId ?? activeSession?.id),
@@ -531,7 +562,7 @@ function GymApp({
     if (!r) return;
     let i = r.exercises.find((t) => t.key === e);
     let a = i.logs.find((e) => e.id === t);
-    let o =
+    let o = i.mode === `timed` ? (editingHistoryId ? a.seconds : recordedTimedSetSeconds(i, a, Date.now())) :
       (i.runningSince === null
         ? null
         : Math.max(1, Math.round((Date.now() - i.runningSince) / 1e3))) ??
@@ -1118,9 +1149,9 @@ function GymApp({
                         currentSession.id,
                       )}
                       editing={!!editingHistoryId}
-                      onSet={(t, n) => updateSet(e.key, t, n)}
+                      onSet={(t, n) => updateSet(e.key, t, n, !0)}
                       onDone={(t, n) => markSetDone(e.key, t, n)}
-                      onTimer={() => toggleMovementTimer(e.key)}
+                      onTimer={() => toggleSetStopwatch(e.key)}
                       onAdd={() =>
                         updateExercise(e.key, (e) => ({
                           ...e,
@@ -1141,6 +1172,8 @@ function GymApp({
                         updateExercise(e.key, (e) => ({
                           ...e,
                           logs: e.logs.slice(0, -1),
+                          ...(e.timerSetId === e.logs.at(-1)?.id
+                            ? { timerSetId: null, elapsedMs: 0, runningSince: null } : {}),
                         }))
                       }
                       key={`${currentSession.id}-${e.key}`}

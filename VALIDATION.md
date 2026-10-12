@@ -1,6 +1,7 @@
 # Standalone app validation
 
-Validation performed in the Linux cloud workspace on 2026-10-08. This repository
+Initial validation was performed on 2026-10-08; the workout interaction update
+was checked on 2026-10-12 in the Linux cloud workspace. This repository
 contains the full React + Vite Setline gym app and an installable PWA. The previous
 website/iPhone wrapper and native build configuration have been removed.
 
@@ -8,9 +9,9 @@ website/iPhone wrapper and native build configuration have been removed.
 | --- | --- |
 | Clean `npm ci` | Passed; 132 packages installed, resolved dependencies recorded in `package-lock.json` |
 | `npm run typecheck` | Passed |
-| `npm test` | Passed: 171 tests, zero failures or skips |
+| `npm test` | Passed: 196 tests, zero failures or skips |
 | `npm run build` | Passed; TypeScript check, Vite production bundle and generated service worker |
-| `npm run test:web` | Passed: 50 real Chromium application workflows, zero failures (2.3 minutes) |
+| `npm run test:web` | Passed: 58 real Chromium application workflows, zero failures (2.5 minutes) |
 | Final PWA metadata check | Passed: installation, manifest/icons and offline workout workflows rerun after the launch-color update (3 checks) |
 | Development server | Passed; HTTP 200 for the Vite page and React entry module |
 | Visual review | Redesigned Today, Train, focused workout, Progress, Nutrition, More, Routine, plan and report reviewed; small-phone rest controls and desktop layout checked |
@@ -48,6 +49,28 @@ backup/restore, schedule and persistence regressions remain in the suite.
 PWA launch colors match the light interface and the iOS status-bar setting uses
 dark text appropriate for that background. Manifest ID, scope, icon paths,
 installation mode, service-worker registration and storage key remain stable.
+
+## Complex pairs and timed sets
+
+Explicit adjacent complex-pair labels alternate A1/A2 and B1/B2 by round in one
+card. Tests cover incomplete rounds, manual selection, uneven/added sets and
+confirmation before advancing. Weight/reps prefill only the same movement's
+empty fields; jump measurements and partner loads are never copied. The existing
+180-second rest prescriptions remain intact.
+
+Each work timer uses an optional `timerSetId`; older records keep their original
+shape. Countdown targets come from the plan. Pause/resume and refresh preserve
+the elapsed work for that set, a new set starts at zero, and returning late from
+another app cannot record time beyond the countdown. Completion remains explicit.
+Manual duration edits and owned-set removal safely clear timer association;
+the all-sets stopwatch adopts the next unfinished set. Strict validation and
+backup round trips include the optional field.
+
+Touch checks verify readable Complete/Undo contrast after taps and hover, large
+timer controls on a 320×568 phone, and grouped progression without the movement
+menu. Saved stopwatch durations remain manually editable. Official Hevy/Strong
+documentation and a small sample of dated App Store reviews informed the update;
+sources and their limits are in [WORKOUT_UX_RESEARCH.md](docs/WORKOUT_UX_RESEARCH.md).
 
 Decimal-entry regressions type both `12.5` and `12,5` with real keystrokes,
 preserve intermediate separators, reload the stored fractional value and verify
@@ -163,8 +186,8 @@ plans and nutrition use the local storage key `setline.gym.v1`; network access i
 not required to save them.
 
 The final production output contains 13 precached files. The main JavaScript
-bundle is 1,109.35 kB (331.59 kB gzip), the lazy FIT decoder is 431.69 kB
-(64.30 kB gzip), and CSS is 244.23 kB (39.84 kB gzip). Vite
+bundle is 1,118.29 kB (334.28 kB gzip), the lazy FIT decoder is 431.69 kB
+(64.30 kB gzip), and CSS is 249.42 kB (40.63 kB gzip). Vite
 reports its standard large-chunk advisory; the build completes successfully.
 
 The reusable cloud install/start configuration was saved as a draft. Publishing
