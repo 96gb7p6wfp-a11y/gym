@@ -127,7 +127,7 @@ function completedPerformance(session: ReportSession): PerformanceValue[] {
       if (!values.length) return [];
       return [{ ...base, kind: exercise.measurement, previous: 0, current: Math.max(...values) }];
     }
-    if (exercise.mode !== 'weight') return [];
+    if (exercise.mode !== 'weight' || exercise.quantityUnit || /assisted.*pull.?up|pull.?up.*assisted/i.test(exercise.name)) return [];
     const best = exercise.logs.filter(log => log.done && (log.kg ?? 0) > 0 && (log.reps ?? 0) > 0)
       .reduce<(typeof exercise.logs)[number] | undefined>((top, log) => !top || log.kg! > top.kg!
         || (log.kg === top.kg && log.reps! > top.reps!) ? log : top, undefined);

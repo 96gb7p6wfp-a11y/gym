@@ -15,6 +15,8 @@ import { FocusedWorkout } from "./FocusedWorkout";
 import { ProgressOverview } from "./ProgressOverview";
 import { RemindersPanel } from "./RemindersPanel";
 import { shortSessionName } from "./presentation";
+import { VolleyballMasterProgram, MasterProgramReadiness } from './VolleyballMasterProgram';
+import { createVolleyballMasterPlan, getMasterProgramWeek, getMasterProgramPhase, masterWeekStart, masterScheduledEvents, masterPlannedMinutes, resolveMasterProgramPlan } from './volleyball-master-plan';
 import { PageHeader, BottomNavigation, SegmentedControl, MenuRow } from "./components/design";
 import { House, Ellipsis, ArrowLeft, Upload, ShieldCheck } from "lucide-react";
 import { DataSettings } from "./DataSettings";
@@ -312,10 +314,21 @@ function GymApp({
     ? sessions.find((e) => e.id === editingHistoryId)
     : activeSession;
   let selectedDate = dateKey(addDays(weekStart, selectedDay));
+  function planForDate(date) {
+    if (!profile.masterProgram) return profile.plan;
+    if (date < profile.masterProgram.startDate) return profile.preMasterPlan ?? profile.plan;
+    return resolveMasterProgramPlan(profile.plan, profile.masterProgram, date, profile.masterMatchWeekend);
+  }
+  let scheduledPlan = React.useMemo(() => planForDate(selectedDate), [profile.plan, profile.masterProgram, profile.preMasterPlan, profile.masterMatchWeekend, selectedDate]);
+  let currentWeekPlan = React.useMemo(() => planForDate(today), [profile.plan, profile.masterProgram, profile.preMasterPlan, profile.masterMatchWeekend, today]);
+  let masterWeek = profile.masterProgram && getMasterProgramWeek(profile.masterProgram.startDate, selectedDate);
+  let selectedMasterMatch = !!masterWeek && profile.masterProgram.matchWeeks.includes(masterWeek);
+  let editableWeekPlan = selectedMasterMatch ? [...profile.plan.slice(0, 5), ...(profile.masterMatchWeekend ?? createVolleyballMasterPlan(true).slice(5))] : profile.plan;
+  let dayEvents = masterScheduledEvents(profile.masterProgram, selectedDate);
   let selectedPlan =
-    extraSessionVisible && profile.plan[selectedDay].extraSession
-      ? profile.plan[selectedDay].extraSession
-      : profile.plan[selectedDay];
+    extraSessionVisible && scheduledPlan[selectedDay].extraSession
+      ? scheduledPlan[selectedDay].extraSession
+      : scheduledPlan[selectedDay];
   let completedSessions = sessions
     .filter((e) => e.status === `completed`)
     .sort((e, t) => t.date.localeCompare(e.date) || t.startedAt - e.startedAt);
@@ -361,15 +374,15 @@ function GymApp({
     setActivityRecords((records) => [...saved.activities, ...records]);
   }
   function dailyContext(date) {
-    const planDay = profile.plan[(new Date(`${date}T12:00:00`).getDay() + 6) % 7];
+    const planDay = planForDate(date)[(new Date(`${date}T12:00:00`).getDay() + 6) % 7];
     const dailyActivities = activityRecords.filter(({ activity }) => activity.date === date && activity.deletedAt === null).map(({ activity }) => activity);
     const daySessions = sessions.filter((session) => session.date === date && [`active`, `completed`].includes(session.status));
     const trainingMinutes = daySessions.reduce((sum, session) => sum + sessionDuration(session, now) / 6e4, 0);
     const totalMinutes = trainingMinutes + dailyActivities.reduce((sum, activity) => sum + activity.durationMinutes, 0);
     const totalCalories = daySessions.reduce((sum, session) => sum + getCalories(session, now), 0) + dailyActivities.reduce((sum, activity) => sum + estimateActivity(activity).calories, 0);
     return { input: { date, bodyWeightKg: profile.bodyWeight,
-      plannedKind: planDay.kind, plannedName: planDay.name,
-      plannedTrainingMinutes: planDay.minutes,
+      plannedKind: planDay.kind, plannedName: masterScheduledEvents(profile.masterProgram, date).some(event => event.name === 'School PE') ? 'School PE + Volleyball' : planDay.name,
+      plannedTrainingMinutes: masterPlannedMinutes(profile.masterProgram, date, planDay.minutes, dailyActivities),
       extraActivities: dailyActivities, completedTrainingMinutes: trainingMinutes,
     }, minutes: totalMinutes, calories: totalCalories };
   }
@@ -391,7 +404,7 @@ function GymApp({
     setEditingExtraSession(t);
     setEditingDay(e);
     setPlanDraft(
-      structuredClone(t ? profile.plan[e].extraSession : profile.plan[e]),
+      structuredClone(t ? editableWeekPlan[e].extraSession : editableWeekPlan[e]),
     );
   }
   React.useEffect(() => setExtraSessionVisible(!1), [selectedDay, weekStart]);
@@ -494,6 +507,12 @@ function GymApp({
       pendingWritesRef.current.size ||
       activeWriteRef.current
     )) {
+      if (masterWeek && selectedDay === 5 && !profile.masterProgram.readiness?.some(row => row.date === selectedDate)) {
+        setTab('train');
+        requestAnimationFrame(() => document.querySelector('.master-readiness')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+        toast('Check readiness during your warm-up first.');
+        return;
+      }
       if (!selectedPlan.exercises.length) {
         toast.error(`Add an exercise to this day before starting.`);
         return;
@@ -720,11 +739,26 @@ function GymApp({
     const existing = profile.customWorkouts ?? [];
     const customWorkouts = existing.some(item => item.id === template.id)
       ? existing.map(item => item.id === template.id ? template : item) : [...existing, template];
-    const plan = customBuilder.day === undefined ? profile.plan : profile.plan.map((item, index) => index === customBuilder.day
+    const plan = customBuilder.day === undefined ? editableWeekPlan : editableWeekPlan.map((item, index) => index === customBuilder.day
       ? { ...workout, ...(item.extraSession ? { extraSession: item.extraSession } : {}) } : item);
-    const saved = await saveProfile({ ...profile, customWorkouts, plan });
+    const saved = await saveBaseWeek(plan, { customWorkouts });
     if (saved) setCustomBuilder(null);
     return saved;
+  }
+  async function saveMasterProgram(settings) {
+    if (settings && !profile.masterProgram) {
+      const saved = await saveProfile({ ...profile, preMasterPlan: structuredClone(profile.plan),
+        plan: createVolleyballMasterPlan(), masterMatchWeekend: createVolleyballMasterPlan(true).slice(5), masterProgram: settings });
+      if (saved) { setWeekStart(new Date(`${settings.startDate}T12:00:00`)); setSelectedDay(0); setExtraSessionVisible(false); }
+      return saved;
+    }
+    if (settings) return saveProfile({ ...profile, masterProgram: settings }, { notify: false });
+    const { masterProgram, preMasterPlan, masterMatchWeekend, ...savedProfile } = profile;
+    return saveProfile({ ...savedProfile, plan: preMasterPlan ?? profile.plan });
+  }
+  function saveBaseWeek(plan, updates = {}) {
+    if (!profile.masterProgram || !selectedMasterMatch) return saveProfile({ ...profile, ...updates, plan });
+    return saveProfile({ ...profile, ...updates, plan: profile.plan.map((day, index) => index < 5 ? plan[index] : day), masterMatchWeekend: plan.slice(5) });
   }
   async function startCustomWorkout(template) {
     if (activeSession || editingHistoryId) { toast('Finish your current workout first.'); return; }
@@ -749,8 +783,8 @@ function GymApp({
   const volleyballSchedule = profile.volleyballSchedule ?? DEFAULT_PROFILE.volleyballSchedule;
   async function saveVolleyballSchedule(schedule) {
     const plan = profile.plan.map((day, index) => schedule.days.includes(index)
-      ? { ...day, note: day.note.replace(/(Club training · )\d{2}:\d{2}[–-]\d{2}:\d{2}/,
-        `$1${schedule.startTime}–${schedule.endTime}`) }
+      ? { ...day, note: day.note.replace(/\b\d{2}:\d{2}[–-]\d{2}:\d{2}/g,
+        `${schedule.startTime}–${schedule.endTime}`) }
       : day);
     if (!(await saveProfile({ ...profile, plan, volleyballSchedule: schedule }))) {
       throw new Error(`Your training times could not be saved. Reload and retry.`);
@@ -937,7 +971,7 @@ function GymApp({
             >{`Today`}</button>
           </div>
           <div className={`week-strip`} aria-label={`Choose a training day`}>
-            {profile.plan.map((e, t) => {
+            {scheduledPlan.map((e, t) => {
               let n = dateKey(addDays(weekStart, t));
               let r = completedSessions.some((e) => e.date === n);
               let i = currentSession
@@ -1056,7 +1090,8 @@ function GymApp({
         <TabsContent value="today">
           <TodayView date={selectedDate} plan={selectedPlan} session={activeSession} completed={dayCompletedSession} daySelector={weekSelector}
             activities={activityRecords} nutrition={reportNutrition} volleyballSchedule={volleyballSchedule}
-            sessions={sessions} weeklyPlan={profile.plan} performance={performance.data} bodyWeight={profile.bodyWeight} today={today}
+            sessions={sessions} weeklyPlan={scheduledPlan} performance={performance.data} bodyWeight={profile.bodyWeight} today={today}
+            programLabel={masterWeek ? `Week ${masterWeek} · ${getMasterProgramPhase(masterWeek)}` : undefined} scheduledEvents={dayEvents}
             onProgress={() => { setProgressView('overview'); setTab('progress'); }}
             disabled={!loaded || saving || !!loadError} onStart={startWorkout} onTrain={() => setTab(`train`)}
             onViewLog={setSelectedHistory} onNutrition={() => setTab(`nutrition`)} onPlan={openPlan}
@@ -1067,7 +1102,7 @@ function GymApp({
           {!currentSession && <button className="text-button train-plan-link" onClick={openPlan}>Weekly plan <ChevronRight size={15} /></button>}
           <div className={`workout-grid`}>
             <section className={`workout-main`}>
-              {!currentSession && profile.plan[selectedDay].extraSession && (
+              {!currentSession && scheduledPlan[selectedDay].extraSession && (
                 <div
                   className={`session-choice`}
                   role={`group`}
@@ -1082,9 +1117,10 @@ function GymApp({
                     className={extraSessionVisible ? `chosen` : ``}
                     aria-pressed={extraSessionVisible}
                     onClick={() => setExtraSessionVisible(!0)}
-                  >{`Jump primer · 16:15`}</button>
+                  >{profile.masterProgram ? `Technique · 8–15 min` : `Jump primer · 16:15`}</button>
                 </div>
               )}
+
               <div className={`session-card ${currentSession ? `session-card--active` : ``}`}>
                 <div className={`session-card-top`}>
                   <span className={`session-tag`}>
@@ -1107,7 +1143,7 @@ function GymApp({
                 </div>
                 <div className={`session-card-main`}>
                   <div>
-                    <h2>{currentSession ? shortSessionName(currentSession.name) : getSessionPurpose(selectedPlan, selectedDay).title}</h2>
+                    <h2>{currentSession ? currentSession.goal ? getSessionPurpose(currentSession).title : shortSessionName(currentSession.name) : getSessionPurpose(selectedPlan, selectedDay).title}</h2>
                     {!currentSession && <p className="session-purpose-line">{getSessionPurpose(selectedPlan, selectedDay).subtitle}</p>}
                     <p>
                       {currentSession
@@ -1197,6 +1233,10 @@ function GymApp({
                   <details className="session-note"><summary>Session focus</summary><p>{getSessionPurpose(selectedPlan, selectedDay).focus}</p><p>Intensity · {getSessionPurpose(selectedPlan, selectedDay).intensity}</p><p>{getSessionPurpose(selectedPlan, selectedDay).fatigue}</p><p>{selectedPlan.note}</p></details>
                 )}
               </div>
+              {!currentSession && masterWeek && <>
+                <div className="master-day-note"><p><strong>{`Week ${masterWeek} · ${getMasterProgramPhase(masterWeek)}`}</strong><span>{selectedMasterMatch ? 'Sunday match week' : 'No Sunday match'}</span></p>{dayEvents.map(event => <p key={event.name}><strong>{event.name}</strong><span>{event.detail}</span></p>)}</div>
+                {(selectedPlan.kind === 'strength' || selectedDay === 5) && <MasterProgramReadiness settings={profile.masterProgram} date={selectedDate} disabled={profileSaving || !loaded} onSave={saveMasterProgram} />}
+              </>}
               {dayCompletedSession && !currentSession && (
                 <div className={`completed-banner`}>
                   <CheckCheck size={18} />
@@ -1217,6 +1257,7 @@ function GymApp({
                 <React.Fragment><FocusedWorkout sessionId={currentSession.id} exercises={currentSession.exercises} now={now} editing={!!editingHistoryId}
                   sessions={completedSessions} date={currentSession.date}
                   context={{ readiness: performance.data?.readiness.find(row => row.date === currentSession.date),
+                    lowFatigueSession: /primer/i.test(currentSession.name) || ['yellow', 'red'].includes(profile.masterProgram?.readiness?.find(row => row.date === currentSession.date)?.status),
                     volleyballWithin24Hours: currentSession.date === today && volleyballIsSoon() }}
                   onExerciseAction={setExerciseActionKey}
                   previous={(exercise) => comparablePrevious(exercise, currentSession.date, currentSession.id)}
@@ -1539,11 +1580,11 @@ function GymApp({
           ]} />}
           {performance.error && <div className="error-state" role="alert"><p>{performance.error}</p><button className="text-button" onClick={performance.reload}>Reload performance</button></div>}
           {progressView === 'details' && <><button className="text-button subpage-back" onClick={() => { setProgressView('overview'); setPerformanceAction(undefined); }}><ArrowLeft size={17} /> Progress</button>
-            <PerformanceDetails sessions={sessions} activities={activityRecords} plan={profile.plan} nutritionRecords={reportNutrition}
+            <PerformanceDetails sessions={sessions} activities={activityRecords} plan={currentWeekPlan} nutritionRecords={reportNutrition}
               performance={performance.data} bodyWeight={profile.bodyWeight} today={today} initialAction={performanceAction}
               onSaveJump={performance.saveJump} onDeleteJump={performance.deleteJump}
               onLogWeight={() => { setNutritionAction('weight'); setTab('nutrition'); }} /></>}
-          {progressView === `overview` && <ProgressOverview sessions={sessions} activities={activityRecords} plan={profile.plan} bodyWeight={profile.bodyWeight} nutritionRecords={reportNutrition} performance={performance.data} today={today}
+          {progressView === `overview` && <ProgressOverview sessions={sessions} activities={activityRecords} plan={currentWeekPlan} bodyWeight={profile.bodyWeight} nutritionRecords={reportNutrition} performance={performance.data} today={today}
             onViewPerformance={() => { setPerformanceAction(undefined); setProgressView('details'); }}
             onLogJump={() => { setPerformanceAction('log-jump'); setProgressView('details'); }}
             onViewStrength={() => setProgressView(`strength`)} onViewHistory={() => setProgressView(`history`)} onViewWeek={() => setProgressView(`week`)} onLogWeight={() => { setNutritionAction(`weight`); setTab(`nutrition`); }} />}
@@ -1811,8 +1852,8 @@ function GymApp({
           {!recentlyDeletedOpen && <ActivityHistory records={activityRecords} bodyWeight={profile.bodyWeight} onSave={saveExtraActivity} disabled={!loaded} />}
 </>}
           {progressView === `week` && <>
-          <WeeklyPerformance sessions={sessions} activities={activityRecords} plan={profile.plan} weekStart={progressReportWeek} volleyballSchedule={volleyballSchedule} />
-          <WeeklyReport sessions={sessions} activities={activityRecords} plan={profile.plan} bodyWeight={profile.bodyWeight} initialWeek={dateKey(weekStart)} nutritionRecords={reportNutrition} onWeekChange={setProgressReportWeek} />
+          <WeeklyPerformance sessions={sessions} activities={activityRecords} plan={planForDate(progressReportWeek)} weekStart={progressReportWeek} volleyballSchedule={volleyballSchedule} />
+          <WeeklyReport sessions={sessions} activities={activityRecords} plan={planForDate(progressReportWeek)} bodyWeight={profile.bodyWeight} initialWeek={dateKey(weekStart)} nutritionRecords={reportNutrition} onWeekChange={setProgressReportWeek} />
           {reportNutritionError && <p className={`nutrition-error`} role={`alert`}>{reportNutritionError} <button className={`text-button`} onClick={() => void loadReportNutrition()}>{`Retry nutrition logs`}</button></p>}
 <details className="report-activity-details"><summary>Activity totals</summary>          <section className={`panel extra-progress`} aria-label={`Extra activity progress`}>
             <h3>{`Extra activity progress`}</h3>
@@ -1835,7 +1876,8 @@ function GymApp({
           {moreView === `plan` && <>
           <details className="plan-schedule"><summary>Volleyball schedule <span>{volleyballSchedule.startTime}–{volleyballSchedule.endTime}</span></summary><TrainingSchedule schedule={volleyballSchedule} onSave={saveVolleyballSchedule} /></details>
 
-          <details className="plan-program"><summary>Jump training block</summary>
+          <VolleyballMasterProgram settings={profile.masterProgram} defaultStartDate={dateKey(addDays(new Date(`${masterWeekStart(today)}T12:00:00`), 7))} selectedDate={selectedDate} onSave={saveMasterProgram} disabled={profileSaving || !loaded} />
+          {!profile.masterProgram && <details className="plan-program"><summary>Jump training block</summary>
           <section className={`panel program-overview`}>
             <div className={`panel-heading`}>
               <h2>{`Your 8-week jump block`}</h2>
@@ -1854,12 +1896,12 @@ function GymApp({
               className={`small-note`}
             >{`Use these phases to adjust your sessions; set counts stay editable. Every two weeks, record body weight in Nutrition, CMJ height and your highest approach-jump touch. Test in the same place, shoes, warm-up and approach distance. Aim for gradual muscle gain while staying fast and springy.`}</p>
           </section>
-          </details>
-          <WeeklyPlanTools plan={profile.plan} templates={profile.customWorkouts ?? []} disabled={profileSaving || !loaded}
-            onChange={plan => saveProfile({ ...profile, plan })} onCreateWorkout={day => openCustomWorkout(null, day)}
+          </details>}
+          <WeeklyPlanTools plan={editableWeekPlan} templates={profile.customWorkouts ?? []} disabled={profileSaving || !loaded}
+            onChange={saveBaseWeek} onCreateWorkout={day => openCustomWorkout(null, day)}
             onEditTemplate={template => openCustomWorkout(template)} onReset={() => setResetPlanOpen(true)} />
           <div className={`plan-grid`}>
-            {profile.plan.map((e, t) => (
+            {(profile.masterProgram && !masterWeek ? editableWeekPlan : scheduledPlan).map((e, t) => (
               <section className={`panel plan-card`} key={t}>
                 <div className={`plan-card-top`}>
                   <span className={`small-label`}>
@@ -1871,7 +1913,7 @@ function GymApp({
                   </span>
                 </div>
                 <details className="plan-day-details">
-                  <summary><strong>{shortSessionName(e.name)}</strong><span>{e.kind === `sport` ? `${volleyballSchedule.startTime}–${volleyballSchedule.endTime}` : `${e.minutes} min`}</span><ChevronRight size={17} /></summary>
+                  <summary><strong>{shortSessionName(e.name)}</strong><span>{e.kind === `sport` && e.name === `Volleyball` ? `${volleyballSchedule.startTime}–${volleyballSchedule.endTime}` : e.name === `Match` ? `Time not set` : `${e.minutes} min`}</span><ChevronRight size={17} /></summary>
                   <PlanDayDetails plan={e} />
                 </details>
                 <button
@@ -2275,8 +2317,8 @@ function GymApp({
         initialWorkout={planDraft} title={`Edit ${editingExtraSession ? 'primer' : WEEKDAYS[editingDay] ?? 'day'}`} submitLabel="Save day"
         onSave={async workout => {
           if (editingDay === null) return false;
-          const saved = await saveProfile({ ...profile, plan: profile.plan.map((day, index) => index === editingDay
-            ? editingExtraSession ? { ...day, extraSession: workout } : workout : day) });
+          const saved = await saveBaseWeek(editableWeekPlan.map((day, index) => index === editingDay
+            ? editingExtraSession ? { ...day, extraSession: workout } : { ...workout, ...(day.extraSession ? { extraSession: day.extraSession } : {}) } : day));
           if (saved) { setEditingDay(null); setPlanDraft(null); }
           return saved;
         }} />
@@ -2289,7 +2331,7 @@ function GymApp({
         {(activeSession || editingHistoryId) && <p className="muted">Finish your current workout first.</p>}
         <button className="btn secondary full" onClick={() => { setWorkoutChooserOpen(false); openCustomWorkout(); }}><Plus size={18} /> Create workout</button>
       </DialogContent></Dialog>
-      <AlertDialog open={resetPlanOpen} onOpenChange={setResetPlanOpen}><AlertDialogContent className="app-dialog"><AlertDialogHeader><AlertDialogTitle>Restore recommended plan?</AlertDialogTitle><AlertDialogDescription>Your saved workouts, history and preferences stay. The weekly plan returns to its recommended schedule.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep my plan</AlertDialogCancel><AlertDialogAction disabled={profileSaving} onClick={async event => { event.preventDefault(); if (await saveProfile(resetRecommendedPlan(profile))) setResetPlanOpen(false); }}>Restore plan</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+      <AlertDialog open={resetPlanOpen} onOpenChange={setResetPlanOpen}><AlertDialogContent className="app-dialog"><AlertDialogHeader><AlertDialogTitle>Restore recommended plan?</AlertDialogTitle><AlertDialogDescription>Your saved workouts, history and preferences stay. The weekly plan returns to its recommended schedule.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep my plan</AlertDialogCancel><AlertDialogAction disabled={profileSaving} onClick={async event => { event.preventDefault(); if (await saveProfile(profile.masterProgram ? { ...profile, plan: createVolleyballMasterPlan(), masterMatchWeekend: createVolleyballMasterPlan(true).slice(5) } : resetRecommendedPlan(profile))) setResetPlanOpen(false); }}>Restore plan</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </Tabs>
   );
 }
@@ -2532,7 +2574,7 @@ function ExerciseTracker({
                     ? timedInMinutes
                       ? `min`
                       : `sec`
-                    : `reps`}
+                    : exercise.quantityUnit ?? `reps`}
                 </TableHead>
                 {exercise.measurement && <TableHead>{`cm`}</TableHead>}
                 <TableHead className={`done-head`}>{`Done`}</TableHead>
@@ -2592,7 +2634,7 @@ function ExerciseTracker({
                         step={timedInMinutes ? `0.1` : `1`}
                         inputMode={timedInMinutes ? `decimal` : `numeric`}
                         placeholder={exercise.target.match(/\d+/)?.[0] ?? `—`}
-                        aria-label={`${exercise.name} set ${n + 1} ${exercise.mode === `timed` ? (timedInMinutes ? `minutes` : `seconds`) : `reps`}`}
+                        aria-label={`${exercise.name} set ${n + 1} ${exercise.mode === `timed` ? (timedInMinutes ? `minutes` : `seconds`) : exercise.quantityUnit === `m` ? `distance in metres` : `reps`}`}
                         value={
                           exercise.mode === `timed`
                             ? t.seconds === null

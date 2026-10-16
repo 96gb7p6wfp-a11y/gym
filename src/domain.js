@@ -9,6 +9,7 @@ import {
   enum as zEnum,
 } from "zod";
 import { ZodIssueCode } from "zod";
+import { MasterProgramSettingsSchema } from './volleyball-master-plan.ts';
 
 var NutritionAmountSchema = zNumber().finite().min(0).max(2e4),
   FoodSchema = zObject({
@@ -834,6 +835,7 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     exerciseId: zString().min(1).max(120).optional(),
     defaultKg: optionalAmount(2e3).optional(),
     targetRpe: zNumber().finite().min(1).max(10).optional(),
+    quantityUnit: zLiteral('m').optional(),
   }),
   PlanDaySchema = zObject({
     name: zString().trim().min(1).max(80),
@@ -849,8 +851,7 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     (workout) => new Set(workout.exercises.map((exercise) => exercise.key)).size === workout.exercises.length,
     `Exercises need unique identifiers.`,
   ),
-  ProfileSchema = zObject({
-    plan: zArray(
+  ProfileWeeklyPlanSchema = zArray(
       PlanDaySchema.extend({
         extraSession: PlanDaySchema.optional(),
       }).refine(
@@ -862,6 +863,11 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
         `Use a unique name for each exercise in a session.`,
       ),
     ).length(7),
+  ProfileSchema = zObject({
+    plan: ProfileWeeklyPlanSchema,
+    masterProgram: MasterProgramSettingsSchema.optional(),
+    preMasterPlan: ProfileWeeklyPlanSchema.optional(),
+    masterMatchWeekend: zArray(PlanDaySchema.refine(day => new Set(day.exercises.map(exercise => exercise.key)).size === day.exercises.length, 'Exercises need unique identifiers.')).length(2).optional(),
     customWorkouts: zArray(CustomWorkoutSchema).max(100).refine(
       (workouts) => new Set(workouts.map((workout) => workout.id)).size === workouts.length,
       `Saved workouts need unique identifiers.`,
@@ -1020,10 +1026,10 @@ function estimatedCalories(e) {
   return e.reduce(
     (e, t) =>
       e +
-      t.logs.reduce(
+      (t.quantityUnit ? 0 : t.logs.reduce(
         (e, t) => e + (t.done ? (t.kg ?? 0) * (t.reps ?? 0) : 0),
         0,
-      ),
+      )),
     0,
   );
 }
@@ -1037,6 +1043,7 @@ function getCalories(e, t = Date.now()) {
     : e.watchCalories;
 }
 function topSet(e) {
+  if (e?.quantityUnit) return undefined;
   return e?.logs
     .filter((e) => e.done && (e.kg ?? 0) > 0 && (e.reps ?? 0) > 0)
     .sort(

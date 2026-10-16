@@ -14,6 +14,11 @@ export function getSessionPurpose(plan: PurposePlan, _dayIndex?: number): Sessio
   const name = plan.name ?? 'Workout';
   const normalized = name.toLowerCase();
   const goal = plan.goal;
+  if (name === 'Match') return { title: 'Match', subtitle: 'Your highest priority today', focus: 'Compete fresh · fuel well', intensity: 'Match effort', fatigue: 'No extra plyometrics or evening legs' };
+  if (goal && /main jump.*heavy lower/i.test(name)) return { title: name, subtitle: 'Approach height + maximal force', focus: 'Eight maximal approaches · six CMJs in the build weeks', intensity: 'Quality first · full recovery', fatigue: '2–3 min after each complex movement' };
+  if (goal && /reactive.*hard lower/i.test(name)) return { title: name, subtitle: 'Reactive takeoff + supporting strength', focus: 'Fast contacts · controlled lifting', intensity: 'Readiness first', fatigue: 'Protect jump quality after Friday' };
+  if (goal && /pre-match primer/i.test(name)) return { title: name, subtitle: 'Fast + springy for tomorrow', focus: 'Only three approach jumps · easy structural work', intensity: 'Low fatigue', fatigue: 'Do not add work when you feel good' };
+  if (goal && /^upper power [ab]$/i.test(name)) return { title: name, subtitle: /A$/.test(name) ? 'Hitting power + back, shoulders and abs' : 'Upper power + athletic muscle', focus: 'Fast throws · controlled pulling and pressing', intensity: 'Power + strength', fatigue: 'Keep enough energy for volleyball' };
   if (plan.kind === 'sport' || goal === 'sport' || /volleyball/.test(normalized)) return {
     title: name, subtitle: 'Sport skills + match performance', focus: 'Quality movement · fuel well', intensity: 'Sport session', fatigue: 'Manage extra leg work',
   };

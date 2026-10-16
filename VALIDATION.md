@@ -9,9 +9,9 @@ website/iPhone wrapper and native build configuration have been removed.
 | --- | --- |
 | Clean `npm ci` | Passed; 132 packages installed, resolved dependencies recorded in `package-lock.json` |
 | `npm run typecheck` | Passed |
-| `npm test` | Passed: 247 tests, zero failures or skips |
+| `npm test` | Passed: 261 tests, zero failures or skips |
 | `npm run build` | Passed; TypeScript check, Vite production bundle and generated service worker |
-| `npm run test:web` | Passed: 82 real Chromium application workflows, zero failures or skips (3.3 minutes) |
+| `npm run test:web` | Passed: 90 real Chromium application workflows, zero failures or skips (4.0 minutes) |
 | Final PWA metadata check | Passed in the full production suite: installation, manifest/icons and offline workout workflows |
 | Development server | Passed; HTTP 200 for the Vite page and React entry module |
 | Visual review | Redesigned Today, Train, focused workout, Progress, Nutrition, More, Routine, plan and report reviewed; small-phone rest controls and desktop layout checked |
@@ -186,8 +186,8 @@ plans and nutrition use the local storage key `setline.gym.v1`; network access i
 not required to save them.
 
 The final production output contains 13 precached files. The main JavaScript
-bundle is 1,246.47 kB (368.80 kB gzip), the lazy FIT decoder is 431.69 kB
-(64.30 kB gzip), and CSS is 332.27 kB (54.47 kB gzip). Vite
+bundle is 1,279.95 kB (377.97 kB gzip), the lazy FIT decoder is 431.69 kB
+(64.30 kB gzip), and CSS is 335.03 kB (54.91 kB gzip). Vite
 reports its standard large-chunk advisory; the build completes successfully.
 
 The reusable cloud install/start configuration was saved as a draft. Publishing
@@ -274,6 +274,43 @@ Seven new unit checks cover gym-day counting and date-spaced chart coordinates.
 No storage schema or key changes are required. The same user records, PWA identity,
 manifest paths and versioned writes remain in use. The source shell and generated
 offline cache share the updated launch color.
+
+## Eight-week volleyball-first master plan
+
+The complete user-supplied plan is available through More → Training plan. Its
+activation preserves the prior weekly plan and does not change recorded or active
+workouts. Match weeks, optional work and date-specific readiness round-trip with
+the same v1 local storage and backup format. No match or completed activity is
+invented; Sunday match time remains unset, and running/PE are scheduled cues.
+
+Fourteen new unit checks cover both weekly variants, exact Wednesday maximal-jump
+doses, adjacent/rested complex pairs, week 4 and week 8 prescriptions, calendar/DST
+boundaries, readiness including the separate Tuesday primer, optional work, custom
+match weekends, distance logging, conservative primer progression and atomic
+backup rejection. They also prevent scheduled PE from being counted twice when
+the same PE is logged as an extra. Existing schema, history and nutrition
+regressions also pass.
+
+Eight new browser workflows exercise activation over a customized legacy plan,
+match/no-match weekends, Saturday readiness, immutable deload session snapshots,
+decimal load plus metre logging, returning to the original plan, editing base
+prescriptions during a deload and independent match-weekend editing. The exercise
+library contains 158 local movements. Carries added from it retain metres; they
+are excluded from repetition volume and strength PR calculations.
+
+The additional visual review inspected 24 program states at 320×568, 390×844 and
+844×390 in light/dark mode, with simulated iPhone safe areas. Today keeps the
+longer session name, goal, Start and weekly progress above small-phone navigation.
+No horizontal document overflow or page errors were observed. These remain
+Chromium checks, not a physical iPhone/Safari run.
+
+Prescription choices and activation instructions are in
+[VOLLEYBALL_MASTER_PLAN.md](docs/VOLLEYBALL_MASTER_PLAN.md).
+
+After the final PE fueling correction, all 261 unit tests and the production
+build passed again. Sixteen focused browser checks for the program, nutrition,
+installation, manifest and offline workout saving passed against that final
+bundle. The complete 90-workflow production suite also passed without skips.
 
 ## Practical limits
 

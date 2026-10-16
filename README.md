@@ -7,9 +7,16 @@ or native iPhone signing is required.
 
 ## Features
 
+- **8-week volleyball-first plan:** in More → Training plan, choose a start Monday,
+  mark Sunday match weeks, then tap **Use this plan**. The prior weekly plan is
+  kept for restoration. Match weeks use Saturday's short primer; other weeks use
+  Reactive + Hard Lower B. Week 4 deload and week 8 peak/retest adjust new session
+  doses. Date-specific readiness moderates jumping; Saturday requires a check.
+  Running and school PE remain scheduled cues until you log them. Optional arms
+  and Tuesday pogos start off. [Plan details](docs/VOLLEYBALL_MASTER_PLAN.md).
 - **Personal training:** purpose-led strength and power sessions around Tuesday/Friday
   volleyball, with fast controls, quiet exercise intent and deliberate light/dark modes.
-- **Exercise library:** 146 local movements, search-first selection and optional muscle,
+- **Exercise library:** 158 local movements, search-first selection and optional muscle,
   goal, equipment, movement and training-type filters. Alternatives rank similar stimuli
   and explain tradeoffs in one line.
 - **Change today:** add, replace, move or remove remaining work without rewriting the

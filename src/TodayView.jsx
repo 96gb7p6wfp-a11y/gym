@@ -12,7 +12,7 @@ const number = value => value.toLocaleString('en-GB', { maximumFractionDigits: 1
 export function TodayView({ date, plan, session, completed, activities, nutrition,
   sessions = [], weeklyPlan = [], performance, bodyWeight, today = currentReportDate(),
   volleyballSchedule, onStart, onTrain, onViewLog, onNutrition, onPlan, onActivity,
-  onProgress, disabled, daySelector }) {
+  onProgress, disabled, daySelector, programLabel, scheduledEvents = [] }) {
   const day = new Date(`${date}T12:00:00`);
   const active = session?.status === 'active';
   const unscheduled = !active && !completed && plan.exercises.length === 0;
@@ -49,12 +49,12 @@ export function TodayView({ date, plan, session, completed, activities, nutritio
 
   return <div className="today-view">
     <section className={`today-hero${shownPlan.kind === 'recovery' ? ' today-hero--recovery' : ''}`} aria-label="Your day">
-      <p className="today-session-status">{active ? 'IN PROGRESS' : completed ? 'WORKOUT COMPLETE' : shownPlan.kind === 'recovery' ? 'RECOVERY DAY' : 'YOUR WORKOUT'}</p>
+      <p className="today-session-status">{active ? 'IN PROGRESS' : completed ? 'WORKOUT COMPLETE' : shownPlan.kind === 'recovery' ? 'RECOVERY DAY' : 'YOUR WORKOUT'}{!active && !completed && programLabel ? ` · ${programLabel}` : ''}</p>
       <h2>{purpose.title}</h2>
       <p className="today-hero__purpose">{purpose.subtitle}</p>
       <p className="today-hero__meta">{active ? `${setCount} / ${plannedSetCount} sets complete`
         : completed ? `${completedMinutes} min · ${setCount} completed sets`
-          : plan.kind === 'sport' ? `${volleyballSchedule.startTime}–${volleyballSchedule.endTime} · Berlin time`
+          : plan.kind === 'sport' ? plan.name === 'Match' ? 'Match · set actual duration when logging' : `${volleyballSchedule.startTime}–${volleyballSchedule.endTime} · Berlin time`
             : `${plan.minutes} min${plan.kind === 'recovery' ? ' · easy pace' : ` · ${plan.exercises.length} exercises`}`}</p>
       {active && <div className="today-session-track" role="progressbar" aria-label="Current workout" aria-valuemin={0} aria-valuemax={plannedSetCount} aria-valuenow={setCount}><span style={{ width: `${plannedSetCount ? setCount / plannedSetCount * 100 : 0}%` }} /></div>}
       <button className="btn today-primary" disabled={disabled} onClick={action}>{actionLabel}<ArrowRight size={19} aria-hidden="true" /></button>
@@ -74,6 +74,7 @@ export function TodayView({ date, plan, session, completed, activities, nutritio
 
     {nextVolleyball && <div className="today-next"><span>Next · Volleyball</span><strong>{nextVolleyball.toLocaleDateString('en-GB', { weekday: 'short' })} · {volleyballSchedule.startTime}</strong></div>}
 
+    {scheduledEvents.length > 0 && <div className="master-day-note" aria-label="Also planned">{scheduledEvents.map(event => <p key={event.name}><strong>{event.name}</strong><span>{event.detail}</span></p>)}</div>}
     <div className="today-schedule">{daySelector}<button className="today-plan-link text-button" onClick={onPlan}>Weekly plan<ChevronRight size={16} aria-hidden="true" /></button></div>
 
     <button className="today-nutrition" onClick={onNutrition}>

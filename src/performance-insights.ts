@@ -6,7 +6,7 @@ import { reportWeekStart, shiftReportDate, type ReportNutritionRecord, type Repo
 
 type LoggedExercise = ReportSession['exercises'][number];
 type LoggedSet = LoggedExercise['logs'][number];
-export type ProgressionExercise = Pick<LoggedExercise, 'key' | 'name' | 'group' | 'target' | 'mode'> & Partial<Pick<LoggedExercise, 'measurement'>> & { exerciseId?: string };
+export type ProgressionExercise = Pick<LoggedExercise, 'key' | 'name' | 'group' | 'target' | 'mode'> & Partial<Pick<LoggedExercise, 'measurement' | 'quantityUnit' | 'targetRpe'>> & { exerciseId?: string };
 export interface ProgressionRecommendation {
   kind: 'load' | 'reps' | 'hold' | 'reduce' | 'quality' | 'baseline';
   title: string;
@@ -17,7 +17,7 @@ export interface ProgressionRecommendation {
   reps?: number;
   previous?: { kg: number | null; reps: number };
 }
-export interface ProgressionContext { volleyballWithin24Hours?: boolean; loadIncrementKg?: number; readiness?: { energy: 'low' | 'normal' | 'high'; soreness: 'low' | 'moderate' | 'high' } }
+export interface ProgressionContext { volleyballWithin24Hours?: boolean; loadIncrementKg?: number; lowFatigueSession?: boolean; readiness?: { energy: 'low' | 'normal' | 'high'; soreness: 'low' | 'moderate' | 'high' } }
 export interface WeightPoint { date: string; kg: number }
 export interface WeightWeek { date: string; kg: number; days: number; adequate: boolean }
 export interface WeightSummary {
@@ -97,6 +97,9 @@ export function getProgressionRecommendation(exercise: ProgressionExercise, sess
   const previous = history.at(-2)?.exercise;
   const intent = exerciseIntent(exercise);
   const base = { intent };
+  if (context.lowFatigueSession || (exercise.targetRpe != null && exercise.targetRpe <= 6)) return { ...base, kind: 'quality', title: 'Keep this easy', cue: 'Follow the planned effort. Keep plenty in reserve; do not add load or sets today.', reason: 'Primer or reduced-readiness work prioritizes freshness over overload.' };
+  if (exercise.quantityUnit) return { ...base, kind: 'quality', title: 'Distance + posture', cue: 'Use the planned metres per side. Stay tall; do not chase reps or extra load.', reason: 'Carry distance is not a repetition or a 1RM test.' };
+  if (/assisted.*pull.?up|pull.?up.*assisted/i.test(exercise.name)) return { ...base, kind: 'quality', title: 'Clean pulling first', cue: 'Build to clean 8/8/8, then gradually reduce assistance. Kg records added load only.', reason: 'More assistance is not more strength; keep the assistance setup in workout notes.' };
   if (context.readiness?.energy === 'low' || (context.readiness?.soreness === 'high' && lowerBody(exercise))) return { ...base, kind: powerExercise(exercise) ? 'quality' : 'hold', title: 'Keep it easy today', cue: powerExercise(exercise) ? 'Use fewer crisp contacts. Stop if jump height or landing control falls.' : 'Keep a comfortable load. Reduce a set if your warm-up feels heavy.', reason: 'Your energy or leg soreness check-in suggests moderating this movement.' };
   if (powerExercise(exercise) || exercise.measurement) return {
     ...base, kind: 'quality', title: 'Quality first', cue: 'Keep reps fast. Finish before jump height or landing control drops.',
@@ -185,6 +188,7 @@ export function getJumpSummaries(sessions: readonly ReportSession[], jumps: read
   };
   for (const jump of jumps) if (validDate(jump.date) && jump.date <= today && positive(jump.cm)) add(jump.type, jump.measurement, { date: jump.date, cm: jump.cm, id: jump.id });
   for (const session of savedSessions(sessions, today)) for (const exercise of session.exercises) {
+    if (exercise.quantityUnit || /assisted.*pull.?up|pull.?up.*assisted/i.test(exercise.name)) continue;
     const type = inferredJumpType(exercise.name);
     if (!type || !exercise.measurement || exercise.measurement === 'distance') continue;
     const values = measuredSets(exercise).map(log => log.measurementCm!);
@@ -212,6 +216,7 @@ export function getPersonalRecords(sessions: readonly ReportSession[], today: st
     if (!old || value > old.value) records.set(key, { key, exerciseKey: exercise.exerciseId ?? exercise.key, name: exercise.name, kind, value: round(value), unit, date: session.date, sessionId: session.id, context, isNew: !!old && (old.sessionId !== session.id || old.isNew) });
   }
   for (const session of savedSessions(sessions, today)) for (const exercise of session.exercises) {
+    if (exercise.quantityUnit || /assisted.*pull.?up|pull.?up.*assisted/i.test(exercise.name)) continue;
     if (exercise.measurement) {
       for (const log of measuredSets(exercise)) consider(exercise, session, exercise.measurement, log.measurementCm!, 'cm', `${exercise.measurement === 'touch' ? 'Highest touch' : exercise.measurement === 'distance' ? 'Jump distance' : 'Jump height'} · ${log.reps ?? 1} reps`);
       continue;
@@ -260,7 +265,7 @@ export function getPerformanceSummary({ sessions, activities = [], plan = [], nu
     const date = shiftReportDate(today, -i), day = (new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7;
     if (plan[day]?.kind === 'strength') { dueDays++; if (month.some(s => s.kind === 'strength' && s.date === date)) completedDays++; }
   }
-  const volume = (items: readonly ReportSession[]) => items.reduce((total, s) => total + s.exercises.filter(e => e.mode === 'weight' && !e.measurement).reduce((sum, e) => sum + strengthSets(e).reduce((n, log) => n + log.kg! * log.reps!, 0), 0), 0);
+  const volume = (items: readonly ReportSession[]) => items.reduce((total, s) => total + s.exercises.filter(e => e.mode === 'weight' && !e.measurement && !e.quantityUnit && !/assisted.*pull.?up|pull.?up.*assisted/i.test(e.name)).reduce((sum, e) => sum + strengthSets(e).reduce((n, log) => n + log.kg! * log.reps!, 0), 0), 0);
   const setCount = (items: readonly ReportSession[]) => items.reduce((total, s) => total + s.exercises.reduce((n, e) => n + e.logs.filter(l => l.done).length, 0), 0);
   const last7 = saved.filter(s => s.date >= shiftReportDate(today, -6));
   const before7 = saved.filter(s => s.date >= shiftReportDate(today, -13) && s.date < shiftReportDate(today, -6));
@@ -281,7 +286,7 @@ export function getPerformanceSummary({ sessions, activities = [], plan = [], nu
           : { level: 'unknown', label: 'No load baseline', cue: 'Log training and how you feel to build context. Recovery cannot be inferred from missing logs.' };
   const strengthChanges: PerformanceSummary['strengthChanges'] = [];
   const exerciseGroups = new Map<string, { date: string; exercise: LoggedExercise }[]>();
-  for (const session of month) for (const exercise of session.exercises) if (exercise.mode === 'weight' && !exercise.measurement && strengthSets(exercise).length) exerciseGroups.set(identity(exercise), [...(exerciseGroups.get(identity(exercise)) ?? []), { date: session.date, exercise }]);
+  for (const session of month) for (const exercise of session.exercises) if (exercise.mode === 'weight' && !exercise.measurement && !exercise.quantityUnit && !/assisted.*pull.?up|pull.?up.*assisted/i.test(exercise.name) && strengthSets(exercise).length) exerciseGroups.set(identity(exercise), [...(exerciseGroups.get(identity(exercise)) ?? []), { date: session.date, exercise }]);
   for (const items of exerciseGroups.values()) {
     const first = items[0], last = items.at(-1)!;
     if (first.date === last.date) continue;

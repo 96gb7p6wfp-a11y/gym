@@ -21,6 +21,7 @@ export interface LibraryExercise {
   substitutions: string[];
   perSide: boolean;
   measurement?: 'touch' | 'height' | 'distance';
+  quantityUnit?: 'm';
   aliases?: string[];
   legacyKeys?: string[];
 }
@@ -174,7 +175,7 @@ family('Core', 'Anti-extension', 'Trunk control and bracing', 'Stable force tran
 family('Core', 'Lateral stability', 'Lateral trunk strength', 'Hip and landing control', [
   ['side-plank', 'Side Plank', 'Core|Glutes', 'Mat', { legacyKeys: ['side-plank'], substitutions: ['suitcase-carry', 'copenhagen-plank'] }],
   ['copenhagen-plank', 'Copenhagen Plank', 'Adductors|Core', 'Bench', { legacyKeys: ['copenhagen'], difficulty: 'Intermediate', recommendedReps: '15–25 sec', substitutions: ['side-plank', 'adductor-squeeze'], cues: ['Start with the knee supported.', 'Keep a steady shoulder-to-hip line.'], mistakes: ['Starting with a long lever too soon.', 'Continuing through groin pain.'] }],
-  ['suitcase-carry', 'Suitcase Carry', 'Core|Forearms|Glutes', 'Dumbbell|Kettlebell', { substitutions: ['side-plank', 'farmer-carry'] }],
+  ['suitcase-carry', 'Suitcase Carry', 'Core|Forearms|Glutes', 'Dumbbell|Kettlebell', { quantityUnit: 'm', perSide: true, recommendedReps: '20–30 m', substitutions: ['side-plank', 'farmer-carry'] }],
 ], { perSide: true, mode: 'timed', recommendedSets: 2, recommendedReps: '20–40 sec', rest: 60 });
 family('Core', 'Trunk flexion', 'Abdominal strength', 'Trunk and hip control', [
   ['cable-crunch', 'Cable Crunch', 'Core', 'Cable', { substitutions: ['reverse-crunch', 'hanging-knee-raise'] }],
@@ -276,6 +277,49 @@ family('Sport', 'Volleyball', 'Sport-specific skill and performance', 'Practice 
   ['volleyball', 'Volleyball practice', 'Legs|Shoulders|Core', 'Court|Volleyball', { legacyKeys: ['volleyball'], mode: 'timed', recommendedSets: 1, recommendedReps: '120 min', rest: 0, cues: ['Arrive warmed up and fuelled.', 'Adjust extra jump work to the practice load.'], mistakes: ['Adding hard leg work when already fatigued.', 'Ignoring a drop in landing control.'] }],
 ]);
 
+family('Strength', 'Horizontal pull', 'Back thickness and scapular control', 'Stable pulling for upper-body development', [
+  ['high-row-machine', 'High Row Machine', 'Back|Biceps', 'Machine', { substitutions: ['chest-supported-row', 'cable-row'], cues: ['Keep the chest supported.', 'Drive elbows down and back without shrugging.'], mistakes: ['Rocking off the pad.', 'Shrugging to finish the pull.'] }],
+  ['one-arm-cable-row', 'One-Arm Cable Row', 'Back|Biceps|Core', 'Cable', { perSide: true, substitutions: ['cable-row', 'chest-supported-row'], cues: ['Keep ribs and pelvis still.', 'Pull the elbow back; return slowly.'] }],
+]);
+family('Strength', 'Horizontal push', 'Upper-chest strength and muscle', 'Controlled pressing for upper-body development', [
+  ['incline-machine-press', 'Incline Machine Press', 'Chest|Shoulders|Triceps', 'Machine', { aliases: ['Low-Incline Machine Press'], substitutions: ['incline-dumbbell-press', 'machine-chest-press'], cues: ['Set handles around the upper chest.', 'Keep the upper back supported and press smoothly.'], mistakes: ['Shrugging into the press.', 'Lifting the back to finish reps.'] }],
+]);
+family('Strength', 'Single-leg squat', 'Single-leg strength and stability', 'Takeoff and landing control', [
+  ['smith-bulgarian', 'Smith Machine Bulgarian Split Squat', 'Quads|Glutes', 'Smith machine|Bench', { perSide: true, substitutions: ['bulgarian-split-squat', 'split-squat'], cues: ['Start with the left leg; match both sides.', 'Use a low rear-foot support; load the front leg.'], mistakes: ['Pushing off the back leg.', 'Adding extra reps only to the stronger side.'] }],
+]);
+family('Strength', 'Hip extension', 'Hip-extension force and glute strength', 'Supporting takeoff strength', [
+  ['hip-thrust-machine', 'Hip Thrust Machine', 'Glutes|Hamstrings', 'Machine', { substitutions: ['hip-thrust', 'glute-bridge'], cues: ['Brace with ribs down.', 'Extend the hips without arching the low back.'], mistakes: ['Finishing with the lumbar spine.', 'Bouncing through the bottom.'] }],
+]);
+family('Plyometric', 'Reactive jump', 'Quick ground contact and vertical rebound', 'Reactive takeoff for volleyball', [
+  ['drop-jump', 'Drop Jump', 'Calves|Quads|Glutes', 'Low box', { difficulty: 'Intermediate', substitutions: ['pogo-jump', 'low-hurdle-hop'], cues: ['Start around 20–30 cm and step off.', 'Rebound vertically with a quick, controlled contact.'], mistakes: ['Jumping off the box.', 'Using a box so high that contact becomes slow.'] }],
+], { mode: 'bodyweight', recommendedSets: 3, recommendedReps: '2 reps', rest: 150 });
+family('Core', 'Anti-extension', 'Trunk control without low-back sag', 'Force transfer with controlled ribs and pelvis', [
+  ['body-saw', 'Body Saw', 'Core|Shoulders', 'Sliders|Mat', { substitutions: ['ab-wheel', 'plank'], cues: ['Start in a forearm plank.', 'Move only as far as the ribs and pelvis stay controlled.'], mistakes: ['Letting the low back sag.', 'Moving farther than you can brace.'] }],
+], { mode: 'bodyweight', recommendedReps: '6–10 reps', rest: 60 });
+family('Stability', 'Foot control', 'Foot intrinsic control', 'Stable tripod contact', [
+  ['short-foot', 'Short-Foot', 'Feet', 'Bodyweight', { cues: ['Keep heel and both toe bases down.', 'Gently shorten the arch without curling toes.'], mistakes: ['Gripping with the toes.', 'Rolling to the outside edge of the foot.'], substitutions: ['single-leg-balance'] }],
+], { mode: 'timed', recommendedSets: 2, recommendedReps: '20 sec', perSide: true, rest: 30 });
+family('Mobility', 'Breathing', 'Rib and pelvis control', 'A calm start to lower-body training', [
+  ['90-90-breathing', '90/90 Breathing', 'Core', 'Mat|Wall', { cues: ['Rest feet on a wall with hips and knees bent.', 'Exhale gently and let the ribs settle.'], mistakes: ['Forcing a maximal breath.', 'Arching the low back.'], substitutions: ['dead-bug'] }],
+], { mode: 'bodyweight', recommendedSets: 1, recommendedReps: '4 breaths', rest: 0 });
+family('Speed', 'Approach technique', 'Approach rhythm and acceleration', 'Convert run-up speed into a tall takeoff', [
+  ['slow-approach-rhythm', 'Slow L-R-L Rhythm', 'Legs|Core', 'Court', { cues: ['Use your normal takeoff pattern; mirror the example if needed.', 'Build speed into a longer penultimate and quick plant.'], mistakes: ['Forcing the wrong foot pattern.', 'Rushing before the rhythm is controlled.'], substitutions: ['penultimate-step'] }],
+], { mode: 'bodyweight', recommendedSets: 2, recommendedReps: '3 reps', rest: 45 });
+family('Mobility', 'Lunge mobility', 'Hip mobility with trunk control', 'Prepare a stable approach and landing', [
+  ['walking-lunge-reach', 'Walking Lunge + Reach', 'Hip flexors|Glutes|Core', 'Bodyweight', { cues: ['Take a comfortable lunge step.', 'Reach tall without arching the low back.'], mistakes: ['Forcing a deep stride.', 'Losing control of the ribs and pelvis.'], substitutions: ['walking-lunge-rotation', 'hip-switch'] }],
+], { mode: 'bodyweight', perSide: true, recommendedReps: '5 reps', recommendedSets: 1, rest: 30 });
+family('Strength', 'Hip adduction', 'Adductor strength and control', 'Supporting lateral court movement', [
+  ['adductor-machine', 'Adductor Machine', 'Adductors', 'Machine', { cues: ['Keep the pelvis supported.', 'Close and reopen the legs slowly through a comfortable range.'], mistakes: ['Bouncing at end range.', 'Forcing a painful stretch.'], substitutions: ['copenhagen-plank'] }],
+], { recommendedSets: 2, recommendedReps: '10–15 reps', rest: 60 });
+const masterAliases: Record<string, string[]> = {
+  'pull-up': ['Pull-Up / Assisted Pull-Up'], 'arm-swing-jump': ['CMJ with Arm Swing'],
+  'landmine-press': ['Half-Kneeling Landmine Press'], 'low-hurdle-hop': ['Hurdle Hops'],
+  'ab-wheel': ['Ab Wheel'], 'lateral-band-walk': ['Mini-Band Lateral Walk'],
+};
+for (const item of catalogue) if (masterAliases[item.id]) item.aliases = [...(item.aliases ?? []), ...masterAliases[item.id]];
+catalogue.find(item => item.id === 'ab-wheel')!.substitutions.unshift('body-saw');
+catalogue.find(item => item.id === 'copenhagen-plank')!.substitutions.unshift('adductor-machine');
+
 // Keep the original app's movement identity so new library entries can find old history.
 // The generic pulldown gets a new ID; the existing neutral-grip movement owns lat-pulldown.
 const canonicalIds = new Map(catalogue.map(item => [item.id, item.id === 'lat-pulldown' ? 'standard-lat-pulldown' : item.legacyKeys?.[0] ?? item.id]));
@@ -358,6 +402,6 @@ export function toPlanExercise(item: LibraryExercise) {
   return {
     key: `library-${crypto.randomUUID()}`, exerciseId: item.id, name: item.name, group: item.muscles[0],
     sets: item.recommendedSets, target: item.recommendedReps, mode: item.mode, rest: item.rest, perSide: item.perSide,
-    cue: item.cues.join(' '), ...(item.measurement ? { measurement: item.measurement } : {}),
+    cue: item.cues.join(' '), ...(item.measurement ? { measurement: item.measurement } : {}), ...(item.quantityUnit ? { quantityUnit: item.quantityUnit } : {}),
   };
 }

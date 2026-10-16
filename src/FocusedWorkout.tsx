@@ -40,6 +40,7 @@ export interface FocusedExercise {
   timerSetId?: string | null;
   exerciseId?: string;
   targetRpe?: number;
+  quantityUnit?: 'm';
 }
 
 export interface FocusedWorkoutProps {
@@ -70,7 +71,7 @@ function previousLabel(exercise: FocusedExercise, log: FocusedSetLog | undefined
     const inMinutes = exercise.target.includes('min');
     return `${number((log.seconds ?? 0) / (inMinutes ? 60 : 1))} ${inMinutes ? 'min' : 'sec'}`;
   }
-  return `${log.kg == null ? 'Bodyweight' : `${number(log.kg)} kg`} × ${log.reps ?? '—'}`;
+  return `${log.kg == null ? 'Bodyweight' : `${number(log.kg)} kg`} × ${log.reps ?? '—'}${exercise.quantityUnit ? ' m' : ''}`;
 }
 
 /** The existing session mutations remain the only source of workout data. */
@@ -228,16 +229,16 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                 </label>
               )}
               <label className="focused-set-field">
-                <span>Reps</span>
-                <div className="focused-number-stepper"><button type="button" aria-label={`Decrease ${exercise.name} reps`} onClick={() => onSet(exercise.key, log.id, { reps: Math.max(1, (log.reps ?? Number(exercise.target.match(/\d+/)?.[0] ?? 1)) - 1) })}><Minus size={17} /></button><input className="set-input" type="number" min="0"
+                <span>{exercise.quantityUnit === 'm' ? 'Distance · m / side' : 'Reps'}</span>
+                <div className="focused-number-stepper"><button type="button" aria-label={`Decrease ${exercise.name} ${exercise.quantityUnit ? 'distance' : 'reps'}`} onClick={() => onSet(exercise.key, log.id, { reps: Math.max(1, (log.reps ?? Number(exercise.target.match(/\d+/)?.[0] ?? 1)) - 1) })}><Minus size={17} /></button><input className="set-input" type="number" min="0"
                   max={1000} step="1" inputMode="numeric"
                   placeholder={exercise.target.match(/\d+/)?.[0] ?? '0'}
-                  aria-label={`${exercise.name} set ${setIndex + 1} reps`}
+                  aria-label={`${exercise.name} set ${setIndex + 1} ${exercise.quantityUnit === 'm' ? 'distance in metres' : 'reps'}`}
                   value={log.reps ?? ''}
                   onChange={(event) => {
                     const next = amount(event.target.value, 1000);
                     onSet(exercise.key, log.id, { reps: next == null ? null : Math.trunc(next) });
-                  }} /><button type="button" aria-label={`Increase ${exercise.name} reps`} onClick={() => onSet(exercise.key, log.id, { reps: Math.min(1000, (log.reps ?? Number(exercise.target.match(/\d+/)?.[0] ?? 0)) + 1) })}><Plus size={17} /></button></div>
+                  }} /><button type="button" aria-label={`Increase ${exercise.name} ${exercise.quantityUnit ? 'distance' : 'reps'}`} onClick={() => onSet(exercise.key, log.id, { reps: Math.min(1000, (log.reps ?? Number(exercise.target.match(/\d+/)?.[0] ?? 0)) + 1) })}><Plus size={17} /></button></div>
               </label>
               {exercise.measurement && (
                 <label className="focused-set-field">
