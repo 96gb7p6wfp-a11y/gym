@@ -1,4 +1,5 @@
 import { DEFAULT_PROFILE, NutritionPayloadSchema, ProfileSchema, SessionSchema } from './domain.js';
+import { PerformanceDataSchema, emptyPerformance, type PerformanceData } from './performance-data.ts';
 import { ExtraActivitySchema, type ActivityRecord } from './activities.ts';
 import { defaultReminderState, isTrackable, ReminderSchema, ReminderEntrySchema, type ReminderState, type ReminderRecord, type ReminderEntryRecord } from './reminders.ts';
 
@@ -17,6 +18,8 @@ interface LocalState {
   nutrition: NutritionRecord[];
   activities: ActivityRecord[];
   reminders: ReminderState;
+  performance?: PerformanceData;
+  performanceVersion?: number;
 }
 
 function object(value: unknown): value is RecordValue {
@@ -93,7 +96,19 @@ function parseState(value: unknown): LocalState {
   if (new Set(sessions.map((entry) => entry.session.id)).size !== sessions.length || new Set(nutrition.map((entry) => entry.id)).size !== nutrition.length || new Set(activities.map((entry) => entry.activity.id)).size !== activities.length) {
     throw new Error('The backup contains duplicate records.');
   }
-  return { schemaVersion: 1, profile: profile.data, profileVersion: value.profileVersion, sessions, nutrition, activities, reminders };
+  // New performance data is optional: reading a legacy backup must not invent
+  // records or materialize fields. Present invalid data always rejects atomically.
+  let performance: PerformanceData | undefined;
+  if (Object.hasOwn(value, 'performance') || Object.hasOwn(value, 'performanceVersion')) {
+    const parsed = PerformanceDataSchema.safeParse(value.performance);
+    if (!parsed.success || !version(value.performanceVersion)) throw new Error('The saved performance records are invalid.');
+    performance = parsed.data;
+  }
+  return {
+    schemaVersion: 1, profile: profile.data, profileVersion: value.profileVersion,
+    sessions, nutrition, activities, reminders,
+    ...(performance ? { performance, performanceVersion: value.performanceVersion as number } : {}),
+  };
 }
 
 /** The reference's request contract, implemented entirely in this device's storage. */
@@ -117,16 +132,24 @@ export function createLocalClient(storage: StoragePort) {
 
   async function request(path: string, payload?: unknown, defaultProfile: unknown = DEFAULT_PROFILE): Promise<RecordValue> {
     if (path === '/api/nutrition/analyze') throw new Error('Automatic photo analysis is unavailable in this offline app. Add foods and nutrition amounts manually.');
-    if (path !== '/api/tracker' && path !== '/api/nutrition' && path !== '/api/reminders') throw new Error('Unknown local data operation.');
+    if (path !== '/api/tracker' && path !== '/api/nutrition' && path !== '/api/reminders' && path !== '/api/performance') throw new Error('Unknown local data operation.');
     const state = read(defaultProfile);
     if (payload === undefined) {
+      if (path === '/api/performance') return clone({ ...(state.performance ?? emptyPerformance()), version: state.performanceVersion ?? 0 });
       return path === '/api/reminders' ? clone(state.reminders) as unknown as RecordValue : path === '/api/tracker'
         ? clone({ profile: state.profile, profileVersion: state.profileVersion, sessions: state.sessions, activities: state.activities })
         : clone({ records: state.nutrition, photoAnalysisReady: false });
     }
     if (!object(payload)) throw new Error('The data to save is invalid.');
     let nextVersion: number;
-    if (path === '/api/reminders' && payload.action === 'reminder') {
+    if (path === '/api/performance' && payload.action === 'save') {
+      assertVersion(payload.expectedVersion, state.performanceVersion ?? 0);
+      const parsed = PerformanceDataSchema.safeParse({ jumps: payload.jumps, readiness: payload.readiness });
+      if (!parsed.success) throw new Error('Enter valid jump measurements and readiness check-ins before saving.');
+      nextVersion = (state.performanceVersion ?? 0) + 1;
+      state.performance = parsed.data;
+      state.performanceVersion = nextVersion;
+    } else if (path === '/api/reminders' && payload.action === 'reminder') {
       const parsed = ReminderSchema.safeParse(payload.reminder);
       if (!parsed.success) throw new Error('Enter valid reminder instructions and a confirmed schedule.');
       const reminder = parsed.data;

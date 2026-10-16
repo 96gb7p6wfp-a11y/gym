@@ -2,7 +2,7 @@
   min-width: 0;
   max-width: 100%;
   margin-top: .65rem;
-  color: #344039;
+  color: var(--sub, #344039);
   font-size: .9rem;
   line-height: 1.55;
   overflow-wrap: anywhere;
@@ -32,7 +32,7 @@
 .exercise-guide .exercise-guide__content strong {
   display: block;
   margin-bottom: .15rem;
-  color: #1d2921;
+  color: var(--ink, #1d2921);
   font-size: .9rem;
 }
 .exercise-guide .exercise-guide__steps,
@@ -58,16 +58,16 @@
   min-height: 44px;
   max-width: 100%;
   gap: .3rem;
-  color: #405e29;
+  color: var(--accent-ink, #405e29);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.exercise-guide__custom { color: #657268; font-size: .85rem; }
+.exercise-guide__custom { color: var(--sub, #657268); font-size: .85rem; }
 .exercise-guide__loading {
   margin: .85rem 0;
   padding: .7rem;
   border-radius: 8px;
-  background: #edf2e6;
+  background: var(--surface-soft, #edf2e6);
 }
 .exercise-guide .exercise-guide__loading > p { margin: .4rem 0 0; }
 .exercise-guide .exercise-guide__target { font-weight: 600; }
@@ -81,5 +81,14 @@
 .exercise-guide__sections > button[aria-pressed=true] { background: var(--surface, #fff); color: var(--ink, #18221b); box-shadow: 0 1px 3px #18221b08; }
 .exercise-guide__alternatives > p { color: var(--sub, #778077); font-size: .85rem; }
 .exercise-guide__alternatives > div { display: grid; padding: .65rem 0; border-bottom: 1px solid var(--line, #edf0e9); }
+.exercise-guide__alternatives > div > p { margin: .25rem 0; font-size: .85rem; line-height: 1.5; color: var(--sub, #778077); }
 .exercise-guide__alternatives a { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent-ink, #375630); font-size: .85rem; text-decoration: underline; text-underline-offset: 3px; }
 .exercise-guide__sections > button:focus-visible, .exercise-guide__alternatives a:focus-visible { outline: 2px solid var(--accent-ink, #375630); outline-offset: 2px; }
+.exercise-guide__overview { display: grid; gap: 15px; margin: 18px 0; }
+.exercise-guide__overview > div { display: grid; gap: 3px; }
+.exercise-guide__overview dt { font-size: .75rem; color: var(--sub, #778077); }
+.exercise-guide__overview dd { margin: 0; font-size: .9rem; color: var(--ink, #1d2921); }
+.exercise-guide__overview dd > span { display: block; margin-top: 3px; font-size: .85rem; color: var(--sub, #778077); }
+.exercise-guide__technique-heading { margin-top: 18px; }
+.exercise-guide__load-toggle { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 44px; padding: 8px 0; border: 0; background: transparent; color: var(--ink, #1d2921); font: inherit; font-weight: 600; text-align: left; }
+.exercise-guide__load-toggle:focus-visible { outline: 2px solid var(--ring, #6a8c43); outline-offset: 2px; }

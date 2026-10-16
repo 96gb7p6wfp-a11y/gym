@@ -1,0 +1,18 @@
+.workout-customizer { min-width: 0; }
+.workout-customizer__launchers { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 3px 0 12px; }
+.workout-customizer__launchers > button { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; }
+.exercise-action-list { display: grid; }
+.exercise-action-list > button { display: flex; align-items: center; gap: 12px; min-height: 60px; width: 100%; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink); text-align: left; font-size: 16px; }
+.exercise-action-list > button > span:nth-child(2) { flex: 1; }
+.exercise-action-list > button > svg { flex-shrink: 0; color: var(--sub); }
+.exercise-action-list > button:disabled { opacity: .4; }
+.exercise-action-list > .small-note { margin-bottom: 12px; }
+.destructive-text { color: var(--destructive) !important; }
+.readiness-check { margin: 6px 0 20px; }
+.readiness-check h3 { margin: 0 0 14px; font-size: 17px; }
+.readiness-check .readiness-soreness-label { margin-top: 22px; }
+.readiness-save { margin-top: 18px; }
+.readiness-check > div { display: flex; gap: 6px; }
+.readiness-check button { flex: 1; min-height: 52px; border-radius: 14px; background: var(--surface-soft); color: var(--ink); font-size: 13px; padding: 10px 6px; }
+.readiness-check button[aria-pressed=true] { background: var(--accent); color: var(--on-accent); }
+.workout-options-sheet > .menu-row { font-weight: 600; }

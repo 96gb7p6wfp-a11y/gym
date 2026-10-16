@@ -29,5 +29,8 @@
 .progress-overview-links strong { font-size: 16px; font-weight: 600; }
 .progress-overview-links small { margin-top: 4px; font-size: 14px; color: var(--sub, #737c75); }
 .progress-overview button:focus-visible { outline: 2px solid var(--accent-ink, #36502a); outline-offset: 3px; }
+.progress-coaching-note, .progress-short-insight { padding-left: 14px; border-left: 2px solid var(--accent-ink); margin: 20px 0 0; color: var(--ink); font-size: 14px; line-height: 1.6; }
+.progress-short-insight { margin-top: 0; }
+.progress-details-button { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 52px; border: 0; border-radius: 17px; background: var(--surface); color: var(--ink); font-size: 15px; font-weight: 600; }
 @media (min-width: 760px) { .progress-focus-insights { gap: 44px; padding: 0 24px; } .progress-overview-links { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; } }
 @media (max-width: 350px) { .progress-weight-summary { padding: 20px; } .progress-focus-insights { gap: 14px; } .progress-insight-value { font-size: 24px; } .progress-consistency-days { gap: 2px; } }

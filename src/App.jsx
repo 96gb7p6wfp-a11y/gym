@@ -1,3 +1,15 @@
+import { exercisePerformanceIdentity, areComparableExercises } from "./performance-insights";
+import { WorkoutCompletion } from "./WorkoutCompletion";
+import { WorkoutBuilder } from "./WorkoutBuilder";
+import { WeeklyPlanTools } from "./WeeklyPlanTools";
+import { WorkoutCustomizer } from "./WorkoutCustomizer";
+import { PerformanceDetails } from "./PerformanceDetails";
+import { AppearanceSettings } from "./ThemeSettings";
+import { useAppearance } from "./theme";
+import { usePerformanceData } from "./usePerformanceData";
+import { resetRecommendedPlan } from "./workout-customization";
+import { findLibraryExercise } from "./exercise-library";
+import { getSessionPurpose } from "./training-purpose";
 import { TodayView } from "./TodayView";
 import { FocusedWorkout } from "./FocusedWorkout";
 import { ProgressOverview } from "./ProgressOverview";
@@ -13,6 +25,7 @@ import { ShortRoutine } from "./ShortRoutine";
 import { TrainingSchedule } from "./TrainingSchedule";
 import { ActivityImport } from "./ActivityImport";
 import { ExerciseGuide } from "./ExerciseGuide";
+import { WeeklyPerformance } from "./WeeklyPerformance";
 import { WeeklyReport } from "./WeeklyReport";
 import { DecimalWeightInput } from "./DecimalWeightInput";
 import { isValidWorkoutWeight } from "./workout-weight";
@@ -54,6 +67,7 @@ import {
   DEFAULT_PROFILE,
   EXERCISE_LIBRARY,
   ProfileSchema,
+  ExerciseSchema,
   SessionSchema,
   WEEKDAYS,
   addDays,
@@ -125,6 +139,14 @@ function GymApp({
   let [reportNutrition, setReportNutrition] = React.useState(undefined);
   let [reportNutritionError, setReportNutritionError] = React.useState(``);
   let [loaded, setLoaded] = React.useState(!1);
+  useAppearance(loaded ? (profile.appearance ?? 'system') : undefined);
+  const performance = usePerformanceData(loaded);
+  const [exerciseActionKey, setExerciseActionKey] = React.useState(null);
+  const [customBuilder, setCustomBuilder] = React.useState(null);
+  const [resetPlanOpen, setResetPlanOpen] = React.useState(false);
+  const [workoutChooserOpen, setWorkoutChooserOpen] = React.useState(false);
+  const [performanceAction, setPerformanceAction] = React.useState(undefined);
+  const [completedCelebrationId, setCompletedCelebrationId] = React.useState(null);
   let [saving, setSaving] = React.useState(!1);
   let [loadError, setLoadError] = React.useState(``);
   let [tab, setTab] = React.useState(`today`);
@@ -638,7 +660,7 @@ function GymApp({
     setFinishSaving(!1);
     setFinishOpen(!1);
     setRestEndsAt(null);
-    r && (toast.success(`Workout complete`), setSelectedHistory(n));
+    r && (toast.success(`Workout complete`), setCompletedCelebrationId(n.id), setSelectedHistory(n));
   }
   async function saveProfile(e) {
     let t = ProfileSchema.safeParse(e);
@@ -673,6 +695,49 @@ function GymApp({
     } finally {
       setProfileSaving(!1);
     }
+  }
+  function openCustomWorkout(workout = null, day = undefined) {
+    setCustomBuilder({ workout: workout ? structuredClone(workout) : null, id: workout?.id, day });
+  }
+  function saveCurrentAsWorkout() {
+    if (!currentSession) return;
+    const workout = {
+      name: currentSession.name, kind: currentSession.kind,
+      ...(currentSession.goal ? { goal: currentSession.goal } : {}),
+      minutes: currentSession.plannedMinutes ?? selectedPlan.minutes, note: currentSession.notes.slice(0, 500),
+      exercises: currentSession.exercises.map(exercise => ExerciseSchema.parse({
+        ...exercise, sets: Math.max(1, Math.min(20, exercise.logs.length)),
+        ...(exercise.logs.find(log => log.done && log.kg !== null) ? { defaultKg: exercise.logs.filter(log => log.done && log.kg !== null).at(-1).kg } : {}),
+      })),
+      ...(currentSession.warmup ? { warmup: currentSession.warmup } : {}),
+      ...(currentSession.cooldown ? { cooldown: currentSession.cooldown } : {}),
+    };
+    setCustomBuilder({ workout, id: undefined, day: undefined });
+  }
+  async function saveCustomWorkout(workout) {
+    if (!customBuilder) return false;
+    const template = { ...workout, id: customBuilder.id ?? crypto.randomUUID() };
+    const existing = profile.customWorkouts ?? [];
+    const customWorkouts = existing.some(item => item.id === template.id)
+      ? existing.map(item => item.id === template.id ? template : item) : [...existing, template];
+    const plan = customBuilder.day === undefined ? profile.plan : profile.plan.map((item, index) => index === customBuilder.day
+      ? { ...workout, ...(item.extraSession ? { extraSession: item.extraSession } : {}) } : item);
+    const saved = await saveProfile({ ...profile, customWorkouts, plan });
+    if (saved) setCustomBuilder(null);
+    return saved;
+  }
+  async function startCustomWorkout(template) {
+    if (activeSession || editingHistoryId) { toast('Finish your current workout first.'); return; }
+    if (!(await flushPendingWrites())) return;
+    const { id: _id, ...workout } = template;
+    const session = createSession(workout, selectedDay, selectedDate, profile, sessionsRef.current);
+    queueSession(session, true);
+    if (!(await flushPendingWrites())) return;
+    setWorkoutChooserOpen(false); setTab('train');
+  }
+  async function customizeSession(next) {
+    queueSession(SessionSchema.parse(next), true);
+    if (!(await flushPendingWrites())) throw new Error('Your workout could not save. Retry before making another change.');
   }
   async function saveNutritionProfile(values) {
     const { bodyWeightKg, ...nutrition } = values;
@@ -774,15 +839,15 @@ function GymApp({
           ...e.exercises,
           ...(e.extraSession?.exercises ?? []),
         ]),
-      ].map((e) => [e.key, e]),
+      ].map((e) => [exercisePerformanceIdentity(e), e]),
     ).values(),
   );
   let progressExercise =
-    allExercises.find((e) => e.key === progressExerciseKey) ?? allExercises[0];
+    allExercises.find((e) => exercisePerformanceIdentity(e) === progressExerciseKey || (e.exerciseId ?? e.key) === progressExerciseKey) ?? allExercises[0];
   let exerciseSessions = completedSessions
     .filter((e) =>
       e.exercises.some(
-        (e) => e.key === progressExercise?.key && e.logs.some((e) => e.done),
+        (e) => progressExercise && areComparableExercises(e, progressExercise) && e.logs.some((e) => e.done),
       ),
     )
     .reverse();
@@ -792,11 +857,11 @@ function GymApp({
       (e) =>
         !progressExercise?.measurement ||
         bestMeasurement(
-          e.exercises.find((e) => e.key === progressExercise.key),
+          e.exercises.find((e) => areComparableExercises(e, progressExercise)),
         ) !== null,
     )
     .map((e) => {
-      let t = e.exercises.find((e) => e.key === progressExercise.key);
+      let t = e.exercises.find((e) => areComparableExercises(e, progressExercise));
       return {
         date: formatDate(e.date, !0),
         value: progressExercise.measurement
@@ -819,6 +884,21 @@ function GymApp({
       : progressExercise?.mode === `timed`
         ? `Total time · sec`
         : `Total reps`;
+  function comparablePrevious(exercise, date, excludedId) {
+    const previous = previousExercise(completedSessions, exercise.exerciseId ?? exercise.key, date, excludedId);
+    return previous && areComparableExercises(previous.exercise, exercise) ? previous : null;
+  }
+  function volleyballIsSoon() {
+    const clock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(now));
+    const [hour, minute] = clock.split(':').map(Number);
+    const [startHour, startMinute] = volleyballSchedule.startTime.split(':').map(Number);
+    const [endHour, endMinute] = volleyballSchedule.endTime.split(':').map(Number);
+    const day = (new Date(`${today}T12:00:00`).getDay() + 6) % 7;
+    const currentMinutes = hour * 60 + minute;
+    return [0, 1].some(offset => volleyballSchedule.days.includes((day + offset) % 7)
+      && offset * 1440 + startHour * 60 + startMinute - currentMinutes <= 1440
+      && offset * 1440 + endHour * 60 + endMinute - currentMinutes >= 0);
+  }
   function openPlan() { setMoreView(`plan`); setTab(`more`); }
   function openSettings() {
     setSettingsDraft({ bodyWeight: profile.bodyWeight, restSeconds: profile.restSeconds });
@@ -903,7 +983,7 @@ function GymApp({
     <Tabs value={tab} onValueChange={setTab} className={`app-shell ${currentSession && tab === `train` ? `is-training` : ``} ${restEndsAt !== null ? `has-rest` : ``}`}>
       <Toaster
         position={`top-center`}
-        theme={`light`}
+        theme={document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'}
         richColors={!0}
         closeButton
         duration={3000}
@@ -959,7 +1039,7 @@ function GymApp({
         ]} />
       </header>
       <main className={`workspace`}>
-        <PageHeader title={tab === `today` ? greeting : tab === `train` ? `Train` : tab === `progress` ? `Progress` : tab === `nutrition` ? `Nutrition` : moreView === `plan` ? `Training plan` : moreView === `routine` ? `Routine` : `More`}
+        <PageHeader title={tab === `today` ? greeting : tab === `train` ? `Train` : tab === `progress` ? `Progress` : tab === `nutrition` ? `Nutrition` : moreView === `plan` ? `Training plan` : moreView === `routine` ? `Routine` : moreView === `workouts` ? `My workouts` : `More`}
           eyebrow={tab === `today` ? new Date(`${selectedDate}T12:00:00`).toLocaleDateString(`en-GB`, { weekday: `long`, day: `numeric`, month: `long` }) : undefined}
           subtitle={tab === `progress` ? `Small steps. Real progress.` : undefined} />
         {(saving || profileSaving) && <span className="sync-state" role="status">Saving…</span>}
@@ -1028,7 +1108,8 @@ function GymApp({
                 </div>
                 <div className={`session-card-main`}>
                   <div>
-                    <h2>{shortSessionName(currentSession?.name ?? selectedPlan.name)}</h2>
+                    <h2>{currentSession ? shortSessionName(currentSession.name) : getSessionPurpose(selectedPlan, selectedDay).title}</h2>
+                    {!currentSession && <p className="session-purpose-line">{getSessionPurpose(selectedPlan, selectedDay).subtitle}</p>}
                     <p>
                       {currentSession
                         ? `${doneSets} of ${totalSets} sets complete`
@@ -1114,7 +1195,7 @@ function GymApp({
                     aria-label={`Completed sets`}
                   />
                 ) : (
-                  <details className="session-note"><summary>Session focus</summary><p>{selectedPlan.note}</p></details>
+                  <details className="session-note"><summary>Session focus</summary><p>{getSessionPurpose(selectedPlan, selectedDay).focus}</p><p>Intensity · {getSessionPurpose(selectedPlan, selectedDay).intensity}</p><p>{getSessionPurpose(selectedPlan, selectedDay).fatigue}</p><p>{selectedPlan.note}</p></details>
                 )}
               </div>
               {dayCompletedSession && !currentSession && (
@@ -1131,10 +1212,15 @@ function GymApp({
                   >{`View log`}</button>
                 </div>
               )}
+              {!currentSession && <div className="workout-template-actions"><button type="button" className="text-button" disabled={!loaded} onClick={() => setWorkoutChooserOpen(true)}>Choose workout</button><button type="button" className="text-button" disabled={!loaded} onClick={() => openCustomWorkout()}>Create workout</button></div>}
               {!currentSession && <div className="section-line"><h3>Exercises</h3><button className="text-button" disabled={!loaded} onClick={() => editPlanDay(selectedDay, extraSessionVisible)}><Pencil size={14} /> Edit day</button></div>}
               {currentSession ? (
-                <FocusedWorkout sessionId={currentSession.id} exercises={currentSession.exercises} now={now} editing={!!editingHistoryId}
-                  previous={(exercise) => previousExercise(completedSessions, exercise.key, currentSession.date, currentSession.id)}
+                <React.Fragment><FocusedWorkout sessionId={currentSession.id} exercises={currentSession.exercises} now={now} editing={!!editingHistoryId}
+                  sessions={completedSessions} date={currentSession.date}
+                  context={{ readiness: performance.data?.readiness.find(row => row.date === currentSession.date),
+                    volleyballWithin24Hours: currentSession.date === today && volleyballIsSoon() }}
+                  onExerciseAction={setExerciseActionKey}
+                  previous={(exercise) => comparablePrevious(exercise, currentSession.date, currentSession.id)}
                   onSet={updateSet} onDone={markSetDone} onTimer={toggleMovementTimer}
                   renderAllSets={(e, t) => (
                     <ExerciseTracker
@@ -1142,9 +1228,8 @@ function GymApp({
                       exercise={e}
                       index={t}
                       now={now}
-                      last={previousExercise(
-                        completedSessions,
-                        e.key,
+                      last={comparablePrevious(
+                        e,
                         currentSession.date,
                         currentSession.id,
                       )}
@@ -1179,12 +1264,16 @@ function GymApp({
                       key={`${currentSession.id}-${e.key}`}
                     />
                   )} />
+                  <WorkoutCustomizer session={currentSession} selectedKey={exerciseActionKey} onSelectedKeyChange={setExerciseActionKey}
+                    onChange={customizeSession} onSaveAs={saveCurrentAsWorkout}
+                    readiness={performance.data?.readiness.find(row => row.date === currentSession.date)} onReadiness={performance.saveReadiness}
+                    disabled={saving || !!loadError} />
+                </React.Fragment>
               ) : (
                 <div className={`planned-list`}>
                   {selectedPlan.exercises.map((e, t) => {
-                    let n = previousExercise(
-                      completedSessions,
-                      e.key,
+                    let n = comparablePrevious(
+                      e,
                       selectedDate,
                     );
                     let r = topSet(n?.exercise);
@@ -1195,6 +1284,7 @@ function GymApp({
                         </span>
                         <div className={`planned-name`}>
                           <strong>{e.name}</strong>
+                          {findLibraryExercise(e) && <p className="planned-benefit">{findLibraryExercise(e).primaryBenefit}</p>}
                           <p>
                             {e.sets}
                             {` sets × `}
@@ -1443,16 +1533,24 @@ function GymApp({
           </div>
         </TabsContent>
         <TabsContent value="progress">
-          <SegmentedControl label="Progress views" value={progressView} onChange={(view) => { setProgressView(view); if (view === `history`) setRecentlyDeletedOpen(false); }} options={[
+          {progressView !== 'details' && <SegmentedControl label="Progress views" value={progressView} onChange={(view) => { setProgressView(view); if (view === `history`) setRecentlyDeletedOpen(false); }} options={[
             { value: `overview`, label: `Overview` }, { value: `strength`, label: `Strength` },
             { value: `history`, label: `History` }, { value: `week`, label: `Your week` },
-          ]} />
-          {progressView === `overview` && <ProgressOverview sessions={sessions} activities={activityRecords} plan={profile.plan} bodyWeight={profile.bodyWeight} nutritionRecords={reportNutrition} today={today}
+          ]} />}
+          {performance.error && <div className="error-state" role="alert"><p>{performance.error}</p><button className="text-button" onClick={performance.reload}>Reload performance</button></div>}
+          {progressView === 'details' && <><button className="text-button subpage-back" onClick={() => { setProgressView('overview'); setPerformanceAction(undefined); }}><ArrowLeft size={17} /> Progress</button>
+            <PerformanceDetails sessions={sessions} activities={activityRecords} plan={profile.plan} nutritionRecords={reportNutrition}
+              performance={performance.data} bodyWeight={profile.bodyWeight} today={today} initialAction={performanceAction}
+              onSaveJump={performance.saveJump} onDeleteJump={performance.deleteJump}
+              onLogWeight={() => { setNutritionAction('weight'); setTab('nutrition'); }} /></>}
+          {progressView === `overview` && <ProgressOverview sessions={sessions} activities={activityRecords} plan={profile.plan} bodyWeight={profile.bodyWeight} nutritionRecords={reportNutrition} performance={performance.data} today={today}
+            onViewPerformance={() => { setPerformanceAction(undefined); setProgressView('details'); }}
+            onLogJump={() => { setPerformanceAction('log-jump'); setProgressView('details'); }}
             onViewStrength={() => setProgressView(`strength`)} onViewHistory={() => setProgressView(`history`)} onViewWeek={() => setProgressView(`week`)} onLogWeight={() => { setNutritionAction(`weight`); setTab(`nutrition`); }} />}
           {progressView === `strength` && <>          <div className={`progress-picker`}>
             <label htmlFor={`progress-exercise`}>{`Movement`}</label>
             <Select
-              value={progressExercise?.key}
+              value={progressExercise ? exercisePerformanceIdentity(progressExercise) : undefined}
               onValueChange={setProgressExerciseKey}
             >
               <SelectTrigger id={`progress-exercise`} className={`wide-select`}>
@@ -1460,7 +1558,7 @@ function GymApp({
               </SelectTrigger>
               <SelectContent>
                 {allExercises.map((e) => (
-                  <SelectItem value={e.key} key={e.key}>
+                  <SelectItem value={exercisePerformanceIdentity(e)} key={exercisePerformanceIdentity(e)}>
                     {e.name}
                   </SelectItem>
                 ))}
@@ -1551,7 +1649,7 @@ function GymApp({
                 .reverse()
                 .map((e) => {
                   let t = e.exercises.find(
-                    (e) => e.key === progressExercise.key,
+                    (e) => areComparableExercises(e, progressExercise),
                   );
                   let n = topSet(t);
                   return (
@@ -1713,6 +1811,7 @@ function GymApp({
           {!recentlyDeletedOpen && <ActivityHistory records={activityRecords} bodyWeight={profile.bodyWeight} onSave={saveExtraActivity} disabled={!loaded} />}
 </>}
           {progressView === `week` && <>
+          <WeeklyPerformance sessions={sessions} activities={activityRecords} plan={profile.plan} weekStart={progressReportWeek} volleyballSchedule={volleyballSchedule} />
           <WeeklyReport sessions={sessions} activities={activityRecords} plan={profile.plan} bodyWeight={profile.bodyWeight} initialWeek={dateKey(weekStart)} nutritionRecords={reportNutrition} onWeekChange={setProgressReportWeek} />
           {reportNutritionError && <p className={`nutrition-error`} role={`alert`}>{reportNutritionError} <button className={`text-button`} onClick={() => void loadReportNutrition()}>{`Retry nutrition logs`}</button></p>}
 <details className="report-activity-details"><summary>Activity totals</summary>          <section className={`panel extra-progress`} aria-label={`Extra activity progress`}>
@@ -1756,6 +1855,9 @@ function GymApp({
             >{`Use these phases to adjust your sessions; set counts stay editable. Every two weeks, record body weight in Nutrition, CMJ height and your highest approach-jump touch. Test in the same place, shoes, warm-up and approach distance. Aim for gradual muscle gain while staying fast and springy.`}</p>
           </section>
           </details>
+          <WeeklyPlanTools plan={profile.plan} templates={profile.customWorkouts ?? []} disabled={profileSaving || !loaded}
+            onChange={plan => saveProfile({ ...profile, plan })} onCreateWorkout={day => openCustomWorkout(null, day)}
+            onEditTemplate={template => openCustomWorkout(template)} onReset={() => setResetPlanOpen(true)} />
           <div className={`plan-grid`}>
             {profile.plan.map((e, t) => (
               <section className={`panel plan-card`} key={t}>
@@ -1798,10 +1900,19 @@ function GymApp({
             ))}
           </div>
 </>}
+          {moreView === 'workouts' && <section className="custom-workouts-page">
+            <div className="section-line"><h2>Saved sessions</h2><button type="button" className="text-button" onClick={() => openCustomWorkout()}><Plus size={18} /> Create workout</button></div>
+            {(profile.customWorkouts ?? []).length === 0 && <div className="empty-state"><Dumbbell /><h3>Your own training</h3><p>Build a session you can use any day.</p></div>}
+            <ul className="saved-workouts-list">{(profile.customWorkouts ?? []).map(workout => <li key={workout.id}>
+              <button className="saved-workout-row" onClick={() => void startCustomWorkout(workout)} disabled={saving || !loaded} aria-label={`Use custom workout ${workout.name}`} ><span><strong>{workout.name}</strong><span>{workout.exercises.length} exercises · {workout.minutes} min</span></span><ChevronRight size={18} /></button>
+              <button className="text-button" aria-label={`Edit custom workout ${workout.name}`} onClick={() => openCustomWorkout(workout)}>Edit</button>
+            </li>)}</ul>
+          </section>}
           {moreView === `routine` && <RemindersPanel showHeading={false} date={routineDate} onDateChange={setRoutineDate} />}
           {moreView === `menu` && <div className="more-menu">
             <div className="more-profile"><span className="eyebrow">YOUR FOCUS</span><h2>Stronger. Higher.</h2><p>Muscle gain &amp; volleyball performance</p></div>
             <div className="menu-group">
+              <MenuRow title="My workouts" subtitle="Your saved sessions" icon={<Dumbbell size={21} />} onClick={() => setMoreView('workouts')} />
               <MenuRow title="Training plan" subtitle="Your week, with room to recover" icon={<ListChecks size={21} />} onClick={openPlan} />
               <MenuRow title="Routine" subtitle="Supplements & medication" icon={<CheckCheck size={21} />} onClick={() => setMoreView(`routine`)} />
               <MenuRow title="Settings" subtitle="Body weight & rest preferences" icon={<Settings2 size={21} />} onClick={openSettings} />
@@ -1963,6 +2074,7 @@ function GymApp({
           >
             {profileSaving ? `Saving…` : `Save preferences`}
           </button>
+          <AppearanceSettings value={profile.appearance ?? 'system'} disabled={profileSaving} onChange={appearance => saveProfile({ ...profile, appearance })} />
           <DataSettings beforeExport={flushPendingWrites} onReplace={replaceLocalData} />
           <button
             className={`text-button`}
@@ -2036,7 +2148,8 @@ function GymApp({
           </DialogHeader>
           {selectedHistory && (
             <ReactJSX.Fragment>
-              <div className={`summary-stats`}>
+              {completedCelebrationId === selectedHistory.id && <WorkoutCompletion session={selectedHistory} sessions={completedSessions} volleyballSchedule={volleyballSchedule} onDone={() => setSelectedHistory(null)} />}
+              {completedCelebrationId !== selectedHistory.id && <div className={`summary-stats`}>
                 <span>
                   <strong>
                     {formatNumber(sessionDuration(selectedHistory) / 6e4)}
@@ -2058,7 +2171,9 @@ function GymApp({
                   {`active kcal`}
                   {selectedHistory.watchCalories === null ? ` est.` : ``}
                 </span>
-              </div>
+              </div>}
+              <details className="history-set-details"><summary>Session details</summary>
+              {completedCelebrationId === selectedHistory.id && <div className="history-energy"><strong>{getCalories(selectedHistory)}</strong> active kcal{selectedHistory.watchCalories === null ? ' est.' : ''}</div>}
               {selectedHistory.exercises
                 .filter((e) => e.logs.some((e) => e.done))
                 .map((e) => (
@@ -2131,6 +2246,7 @@ function GymApp({
                 </div>
               )}
               <ExtraActivities date={selectedHistory.date} bodyWeight={profile.bodyWeight} records={activityRecords} onSave={saveExtraActivity} readOnly />
+              </details>
               <button
                 className={`btn secondary full`}
                 onClick={() => {
@@ -2158,166 +2274,25 @@ function GymApp({
           )}
         </DialogContent>
       </Dialog>
-      <Dialog
-        open={editingDay !== null}
-        onOpenChange={(e) => {
-          e || (setEditingDay(null), setPlanDraft(null));
-        }}
-      >
-        <DialogContent className={`app-dialog plan-dialog`}>
-          <DialogHeader>
-            <DialogTitle>
-              {`Edit `}
-              {editingExtraSession
-                ? `primer`
-                : editingDay === null
-                  ? `day`
-                  : WEEKDAYS[editingDay]}
-            </DialogTitle>
-            <DialogDescription>{`Changes apply to future sessions. Saved workouts keep their original exercises.`}</DialogDescription>
-          </DialogHeader>
-          {planDraft && (
-            <ReactJSX.Fragment>
-              <div className={`edit-day-grid`}>
-                <label className={`field-label`}>
-                  {`Session name`}
-                  <input
-                    maxLength={80}
-                    value={planDraft.name}
-                    onChange={(e) =>
-                      setPlanDraft({
-                        ...planDraft,
-                        name: e.target.value,
-                      })
-                    }
-                  />
-                </label>
-                <label className={`field-label`}>
-                  {`Type`}
-                  <Select
-                    value={planDraft.kind}
-                    onValueChange={(e) =>
-                      setPlanDraft({
-                        ...planDraft,
-                        kind: e,
-                      })
-                    }
-                  >
-                    <SelectTrigger className={`wide-select`}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={`strength`}>{`Gym`}</SelectItem>
-                      <SelectItem value={`sport`}>{`Volleyball`}</SelectItem>
-                      <SelectItem value={`recovery`}>{`Recovery`}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </label>
-              </div>
-              <label className={`field-label`}>
-                {`Planned minutes`}
-                <input
-                  type={`number`}
-                  min={`1`}
-                  max={`600`}
-                  value={planDraft.minutes}
-                  onChange={(e) =>
-                    setPlanDraft({
-                      ...planDraft,
-                      minutes: Number(e.target.value),
-                    })
-                  }
-                />
-              </label>
-              <div className={`edit-exercises`}>
-                {planDraft.exercises.map((e, t) => (
-                  <ExerciseEditor
-                    exercise={e}
-                    onChange={(e) =>
-                      setPlanDraft({
-                        ...planDraft,
-                        exercises: planDraft.exercises.map((n, r) =>
-                          t === r ? e : n,
-                        ),
-                      })
-                    }
-                    onRemove={() =>
-                      setPlanDraft({
-                        ...planDraft,
-                        exercises: planDraft.exercises.filter(
-                          (e, n) => n !== t,
-                        ),
-                      })
-                    }
-                    key={t}
-                  />
-                ))}
-              </div>
-              <button
-                className={`btn secondary`}
-                disabled={planDraft.exercises.length >= 40}
-                onClick={() =>
-                  setPlanDraft({
-                    ...planDraft,
-                    exercises: [
-                      ...planDraft.exercises,
-                      {
-                        key: crypto.randomUUID(),
-                        name: `New exercise`,
-                        group: `Custom`,
-                        sets: 3,
-                        target: `8–12 reps`,
-                        mode: `weight`,
-                        rest: 90,
-                        perSide: !1,
-                      },
-                    ],
-                  })
-                }
-              >
-                <Plus size={16} />
-                {` Add exercise`}
-              </button>
-              <label className={`field-label`}>
-                {`Session note`}
-                <textarea
-                  maxLength={500}
-                  value={planDraft.note}
-                  onChange={(e) =>
-                    setPlanDraft({
-                      ...planDraft,
-                      note: e.target.value,
-                    })
-                  }
-                />
-              </label>
-              <button
-                className={`btn full`}
-                disabled={profileSaving}
-                onClick={async () => {
-                  editingDay !== null &&
-                    (await saveProfile({
-                      ...profile,
-                      plan: profile.plan.map((e, t) =>
-                        t === editingDay
-                          ? editingExtraSession
-                            ? {
-                                ...e,
-                                extraSession: planDraft,
-                              }
-                            : planDraft
-                          : e,
-                      ),
-                    })) &&
-                    (setEditingDay(null), setPlanDraft(null));
-                }}
-              >
-                {profileSaving ? `Saving…` : `Save day`}
-              </button>
-            </ReactJSX.Fragment>
-          )}
-        </DialogContent>
-      </Dialog>
+      <WorkoutBuilder open={editingDay !== null} onOpenChange={open => { if (!open) { setEditingDay(null); setPlanDraft(null); } }}
+        initialWorkout={planDraft} title={`Edit ${editingExtraSession ? 'primer' : WEEKDAYS[editingDay] ?? 'day'}`} submitLabel="Save day"
+        onSave={async workout => {
+          if (editingDay === null) return false;
+          const saved = await saveProfile({ ...profile, plan: profile.plan.map((day, index) => index === editingDay
+            ? editingExtraSession ? { ...day, extraSession: workout } : workout : day) });
+          if (saved) { setEditingDay(null); setPlanDraft(null); }
+          return saved;
+        }} />
+      <WorkoutBuilder open={customBuilder !== null} onOpenChange={open => { if (!open) setCustomBuilder(null); }}
+        initialWorkout={customBuilder?.workout} title={customBuilder?.id ? 'Edit workout' : 'Create workout'} onSave={saveCustomWorkout} />
+      <Dialog open={workoutChooserOpen} onOpenChange={setWorkoutChooserOpen}><DialogContent className="app-dialog workout-chooser">
+        <DialogHeader><DialogTitle>Choose workout</DialogTitle><DialogDescription>Use a saved session for {formatDate(selectedDate)}.</DialogDescription></DialogHeader>
+        {(profile.customWorkouts ?? []).map(workout => <button key={workout.id} className="saved-workout-row" disabled={saving || !!activeSession || !!editingHistoryId} aria-label={`Start ${workout.name}`} onClick={() => void startCustomWorkout(workout)}><span><strong>{workout.name}</strong><span>{workout.exercises.length} exercises · {workout.minutes} min</span></span><Play size={18} /></button>)}
+        {!(profile.customWorkouts ?? []).length && <p className="muted">Create a workout to use it here.</p>}
+        {(activeSession || editingHistoryId) && <p className="muted">Finish your current workout first.</p>}
+        <button className="btn secondary full" onClick={() => { setWorkoutChooserOpen(false); openCustomWorkout(); }}><Plus size={18} /> Create workout</button>
+      </DialogContent></Dialog>
+      <AlertDialog open={resetPlanOpen} onOpenChange={setResetPlanOpen}><AlertDialogContent className="app-dialog"><AlertDialogHeader><AlertDialogTitle>Restore recommended plan?</AlertDialogTitle><AlertDialogDescription>Your saved workouts, history and preferences stay. The weekly plan returns to its recommended schedule.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep my plan</AlertDialogCancel><AlertDialogAction disabled={profileSaving} onClick={async event => { event.preventDefault(); if (await saveProfile(resetRecommendedPlan(profile))) setResetPlanOpen(false); }}>Restore plan</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </Tabs>
   );
 }

@@ -1,0 +1,40 @@
+# Premium fitness UX benchmarks
+
+Research checked **15–16 October 2026**. This is a review of publicly accessible official product/help pages, not hands-on testing of paid native apps or a representative customer survey. Retrieved pages describe the publishers' products; they do not prove an outcome or the quality of Setline's implementation.
+
+The goal is to borrow useful interaction principles while retaining Setline's own design, volleyball schedule, local data model and performance priorities. No third-party branding, screenshots, animations, exercise videos, source code or paid content is copied.
+
+## Verified patterns
+
+| Official source | What the retrieved page establishes | Setline decision |
+| --- | --- | --- |
+| [Hevy: Exercise Library](https://www.hevyapp.com/features/exercise-library/) | A searchable catalog with equipment and muscle filters; exercises can be added to a reusable routine or live workout. Details include instructions, performance history and appropriate tracking types. | Open the same search-first library from today's session or the plan editor. Keep filters optional. Use stable movement identities and purpose/equipment metadata rather than making the user fill in an entire movement from scratch. |
+| [Hevy: Exercise Programming Options](https://www.hevyapp.com/features/exercise-programming-options/) | A contextual exercise menu contains reorder, replace, superset and remove actions. Set count, rep range, exercise-specific rest and notes are adjustable. RPE is optional. | Use one quiet exercise action to reveal changes, with large reachable controls. Preserve the fast focused default, complex-pair prescriptions and optional effort fields. Do not put a permanent row of five editing buttons under every movement. |
+| [Hevy: Previous Workout Values](https://www.hevyapp.com/features/track-exercises/) | Previous performance appears during logging. Tapping a previous value can reuse it; absent history stays blank. Detail pages provide deeper records/history. | Keep Last beside the current set; show a small conservative next-step suggestion when comparable evidence exists. Never invent a previous lift or overwrite already edited/completed sets. |
+| [Hevy: Track Exercise Performance](https://www.hevyapp.com/features/exercise-performance/) | Exercise-level records and metric-selectable charts sit inside details. History can explain context, including an exercise occurring later in the session. Different exercise types have different meaningful records. | Keep the Progress overview sparse and place records/charts deeper. Use suitable records for loaded lifts, reps, timed work and jumps. Do not infer a strength decline from weight alone when reps, setup or session order changed. |
+| [Hevy: Create Folders and Gym Routines](https://www.hevyapp.com/features/gym-routines/) | Reusable workouts can be named and customized. Live-session changes can be kept separate from the original routine, or explicitly saved back. | Offer custom workouts and plan assignment, but keep “change today” separate from “save plan.” Do not require folders or a large template dashboard for one person's weekly program. |
+| [Hevy: Supersets](https://www.hevyapp.com/features/what-are-supersets/) | Grouped exercises and automatic alternation reduce repeated movement selection during a session. | Retain Setline's existing pair card and automatic round progression. A strength-plus-jump complex still keeps its prescribed recovery; it is not automatically a no-rest superset. |
+| [Hevy: Automatic Rest Timer](https://www.hevyapp.com/features/workout-rest-timer/) | Automatic completion-triggered rest is exercise-specific, optional and adjustable during a workout. | Preserve one contextual rest countdown. Keep work timers distinct from recovery and retain explicit completion after timed work. |
+| [Strong: Perform a Workout](https://help.strongapp.io/article/229-my-first-workout) | Start empty or from a template; add/delete/modify/reorder movements and sets during a live workout; finish without completing every planned exercise; history retains the result. | Make today's workout adaptable without requiring a detour into a future plan. Protect recorded work when removing/replacing movements. Keep incomplete sessions finishable and accurately counted. |
+| [Strong: Save or Update a Template](https://help.strongapp.io/article/177-update-template-or-routine) | Saving a completed workout as a template is explicit. Keeping the original, changing structure and updating only values are separate choices; the page itself acknowledges confusion in this process. | Prefer a clear Save custom workout or Save plan action. Ordinary logging and one-day substitutions should leave the recommended plan untouched. Avoid several subtly different automatic update prompts. |
+| [Strong: Create a Custom Exercise](https://help.strongapp.io/article/97-create-custom-exercises) | Search exists before custom creation, and custom movements can be created during training. | Keep manual creation as a fallback to the catalog; exercise metadata and logging mode must remain explicit so duration, bodyweight and jump measurements are not treated as ordinary kilograms/repetitions. |
+| [Strong: Rest Timer](https://help.strongapp.io/article/231-rest-timer) | Rest begins automatically, can expand, can be skipped and has exercise-specific configuration. | Keep rest visible but compact while the next set stays usable. Editing an exercise's rest should not require opening global settings. |
+
+Hevy and Strong pages above returned successful HTTPS responses on **15 October 2026**. Strong's help pages show older publication/update dates (2021–2022); this research records their current public documentation, not an independently verified native-app release.
+
+## Customer evidence and limits
+
+[The preceding interaction research](WORKOUT_UX_RESEARCH.md) records individually identified, dated public App Store comments checked on 12 October 2026. They praise accessible history, quick logging, grouping and built-in timers; one describes difficulty combining added load with duration and another describes cumbersome older-history navigation. These are individual observations, not prevalence estimates. They were not newly re-fetched for this document. Publisher-selected quotations appearing on official feature pages are marketing material and are not counted as independent customer evidence.
+
+## Remaining benchmark access
+
+Normal HTTPS requests to Fitbod (`fitbod.me`), Ladder (`www.joinladder.com`), Alpha Progression (`alphaprogression.com`), Gentler Streak (`gentler.app`) and Apple Fitness (`www.apple.com`) were denied by this environment's destination proxy with CONNECT 403. Each was retried once after saving an environment configuration draft allowing these destinations; the same denials remained on 16 October. A saved draft does not establish that a runtime policy was applied. No direct network route, TLS bypass or alternate proxy was used. These five products are not treated as verified sources; their names alone do not establish a feature or justify an implementation claim.
+
+## Principles for this product
+
+1. **One next action.** Today's purpose and the next set dominate; the library, all sets, technique and records open only when needed.
+2. **Context before automation.** Suggestions acknowledge available data, measurement type, effort and volleyball recovery; the user can accept, edit or ignore them.
+3. **Session changes are reversible.** Changing today's order or equipment does not silently rewrite future sessions or past records.
+4. **Progress is specific.** Jump height, highest touch, body-weight weekly averages, comparable lifts and recorded consistency remain distinct.
+5. **Visual quality serves speed.** Typography, semantic colors, restrained motion and deliberate dark surfaces should reduce effort, not add decorative dashboards.
+6. **Native features need actual support.** Other apps' Watch, Live Activity, Health and background notification integrations do not establish browser/PWA support in Setline.

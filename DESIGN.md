@@ -37,3 +37,33 @@ The storage key remains `setline.gym.v1`. No records are cleared or recreated.
 Optional routine and timer fields accept older records and backups. Closed-app reminders
 require a push service; the app honestly provides an in-app schedule. Photo
 analysis is hidden when its optional service is unavailable.
+
+
+## Athlete refinement
+
+The 2026-10-16 refinement keeps those five destinations and the original recommended
+plan, while adding purpose-led previews and a more focused set card. Exercise benefit
+and intent are each one short line. Technique, effort, alternatives and session changes
+open only when requested. Manual +/- controls and decimal text entry coexist.
+
+The semantic visual system has deliberate neutral light and dark surfaces, controlled
+green emphasis, readable on-accent text and consistent phone touch targets. System
+appearance is the default; explicit preferences live in the existing profile. Short
+viewports use normal-flow completion actions so controls do not cover weight inputs.
+
+WorkoutBuilder, ExerciseLibrarySheet, WorkoutCustomizer, WeeklyPlanTools,
+PerformanceDetails, WorkoutCompletion and the shared page/header/sheet primitives
+keep capability behind focused interfaces. Templates and recurring plans are separate
+from live session snapshots. New sessions retain planned duration separately from
+recorded elapsed time, so saving a custom template cannot borrow another day’s duration. Removing or replacing remaining work retains completed
+sets; plan editing and resetting cannot rewrite history.
+
+Performance comparisons include stable exercise identity, normalized name, logging mode
+and measurement kind. Height, absolute touch and distance remain distinct. Weekly
+weight trends require adequately sampled weeks; readiness is self-reported and training
+load is an estimate, never an invented physiological score. Recommendations are explicit
+actions and never silently alter working sets, weekly volume or nutrition targets.
+
+The v1 storage key and portable backup envelope remain compatible. New appearance,
+template and performance fields are optional; validation and optimistic version checks
+protect writes and reject malformed data without wiping old records.

@@ -1,0 +1,21 @@
+.weekly-performance { margin: 0 0 22px; color: var(--ink); }
+.weekly-performance > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 5px 1px; font-size: 16px; font-weight: 650; cursor: pointer; list-style: none; }
+.weekly-performance > summary::-webkit-details-marker { display: none; }
+.weekly-performance > summary > svg { color: var(--sub); flex: 0 0 auto; transition: transform 160ms ease; }
+.weekly-performance[open] > summary > svg { transform: rotate(180deg); }
+.weekly-performance__body { padding: 6px 0 0; }
+.weekly-performance__days { list-style: none; padding: 0; margin: 0; }
+.weekly-performance__day { display: flex; align-items: center; gap: 16px; min-height: 70px; padding: 13px 0; }
+.weekly-performance__day + .weekly-performance__day { border-top: 1px solid var(--line); }
+.weekly-performance__date { display: flex; flex: 0 0 35px; flex-direction: column; gap: 2px; }
+.weekly-performance__date > span { color: var(--sub); font-size: 11px; font-weight: 600; }
+.weekly-performance__date > time { color: var(--ink); font-size: 18px; font-weight: 650; line-height: 1.3; font-variant-numeric: tabular-nums; }
+.weekly-performance__training { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.weekly-performance__training > strong { color: var(--ink); font-size: 15px; font-weight: 600; line-height: 1.35; }
+.weekly-performance__extra { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--sub); font-size: 12px; line-height: 1.5; }
+.weekly-performance__status { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; color: var(--sub); font-size: 12px; font-variant-numeric: tabular-nums; }
+.weekly-performance__done { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--on-accent, #203027); }
+.weekly-performance__focus { padding: 20px 0 10px; margin-top: 6px; border-top: 1px solid var(--line); }
+.weekly-performance__focus > span { color: var(--sub); font-size: 12px; }
+.weekly-performance__focus > p { margin: 6px 0 0; color: var(--ink); font-size: 14px; line-height: 1.5; font-weight: 550; }
+@media (prefers-reduced-motion: reduce) { .weekly-performance > summary > svg { transition: none; } }

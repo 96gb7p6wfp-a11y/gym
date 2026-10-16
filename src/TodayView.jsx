@@ -1,12 +1,15 @@
 import { ArrowUpRight, Check, ChevronRight } from 'lucide-react';
 import { dateKey, addDays, sumNutrients } from './domain';
-import { shortSessionName } from './presentation';
+import { getSessionPurpose } from './training-purpose';
 
 export function TodayView({ date, plan, session, completed, activities, nutrition,
   volleyballSchedule, onStart, onTrain, onViewLog, onNutrition, onPlan, onActivity, disabled, daySelector }) {
   const day = new Date(`${date}T12:00:00`);
   const active = session?.status === 'active';
-  const title = shortSessionName(active ? session.name : plan.name);
+  const unscheduled = !active && !completed && plan.exercises.length === 0;
+  const shownPlan = active ? session : plan;
+  const purpose = getSessionPurpose(shownPlan, (day.getDay() + 6) % 7);
+  const title = purpose.title;
   const extras = activities.filter(({ activity }) => activity.date === date && activity.deletedAt === null);
   const targets = nutrition?.find(record => record.payload.kind === 'targets')?.payload;
   const totals = sumNutrients((nutrition ?? []).filter(record => record.date === date && record.payload.kind === 'meal').flatMap(record => record.payload.foods));
@@ -20,16 +23,18 @@ export function TodayView({ date, plan, session, completed, activities, nutritio
   }
   const dateLabel = day.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
   return <div className="today-view">
-    <section className={`today-hero ${plan.kind === 'recovery' ? 'today-hero--recovery' : ''}`} aria-label="Your day">
+    <section className={`today-hero ${shownPlan.kind === 'recovery' ? 'today-hero--recovery' : ''}`} aria-label="Your day">
       <div className="today-hero__top"><span className="eyebrow">{active ? 'IN PROGRESS' : completed ? 'WORKOUT COMPLETE' : plan.kind === 'recovery' ? 'TAKE IT EASY' : 'TODAY’S SESSION'}</span><span className="today-hero__mark" aria-hidden="true">{completed && !active ? <Check size={24} /> : <ArrowUpRight size={24} />}</span></div>
       <h2>{title}</h2>
-      <p>{active ? `${session.exercises.reduce((count, exercise) => count + exercise.logs.filter(log => log.done).length, 0)} sets complete · pick up where you left off`
+      <p className="today-hero__purpose">{purpose.subtitle}</p>
+      <p className="today-hero__meta">{active ? `${session.exercises.reduce((count, exercise) => count + exercise.logs.filter(log => log.done).length, 0)} sets complete · pick up where you left off`
         : plan.kind === 'sport' ? `${volleyballSchedule.startTime}–${volleyballSchedule.endTime} · Berlin time`
-        : `${plan.minutes} min${plan.kind === 'recovery' ? ' · move, recover, recharge' : ` · ${plan.exercises.length} exercises`}`}</p>
-      <button className="btn today-primary" disabled={disabled} onClick={active ? onTrain : completed ? () => onViewLog(completed) : onStart}>
-        {active ? 'Continue workout' : completed ? 'View workout' : plan.kind === 'recovery' ? 'Start recovery' : 'Start workout'}<ChevronRight size={18} aria-hidden="true" />
+        : `${plan.minutes} min${plan.kind === 'recovery' ? ' · easy pace' : ` · ${plan.exercises.length} exercises`}`}</p>
+      <button className="btn today-primary" disabled={disabled} onClick={active ? onTrain : completed ? () => onViewLog(completed) : unscheduled ? onTrain : onStart}>
+        {active ? 'Continue workout' : completed ? 'View workout' : unscheduled ? plan.kind === 'recovery' ? 'View recovery' : 'Choose workout' : plan.kind === 'recovery' ? 'Start recovery' : 'Start workout'}<ChevronRight size={18} aria-hidden="true" />
       </button>
       <button className="today-plan-link" onClick={onPlan}>Weekly plan <ChevronRight size={14} aria-hidden="true" /></button>
+      <details className="today-intent"><summary>Today’s focus</summary><p>{purpose.focus}</p><span>{purpose.fatigue}</span></details>
     </section>
     {daySelector}
     {nextVolleyball && <div className="today-next"><div><span className="eyebrow">NEXT UP</span><strong>Volleyball</strong></div><p>{nextVolleyball.toLocaleDateString('en-GB', { weekday: 'long' })}<br /><span>{volleyballSchedule.startTime}–{volleyballSchedule.endTime}</span></p></div>}

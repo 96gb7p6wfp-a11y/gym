@@ -101,6 +101,11 @@ async function finishWorkout(page: Page, minutes = '60', watchCalories?: string)
   return summary;
 }
 
+async function openSessionDetails(scope: Locator) {
+  const summary = scope.locator('summary').filter({ hasText: /^Session details$/ });
+  if (!await summary.locator('..').evaluate(element => element.hasAttribute('open'))) await summary.click();
+}
+
 async function closeDialog(dialog: Locator) {
   await dialog.getByRole('button', { name: 'Close', exact: true }).click();
   await expect(dialog).not.toBeVisible();
@@ -258,8 +263,9 @@ test('validates sets, saves a complete workout, edits its log, and deletes and r
   await page.getByLabel('Workout notes', { exact: true }).fill('Felt strong; keep the same setup.');
   const summary = await finishWorkout(page, '60', '350');
   await expect(summary).toContainText(/60\s*minutes/);
-  await expect(summary).toContainText(/1\s*sets/);
-  await expect(summary).toContainText(/24\s*kg volume/);
+  await expect(summary).toContainText(/1\s*set/);
+  await expect(summary.locator('.workout-completion__volume')).toContainText(/Volume24\s*kg logged/);
+  await openSessionDetails(summary);
   await expect(summary).toContainText(/350\s*active kcal/);
   await expect(summary.getByRole('cell', { name: '6 kg', exact: true })).toBeVisible();
   await expect(summary.getByRole('cell', { name: '45s', exact: true })).toBeVisible();
@@ -341,6 +347,7 @@ test('keeps the close button tappable while a tall Volleyball log scrolls in iPh
     await history.click();
     const summary = page.getByRole('dialog', { name: 'Volleyball', exact: true });
     await expect(summary).toContainText(/120\s*minutes/);
+    await openSessionDetails(summary);
     await expect(summary).toContainText('Ankle Knee-to-Wall');
     await verifyPinnedClose(page, summary, size.top, size.bottom, size.left, size.right);
     await expect(history).toBeVisible();
@@ -477,21 +484,27 @@ test('validates and persists editable day plans without changing an existing wor
   await selectTab(page, 'My plan');
   await page.getByRole('button', { name: 'Edit Monday', exact: true }).click();
   const editor = page.getByRole('dialog', { name: 'Edit Monday', exact: true });
-  await editor.getByLabel('Session name', { exact: true }).fill('');
+  await editor.getByLabel('Workout name', { exact: true }).fill('');
   await editor.getByRole('button', { name: 'Save day', exact: true }).click();
   await expect(editor).toBeVisible();
-  await expect(page.getByText('Check the names, sets, and numbers in your plan.', { exact: true })).toBeVisible();
-  await editor.getByLabel('Session name', { exact: true }).fill('Custom strength');
-  await editor.getByLabel('Movement', { exact: true }).first().fill('Custom press');
-  await editor.getByLabel('Sets', { exact: true }).first().fill('2');
-  await editor.getByLabel('Target', { exact: true }).first().fill('8 reps');
-  await editor.getByLabel('Rest · sec', { exact: true }).first().fill('60');
+  await expect(editor.getByRole('alert')).toHaveText('Give your workout a name.');
+  await editor.getByLabel('Workout name', { exact: true }).fill('Custom strength');
+  await editor.getByRole('button', { name: `Edit ${MOVEMENT}`, exact: true }).click();
+  await editor.getByLabel('Sets', { exact: true }).fill('2');
+  await editor.getByLabel('Target', { exact: true }).fill('8 reps');
+  await editor.getByLabel('Rest · sec', { exact: true }).fill('60');
+  await editor.locator('.builder-exercise-options > summary').click();
+  await editor.getByLabel('Movement', { exact: true }).fill('Custom press');
+  await editor.getByRole('button', { name: 'Edit Pallof Press', exact: true }).click();
   await editor.getByRole('button', { name: 'Remove Pallof Press', exact: true }).click();
   await editor.getByRole('button', { name: 'Add exercise', exact: true }).click();
-  const added = editor.locator('.plan-exercise-editor').last();
-  await added.getByLabel('Movement', { exact: true }).fill('Bodyweight squat');
-  await added.getByRole('combobox').click();
-  await page.getByRole('option', { name: 'Bodyweight + reps', exact: true }).click();
+  const library = page.getByRole('dialog', { name: 'Add exercise', exact: true });
+  await library.getByRole('searchbox', { name: 'Search exercises', exact: true }).fill('Bodyweight Squat');
+  await library.getByRole('button', { name: 'Select Bodyweight Squat', exact: true }).click();
+  await expect(library).not.toBeVisible();
+  await editor.locator('.builder-exercise-options > summary').click();
+  await editor.getByRole('combobox', { name: 'Logging', exact: true }).selectOption('bodyweight');
+  await editor.locator('.builder-session-options > summary').click();
   await editor.getByRole('textbox', { name: 'Session note', exact: true }).fill('My custom weekly session.');
   await editor.getByRole('button', { name: 'Save day', exact: true }).click();
   await expect(editor).not.toBeVisible();
@@ -502,12 +515,20 @@ test('validates and persists editable day plans without changing an existing wor
   await expect(page.getByRole('heading', { name: 'Upper Body', exact: true })).toBeVisible();
   await selectTab(page, 'My plan');
   await page.getByRole('button', { name: 'Edit Monday', exact: true }).click();
-  await expect(editor.getByLabel('Session name', { exact: true })).toHaveValue('Custom strength');
-  await expect(editor.getByLabel('Movement', { exact: true }).first()).toHaveValue('Custom press');
-  await expect(editor.getByLabel('Sets', { exact: true }).first()).toHaveValue('2');
-  await expect(editor.getByLabel('Movement', { exact: true })).toHaveCount(10);
-  await expect(editor.getByRole('button', { name: 'Remove Pallof Press', exact: true })).toHaveCount(0);
-  await expect(editor.locator('.plan-exercise-editor').last().getByRole('combobox')).toContainText('Bodyweight + reps');
+  await expect(editor.getByLabel('Workout name', { exact: true })).toHaveValue('Custom strength');
+  await editor.getByRole('button', { name: 'Edit Custom press', exact: true }).click();
+  await expect(editor.getByLabel('Sets', { exact: true })).toHaveValue('2');
+  await expect(editor.getByLabel('Target', { exact: true })).toHaveValue('8 reps');
+  await expect(editor.getByLabel('Rest · sec', { exact: true })).toHaveValue('60');
+  await editor.locator('.builder-exercise-options > summary').click();
+  await expect(editor.getByLabel('Movement', { exact: true })).toHaveValue('Custom press');
+  await expect(editor.locator('.builder-exercise-row')).toHaveCount(10);
+  await expect(editor.getByRole('button', { name: 'Edit Pallof Press', exact: true })).toHaveCount(0);
+  await editor.getByRole('button', { name: 'Edit Bodyweight Squat', exact: true }).click();
+  await editor.locator('.builder-exercise-options > summary').click();
+  await expect(editor.getByRole('combobox', { name: 'Logging', exact: true })).toHaveValue('bodyweight');
+  await editor.locator('.builder-session-options > summary').click();
+  await expect(editor.getByRole('textbox', { name: 'Session note', exact: true })).toHaveValue('My custom weekly session.');
   await closeDialog(editor);
   await selectTab(page, 'Workout');
   await page.getByRole('button', { name: 'Discard this workout', exact: true }).click();
@@ -586,6 +607,7 @@ test('records jump measurements and timed movement sets', async ({ page }) => {
   await page.getByRole('checkbox', { name: 'Complete Pogo Jump set 1', exact: true }).check();
   const summary = await finishWorkout(page);
   await expect(summary).toContainText(/3\s*sets/);
+  await openSessionDetails(summary);
   await expect(summary.getByRole('cell', { name: '315', exact: true })).toBeVisible();
   await expect(summary.getByRole('cell', { name: '15s', exact: true })).toBeVisible();
   await closeDialog(summary);
@@ -740,13 +762,14 @@ test('reloads the cached full app offline and saves a complete workout without a
   await page.locator('.workout-notes > details > summary').click();
   await page.getByLabel('Workout notes', { exact: true }).fill('Logged entirely offline.');
   const summary = await finishWorkout(page, '45');
-  await expect(summary).toContainText(/54\s*kg volume/);
+  await expect(summary.locator('.workout-completion__volume')).toContainText(/Volume54\s*kg logged/);
   await closeDialog(summary);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await selectTab(page, 'History');
   const history = mondayHistory(page);
   await expect(history).toContainText('54 kg total volume');
   await history.click();
+  await openSessionDetails(page.getByRole('dialog'));
   await expect(page.getByRole('dialog')).toContainText('Logged entirely offline.');
 });
 

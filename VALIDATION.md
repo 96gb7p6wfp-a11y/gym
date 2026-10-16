@@ -1,7 +1,7 @@
 # Standalone app validation
 
-Initial validation was performed on 2026-10-08; the workout interaction update
-was checked on 2026-10-12 in the Linux cloud workspace. This repository
+Initial validation was performed on 2026-10-08. The athlete-focused redesign
+was checked on 2026-10-16 in the Linux cloud workspace. This repository
 contains the full React + Vite Setline gym app and an installable PWA. The previous
 website/iPhone wrapper and native build configuration have been removed.
 
@@ -9,9 +9,9 @@ website/iPhone wrapper and native build configuration have been removed.
 | --- | --- |
 | Clean `npm ci` | Passed; 132 packages installed, resolved dependencies recorded in `package-lock.json` |
 | `npm run typecheck` | Passed |
-| `npm test` | Passed: 196 tests, zero failures or skips |
+| `npm test` | Passed: 240 tests, zero failures or skips |
 | `npm run build` | Passed; TypeScript check, Vite production bundle and generated service worker |
-| `npm run test:web` | Passed: 58 real Chromium application workflows, zero failures (2.5 minutes) |
+| `npm run test:web` | Passed: 74 real Chromium application workflows, zero failures or skips (3.2 minutes) |
 | Final PWA metadata check | Passed: installation, manifest/icons and offline workout workflows rerun after the launch-color update (3 checks) |
 | Development server | Passed; HTTP 200 for the Vite page and React entry module |
 | Visual review | Redesigned Today, Train, focused workout, Progress, Nutrition, More, Routine, plan and report reviewed; small-phone rest controls and desktop layout checked |
@@ -186,8 +186,8 @@ plans and nutrition use the local storage key `setline.gym.v1`; network access i
 not required to save them.
 
 The final production output contains 13 precached files. The main JavaScript
-bundle is 1,118.29 kB (334.28 kB gzip), the lazy FIT decoder is 431.69 kB
-(64.30 kB gzip), and CSS is 249.42 kB (40.63 kB gzip). Vite
+bundle is 1,236.67 kB (365.96 kB gzip), the lazy FIT decoder is 431.69 kB
+(64.30 kB gzip), and CSS is 302.15 kB (49.51 kB gzip). Vite
 reports its standard large-chunk advisory; the build completes successfully.
 
 The reusable cloud install/start configuration was saved as a draft. Publishing
@@ -201,6 +201,52 @@ network draft. Manufacturer serving instructions were not verified. D3 strength
 magnesium frequency come from the user. K2 amount, omega-3 variant and elemental
 magnesium serving remain awaiting label confirmation in the reminder UI. Saving
 the domain draft did not establish runtime network access or publication.
+
+## Athlete refinement checks — 2026-10-16
+
+The full app retains Today / Train / Progress / Nutrition / More. Purpose-led
+previews, short exercise benefits and intent, deliberate light/dark surfaces and
+large stepper controls were reviewed against the current production build.
+Session details, technique, effort, weekly calendar and records stay behind a tap.
+
+New automated checks cover:
+
+- Searchable local exercise metadata and alternatives ranked by movement, muscles,
+  equipment and purpose; original exercise keys remain resolvable.
+- Creating/editing reusable workouts with decimal starting loads, sets, reps,
+  target RPE, rest and notes; cancel/invalid drafts leave saved data unchanged.
+- Adding, replacing, moving and removing today's work without changing the plan;
+  completed sets stay recorded when remaining work is replaced or removed.
+- Swapping plan days, assigning custom sessions, confirmed recovery days and
+  explicitly restoring recommendations without deleting templates or history.
+- Conservative progression, explicit application to only the current unfinished
+  set, and unchanged completed sets, other sets and historical records.
+- Canonical exercise copies sharing a chart while renamed, retyped and differently
+  measured movements remain separate. Session prefill follows the same safety rule.
+- Manual jump height and highest touch as separate series; offline save/reload and
+  confirmed deletion preserve the other measurement and all existing data.
+- Weekly body-weight averages and adequately sampled trends; multi-week stable
+  weight can suggest a small calorie increase without changing saved targets.
+- Self-reported energy and leg soreness, optimistic versions, strict validation, optional stable planned-session duration,
+  old backups without optional fields, malformed imports and full backup/restore.
+- Appearance persistence, reachable narrow-phone close controls, all five screens
+  without horizontal overflow and restrained session-specific completion records.
+
+The final empty-recovery-day action refinement was followed by 18 passing Today/
+customization regressions and 3 passing install/manifest/offline-workout checks
+against the final production output. Empty recovery days open guidance without
+creating an empty session.
+
+The production checks include the original decimal, rest, complex pair, timed-set,
+nutrition, supplement/medication routine, import, history, plan, offline, backup and
+PWA regressions. Phone tests cover 320×568 and 390×844, landscape 844×390 with
+horizontal insets, 16 px input text, 44 px actions and desktop width 1280.
+These are Chromium emulations and source/visual reviews, not a physical Safari run.
+
+The before-change audit and eleven accessible official Hevy/Strong references are
+in [PREMIUM_PRODUCT_AUDIT.md](docs/PREMIUM_PRODUCT_AUDIT.md) and
+[PREMIUM_BENCHMARKS.md](docs/PREMIUM_BENCHMARKS.md). Other requested benchmark
+sites remained blocked by the environment proxy; they are marked unverified.
 
 ## Practical limits
 

@@ -55,7 +55,8 @@ for (const separator of ['.', ',']) {
     await finish.getByLabel('Workout duration · minutes', { exact: true }).fill('60');
     await finish.getByRole('button', { name: 'Save completed workout', exact: true }).click();
     const summary = page.getByRole('dialog');
-    await expect(summary).toContainText(/100\s*kg volume/);
+    await expect(summary.locator('.workout-completion__volume')).toContainText(/Volume100\s*kg logged/);
+    await summary.locator('.history-set-details > summary').click();
     await expect(summary.getByRole('cell', { name: '12.5 kg', exact: true })).toBeVisible();
     await summary.getByRole('button', { name: 'Close', exact: true }).click();
     await page.reload();

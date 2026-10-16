@@ -7,6 +7,25 @@ or native iPhone signing is required.
 
 ## Features
 
+- **Personal training:** purpose-led strength and power sessions around Tuesday/Friday
+  volleyball, with fast controls, quiet exercise intent and deliberate light/dark modes.
+- **Exercise library:** 146 local movements, search-first selection and optional muscle,
+  goal, equipment, movement and training-type filters. Alternatives rank similar stimuli
+  and explain tradeoffs in one line.
+- **Change today:** add, replace, move or remove remaining work without rewriting the
+  weekly plan. Completed sets stay in the log. Quick effort/load adjustments and an
+  optional energy/leg-soreness check-in remain behind workout options.
+- **Custom workouts:** create, edit and start reusable sessions; save the current workout
+  as a template. Customize or swap weekly days, assign templates, and explicitly restore
+  the recommended plan without losing history or preferences.
+- **Progression:** comparable completed sets and effort guide conservative rep or load
+  suggestions. Applying a suggestion is explicit and affects only the current set.
+  Explosive work prioritizes quality; volleyball timing and recorded readiness moderate
+  advice. Renamed, retyped and differently measured movements have separate baselines.
+- **Performance:** separate standing/approach/block jump height and highest-touch records,
+  weekly weight averages, suitable strength/repetition/estimated-1RM/volume records, and
+  concise load insights. Stable multi-week weight can suggest a small food increase;
+  saved calorie targets never change automatically.
 - **Today:** today's session, one main action, compact week navigation, next
   volleyball session and a quiet nutrition snapshot.
 - **Train:** focused exercise and current-set controls, previous performance,
@@ -36,7 +55,7 @@ or native iPhone signing is required.
   preserve older records. Reminders, history and settings are included in backups.
 - **Training plan:** in More or via Today/Train; edit days and movements,
   sets/targets/rest, logging mode and preparation.
-- **Settings:** body weight, default rest, home-screen installation, validated backup
+- **Settings:** system/light/dark appearance, body weight, default rest, home-screen installation, validated backup
   export/import, recovery export and confirmed local-data reset.
 - **Extra activities:** dated runs, rides, walks, swimming and custom activities
   outside the recurring plan. Log distance, duration and effort, preview active
@@ -61,7 +80,7 @@ or native iPhone signing is required.
   short analysis and next-week suggestions. Logged meals show a partial protein
   summary; unrecorded meals are unknown. Reports can be downloaded as JSON.
 
-Workout data, extra activities, plans, preferences and nutrition are stored in this browser/device
+Workout data, extra activities, custom workouts, jump/readiness records, plans, preferences and nutrition are stored in this browser/device
 under `setline.gym.v1`. They persist across reloads and can be used offline after
 one successful online load. No demo workout history is inserted.
 
@@ -203,3 +222,11 @@ service worker. The prior iPhone/website wrapper has been removed.
 `activity-import.ts`, `fit-import.ts` and `ActivityImport.tsx` handle local activity
 files; `exercise-guides.ts` and `ExerciseGuide.tsx` provide movement instructions;
 `weekly-report.ts` and `WeeklyReport.tsx` generate reports from saved data.
+
+## Product review
+
+The refinement audit and verified public UX benchmarks are recorded in
+[PREMIUM_PRODUCT_AUDIT.md](docs/PREMIUM_PRODUCT_AUDIT.md) and
+[PREMIUM_BENCHMARKS.md](docs/PREMIUM_BENCHMARKS.md). Hevy and Strong documentation
+was accessible; five other benchmark destinations were blocked by the cloud
+network policy and are identified as unverified rather than cited as evidence.

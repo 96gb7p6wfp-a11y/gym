@@ -1,0 +1,76 @@
+.workout-builder-sheet { --builder-space: 20px; }
+.workout-builder { display: grid; gap: 20px; min-width: 0; }
+.builder-fields { border: 0; padding: 0; margin: 0; display: grid; gap: 24px; min-width: 0; }
+.builder-basics { display: grid; gap: 16px; }
+.workout-builder .field-label { display: grid; gap: 8px; min-width: 0; color: var(--sub); font-size: 13px; }
+.workout-builder input:not([type='checkbox']), .workout-builder select, .workout-builder textarea { min-width: 0; width: 100%; min-height: 48px; border: 0; border-radius: 12px; background: var(--surface-soft); color: var(--ink); padding: 12px; font: inherit; font-size: 16px; }
+.workout-builder textarea { resize: vertical; min-height: 78px; }
+.workout-builder select { padding-right: 24px; }
+.builder-section-heading, .saved-workouts-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.builder-section-heading h3, .saved-workouts-heading h3 { font-size: 16px; font-weight: 650; letter-spacing: -.02em; margin: 0; }
+.builder-section-heading > span { color: var(--sub); font-size: 12px; }
+.builder-empty, .weekly-plan-note { color: var(--sub); line-height: 1.5; font-size: 13px; margin: 0; }
+.builder-empty { padding: 10px 0; }
+.builder-exercises { list-style: none; display: grid; gap: 0; margin: -12px 0 0; padding: 0; min-width: 0; }
+.builder-exercises > li { border-bottom: 1px solid var(--line); min-width: 0; }
+.builder-exercise-row { display: flex; align-items: center; text-align: left; width: 100%; gap: 12px; min-height: 76px; padding: 14px 0; background: transparent; color: var(--ink); border: 0; }
+.builder-exercise-row > svg { color: var(--sub); flex: 0 0 auto; }
+.builder-exercise-order { color: var(--sub); font-size: 12px; font-variant-numeric: tabular-nums; flex: 0 0 18px; text-align: center; }
+.builder-exercise-copy { display: grid; flex: 1; min-width: 0; gap: 5px; }
+.builder-exercise-copy > strong { font-size: 15px; font-weight: 650; line-height: 1.35; overflow-wrap: anywhere; }
+.builder-exercise-copy > span { font-size: 12px; color: var(--sub); line-height: 1.4; }
+.builder-exercise-edit { display: grid; gap: 16px; padding: 0 0 18px; min-width: 0; }
+.builder-prescription-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 14px; min-width: 0; }
+.builder-exercise-options, .builder-session-options { min-width: 0; }
+.builder-exercise-options > summary, .builder-session-options > summary { display: flex; align-items: center; min-height: 44px; list-style: none; font-size: 13px; font-weight: 550; color: var(--sub); cursor: pointer; }
+.builder-exercise-options > summary::after, .builder-session-options > summary::after { content: '+'; margin-left: auto; font-size: 18px; }
+.builder-exercise-options[open] > summary::after, .builder-session-options[open] > summary::after { content: '−'; }
+.builder-exercise-options > :not(summary), .builder-session-options > :not(summary) { margin-top: 14px; }
+.builder-check { display: flex; align-items: center; min-height: 44px; gap: 12px; font-size: 13px; color: var(--sub); }
+.builder-check input { width: 20px; height: 20px; accent-color: var(--ink); }
+.builder-exercise-actions { display: flex; align-items: center; gap: 8px; }
+.builder-exercise-actions .text-button { min-height: 44px; margin-right: auto; }
+.builder-order-actions { display: flex; gap: 4px; }
+.builder-exercise-actions .icon-button { min-width: 44px; min-height: 44px; flex: 0 0 44px; }
+.builder-exercise-actions button:disabled { opacity: .35; }
+.builder-remove { color: var(--sub); }
+.builder-add { min-height: 52px; }
+.builder-save { position: sticky; bottom: -24px; z-index: 2; margin: 0 -4px -4px; padding: 16px 4px 4px; background: var(--surface); box-shadow: 0 -12px 16px -16px rgb(0 0 0 / 12%); }
+.builder-save > .btn { min-height: 54px; }
+.builder-error { color: var(--danger, #a04435); font-size: 13px; line-height: 1.5; margin: 0 0 12px; }
+.weekly-plan-tools { display: grid; gap: 24px; min-width: 0; }
+.weekly-plan-customize { border-bottom: 1px solid var(--line); padding-bottom: 12px; min-width: 0; }
+.weekly-plan-customize > summary { display: flex; align-items: center; justify-content: space-between; min-height: 52px; list-style: none; font-size: 15px; font-weight: 600; cursor: pointer; }
+.weekly-plan-customize[open] > summary svg { rotate: 90deg; }
+.weekly-plan-customize > :not(summary) { margin-top: 16px; }
+.weekly-plan-days { display: grid; grid-template-columns: repeat(7, minmax(44px, 1fr)); gap: 3px; border-radius: 14px; padding: 4px; background: var(--surface-soft); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; scroll-snap-type: x proximity; }
+.weekly-plan-days::-webkit-scrollbar { display: none; }
+.weekly-plan-days > button { min-height: 44px; padding: 4px 1px; background: transparent; color: var(--sub); border: 0; border-radius: 10px; font-size: 11px; scroll-snap-align: center; }
+.weekly-plan-days > button[aria-pressed='true'] { background: var(--surface); color: var(--ink); font-weight: 650; box-shadow: 0 1px 3px rgb(0 0 0 / 5%); }
+.weekly-plan-selected > span { font-size: 12px; color: var(--sub); }
+.weekly-plan-selected > h3 { font-size: 21px; line-height: 1.25; letter-spacing: -.025em; margin: 6px 0 0; }
+.weekly-plan-actions { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.weekly-plan-actions .text-button, .weekly-plan-reset { min-height: 44px; font-size: 13px; }
+.saved-workouts-heading .text-button { min-height: 44px; font-size: 12px; gap: 5px; }
+.saved-workouts-list { list-style: none; padding: 0; margin: -12px 0 0; }
+.saved-workouts-list > li { display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--line); }
+.saved-workout-row, .weekly-plan-destination { display: flex; align-items: center; gap: 16px; text-align: left; min-height: 74px; padding: 14px 0; border: 0; background: transparent; color: var(--ink); width: 100%; }
+.saved-workout-row > span, .weekly-plan-destination > span { display: grid; gap: 5px; min-width: 0; flex: 1; }
+.saved-workout-row strong, .weekly-plan-destination strong { font-size: 15px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.saved-workout-row > span > span, .weekly-plan-destination > span > span { font-size: 12px; color: var(--sub); line-height: 1.4; }
+.saved-workout-row > svg, .weekly-plan-destination > svg { color: var(--sub); flex: 0 0 auto; }
+.saved-workouts-list > li > .text-button { min-width: 44px; min-height: 44px; font-size: 13px; }
+.weekly-plan-destination-list { display: grid; min-width: 0; }
+.weekly-plan-destination-list > button + button { border-top: 1px solid var(--line); }
+.weekly-plan-recovery { display: grid; gap: 16px; }
+.weekly-plan-recovery > p { font-size: 14px; color: var(--sub); line-height: 1.5; }
+.weekly-plan-recovery > .text-button { min-height: 44px; justify-content: center; }
+@media (max-width: 360px) {
+  .builder-exercise-copy > strong { font-size: 14px; }
+  .builder-exercise-actions { gap: 2px; }
+  .builder-exercise-actions .text-button { font-size: 12px; }
+  .saved-workouts-heading { gap: 6px; }
+  .saved-workouts-heading h3 { font-size: 15px; }
+  .saved-workouts-heading .text-button { font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) { .weekly-plan-customize > summary svg { transition: none; } }

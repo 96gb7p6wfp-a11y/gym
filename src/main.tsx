@@ -4,6 +4,10 @@ import App from './App.jsx';
 import './reference.css';
 import './app.css';
 import './premium.css';
+import './athlete.css';
+import { initializeAppearance } from './theme';
+
+initializeAppearance();
 
 class AppBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };

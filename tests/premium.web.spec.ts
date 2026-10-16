@@ -150,8 +150,22 @@ test('offers a one-tap progress check-in and charts only recorded body weights',
   await expect(check.locator('.nutrition-weight-average')).toContainText('64.1 kg');
   await check.getByRole('button', { name: 'Close', exact: true }).click();
   await tab(page, 'Progress');
-  await expect(page.getByRole('img', { name: 'Body weight trend: 64 to 64.2 kilograms across 2 check-ins', exact: true })).toBeVisible();
-  await expect(page.locator('.progress-weight-caption')).toContainText('+0.2 kg across 2 recent check-ins');
+  // Two nearby weigh-ins are useful records, but not a weekly trend.
+  await expect(page.getByRole('img', { name: /^Body weight trend:/ })).toHaveCount(0);
+  await expect(page.locator('.progress-weight-caption')).toContainText('2 days');
+  await tab(page, 'Nutrition');
+  for (const [date, kilograms] of [['2026-09-28', '63.8'], ['2026-09-30', '64'], ['2026-10-01', '64.2'], ['2026-10-05', '64.1']]) {
+    await page.getByLabel('Nutrition date', { exact: true }).fill(date);
+    await page.getByRole('button', { name: /^Weight check-in/ }).click();
+    const entry = page.getByRole('dialog', { name: 'Weight check-in', exact: true });
+    await entry.getByLabel('Body weight · kg', { exact: true }).fill(kilograms);
+    await entry.getByRole('button', { name: 'Save weight', exact: true }).click();
+    await expect(entry.locator('.nutrition-weight-average')).toContainText('kg');
+    await entry.getByRole('button', { name: 'Close', exact: true }).click();
+  }
+  await tab(page, 'Progress');
+  await expect(page.getByRole('img', { name: 'Body weight trend: weekly averages from 64 to 64.1 kilograms', exact: true })).toBeVisible();
+  await expect(page.locator('.progress-weight-caption')).toContainText('+0.1 kg · weekly averages over 30 days');
 });
 
 test('imports directly from More and keeps activity totals synchronized with the report week', async ({ page }) => {

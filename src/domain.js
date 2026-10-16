@@ -819,6 +819,7 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
       done: zBoolean(),
     }),
   ).max(20),
+  TrainingGoalSchema = zEnum([`strength`, `hypertrophy`, `power`, `jump`, `mobility`, `recovery`, `capacity`, `sport`]),
   ExerciseSchema = zObject({
     key: zString().min(1).max(120),
     name: zString().trim().min(1).max(120),
@@ -830,16 +831,24 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     perSide: zBoolean(),
     cue: zString().max(500).optional(),
     measurement: zEnum([`touch`, `height`, `distance`]).optional(),
+    exerciseId: zString().min(1).max(120).optional(),
+    defaultKg: optionalAmount(2e3).optional(),
+    targetRpe: zNumber().finite().min(1).max(10).optional(),
   }),
   PlanDaySchema = zObject({
     name: zString().trim().min(1).max(80),
     kind: zEnum([`strength`, `sport`, `recovery`]),
+    goal: TrainingGoalSchema.optional(),
     minutes: zNumber().int().min(1).max(600),
     note: zString().max(500),
     exercises: zArray(ExerciseSchema).max(40),
     warmup: PreparationSchema.optional(),
     cooldown: PreparationSchema.optional(),
   }),
+  CustomWorkoutSchema = PlanDaySchema.extend({ id: zString().uuid() }).refine(
+    (workout) => new Set(workout.exercises.map((exercise) => exercise.key)).size === workout.exercises.length,
+    `Exercises need unique identifiers.`,
+  ),
   ProfileSchema = zObject({
     plan: zArray(
       PlanDaySchema.extend({
@@ -853,6 +862,11 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
         `Use a unique name for each exercise in a session.`,
       ),
     ).length(7),
+    customWorkouts: zArray(CustomWorkoutSchema).max(100).refine(
+      (workouts) => new Set(workouts.map((workout) => workout.id)).size === workouts.length,
+      `Saved workouts need unique identifiers.`,
+    ).optional(),
+    appearance: zEnum([`system`, `light`, `dark`]).optional(),
     bodyWeight: zNumber().finite().min(20).max(400),
     restSeconds: zNumber().int().min(15).max(600),
     nutrition: zObject({
@@ -906,6 +920,8 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     day: zNumber().int().min(0).max(6),
     name: zString().min(1).max(80),
     kind: zEnum([`strength`, `sport`, `recovery`]),
+    goal: TrainingGoalSchema.optional(),
+    plannedMinutes: zNumber().int().min(1).max(600).optional(),
     status: zEnum([`active`, `completed`, `cancelled`, `deleted`]),
     startedAt: zNumber().min(0),
     finishedAt: zNumber().min(0).nullable(),
@@ -1033,7 +1049,7 @@ function previousExercise(e, t, n, r) {
     .sort(
       (e, t) => t.date.localeCompare(e.date) || t.startedAt - e.startedAt,
     )) {
-    let e = i.exercises.find((e) => e.key === t && e.logs.some((e) => e.done));
+    let e = i.exercises.find((e) => (e.key === t || e.exerciseId === t) && e.logs.some((e) => e.done));
     if (e)
       return {
         session: i,
@@ -1071,6 +1087,8 @@ function createSession(e, t, n, r, i) {
     day: t,
     name: e.name,
     kind: e.kind,
+    ...(e.goal ? { goal: e.goal } : {}),
+    plannedMinutes: e.minutes,
     status: `active`,
     startedAt: a,
     finishedAt: null,
@@ -1089,7 +1107,10 @@ function createSession(e, t, n, r, i) {
       done: !1,
     })),
     exercises: e.exercises.map((e) => {
-      let t = previousExercise(i, e.key, n)?.exercise;
+      let t = previousExercise(i, e.exerciseId ?? e.key, n)?.exercise;
+      // A renamed movement or a different measurement is a new baseline.
+      const normalizedName = value => value.trim().replace(/\s+/g, ' ').toLowerCase();
+      if (t && (normalizedName(t.name) !== normalizedName(e.name) || t.mode !== e.mode || (t.measurement ?? null) !== (e.measurement ?? null))) t = undefined;
       return {
         ...e,
         elapsedMs: 0,
@@ -1098,11 +1119,11 @@ function createSession(e, t, n, r, i) {
           {
             length: e.sets,
           },
-          (e, n) => {
+          (_, n) => {
             let r = t?.logs.filter((e) => e.done)[n];
             return {
               id: crypto.randomUUID(),
-              kg: r?.kg ?? null,
+              kg: r ? r.kg : (e.defaultKg ?? null),
               reps: r?.reps ?? null,
               seconds: r?.seconds ?? null,
               rir: null,
@@ -1150,8 +1171,10 @@ export {
   withPreparation,
   optionalAmount,
   PreparationSchema,
+  TrainingGoalSchema,
   ExerciseSchema,
   PlanDaySchema,
+  CustomWorkoutSchema,
   ProfileSchema,
   SetLogSchema,
   SessionExerciseSchema,
