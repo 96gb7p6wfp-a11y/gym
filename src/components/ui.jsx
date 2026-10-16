@@ -1,7 +1,7 @@
 import { twMerge } from "tailwind-merge";
 import { clsx } from "clsx";
 import * as ReactJSX from "react/jsx-runtime";
-import { useLayoutEffect, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { Slot as SlotPrimitiveSlot } from "@radix-ui/react-slot";
 import { Root as DialogPrimitiveRoot } from "@radix-ui/react-dialog";
 import { Portal as DialogPrimitivePortal } from "@radix-ui/react-dialog";
@@ -100,7 +100,8 @@ function DialogContent({
   return (
     <DialogPortal data-slot={`dialog-portal`}>
       <DialogOverlay />
-      <DialogPrimitiveContent
+      <DialogViewportSurface
+        primitive={DialogPrimitiveContent}
         data-slot={`dialog-content`}
         className={cn(
           `fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border bg-background p-6 shadow-lg duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:max-w-lg`,
@@ -120,9 +121,73 @@ function DialogContent({
         <div className={`dialog-scroll`} data-slot={`dialog-scroll`}>
           {t}
         </div>
-      </DialogPrimitiveContent>
+      </DialogViewportSurface>
     </DialogPortal>
   );
+}
+
+/* Safari keeps the layout viewport behind its keyboard. Size each mounted
+   portal to the visible viewport, without moving the underlying page. */
+function DialogViewportSurface({ primitive: Primitive, style, ref: forwardedRef, ...props }) {
+  const surface = useRef(null);
+  const attachSurface = useCallback(node => {
+    surface.current = node;
+    if (typeof forwardedRef === 'function') return forwardedRef(node);
+    if (forwardedRef) forwardedRef.current = node;
+  }, [forwardedRef]);
+  const readViewport = () => {
+    const viewport = window.visualViewport;
+    const height = viewport?.height ?? window.innerHeight;
+    const top = viewport?.offsetTop ?? 0;
+    return { height, top, bottom: Math.max(0, window.innerHeight - height - top) };
+  };
+  const [viewport, setViewport] = useState(readViewport);
+  useLayoutEffect(() => {
+    let frame = 0;
+    const update = (reveal = false) => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const next = readViewport();
+        setViewport(previous => reveal !== true && previous.height === next.height && previous.top === next.top && previous.bottom === next.bottom ? previous : next);
+      });
+    };
+    const focus = event => { if (surface.current?.contains(event.target)) update(true); };
+    const visual = window.visualViewport;
+    window.addEventListener('resize', update);
+    visual?.addEventListener('resize', update);
+    visual?.addEventListener('scroll', update);
+    document.addEventListener('focusin', focus);
+    update();
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', update);
+      visual?.removeEventListener('resize', update);
+      visual?.removeEventListener('scroll', update);
+      document.removeEventListener('focusin', focus);
+    };
+  }, []);
+  useLayoutEffect(() => {
+    const active = document.activeElement;
+    if (!surface.current?.contains(active) || !active?.matches('input, textarea, select, [contenteditable="true"]')) return;
+    const scroller = surface.current.querySelector('.dialog-scroll') ?? surface.current;
+    const bounds = scroller.getBoundingClientRect();
+    const field = active.getBoundingClientRect();
+    const top = Math.max(bounds.top + 16, viewport.top + 16);
+    const bottom = Math.min(bounds.bottom - 20, viewport.top + viewport.height - 20);
+    if (field.bottom > bottom) scroller.scrollTop += field.bottom - bottom;
+    else if (field.top < top) scroller.scrollTop -= top - field.top;
+  }, [viewport]);
+  return <Primitive
+    ref={attachSurface}
+    data-dialog-viewport="true"
+    style={{
+      '--dialog-viewport-height': `${viewport.height}px`,
+      '--dialog-viewport-top': `${viewport.top}px`,
+      '--dialog-viewport-bottom': `${viewport.bottom}px`,
+      ...style,
+    }}
+    {...props}
+  />;
 }
 function DialogHeader({ className: e, ...t }) {
   return (
@@ -242,7 +307,8 @@ function AlertDialogContent({ className: e, size: t = `default`, ...n }) {
   return (
     <AlertDialogPortal>
       <AlertDialogOverlay />
-      <AlertDialogPrimitiveContent
+      <DialogViewportSurface
+        primitive={AlertDialogPrimitiveContent}
         data-slot={`alert-dialog-content`}
         data-size={t}
         className={cn(

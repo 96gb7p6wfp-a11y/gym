@@ -4,6 +4,7 @@ test('exercise details explain purpose and rank relevant alternatives without cr
   await page.goto('/');
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: /^Mon / }).click();
+  await page.locator('.planned-preview > summary').click();
   const guide = page.locator('details.exercise-guide').filter({
     has: page.locator('summary[aria-label="Exercise details for Chest-Supported Row"]'),
   }).first();

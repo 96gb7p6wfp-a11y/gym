@@ -26,8 +26,8 @@ or native iPhone signing is required.
   weekly weight averages, suitable strength/repetition/estimated-1RM/volume records, and
   concise load insights. Stable multi-week weight can suggest a small food increase;
   saved calorie targets never change automatically.
-- **Today:** today's session, one main action, compact week navigation, next
-  volleyball session and a quiet nutrition snapshot.
+- **Today:** the workout, its goal, one main action and weekly gym progress first;
+  recorded jump height, next volleyball, compact week navigation and nutrition stay quiet.
 - **Train:** focused exercise and current-set controls, previous performance,
   quick completion and automatic advancement. All-set editing and the original
   seven-day gym/volleyball/recovery plan remain available, including the Tuesday jump
@@ -37,8 +37,9 @@ or native iPhone signing is required.
   Complex pairs alternate by round in one view while keeping prescribed rest.
   Short timed movements have a per-set countdown with quick duration adjustment,
   pause/resume/reset and explicit completion; longer activities retain manual minutes.
-- **Progress:** a compact weight/consistency/strength overview, detailed charts,
-  personal bests, History with editing/deletion/restoration, and weekly reports.
+- **Progress:** a jump-first overview with real dated trends, weekly body-weight
+  averages, comparable strength and recovery-aware training cadence. Detailed charts,
+  personal bests, History with editing/deletion/restoration, and weekly reports remain available.
 - **Nutrition:** calories and protein remaining, quick multi-food meals, recent
   meals, saved foods, daily weight entries and targets.
 - **Daily nutrition estimate:** editable age, height, body weight, activity and

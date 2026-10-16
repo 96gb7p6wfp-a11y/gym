@@ -12,8 +12,9 @@ remain unchanged.
 | Nutrition | What should I still eat? | Recent meals, saved foods, targets and profile, weight check-in, fuel guidance |
 | More | What else do I need? | Training plan, routine, settings, imports, backup and installation |
 
-The visual system uses a warm neutral background, dark type and one soft green
-accent. Primary actions are large; secondary actions are simple rows or
+The visual system uses a cool neutral background, strong dark type and one lime
+accent. Dark mode uses charcoal surfaces with controlled contrast. Primary actions
+are large; secondary actions are simple rows or
 disclosures. Mobile dialogs become bottom sheets with a pinned close button and
 an independently scrolling body. The bottom navigation and popup boundaries
 respect iPhone safe areas.
@@ -67,3 +68,23 @@ actions and never silently alter working sets, weekly volume or nutrition target
 The v1 storage key and portable backup envelope remain compatible. New appearance,
 template and performance fields are optional; validation and optimistic version checks
 protect writes and reject malformed data without wiping old records.
+
+## Focus and performance
+
+Today puts the session name, one-line training goal, Start and weekly gym progress
+before the calendar. They fit above navigation on 320×568 and 390×844 phones with
+simulated iPhone safe areas. A recorded jump height adds one quiet trend; technique,
+the plan, nutrition and extra activities remain available farther down.
+
+Progress leads with vertical jump, followed by body-weight and comparable-strength
+trends. Charts use real dated records, without placeholder curves or combining
+height with highest touch. Weekly gym progress counts distinct completed days;
+optional primers do not become extra obligations, and recovery does not break a
+daily streak. Further measurements, history and reports stay behind explicit actions.
+
+Phone all-set editing uses compact stacked rows rather than sideways scrolling.
+Visual-viewport changes resize sheets and reveal focused fields. During workout
+entry, navigation and rest chrome give the keyboard room while timers keep running.
+The current input and Complete stay together when they fit. Keyboard Done dismisses
+editing; completing a set remains an explicit action. Pointer interaction is quiet,
+while keyboard navigation retains a visible focus ring.

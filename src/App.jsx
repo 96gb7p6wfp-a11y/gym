@@ -662,7 +662,7 @@ function GymApp({
     setRestEndsAt(null);
     r && (toast.success(`Workout complete`), setCompletedCelebrationId(n.id), setSelectedHistory(n));
   }
-  async function saveProfile(e) {
+  async function saveProfile(e, { notify = true } = {}) {
     let t = ProfileSchema.safeParse(e);
     if (!t.success)
       return (
@@ -682,7 +682,7 @@ function GymApp({
         ).version),
         setProfile(t.data),
         setRestSeconds(e.restSeconds),
-        toast.success(`Changes saved.`),
+        notify && toast.success(`Changes saved.`),
         !0
       );
     } catch (e) {
@@ -904,8 +904,6 @@ function GymApp({
     setSettingsDraft({ bodyWeight: profile.bodyWeight, restSeconds: profile.restSeconds });
     setSettingsOpen(true);
   }
-  const hour = Number(new Intl.DateTimeFormat(`en-GB`, { timeZone: `Europe/Berlin`, hour: `numeric`, hourCycle: `h23` }).format(new Date(now)));
-  const greeting = hour < 12 ? `Good morning` : hour < 18 ? `Good afternoon` : `Good evening`;
   const weekSelector = <div className="compact-week">
           <div className={`week-heading`}>
             <div className={`week-control`}>
@@ -984,7 +982,7 @@ function GymApp({
       <Toaster
         position={`top-center`}
         theme={document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'}
-        richColors={!0}
+        richColors={false}
         closeButton
         duration={3000}
         offset={{ top: `calc(env(safe-area-inset-top, 0px) + 80px)` }}
@@ -1039,9 +1037,8 @@ function GymApp({
         ]} />
       </header>
       <main className={`workspace`}>
-        <PageHeader title={tab === `today` ? greeting : tab === `train` ? `Train` : tab === `progress` ? `Progress` : tab === `nutrition` ? `Nutrition` : moreView === `plan` ? `Training plan` : moreView === `routine` ? `Routine` : moreView === `workouts` ? `My workouts` : `More`}
-          eyebrow={tab === `today` ? new Date(`${selectedDate}T12:00:00`).toLocaleDateString(`en-GB`, { weekday: `long`, day: `numeric`, month: `long` }) : undefined}
-          subtitle={tab === `progress` ? `Small steps. Real progress.` : undefined} />
+        <PageHeader title={tab === `today` ? `Today` : tab === `train` ? `Train` : tab === `progress` ? `Progress` : tab === `nutrition` ? `Nutrition` : moreView === `plan` ? `Training plan` : moreView === `routine` ? `Routine` : moreView === `workouts` ? `My workouts` : `More`}
+          action={tab === `today` ? <span className="today-header-date">{new Date(`${selectedDate}T12:00:00`).toLocaleDateString(`en-GB`, { weekday: `short`, day: `numeric`, month: `long` })}</span> : undefined} />
         {(saving || profileSaving) && <span className="sync-state" role="status">Saving…</span>}
         {loadError && tab !== `nutrition` && (
           <div className={`error-banner`} role={`alert`}>
@@ -1059,6 +1056,8 @@ function GymApp({
         <TabsContent value="today">
           <TodayView date={selectedDate} plan={selectedPlan} session={activeSession} completed={dayCompletedSession} daySelector={weekSelector}
             activities={activityRecords} nutrition={reportNutrition} volleyballSchedule={volleyballSchedule}
+            sessions={sessions} weeklyPlan={profile.plan} performance={performance.data} bodyWeight={profile.bodyWeight} today={today}
+            onProgress={() => { setProgressView('overview'); setTab('progress'); }}
             disabled={!loaded || saving || !!loadError} onStart={startWorkout} onTrain={() => setTab(`train`)}
             onViewLog={setSelectedHistory} onNutrition={() => setTab(`nutrition`)} onPlan={openPlan}
             onActivity={() => { setTab(`train`); requestAnimationFrame(() => { const tools = document.querySelector(`.train-activities`); if (tools) { tools.open = true; tools.scrollIntoView({ block: `start`, behavior: `smooth` }); } }); }} />
@@ -1270,6 +1269,7 @@ function GymApp({
                     disabled={saving || !!loadError} />
                 </React.Fragment>
               ) : (
+                <details className="planned-preview"><summary>Exercise preview <span>{selectedPlan.exercises.length} movements</span></summary>
                 <div className={`planned-list`}>
                   {selectedPlan.exercises.map((e, t) => {
                     let n = comparablePrevious(
@@ -1315,7 +1315,7 @@ function GymApp({
                       <p>{`Edit this day to add your movements.`}</p>
                     </div>
                   )}
-                </div>
+                </div></details>
               )}
               <details className="train-activities"><summary>Activities</summary>
               <ExtraActivities
@@ -1834,7 +1834,7 @@ function GymApp({
           {moreView !== `menu` && <button className="text-button subpage-back" onClick={() => setMoreView(`menu`)}><ArrowLeft size={17} /> More</button>}
           {moreView === `plan` && <>
           <details className="plan-schedule"><summary>Volleyball schedule <span>{volleyballSchedule.startTime}–{volleyballSchedule.endTime}</span></summary><TrainingSchedule schedule={volleyballSchedule} onSave={saveVolleyballSchedule} /></details>
-          <p className="plan-intro">Four gym days. Two volleyball nights. Room to recover.</p>
+
           <details className="plan-program"><summary>Jump training block</summary>
           <section className={`panel program-overview`}>
             <div className={`panel-heading`}>
@@ -1910,7 +1910,6 @@ function GymApp({
           </section>}
           {moreView === `routine` && <RemindersPanel showHeading={false} date={routineDate} onDateChange={setRoutineDate} />}
           {moreView === `menu` && <div className="more-menu">
-            <div className="more-profile"><span className="eyebrow">YOUR FOCUS</span><h2>Stronger. Higher.</h2><p>Muscle gain &amp; volleyball performance</p></div>
             <div className="menu-group">
               <MenuRow title="My workouts" subtitle="Your saved sessions" icon={<Dumbbell size={21} />} onClick={() => setMoreView('workouts')} />
               <MenuRow title="Training plan" subtitle="Your week, with room to recover" icon={<ListChecks size={21} />} onClick={openPlan} />
@@ -1922,7 +1921,6 @@ function GymApp({
               <MenuRow title="Backup & data" subtitle="Keep a copy of your training" icon={<ShieldCheck size={21} />} onClick={openSettings} />
               <MenuRow title="Install Setline" subtitle="Add to your iPhone Home Screen" icon={<House size={21} />} onClick={() => setInstallOpen(true)} />
             </div>
-            <p className="more-footer">Made for one set at a time.</p>
             <ActivityImport bodyWeight={profile.bodyWeight} records={activityRecords} onImport={importExtraActivities} disabled={!loaded} open={importOpen} onOpenChange={setImportOpen} hideLauncher />
           </div>}
         </TabsContent>
@@ -2052,8 +2050,7 @@ function GymApp({
               }
             />
           </label>
-          <div className={`info-box`}>
-            <h3>{`About calorie estimates`}</h3>
+          <details className="settings-estimates"><summary>Calorie estimates</summary>
             <p>{`Active calories are estimated from your body weight, workout duration, and intensity. They are a rough estimate, not a measurement. Rest between sets affects accuracy.`}</p>
             <p>{`You can enter your watch’s active calories when finishing a workout. This app does not read Apple Health.`}</p>
             <a
@@ -2061,7 +2058,7 @@ function GymApp({
               target={`_blank`}
               rel={`noreferrer`}
             >{`2024 Compendium of Physical Activities`}</a>
-          </div>
+          </details>
           <button
             className={`btn full`}
             disabled={!loaded || profileSaving}
@@ -2074,7 +2071,7 @@ function GymApp({
           >
             {profileSaving ? `Saving…` : `Save preferences`}
           </button>
-          <AppearanceSettings value={profile.appearance ?? 'system'} disabled={profileSaving} onChange={appearance => saveProfile({ ...profile, appearance })} />
+          <AppearanceSettings value={profile.appearance ?? 'system'} disabled={profileSaving} onChange={appearance => saveProfile({ ...profile, appearance }, { notify: false })} />
           <DataSettings beforeExport={flushPendingWrites} onReplace={replaceLocalData} />
           <button
             className={`text-button`}

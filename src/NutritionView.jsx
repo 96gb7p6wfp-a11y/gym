@@ -331,7 +331,7 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
         <div className="nutrition-daily__energy">
           <span className="small-label">Calories</span>
           <div className="nutrition-daily__number"><strong>{roundNutrient(targets.calories === null ? dailyTotals.calories : Math.max(0, targets.calories - dailyTotals.calories)).toLocaleString('en-GB')}</strong><span>{targets.calories === null ? 'kcal logged' : 'kcal left'}</span></div>
-          <p className="muted">{roundNutrient(dailyTotals.calories).toLocaleString('en-GB')}{targets.calories === null ? ' logged · No target set' : ` of ${targets.calories} kcal`}</p>
+          <p className="muted">{targets.calories === null ? 'No target set' : `${roundNutrient(dailyTotals.calories).toLocaleString('en-GB')} of ${targets.calories} kcal`}</p>
           {targets.calories !== null && targets.calories > 0 && <progress value={Math.min(dailyTotals.calories, targets.calories)} max={targets.calories} aria-label="Calories · kcal daily progress" />}
         </div>
         <div className="nutrition-daily__protein">
@@ -354,7 +354,7 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
             <div><strong>{roundNutrient(nutrients.calories)} kcal</strong><small>{roundNutrient(nutrients.protein)} g protein</small></div>
             <ChevronRight size={17} aria-hidden="true" />
           </button>;
-        }) : <div className="nutrition-empty"><Utensils size={23} aria-hidden="true" /><div><strong>{loaded ? 'Your meals start here' : 'Loading your meals…'}</strong><p>Log what you eat. Build your day.</p></div></div>}
+        }) : <div className="nutrition-empty"><Utensils size={23} aria-hidden="true" /><div><strong>{loaded ? 'No meals yet' : 'Loading your meals…'}</strong></div></div>}
       </section>
       <div className="nutrition-tools">
         <button type="button" className="nutrition-tool-row" onClick={() => setProfileOpen(true)}><span><strong>Targets</strong><small>Your daily goals & profile</small></span><ChevronRight size={18} aria-hidden="true" /></button>

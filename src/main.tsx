@@ -5,9 +5,14 @@ import './reference.css';
 import './app.css';
 import './premium.css';
 import './athlete.css';
+import './performance-shell.css';
+import './today-focus.css';
+import './mobile-interactions.css';
+import { initializeInputModality } from './mobile-interactions';
 import { initializeAppearance } from './theme';
 
 initializeAppearance();
+initializeInputModality();
 
 class AppBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };

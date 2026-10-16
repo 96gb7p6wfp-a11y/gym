@@ -1,0 +1,9 @@
+/* The keyboard gets the space; fixed app chrome returns when editing ends. */
+.week-heading > .text-button { min-width: 44px; }
+.activity-import--headless { margin: 0; padding: 0; border: 0; background: transparent; }
+.activity-import--headless:empty { display: none; }
+html[data-keyboard-open='true'] .app-nav,
+html[data-keyboard-open='true'] .rest-floating { visibility: hidden; pointer-events: none; }
+html[data-keyboard-open='true'] .focused-exercise .focused-complete-set { position: static !important; }
+html[data-keyboard-open='true'] .focused-set-controls input,
+html[data-keyboard-open='true'] .focused-complete-set { scroll-margin-top: 20px; scroll-margin-bottom: calc(var(--app-keyboard-inset, 0px) + 20px); }

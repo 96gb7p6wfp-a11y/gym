@@ -715,8 +715,8 @@ test('serves a standalone PWA manifest, local icons, safe-area HTML, and a worke
   expect(manifest.start_url).toBe('/');
   expect(manifest.scope).toBe('/');
   expect(['standalone', 'fullscreen']).toContain(manifest.display);
-  expect(manifest.theme_color).toBe('#f5f5f0');
-  expect(manifest.background_color).toBe('#f5f5f0');
+  expect(manifest.theme_color).toBe('#f6f6f6');
+  expect(manifest.background_color).toBe('#f6f6f6');
   expect(manifest.display_override).toContain('fullscreen');
   expect(manifest.icons).toEqual(expect.arrayContaining([
     expect.objectContaining({ sizes: '192x192' }),
@@ -978,6 +978,7 @@ test('keeps daily food and recovery tips short and shows local exercise instruct
   await expect(warmup.getByRole('link')).toHaveAttribute('href', /^https:\/\/www\.youtube\.com\/results\?search_query=/);
   const warmupSummaryBounds = await warmup.locator('summary').boundingBox();
   expect(warmupSummaryBounds!.height).toBeGreaterThanOrEqual(44);
+  await page.locator('.planned-preview > summary').click();
   const plannedGuide = page.locator('details.exercise-guide').filter({ has: page.locator(`summary[aria-label="Exercise details for ${MOVEMENT}"]`) });
   await plannedGuide.locator('summary').click();
   await expect(plannedGuide.locator('ol li')).toHaveCount(3);

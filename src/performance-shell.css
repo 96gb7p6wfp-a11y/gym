@@ -1,0 +1,465 @@
+/* Performance shell: neutral surfaces, deliberate hierarchy and touch-first controls.
+   Loaded last so older feature styles inherit the same semantic palette. */
+:root {
+  --canvas: #f6f6f6;
+  --background: var(--canvas);
+  --bg: var(--canvas);
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-soft: #ededee;
+  --surface-hover: #e5e6e7;
+  --field: #f0f1f2;
+  --ink: #181b1e;
+  --sub: #686e75;
+  --line: #e2e4e6;
+  --accent: #c8f574;
+  --accent-ink: #40591d;
+  --on-accent: #202912;
+  --accent-soft: #edf4e4;
+  --hero: #23272b;
+  --on-hero: #f7f8f9;
+  --hero-sub: #b7bdc3;
+  --hero-line: #42484e;
+  --nav: rgb(246 246 246 / 94%);
+  --shadow: none;
+  --sheet-shadow: 0 24px 90px rgb(8 12 18 / 18%);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface-raised);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--surface);
+  --secondary: var(--surface-soft);
+  --secondary-foreground: var(--ink);
+  --muted: var(--surface-soft);
+  --muted-foreground: var(--sub);
+  --accent-foreground: var(--on-accent);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: #627c36;
+  --soft: var(--surface-soft);
+  --lime: var(--accent);
+  --chart-1: var(--accent-ink);
+  --chart-2: var(--sub);
+  --radius: 1.125rem;
+  --default-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  --canvas: #111315;
+  --surface: #1c1f22;
+  --surface-soft: #272b2f;
+  --surface-raised: #24282c;
+  --surface-hover: #33383d;
+  --field: #292e33;
+  --ink: #f4f5f6;
+  --sub: #a4abb3;
+  --line: #34393f;
+  --accent: #c8f574;
+  --accent-ink: #c8f574;
+  --on-accent: #202912;
+  --accent-soft: #2e3824;
+  --hero: #24282c;
+  --on-hero: #f7f8f9;
+  --hero-sub: #b7bdc3;
+  --hero-line: #41474e;
+  --nav: rgb(17 19 21 / 94%);
+  --sheet-shadow: 0 24px 90px rgb(0 0 0 / 40%);
+  --primary-foreground: #171a1d;
+  --ring: #c8f574;
+  color-scheme: dark;
+}
+
+html, body, #setline-root { background: var(--canvas); color: var(--ink); }
+body { font-family: var(--default-font-family); letter-spacing: -.012em; }
+h1 { font-size: 34px; font-weight: 720; line-height: 1.1; letter-spacing: -.05em; }
+h2, h3 { letter-spacing: -.03em; }
+button, input, select, textarea { font-family: inherit; }
+button, summary, a { -webkit-tap-highlight-color: transparent; }
+button { touch-action: manipulation; }
+button:focus:not(:focus-visible), [role='tab']:focus:not(:focus-visible) { outline: none; }
+button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.workspace { max-width: 760px; padding-left: max(24px, var(--app-safe-area-left)); padding-right: max(24px, var(--app-safe-area-right)); }
+.page-header { margin-bottom: 24px; }
+.page-header h1 { font-size: 34px; line-height: 1.08; }
+.page-header .eyebrow { color: var(--sub); font-size: 13px; font-weight: 450; margin-bottom: 7px; }
+.eyebrow, .small-label { letter-spacing: .09em; font-size: 10px; }
+.page-subtitle { font-size: 14px; line-height: 1.45; }
+.section-line h2, .section-header h2, .panel-heading h2 { font-size: 20px; font-weight: 650; }
+.small-note { line-height: 1.5; }
+
+/* The tab bar stays visually still: one selected icon and label, no stacked pills. */
+.app-nav {
+  background: var(--nav) !important;
+  border-top: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  box-shadow: none;
+  -webkit-backdrop-filter: saturate(130%) blur(24px);
+  backdrop-filter: saturate(130%) blur(24px);
+  padding-top: 6px !important;
+  padding-bottom: calc(6px + var(--app-safe-area-bottom)) !important;
+}
+.app-nav [data-slot='tabs-trigger'] {
+  min-height: 54px;
+  height: 54px;
+  padding: 5px 0;
+  gap: 4px;
+  color: var(--sub);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: 0;
+  border-radius: 12px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.app-nav-icon, .app-nav [data-state='active'] .app-nav-icon {
+  width: 38px;
+  height: 26px;
+  border-radius: 0;
+  background: transparent;
+}
+.app-nav [data-slot='tabs-trigger'][data-state='active'] { color: var(--ink); font-weight: 650; }
+.app-nav [data-slot='tabs-trigger'] svg { width: 23px; height: 23px; stroke-width: 1.65; }
+.app-nav [data-slot='tabs-trigger'][data-state='active'] svg { stroke-width: 2.15; }
+.app-nav [data-slot='tabs-trigger']:focus-visible { outline: 2px solid var(--ring); outline-offset: -3px; }
+:root[data-input-modality='pointer'] .app-nav [data-slot='tabs-trigger']:focus-visible { outline: none; }
+:root[data-input-modality='keyboard'] .app-nav [role='tab']:focus-visible { outline: 2px solid var(--ring); outline-offset: -3px; }
+
+/* Shape and emphasis carry meaning; accent is reserved for the next action. */
+.surface, .panel, .history-card, .menu-group, .weekly-report, .reminder-panel,
+.extra-activities, .activity-import, .exercise-card { border-radius: 18px; box-shadow: none; }
+.surface, .panel { padding: 22px; }
+.btn {
+  min-height: 50px;
+  padding: 13px 18px;
+  border-radius: 14px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -.015em;
+  box-shadow: none;
+}
+.btn.lime, .btn:hover, .btn.lime:hover { background: var(--accent); color: var(--on-accent); }
+.btn.secondary, .btn.secondary:hover { background: var(--surface-soft); color: var(--ink); }
+.btn.btn-outline-light, .btn.btn-outline-light:hover { background: transparent; color: var(--on-hero); border-color: var(--hero-line); }
+.btn:active { opacity: .78; }
+.icon-button, .btn.icon-only { min-height: 44px; min-width: 44px; border-radius: 12px; }
+.text-button { color: var(--ink); min-height: 44px; font-weight: 550; }
+.text-button:hover { color: var(--ink); }
+.icon-button:active, .menu-row:active { opacity: .65; }
+.metric-row dd { font-weight: 650; font-variant-numeric: tabular-nums; }
+.segmented-control, .session-choice { background: var(--surface-soft); border-radius: 13px; }
+.segmented-control button, .session-choice button { min-height: 44px; border-radius: 10px; font-size: 13px; }
+.segmented-control button.selected, .session-choice button.chosen { box-shadow: 0 1px 3px rgb(0 0 0 / 6%); }
+:root[data-theme='dark'] .segmented-control button.selected,
+:root[data-theme='dark'] .session-choice button.chosen { background: color-mix(in srgb, var(--ink) 12%, var(--surface-soft)); }
+.segmented-control[aria-label='Progress views'] { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; }
+.segmented-control[aria-label='Progress views'] button { min-width: 0; padding-inline: 3px; white-space: nowrap; }
+@media (max-width: 350px) {
+  .segmented-control[aria-label='Progress views'] button { font-size: 12px; }
+}
+
+/* A compact calendar and session overview leave room for the actual movements. */
+.week-heading { margin-bottom: 2px; }
+.week-strip { gap: 3px; margin-bottom: 14px; }
+.day-cell { border-radius: 13px; min-height: 70px; padding: 8px 2px; }
+.day-cell strong { font-size: 22px; margin: 5px 0; line-height: 1.1; }
+.day-cell.selected { background: var(--ink); color: var(--canvas); }
+.day-cell.selected .day-top, .day-cell.selected .day-name, .day-cell.selected .day-type { color: var(--canvas); }
+.day-cell.today:not(.selected) { box-shadow: inset 0 0 0 1px var(--line); }
+.day-cell.today::after { background: var(--accent-ink); }
+.day-cell.selected.today::after { background: var(--accent); }
+.day-type { font-size: 9px; }
+.train-plan-link { margin-top: -3px; margin-bottom: 4px; color: var(--sub); font-size: 13px; }
+.session-card { padding: 23px 22px 18px; border-radius: 20px; background: var(--hero); }
+.session-card-top { margin-bottom: 14px; }
+.session-card h2 { font-size: 31px; line-height: 1.08; letter-spacing: -.045em; font-weight: 650; }
+.session-tag { font-size: 10px; letter-spacing: .065em; }
+.session-card-main .session-purpose-line { font-size: 14px; margin: 8px 0; max-width: none; }
+.session-card-main p { font-size: 12px; }
+.session-card .session-note { margin-top: 14px; padding-top: 0; }
+.session-card .session-note > summary { min-height: 44px; font-size: 12px; }
+.session-card--active { padding: 0 0 3px; border-radius: 0; background: transparent; }
+.session-card--active .session-card-main .session-purpose-line { color: var(--sub); }
+.session-card--active .btn.btn-outline-light { color: var(--ink); border-color: var(--line); }
+.workout-main { gap: 18px; }
+.workout-template-actions { margin: -7px 0 -2px; }
+.workout-template-actions > .text-button { color: var(--sub); font-size: 12px; }
+.planned-list { background: transparent; border: 0; border-radius: 0; }
+.planned-exercise { padding: 18px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
+.exercise-number { background: transparent; color: var(--sub); font-size: 12px; font-weight: 500; }
+.planned-name > strong, .planned-name h3 { font-size: 17px; font-weight: 600; line-height: 1.3; }
+.planned-name > .planned-benefit { margin: 4px 0; font-size: 13px; }
+.planned-name .exercise-guide > summary { min-height: 44px; color: var(--sub); font-size: 12px; }
+.planned-preview { border-block: 1px solid var(--line); }
+.planned-preview > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px; padding: 10px 0; list-style: none; cursor: pointer; color: var(--ink); font-size: 15px; font-weight: 550; }
+.planned-preview > summary::-webkit-details-marker { display: none; }
+.planned-preview > summary > span { margin-left: auto; color: var(--sub); font-size: 12px; font-weight: 450; }
+.planned-preview > summary::after { content: '›'; color: var(--sub); font-size: 24px; font-weight: 400; line-height: 1; transition: transform 150ms ease; }
+.planned-preview[open] > summary::after { transform: rotate(90deg); }
+.planned-preview > .planned-list { margin-bottom: 0; }
+
+/* Set controls form one focused instrument, with secondary information below. */
+.focused-exercise { border-radius: 20px; padding: 23px 22px; box-shadow: none; }
+.focused-exercise-title { margin-top: 10px; }
+.focused-exercise-title .focused-exercise__name { font-size: clamp(27px, 7.3vw, 34px); font-weight: 650; line-height: 1.08; }
+.focused-exercise-benefit { font-size: 14px; margin-bottom: 6px; }
+.focused-exercise-intent { font-size: 12px; margin-top: 6px; }
+.focused-exercise__set-heading { margin: 23px 0 14px; }
+.focused-exercise__set-heading > strong { font-size: 20px; }
+.focused-exercise__previous b { font-size: 14px; font-variant-numeric: tabular-nums; }
+.focused-number-stepper { border-radius: 13px; background: var(--field); }
+.focused-number-stepper > button { height: 68px; min-height: 68px; border-radius: 11px; }
+.focused-set-controls .focused-number-stepper .set-input { height: 68px; font-size: 30px; letter-spacing: -.04em; font-weight: 600; }
+.focused-exercise .btn.focused-complete-set { border-radius: 14px; min-height: 54px; margin-top: 18px; }
+.focused-exercise .focused-complete-set:is(:hover, :active, :focus-visible) { background: var(--accent); color: var(--on-accent); }
+.focused-exercise .focused-complete-set.secondary:is(:hover, :active, :focus-visible) { background: var(--surface-soft); color: var(--ink); }
+.focused-exercise__set-selector > button { border-radius: 10px; }
+.focused-exercise .progression-cue { border-radius: 12px; }
+.focused-pair { border-radius: 13px; }
+.rest-floating { border-radius: 16px; background: var(--hero); color: var(--on-hero); box-shadow: 0 8px 25px rgb(0 0 0 / 13%); }
+.rest-clock { font-variant-numeric: tabular-nums; letter-spacing: -.025em; }
+.timed-set-controls { border-radius: 14px; }
+.workout-customizer__launchers > button { min-height: 44px; color: var(--sub); }
+
+/* All sets keeps the checkmark in reach. Previous values sit below their row,
+   leaving the full first line for set number, editable values and completion. */
+.focused-workout__all-sets [data-slot='table-container'] { min-width: 0; width: 100%; overflow: visible; }
+.focused-workout__all-sets .log-table,
+.focused-workout__all-sets .log-table > thead,
+.focused-workout__all-sets .log-table > tbody { display: block; min-width: 0; width: 100%; }
+.focused-workout__all-sets .log-table tr {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) minmax(0, 1fr) 44px;
+  gap: 5px 8px;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+}
+.focused-workout__all-sets .log-table tr:has(> :nth-child(4):last-child) { grid-template-columns: 28px minmax(0, 1fr) 44px; }
+.focused-workout__all-sets .log-table thead tr { padding: 0 0 5px; }
+.focused-workout__all-sets .log-table th,
+.focused-workout__all-sets .log-table td {
+  display: block;
+  min-width: 0;
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  white-space: normal;
+  text-align: center;
+}
+.focused-workout__all-sets .log-table th { color: var(--sub); font-size: 11px; line-height: 1.4; font-weight: 500; }
+.focused-workout__all-sets .log-table th:nth-child(2) { display: none; }
+.focused-workout__all-sets .log-table tr > :first-child { grid-column: 1; grid-row: 1; }
+.focused-workout__all-sets .log-table tr > :nth-child(3) { grid-column: 2; grid-row: 1; }
+.focused-workout__all-sets .log-table tr > :nth-child(4) { grid-column: 3; grid-row: 1; }
+.focused-workout__all-sets .log-table tr > :last-child { grid-column: -2 / -1; grid-row: 1; }
+.focused-workout__all-sets .log-table td.last-set {
+  grid-column: 2 / -1;
+  grid-row: 2;
+  padding-top: 1px;
+  color: var(--sub);
+  text-align: left;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.focused-workout__all-sets .log-table td.last-set::before { content: 'Last: '; }
+.focused-workout__all-sets .log-table .set-index { color: var(--sub); font-size: 13px; }
+.focused-workout__all-sets .log-table .weight-input-field { display: block; min-width: 0; width: 100%; }
+.focused-workout__all-sets .log-table .set-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  height: 48px;
+  padding: 8px 3px;
+  border-radius: 11px;
+  font-size: 19px;
+  line-height: 1.2;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.focused-workout__all-sets .log-table .done-cell { display: grid; place-items: center; width: 44px; min-height: 48px; }
+.focused-workout__all-sets .log-table .set-check { width: 44px; min-width: 44px; height: 44px; min-height: 44px; transform: none; border-radius: 11px; }
+.focused-workout__all-sets .log-table .set-done .set-index { color: var(--accent-ink); }
+.focused-workout__all-sets .log-table .weight-input-error { max-width: none; font-size: 11px; }
+.focused-workout__all-sets .exercise-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.focused-workout__all-sets .exercise-tools > div { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.focused-workout__all-sets .exercise-tools .text-button:has(> svg:only-child) { min-width: 44px; min-height: 44px; justify-content: center; }
+.focused-workout__all-sets .exercise-tools .movement-timer { margin-left: auto; min-height: 44px; }
+
+/* Calories and protein are the main numbers; the remaining macros stay quiet. */
+.nutrition-view .nutrition-toolbar { margin-bottom: 12px; }
+.nutrition-view .nutrition-date { gap: 8px; }
+.nutrition-view .nutrition-totals.nutrition-daily { padding: 22px; border-radius: 20px; }
+.nutrition-daily .small-label { color: var(--sub); font-size: 11px; letter-spacing: .02em; font-weight: 550; }
+.nutrition-daily__number { gap: 8px; margin: 5px 0; }
+.nutrition-daily__number > strong { font-size: 52px; line-height: 1.02; letter-spacing: -.055em; font-weight: 650; }
+.nutrition-daily__number > span { font-size: 14px; }
+.nutrition-daily__energy > p { margin: 7px 0 10px; font-size: 12px; }
+.nutrition-daily__protein { margin-top: 18px; row-gap: 8px; }
+.nutrition-daily__protein > div { gap: 4px; }
+.nutrition-daily__protein strong { font-size: 30px; line-height: 1.1; letter-spacing: -.035em; }
+.nutrition-daily__protein strong > span, .nutrition-daily__left { font-size: 13px; }
+.nutrition-daily__macros { margin-top: 16px; padding-top: 13px; gap: 20px; }
+.nutrition-daily__macros > div { display: flex; align-items: baseline; gap: 7px; }
+.nutrition-daily__macros > div > span { font-size: 12px; }
+.nutrition-daily__macros strong { font-size: 15px; font-variant-numeric: tabular-nums; }
+.nutrition-daily > .text-button { margin-top: 7px; font-size: 12px; color: var(--sub); }
+.nutrition-view .nutrition-log-action { min-height: 52px; margin: 14px 0 24px; }
+.nutrition-view .nutrition-tools { margin-top: 18px; }
+.nutrition-tool-row, .nutrition-simple-fuel > summary { min-height: 68px; padding: 14px 0; }
+.nutrition-tool-row > span, .nutrition-simple-fuel > summary > span { gap: 4px; }
+.nutrition-tool-row small, .nutrition-simple-fuel > summary small { font-size: 12px; }
+.nutrition-empty { min-height: 76px; padding: 13px 0; }
+.nutrition-empty p { font-size: 13px; }
+.recharts-cartesian-grid line { stroke: var(--line); }
+.recharts-cartesian-axis-tick-value { fill: var(--sub); }
+.recharts-line-curve { stroke: var(--chart-1); }
+.recharts-default-tooltip { border-radius: 12px; background: var(--surface-raised) !important; border-color: var(--line) !important; color: var(--ink); }
+.recharts-tooltip-label, .recharts-tooltip-item { color: var(--ink) !important; }
+
+/* Secondary screens use grouped rows rather than another layer of hero cards. */
+.more-menu { gap: 22px; }
+.menu-group { padding: 0 18px; border-radius: 18px; box-shadow: none; }
+.menu-row { min-height: 66px; gap: 13px; padding: 14px 0; }
+.menu-row-icon { width: 30px; height: 34px; border-radius: 0; color: var(--sub); background: transparent; }
+.menu-row-icon svg { width: 21px; height: 21px; }
+.menu-row-copy { gap: 3px; }
+.menu-row-copy strong { font-size: 16px; font-weight: 550; }
+.menu-row-copy > span { font-size: 12px; line-height: 1.4; }
+.more-footer { color: var(--sub); font-size: 11px; }
+.plan-card { padding: 20px 0; border-radius: 0; border-bottom: 1px solid var(--line); }
+.plan-card h2 { font-size: 26px; letter-spacing: -.035em; }
+.plan-card li { padding: 11px 0; font-size: 14px; }
+.plan-card > .btn { color: var(--ink); }
+.history-card { padding: 21px; }
+.history-card h2 { font-size: 25px; letter-spacing: -.04em; }
+.summary-stats, .weekly-report-metrics { border-radius: 14px; padding: 18px; }
+.summary-stats strong, .weekly-report-metrics strong { font-size: 30px; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.weekly-report { padding: 22px; }
+.weekly-report-performance { border-radius: 12px; }
+.weekly-report-download { background: var(--surface-soft); color: var(--ink); }
+.reminder-panel { padding: 22px; }
+.reminder-panel__item { border-radius: 13px; }
+.kind-badge { border-radius: 7px; font-size: 10px; }
+
+/* Forms keep native keyboard sizing; sheets retain one scrolling owner. */
+input:not([type='checkbox']):not([type='range']), textarea, select,
+[data-slot='select-trigger'] { font-size: 16px; border-radius: 12px; }
+input:not([type='checkbox']):not([type='range']), textarea { scroll-margin-block: 90px 160px; }
+input[type='date'], input[type='time'] { color-scheme: light; min-height: 44px; }
+:root[data-theme='dark'] input[type='date'], :root[data-theme='dark'] input[type='time'] { color-scheme: dark; }
+input::-webkit-calendar-picker-indicator { opacity: .7; }
+.set-input:focus { box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 22%, transparent); }
+.app-dialog, [data-slot='alert-dialog-content'] { border-radius: 22px !important; border-color: transparent; box-shadow: var(--sheet-shadow); }
+[data-slot='dialog-overlay'], [data-slot='alert-dialog-overlay'] { background: rgb(7 10 13 / 48%); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.dialog-scroll { gap: 18px; }
+[data-slot='dialog-title'], [data-slot='alert-dialog-title'] { font-size: 25px; font-weight: 650; letter-spacing: -.04em; }
+[data-slot='dialog-description'], [data-slot='alert-dialog-description'] { font-size: 13px; line-height: 1.45; }
+.dialog-close-button { min-height: 44px; min-width: 44px; background: var(--surface-soft); color: var(--ink); }
+[data-slot='select-content'] { border-radius: 16px; }
+[data-slot='select-item'] { min-height: 46px; border-radius: 9px; }
+.exercise-library__search { border-radius: 12px; }
+.builder-save > .btn { border-radius: 14px; }
+.exercise-action-list > button { min-height: 58px; }
+.settings-estimates { border-block: 1px solid var(--line); }
+.settings-estimates > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; list-style: none; cursor: pointer; color: var(--sub); font-size: 13px; font-weight: 500; }
+.settings-estimates > summary::-webkit-details-marker { display: none; }
+.settings-estimates > summary::after { content: '+'; margin-left: auto; font-size: 19px; font-weight: 400; }
+.settings-estimates[open] > summary::after { content: '−'; }
+.settings-estimates > p { margin: 0 0 12px; font-size: 13px; line-height: 1.5; color: var(--sub); }
+.settings-estimates > a { display: inline-flex; align-items: center; min-height: 44px; font-size: 12px; line-height: 1.6; color: var(--sub); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Feedback is a quiet status row with an actual 44px dismiss target. */
+[data-sonner-toaster] {
+  --normal-bg: var(--surface-raised);
+  --normal-text: var(--ink);
+  --normal-border: var(--line);
+  font-family: var(--default-font-family);
+}
+[data-sonner-toaster] [data-sonner-toast][data-styled='true'] {
+  min-height: 60px;
+  padding: 15px 55px 15px 16px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface-raised);
+  color: var(--ink);
+  box-shadow: 0 8px 32px rgb(8 12 18 / 10%);
+  font-size: 13px;
+}
+[data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-close-button] {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  left: auto;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--sub);
+}
+[data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-close-button] > svg { width: 14px; height: 14px; }
+[data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-close-button]:hover { background: var(--surface-soft); border-color: transparent; }
+[data-sonner-toaster] [data-sonner-toast][data-type='error'] > [data-icon] { color: var(--danger); }
+
+@media (max-width: 760px) {
+  .workspace { padding-top: 24px; padding-bottom: calc(112px + var(--app-safe-area-bottom)); }
+  .topbar { height: var(--app-safe-area-top); padding: 0; }
+  .app-nav { border-radius: 0 !important; }
+  .page-header { margin-bottom: 23px; }
+  .dialog-scroll { padding: 31px 22px 24px; }
+  .is-training .workspace { padding-top: 18px; }
+}
+@media (max-width: 360px) {
+  .workspace { padding-left: max(20px, var(--app-safe-area-left)); padding-right: max(20px, var(--app-safe-area-right)); }
+  .page-header h1 { font-size: 32px; }
+  .surface, .panel, .nutrition-view .nutrition-totals.nutrition-daily { padding: 20px; }
+  .session-card { padding: 21px 20px 16px; }
+  .session-card h2 { font-size: 29px; }
+  .focused-exercise { padding: 20px 18px; }
+  .focused-exercise-title .focused-exercise__name { font-size: 27px; }
+  .focused-number-stepper > button { min-height: 60px; height: 60px; }
+  .focused-set-controls .focused-number-stepper .set-input { height: 60px; font-size: 29px; }
+  .menu-group { padding: 0 16px; }
+  .menu-row { gap: 10px; }
+  .nutrition-daily__macros { gap: 10px; }
+  .nutrition-daily__macros > div { flex-wrap: wrap; row-gap: 3px; }
+  .dialog-scroll { padding-left: 20px; padding-right: 20px; }
+}
+@media (max-width: 760px) and (max-height: 700px) and (orientation: portrait) {
+  .workspace:has(> [data-state='active'] .nutrition-view) { padding-top: 16px; }
+  .workspace:has(> [data-state='active'] .nutrition-view) > .page-header { margin-bottom: 16px; }
+  .nutrition-view .nutrition-toolbar { margin-bottom: 8px; }
+  .nutrition-view .nutrition-totals.nutrition-daily { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 8px 16px; padding: 18px; }
+  .nutrition-daily__energy, .nutrition-daily__protein { min-width: 0; }
+  .nutrition-daily__number { margin: 5px 0; gap: 4px; }
+  .nutrition-daily__number > strong { font-size: clamp(32px, 10.2vw, 40px); }
+  .nutrition-daily__number > span { font-size: 12px; }
+  .nutrition-daily__energy > p { font-size: 11px; line-height: 1.35; margin: 6px 0 4px; }
+  .nutrition-daily__protein { margin-top: 0; gap: 6px; }
+  .nutrition-daily__protein > div { gap: 8px; }
+  .nutrition-daily__protein strong { font-size: 27px; }
+  .nutrition-daily__protein strong > span, .nutrition-daily__left { font-size: 12px; }
+  .nutrition-daily__macros { grid-column: 1 / -1; width: 100%; margin-top: 4px; padding-top: 10px; }
+  .nutrition-daily > .text-button { grid-column: 1 / -1; margin-top: 0; justify-self: start; }
+  .nutrition-view .nutrition-log-action { margin: 12px 0 20px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .workspace { padding-top: 18px; }
+  .page-header { margin-bottom: 18px; }
+  .app-nav { max-width: none; border-radius: 0 !important; }
+  .app-dialog, [data-slot='alert-dialog-content'] { border-radius: 18px !important; }
+  .focused-exercise .focused-complete-set { position: static; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .btn, .icon-button, .menu-row { transition: opacity 110ms ease, background-color 140ms ease; }
+}

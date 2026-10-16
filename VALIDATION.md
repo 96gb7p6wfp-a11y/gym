@@ -9,10 +9,10 @@ website/iPhone wrapper and native build configuration have been removed.
 | --- | --- |
 | Clean `npm ci` | Passed; 132 packages installed, resolved dependencies recorded in `package-lock.json` |
 | `npm run typecheck` | Passed |
-| `npm test` | Passed: 240 tests, zero failures or skips |
+| `npm test` | Passed: 247 tests, zero failures or skips |
 | `npm run build` | Passed; TypeScript check, Vite production bundle and generated service worker |
-| `npm run test:web` | Passed: 74 real Chromium application workflows, zero failures or skips (3.2 minutes) |
-| Final PWA metadata check | Passed: installation, manifest/icons and offline workout workflows rerun after the launch-color update (3 checks) |
+| `npm run test:web` | Passed: 82 real Chromium application workflows, zero failures or skips (3.3 minutes) |
+| Final PWA metadata check | Passed in the full production suite: installation, manifest/icons and offline workout workflows |
 | Development server | Passed; HTTP 200 for the Vite page and React entry module |
 | Visual review | Redesigned Today, Train, focused workout, Progress, Nutrition, More, Routine, plan and report reviewed; small-phone rest controls and desktop layout checked |
 | Standalone dependency review | Passed; no iframe, former-host dependency, remote workout API, remote nutrition API or remote app assets |
@@ -186,8 +186,8 @@ plans and nutrition use the local storage key `setline.gym.v1`; network access i
 not required to save them.
 
 The final production output contains 13 precached files. The main JavaScript
-bundle is 1,236.67 kB (365.96 kB gzip), the lazy FIT decoder is 431.69 kB
-(64.30 kB gzip), and CSS is 302.15 kB (49.51 kB gzip). Vite
+bundle is 1,246.47 kB (368.80 kB gzip), the lazy FIT decoder is 431.69 kB
+(64.30 kB gzip), and CSS is 332.27 kB (54.47 kB gzip). Vite
 reports its standard large-chunk advisory; the build completes successfully.
 
 The reusable cloud install/start configuration was saved as a draft. Publishing
@@ -247,6 +247,33 @@ The before-change audit and eleven accessible official Hevy/Strong references ar
 in [PREMIUM_PRODUCT_AUDIT.md](docs/PREMIUM_PRODUCT_AUDIT.md) and
 [PREMIUM_BENCHMARKS.md](docs/PREMIUM_BENCHMARKS.md). Other requested benchmark
 sites remained blocked by the environment proxy; they are marked unverified.
+
+## Focus and iPhone interaction refinement — 2026-10-16
+
+The screen audit covered all five destinations and 36 distinct states across
+320×568, 390×844 and 844×390 viewports: previews, active workouts, complex pairs,
+timers, all-set editing, movement/details sheets, history, reports, plan editing,
+library, custom builder, nutrition, routine, settings, imports and backup tools.
+The final dev inspection found no page errors or horizontal document overflow.
+Light/dark screenshots were also reviewed with actual saved-record fixtures.
+
+Today exposes the workout, goal, Start and real weekly gym progress before the
+calendar. Both primary actions fit above navigation at 320 px and 390 px with
+47 px top and 34 px bottom safe areas. Progress uses calendar-spaced jump-height,
+weekly weight and comparable strength records, with no invented empty-state
+graphs. Optional primers do not inflate gym-day consistency; recovery is preserved.
+
+Eight new browser workflows cover Today containment, the progress link, keyboard
+focus versus touch, reachable workout inputs/Complete, all-set controls in three
+logging modes, keyboard-sized meal/preferences sheets, viewport panning, and
+resize fallback without the Visual Viewport API. Keyboard tests simulate visual
+viewport geometry; they do not exercise a physical iOS keyboard. Existing guide
+checks now open Exercise preview before inspecting the unchanged instructions.
+Seven new unit checks cover gym-day counting and date-spaced chart coordinates.
+
+No storage schema or key changes are required. The same user records, PWA identity,
+manifest paths and versioned writes remain in use. The source shell and generated
+offline cache share the updated launch color.
 
 ## Practical limits
 

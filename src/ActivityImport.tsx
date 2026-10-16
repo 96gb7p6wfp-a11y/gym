@@ -204,7 +204,7 @@ export function ActivityImport({ bodyWeight, records, onImport, disabled = false
   }
 
   return (
-    <section className="activity-import" aria-label="Activity imports">
+    <section className={`activity-import${hideLauncher ? ' activity-import--headless' : ''}`} aria-label="Activity imports">
       {!hideLauncher && <div className="activity-import-heading">
         <div>
           <h2>Import activities</h2>
