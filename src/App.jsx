@@ -1065,7 +1065,7 @@ function GymApp({
           { value: `more`, label: `More`, icon: <Ellipsis /> },
         ]} />
       <main className={`workspace ${tab === 'train' && currentSession ? 'workspace--training' : ''}`}>
-        <PageHeader title={tab === `today` ? `Today` : tab === `train` ? `Train` : tab === `progress` ? `Progress` : tab === `nutrition` ? `Nutrition` : moreView === `plan` ? `Training plan` : moreView === `routine` ? `Routine` : moreView === `workouts` ? `My workouts` : `More`}
+        <PageHeader title={tab === `today` ? `Today` : tab === `train` ? `Train` : tab === `progress` ? progressView === 'history' ? 'History' : progressView === 'strength' ? 'Strength' : progressView === 'week' ? 'Your week' : progressView === 'details' ? 'Performance' : 'Progress' : tab === `nutrition` ? `Nutrition` : moreView === `plan` ? `Training plan` : moreView === `routine` ? `Routine` : moreView === `workouts` ? `My workouts` : `More`}
           action={tab === `train` && !currentSession ? <button type="button" className="icon-button" aria-label="Weekly plan" onClick={openPlan}><ListChecks size={21} /></button> : undefined}
           subtitle={tab === `today` ? new Date(`${selectedDate}T12:00:00`).toLocaleDateString(`en-GB`, { weekday: `long`, day: `numeric`, month: `long` }) : undefined} />
         {(saving || profileSaving) && <span className="sync-state" role="status">Saving…</span>}
@@ -1541,10 +1541,7 @@ function GymApp({
           </div>
         </TabsContent>
         <TabsContent value="progress">
-          {!['overview', 'details'].includes(progressView) && <><button type="button" className="text-button subpage-back" onClick={() => setProgressView('overview')}><ArrowLeft size={17} />Progress</button><SegmentedControl label="Progress views" value={progressView} onChange={(view) => { setProgressView(view); if (view === `history`) setRecentlyDeletedOpen(false); }} options={[
-            { value: `overview`, label: `Overview` }, { value: `strength`, label: `Strength` },
-            { value: `history`, label: `History` }, { value: `week`, label: `Your week` },
-          ]} /></>}
+          {!['overview', 'details'].includes(progressView) && <button type="button" className="text-button subpage-back" onClick={() => setProgressView('overview')}><ArrowLeft size={17} />Progress</button>}
           {performance.error && <div className="error-state" role="alert"><p>{performance.error}</p><button className="text-button" onClick={performance.reload}>Reload performance</button></div>}
           {progressView === 'details' && <><button className="text-button subpage-back" onClick={() => { setProgressView('overview'); setPerformanceAction(undefined); }}><ArrowLeft size={17} /> Progress</button>
             <PerformanceDetails sessions={sessions} activities={activityRecords} plan={currentWeekPlan} nutritionRecords={reportNutrition}
@@ -1600,7 +1597,7 @@ function GymApp({
                       bottom: 10,
                     }}
                   >
-                    <CartesianGrid stroke={`#e6eae7`} vertical={!1} />
+                    <CartesianGrid stroke={`var(--line)`} vertical={!1} />
                     <XAxis
                       dataKey={`date`}
                       tick={{
@@ -1629,12 +1626,12 @@ function GymApp({
                     <Line
                       type={`linear`}
                       dataKey={`value`}
-                      stroke={`#607d28`}
+                      stroke={`var(--accent)`}
                       strokeWidth={3}
                       dot={{
                         r: 4,
-                        fill: `#151c19`,
-                        stroke: `#fff`,
+                        fill: `var(--accent)`,
+                        stroke: `var(--canvas)`,
                         strokeWidth: 2,
                       }}
                       activeDot={{

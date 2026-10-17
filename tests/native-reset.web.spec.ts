@@ -110,6 +110,7 @@ test('More offers a read-only searchable library and Back restores the query wit
 });
 
 test('Progress keeps one chart at a time and never mixes highest touch with jump height', async ({ page }) => {
+  await seed(page, 'light');
   const jumps = [
     { id: '00000000-0000-4000-8000-000000000001', date: '2026-10-01', type: 'approach', measurement: 'height', cm: 65, notes: '' },
     { id: '00000000-0000-4000-8000-000000000002', date: TODAY, type: 'approach', measurement: 'height', cm: 67.5, notes: '' },

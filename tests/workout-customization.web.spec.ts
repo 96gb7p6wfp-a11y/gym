@@ -203,7 +203,7 @@ test('a recovery day requires confirmation and removes only that scheduled day',
   expect(revised.filter((_: unknown, index: number) => index !== 2)).toEqual(baseline.filter((_: unknown, index: number) => index !== 2));
   await tab(page, 'Today');
   await page.getByRole('button', { name: 'Choose training day', exact: true }).click();
-  const days = page.getByRole('dialog', { name: 'Choose training day', exact: true });
+  const days = page.getByRole('dialog', { name: 'Choose a day', exact: true });
   await days.getByRole('button', { name: /^Wed / }).click();
   await days.getByRole('button', { name: 'Done', exact: true }).click();
   await page.getByRole('button', { name: 'View recovery', exact: true }).click();

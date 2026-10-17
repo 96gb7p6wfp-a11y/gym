@@ -147,3 +147,15 @@ html[data-input-modality='keyboard'] .native-tabbar .app-nav-item:focus-visible 
 @media(min-width:760px) { .workspace { padding-top:calc(var(--app-safe-area-top) + 48px); } .page-header { margin-bottom:44px; } .page-header h1 { font-size:42px; } .today-session h2 { font-size:58px; } .today-session { max-width:540px; padding-bottom:40px; } .today-ledger { padding-block:28px; } .today-ledger>button { padding-inline:25px; } .today-ledger strong { font-size:32px; } .today-ledger__label,.today-ledger__detail { font-size:12px; } .workspace--training { padding-top:calc(var(--app-safe-area-top) + 24px); } }
 @media(max-height:500px) and (orientation:landscape) { :root { --tab-height:54px; } .workspace { padding-top:calc(var(--app-safe-area-top) + 16px); } .page-header { margin-bottom:20px; } .native-tabbar .app-nav-item { flex-direction:row; gap:6px; } }
 @media(prefers-reduced-motion:no-preference) { .btn,.icon-button,.text-button,.menu-row { transition:transform 120ms ease,opacity 120ms ease; } .menu-row:active { opacity:.5; } }
+/* History is a divided record list, with a single contextual archive filter. */
+.history-views { display:flex; flex-wrap:wrap; gap:22px; margin:0 0 22px; border-bottom:1px solid var(--line); }
+.history-views>button { min-height:48px; padding:9px 0; border:0; border-bottom:2px solid transparent; border-radius:0; background:transparent; color:var(--sub); font-size:14px; font-weight:500; }
+.history-views>button.chosen { background:transparent; color:var(--ink); border-bottom-color:var(--accent); }
+.history-card:is(:hover,:active,:focus-visible) { border-color:var(--line); background:transparent; box-shadow:none; }
+.history-card::before,.history-card::after { content:none; }
+.history-card h2 { margin:0; font-size:24px; font-weight:550; letter-spacing:-.045em; }
+.history-card-top { margin-bottom:16px; }
+.history-volume { border-color:var(--line); color:var(--ink); font-weight:550; }
+.history-metrics { color:var(--sub); }
+.deleted-record { border-color:var(--line); }
+.recharts-dot,.recharts-active-dot circle { fill:var(--accent); stroke:var(--canvas); }

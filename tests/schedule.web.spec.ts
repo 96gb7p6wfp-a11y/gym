@@ -43,8 +43,8 @@ test('volleyball times validate, persist and update workout and meal guidance', 
 test('movement loading advice preserves distinct strength and power targets', async ({ page }) => {
   await page.goto('/');
   await openPlan(page);
-  await page.locator('.plan-day-details > summary').filter({ hasText: 'Lower Body' }).click();
-  await page.locator('.plan-day-details > summary').filter({ hasText: 'Upper Body' }).first().click();
+  await page.locator('.plan-day').filter({ has: page.getByRole('button', { name: 'Edit Wednesday', exact: true }) }).locator(':scope > .plan-day-details > summary').click();
+  await page.locator('.plan-day').filter({ has: page.getByRole('button', { name: 'Edit Monday', exact: true }) }).locator(':scope > .plan-day-details > summary').click();
   await page.getByRole('button', { name: 'Exercise details for Hack Squat', exact: true }).first().click();
   const guide = page.locator('.exercise-guide-sheet');
   await guide.getByRole('button', { name: 'Load & reps', exact: true }).click();

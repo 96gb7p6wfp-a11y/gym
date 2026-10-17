@@ -293,7 +293,7 @@ test('validates sets, saves a complete workout, edits its log, and deletes and r
   await expect(page.getByRole('button', { name: 'Restore', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Restore', exact: true }).click();
   await expect(page.getByText('No deleted workouts.', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'History', exact: true }).click();
+  await page.getByRole('button', { name: 'All workouts', exact: true }).click();
   await expect(history).toContainText('30 kg total volume');
 });
 
