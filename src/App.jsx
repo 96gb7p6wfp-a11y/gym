@@ -1219,7 +1219,6 @@ function GymApp({
                 </div>
               )}
               {!currentSession && <div className="workout-template-actions"><button type="button" className="text-button" disabled={!loaded} onClick={() => setWorkoutChooserOpen(true)}>Choose workout</button><button type="button" className="text-button" disabled={!loaded} onClick={() => openCustomWorkout()}>Create workout</button></div>}
-              {!currentSession && <div className="section-line"><h3>Exercises</h3><button className="text-button" disabled={!loaded} onClick={() => editPlanDay(selectedDay, extraSessionVisible)}><Pencil size={14} /> Edit day</button></div>}
               {currentSession ? (
                 <React.Fragment><FocusedWorkout sessionId={currentSession.id} exercises={currentSession.exercises} now={now} editing={!!editingHistoryId}
                   sessions={completedSessions} date={currentSession.date}
@@ -1277,7 +1276,8 @@ function GymApp({
                     disabled={saving || !!loadError} />
                 </React.Fragment>
               ) : (
-                <details className="planned-preview"><summary>Exercise preview <span>{selectedPlan.exercises.length} movements</span></summary>
+                <div className="planned-section">
+                <details className="planned-preview"><summary>Exercises <span>{selectedPlan.exercises.length}</span></summary>
                 <div className={`planned-list`}>
                   {selectedPlan.exercises.map((e, t) => {
                     let n = comparablePrevious(
@@ -1324,6 +1324,8 @@ function GymApp({
                     </div>
                   )}
                 </div></details>
+                <button className="text-button planned-edit" disabled={!loaded} onClick={() => editPlanDay(selectedDay, extraSessionVisible)}><Pencil size={14} /> Edit day</button>
+                </div>
               )}
               <details className="train-activities"><summary>Activities</summary>
               <ExtraActivities
@@ -2294,8 +2296,8 @@ function PreparationChecklist({
         <AccordionContent>
           <p className={`routine-note`}>
             {phase === `warmup`
-              ? `Move dynamically and build effort gradually. Keep this light; avoid long static holds before lifting or jumping. Before volleyball, choose relevant lower-body and shoulder drills within your warm-up time.`
-              : `Use gentle, comfortable holds on both sides. Never force a stretch or pull into pain. Short on time: prioritize ankles, hip flexors and upper-back/lat mobility.`}
+              ? `Build up gradually with light, dynamic movements. Before volleyball, focus on ankles, hips and shoulders; save long holds for after training.`
+              : `Use gentle holds on both sides; never stretch into pain. Short on time? Focus on ankles, hip flexors and upper back.`}
           </p>
           <ol className={`routine-steps`}>
             {items.map((e, n) => (

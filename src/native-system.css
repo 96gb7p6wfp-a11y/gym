@@ -36,6 +36,9 @@ h1,h2,h3,h4,p { overflow-wrap:break-word; } button svg { flex-shrink:0; }
 .btn.full,.btn.full-width { width:100%; }
 .btn.icon-only,.icon-button { display:inline-flex; align-items:center; justify-content:center; width:44px; min-width:44px; min-height:44px; padding:0; border:0; border-radius:50%; background:transparent; color:var(--ink); }
 .text-button { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:44px; padding:7px 0; border:0; background:transparent; color:var(--accent); font-size:14px; font-weight:550; letter-spacing:-.015em; }
+.icon-button:hover { background:var(--surface-soft); color:var(--ink); }
+.text-button:hover { color:var(--accent); }
+.text-button.danger,.text-button.danger:hover { color:var(--danger); }
 .btn:hover,.btn.lime:hover { background:var(--accent); color:var(--on-accent); filter:brightness(.96); }
 .btn.secondary:hover,.btn.btn-outline:hover,.btn.btn-outline-light:hover { background:var(--surface-soft); color:var(--ink); }
 .btn:active,.icon-button:active,.text-button:active { transform:scale(.98); }

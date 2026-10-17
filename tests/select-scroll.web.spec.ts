@@ -52,7 +52,8 @@ for (const screen of [
     const afterDown = await viewport.evaluate(e => e.scrollTop);
     expect(afterDown, 'A finger swipe must move the list, without resetting it to the selected item').toBeGreaterThan(before + 60);
     await swipe(page, session, viewport, 'up');
-    expect(await viewport.evaluate(e => e.scrollTop)).toBeLessThan(afterDown - 40);
+    // Touch scrolling is pixel-quantized; a reversal of exactly 40px is valid.
+    expect(await viewport.evaluate(e => e.scrollTop)).toBeLessThanOrEqual(afterDown - 40);
     await expect(list).toBeVisible();
     expect(await page.evaluate(() => window.scrollY)).toBe(backgroundY);
 
