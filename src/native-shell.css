@@ -159,3 +159,9 @@ html[data-input-modality='keyboard'] .native-tabbar .app-nav-item:focus-visible 
 .history-metrics { color:var(--sub); }
 .deleted-record { border-color:var(--line); }
 .recharts-dot,.recharts-active-dot circle { fill:var(--accent); stroke:var(--canvas); }
+.progress-caption { border-color:var(--line); }
+/* Compact date selection remains swipeable rather than shrinking touch targets. */
+.week-strip { display:flex; width:100%; min-width:0; overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x proximity; scrollbar-width:none; }
+.week-strip .day-cell { flex:1 0 44px; min-width:44px; scroll-snap-align:center; }
+.week-strip .day-cell:focus-visible { outline-offset:-4px; }
+.progress-native .progress-chart-selector>button { min-width:44px; }

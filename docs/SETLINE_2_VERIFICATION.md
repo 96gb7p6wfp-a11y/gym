@@ -2,9 +2,9 @@
 
 Release checks run on 17 October 2026 against the generated production app.
 
-- `npm test`: 261 tests for storage, calculations, imports, programme and training behavior.
+- `npm test`: **261 passed** for storage, calculations, imports, programme and training behavior.
 - `npm run build`: TypeScript, Vite output and content-versioned service-worker generation.
-- `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:web`: complete browser suite, including ten native-reset cases.
+- `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:web`: **100 passed**, including ten native-reset cases.
 - `git diff --check`: whitespace validation.
 
 The browser suite covers decimal dot/comma weights; focused and All Sets logging; complex pairs; per-set timers and rest; exercise add/replace/remove/reorder; custom workouts; weekly-plan editing and reset; the reversible eight-week programme; history; separate jump-height and highest-touch records; adequately sampled weight trends; nutrition; routines; imports; backup/restore; refresh persistence; and offline recording.
