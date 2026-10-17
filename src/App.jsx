@@ -13,6 +13,7 @@ import { findLibraryExercise } from "./exercise-library";
 import { getSessionPurpose } from "./training-purpose";
 import { TodayView } from "./TodayView";
 import { FocusedWorkout } from "./FocusedWorkout";
+import { WorkoutPreview } from "./WorkoutPreview";
 import { ProgressOverview } from "./ProgressOverview";
 import { RemindersPanel } from "./RemindersPanel";
 import { shortSessionName } from "./presentation";
@@ -1278,52 +1279,12 @@ function GymApp({
               ) : (
                 <div className="planned-section">
                 <details className="planned-preview"><summary>Exercises <span>{selectedPlan.exercises.length}</span></summary>
-                <div className={`planned-list`}>
-                  {selectedPlan.exercises.map((e, t) => {
-                    let n = comparablePrevious(
-                      e,
-                      selectedDate,
-                    );
-                    let r = topSet(n?.exercise);
-                    return (
-                      <div className={`planned-exercise`} key={e.key}>
-                        <span className={`exercise-number`}>
-                          {String(t + 1).padStart(2, `0`)}
-                        </span>
-                        <div className={`planned-name`}>
-                          <strong>{e.name}</strong>
-                          {findLibraryExercise(e) && <p className="planned-benefit">{findLibraryExercise(e).primaryBenefit}</p>}
-                          <p>
-                            {e.sets}
-                            {` sets × `}
-                            {e.target}
-                            {e.perSide ? ` / side` : ``}
-                            {` `}
-                            <span>
-                              {`· `}
-                              {e.group}
-                            </span>
-                          </p>
-                          <ExerciseGuide exercise={e} compact />
-                        </div>
-                        <span className={`planned-last`}>
-                          {r
-                            ? `${formatNumber(r.kg)} kg × ${r.reps}`
-                            : n
-                              ? `${n.exercise.logs.filter((e) => e.done).length} sets last time`
-                              : `First log`}
-                        </span>
-                      </div>
-                    );
-                  })}
-                  {!selectedPlan.exercises.length && (
-                    <div className={`empty-state`}>
-                      <Dumbbell />
-                      <h3>{`No exercises yet`}</h3>
-                      <p>{`Edit this day to add your movements.`}</p>
-                    </div>
-                  )}
-                </div></details>
+                <WorkoutPreview exercises={selectedPlan.exercises} previous={exercise => {
+                  const previous = comparablePrevious(exercise, selectedDate);
+                  const best = topSet(previous?.exercise);
+                  return best ? `${formatNumber(best.kg)} kg × ${best.reps}` : previous
+                    ? `${previous.exercise.logs.filter(log => log.done).length} sets last time` : undefined;
+                }} /></details>
                 <button className="text-button planned-edit" disabled={!loaded} onClick={() => editPlanDay(selectedDay, extraSessionVisible)}><Pencil size={14} /> Edit day</button>
                 </div>
               )}

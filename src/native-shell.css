@@ -65,16 +65,13 @@ html[data-input-modality='keyboard'] .native-tabbar .app-nav-item:focus-visible 
 .planned-preview>summary,.train-activities>summary,.train-secondary>summary { display:flex; justify-content:space-between; align-items:center; min-height:54px; padding:14px 0; border:0; color:var(--ink); font-size:15px; font-weight:550; list-style:none; }
 .planned-preview>summary::-webkit-details-marker,.train-activities>summary::-webkit-details-marker { display:none; }
 .planned-preview>summary::after,.train-activities>summary::after,.train-secondary>summary::after { content:'›'; color:var(--sub); font-size:22px; font-weight:400; }
+.planned-preview[open]>summary::after,.train-activities[open]>summary::after,.train-secondary[open]>summary::after { transform:rotate(90deg); }
+.train-secondary>summary::-webkit-details-marker { display:none; }
 .planned-section { position:relative; border-top:1px solid var(--line); }
 .planned-section>.planned-edit { position:absolute; top:5px; right:0; }
 .planned-section>.planned-preview>summary { width:calc(100% - 94px); justify-content:flex-start; gap:10px; }
 .planned-section>.planned-preview>summary>span { color:var(--sub); font-size:13px; font-weight:400; }
 .planned-section>.planned-preview>summary::after { margin-left:auto; }
-.planned-list { display:grid; gap:0; margin:0; padding:0; list-style:none; }
-.planned-exercise { display:flex; align-items:flex-start; gap:16px; padding:20px 0; border:0; border-top:1px solid var(--line); border-radius:0; background:transparent; }
-.planned-exercise>span { color:var(--sub); font-size:11px; padding-top:4px; font-variant-numeric:tabular-nums; } .planned-exercise>div { min-width:0; flex:1; }
-.planned-exercise strong { font-size:16px; line-height:1.35; letter-spacing:-.025em; font-weight:550; } .planned-exercise p,.planned-exercise small { display:block; margin:5px 0 0; color:var(--sub); font-size:12px; line-height:1.5; }
-.planned-exercise .exercise-guide__trigger { min-height:44px; padding:8px 0; font-size:12px; }
 .train-activities,.train-secondary { margin:20px 0 0; padding:0; border:0; border-top:1px solid var(--line); border-radius:0; background:transparent; }
 .completed-banner { display:flex; align-items:center; flex-wrap:wrap; gap:10px; padding:14px 0; margin:0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; font-size:13px; }
 /* Current session chrome is one quiet row; the exercise takes the screen. */

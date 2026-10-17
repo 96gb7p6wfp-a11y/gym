@@ -95,6 +95,73 @@ async function readSession(page: Page) {
   return page.evaluate(key => JSON.parse(localStorage.getItem(key)!).sessions[0]?.session, STORE);
 }
 
+async function readStoredData(page: Page) {
+  return page.evaluate(key => JSON.parse(localStorage.getItem(key)!), STORE);
+}
+
+const phoneSizes = [
+  { width: 320, height: 568 },
+  { width: 390, height: 844 },
+  { width: 430, height: 932 },
+];
+
+for (const appearance of ['light', 'dark'] as const) {
+  for (const size of phoneSizes) {
+    test(`exercise previews stay compact, readable and read-only at ${size.width}px in ${appearance}`, async ({ page }) => {
+      await page.setViewportSize(size);
+      await seed(page, appearance);
+      await page.getByRole('tab', { name: 'Train', exact: true }).click();
+      const storedBeforeBrowsing = await readStoredData(page);
+
+      // Cover an upper-body day and the jump day from the user's screenshot.
+      for (const day of ['Mon', 'Sun']) {
+        await page.getByRole('button', { name: new RegExp(`^${day} `) }).click();
+        const disclosure = page.locator('.planned-preview');
+        const summary = disclosure.locator('summary');
+        if (!(await disclosure.evaluate(element => element.hasAttribute('open')))) await summary.click();
+        const sequence = page.getByRole('list', { name: 'Planned exercises', exact: true });
+        await expect(sequence).toBeVisible();
+        const rows = sequence.locator('.workout-preview__item');
+        expect(await rows.count()).toBeGreaterThan(1);
+
+        // Test the actual background chain rather than just the page theme:
+        // the original bug was a white list containing inherited white text.
+        await expectReadable(sequence.locator('.workout-preview__index, .workout-preview__copy > strong, .workout-preview__copy > span, .workout-preview__dose > strong, .workout-preview__dose > span'));
+        for (const element of [sequence, rows.first()]) {
+          const surface = await element.evaluate(node => {
+            const style = getComputedStyle(node);
+            return { background: style.backgroundColor, radius: style.borderRadius };
+          });
+          expect(surface.background).toBe('rgba(0, 0, 0, 0)');
+          expect(surface.radius).toBe('0px');
+        }
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        expect(await sequence.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+
+        const first = rows.first().getByRole('button');
+        const bounds = (await first.boundingBox())!;
+        expect(bounds.width).toBeGreaterThanOrEqual(44);
+        expect(bounds.height).toBeGreaterThanOrEqual(44);
+        // A single full-width action replaces the oversized exercise cards.
+        expect(bounds.height).toBeLessThanOrEqual(132);
+        const name = await rows.first().locator('.workout-preview__copy > strong').innerText();
+        if (day === 'Sun') expect(name).toBe('Approach Jump');
+        await expect(first).toHaveAccessibleName(`Exercise details for ${name}`);
+        await first.click();
+        const guide = page.locator('.exercise-guide-sheet');
+        await expect(guide.getByRole('heading', { name, exact: true })).toBeVisible();
+        await expectReadable(guide.locator('.exercise-guide__title, .exercise-guide__category'));
+        await guide.getByRole('button', { name: 'Close', exact: true }).click();
+        await expect(guide).not.toBeVisible();
+        await expect(first).toBeFocused();
+      }
+
+      // Browsing and opening guides must never start a workout or edit a plan.
+      expect(await readStoredData(page)).toEqual(storedBeforeBrowsing);
+    });
+  }
+}
+
 for (const appearance of ['light', 'dark'] as const) {
   test(`preparation stays readable and its large checklist controls persist in ${appearance}`, async ({ page }) => {
     await seed(page, appearance);

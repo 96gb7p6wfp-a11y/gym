@@ -1,0 +1,22 @@
+/* A session is a sequence, not a stack of exercise cards. No legacy list classes. */
+.workout-preview { display:block; margin:0; padding:0; list-style:none; border:0; border-top:1px solid var(--line); border-radius:0; background:transparent; color:var(--ink); }
+.workout-preview__item { display:block; margin:0; padding:0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; }
+.workout-preview__item:last-child { border-bottom:0; }
+.workout-preview__row { display:grid; grid-template-columns:22px minmax(0,1fr) minmax(56px,82px) 16px; align-items:center; gap:12px; width:100%; min-height:90px; margin:0; padding:18px 0; border:0; border-radius:0; background:transparent; color:var(--ink); text-align:left; box-shadow:none; }
+.workout-preview__index { align-self:start; padding-top:2px; color:var(--sub); font-size:11px; font-weight:500; line-height:24px; font-variant-numeric:tabular-nums; }
+.workout-preview__copy { display:grid; gap:5px; min-width:0; }
+.workout-preview__copy>strong { color:var(--ink); font-size:16px; font-weight:600; line-height:1.35; letter-spacing:-.025em; overflow-wrap:break-word; }
+.workout-preview__copy>span { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; color:var(--sub); font-size:13px; font-weight:400; line-height:1.45; }
+.workout-preview__dose { display:grid; gap:5px; min-width:0; color:var(--sub); text-align:right; font-size:13px; line-height:1.5; font-weight:400; font-variant-numeric:tabular-nums; }
+.workout-preview__dose>strong { color:var(--ink); font-size:14px; line-height:1.4; font-weight:500; }
+.workout-preview__row>svg { color:var(--sub); }
+.workout-preview__row:active { background:var(--surface-soft); }
+.workout-preview__row:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+.workout-preview__previous { display:flex; justify-content:space-between; align-items:baseline; gap:16px; padding:0 0 20px; border-bottom:1px solid var(--line); color:var(--sub); font-size:13px; }
+.workout-preview__previous strong { color:var(--ink); font-size:16px; font-weight:550; font-variant-numeric:tabular-nums; }
+@media(max-width:350px) {
+ .workout-preview__row { grid-template-columns:18px minmax(0,1fr) minmax(50px,68px) 16px; gap:9px; }
+ .workout-preview__copy>strong { font-size:15px; }
+}
+@media(prefers-reduced-motion:no-preference) { .workout-preview__row { transition:background-color 100ms ease; } }
+@media(hover:hover) and (pointer:fine) { .workout-preview__row:hover { background:var(--surface-soft); } }

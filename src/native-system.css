@@ -1,7 +1,7 @@
 /* Setline 2: shared native foundations, including portalled controls. */
 :root {
  --canvas:#f7f5f1; --surface:#fffefa; --surface-soft:#efeee8; --surface-raised:#fffefa;
- --ink:#1c2428; --sub:#697174; --accent:#286975; --on-accent:#fff; --line:#dedfda;
+ --ink:#1c2428; --sub:#626c70; --accent:#286975; --on-accent:#fff; --line:#dedfda;
  --lime:var(--accent); --accent-ink:var(--accent); --accent-soft:#e4edef; --soft:var(--surface-soft);
  --background:var(--canvas); --foreground:var(--ink); --card:var(--surface); --card-foreground:var(--ink);
  --popover:var(--surface); --popover-foreground:var(--ink); --primary:var(--accent); --primary-foreground:var(--on-accent);

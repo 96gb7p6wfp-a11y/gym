@@ -76,7 +76,7 @@ test('Saturday yellow and red adjust only future work, then green restores the b
   await page.locator('.planned-preview > summary').click();
   const preview = page.locator('.planned-preview');
   await expect(preview).not.toContainText('Hurdle Hops');
-  await expect(preview.locator('.planned-exercise').filter({ hasText: 'Approach Jump' })).toContainText('2 sets');
+  await expect(preview.getByRole('listitem').filter({ hasText: 'Approach Jump' })).toContainText('2 sets');
   await readiness.getByRole('button', { name: 'Red', exact: true }).click();
   await expect(page.locator('.session-card h2')).toHaveText('Recovery');
   await readiness.getByRole('button', { name: 'Green', exact: true }).click();
@@ -146,7 +146,7 @@ test('editing a deload preview retains the normal base prescription instead of p
   await expect(builder).not.toBeVisible();
   expect((await read(page)).profile.plan[2].exercises[0].sets).toBe(4);
   await page.locator('.planned-preview > summary').click();
-  await expect(page.locator('.planned-exercise').filter({ hasText: 'Approach Jump' })).toContainText('3 sets');
+  await expect(page.getByRole('list', { name: 'Planned exercises' }).getByRole('listitem').filter({ hasText: 'Approach Jump' })).toContainText('3 sets');
 });
 
 test('a custom match-weekend edit does not replace the non-match lower day', async ({ page }) => {

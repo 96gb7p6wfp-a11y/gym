@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { ArrowUpRight, ChevronRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui';
 import { getExerciseGuide, type GuideExercise } from './exercise-guides';
@@ -8,6 +8,27 @@ import './exercise-guides.css';
 export interface ExerciseGuideProps {
   exercise: GuideExercise;
   compact?: boolean;
+}
+
+/** A shared sheet lets compact exercise rows open the complete existing guide. */
+export function ExerciseGuideSheet({ exercise, open, onOpenChange, onCloseAutoFocus, children }: {
+  exercise: GuideExercise;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCloseAutoFocus?: (event: Event) => void;
+  children?: ReactNode;
+}) {
+  const movement = findLibraryExercise({ name: exercise.name, key: exercise.key });
+  return <Dialog open={open} onOpenChange={onOpenChange}>
+    <DialogContent className="app-dialog exercise-guide-sheet" onCloseAutoFocus={onCloseAutoFocus}>
+      <DialogHeader className="exercise-guide__header">
+        <DialogDescription className="exercise-guide__category">{movement?.category ?? exercise.group ?? 'Exercise guide'}</DialogDescription>
+        <DialogTitle className="exercise-guide__title">{exercise.name}</DialogTitle>
+      </DialogHeader>
+      {children}
+      <ExerciseGuideBody key={exercise.name} exercise={exercise} />
+    </DialogContent>
+  </Dialog>;
 }
 
 /** Shared by workout details and the library, without nesting another sheet. */
@@ -75,18 +96,9 @@ export function ExerciseGuideBody({ exercise }: { exercise: GuideExercise }) {
 export function ExerciseGuide({ exercise, compact = false }: ExerciseGuideProps) {
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
-  const movement = findLibraryExercise({ name: exercise.name, key: exercise.key });
   return <div className={`exercise-guide${compact ? ' exercise-guide--compact' : ''}`}>
     <button ref={trigger} type="button" className="exercise-guide__trigger" aria-label={`Exercise details for ${exercise.name}`} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>Exercise details<ChevronRight size={17} aria-hidden="true" /></button>
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="app-dialog exercise-guide-sheet" onCloseAutoFocus={(event: Event) => { event.preventDefault(); trigger.current?.focus({ preventScroll: true }); }}>
-        <DialogHeader className="exercise-guide__header">
-          <DialogDescription className="exercise-guide__category">{movement?.category ?? exercise.group ?? 'Exercise guide'}</DialogDescription>
-          <DialogTitle className="exercise-guide__title">{exercise.name}</DialogTitle>
-        </DialogHeader>
-        <ExerciseGuideBody key={exercise.name} exercise={exercise} />
-      </DialogContent>
-    </Dialog>
+    <ExerciseGuideSheet exercise={exercise} open={open} onOpenChange={setOpen} onCloseAutoFocus={(event: Event) => { event.preventDefault(); trigger.current?.focus({ preventScroll: true }); }} />
   </div>;
 }
 
