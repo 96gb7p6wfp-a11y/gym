@@ -74,7 +74,7 @@ for (const width of [320, 390]) {
     await expect(page.getByRole('button', { name: 'View approach jump progress: 67.5 centimetres', exact: true })).toContainText('+2.5 cm');
     await progress.click();
     await expect(page.getByRole('tab', { name: 'Progress', exact: true })).toHaveAttribute('data-state', 'active');
-    const progressViews = (await page.getByRole('group', { name: 'Progress views', exact: true }).boundingBox())!;
+    const progressViews = (await page.getByRole('group', { name: 'Chart metric', exact: true }).boundingBox())!;
     expect(progressViews.height).toBeLessThanOrEqual(56);
     await expect(page.getByRole('img', { name: /^Approach jump trend:/ })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Jump performance', exact: true })).not.toContainText('305');

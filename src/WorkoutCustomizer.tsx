@@ -119,6 +119,7 @@ export function WorkoutCustomizer({ session, selectedKey, onSelectedKeyChange, o
         selecting.current = false;
       }
     }} onSelect={choose} title={library?.kind === 'alternative' ? 'Add an alternative' : undefined}
+      confirmationLabel={library?.kind === 'alternative' ? 'Add an alternative' : undefined}
       replacementFor={library?.kind === 'replace' || library?.kind === 'alternative' ? session.exercises.find(row => row.key === library.key) : undefined} />
     <Dialog open={sessionOpen} onOpenChange={(open: boolean) => { if (!busy) setSessionOpen(open); }}>
       <DialogContent className="app-dialog workout-options-sheet"><DialogHeader className=""><DialogTitle className="">Your session</DialogTitle><DialogDescription className="">Adjust to how you feel. Consistency beats extra fatigue.</DialogDescription></DialogHeader>

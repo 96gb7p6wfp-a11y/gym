@@ -1,94 +1,44 @@
-.exercise-guide {
-  min-width: 0;
-  max-width: 100%;
-  margin-top: .65rem;
-  color: var(--sub, #344039);
-  font-size: .9rem;
-  line-height: 1.55;
-  overflow-wrap: anywhere;
-  border: 0;
-  border-radius: 14px;
-  background: transparent;
-}
-.exercise-guide > summary {
-  box-sizing: border-box;
-  min-height: 44px;
-  padding: .65rem .85rem;
-  color: var(--ink, #263229);
-  cursor: pointer;
-  font-weight: 600;
-}
-.exercise-guide > summary:focus-visible,
-.exercise-guide__content > a:focus-visible {
-  outline: 2px solid #6a8c43;
-  outline-offset: 3px;
-}
-.exercise-guide__content {
-  min-width: 0;
-  padding: 0 .85rem .85rem;
-  border-top: 1px solid var(--line, #edf0e9);
-}
-.exercise-guide .exercise-guide__content > p { margin: .85rem 0; }
-.exercise-guide .exercise-guide__content strong {
-  display: block;
-  margin-bottom: .15rem;
-  color: var(--ink, #1d2921);
-  font-size: .9rem;
-}
-.exercise-guide .exercise-guide__steps,
-.exercise-guide .exercise-guide__mistakes ul {
-  margin: .8rem 0;
-  padding-left: 1.35rem;
-  list-style-position: outside;
-}
-.exercise-guide .exercise-guide__steps { list-style-type: decimal; }
-.exercise-guide .exercise-guide__mistakes ul { list-style-type: disc; }
-.exercise-guide .exercise-guide__steps > li,
-.exercise-guide .exercise-guide__mistakes li {
-  display: list-item;
-  border: 0;
-  margin: .35rem 0;
-  padding: 0 0 0 .15rem;
-  font-size: inherit;
-  line-height: inherit;
-}
-.exercise-guide__content > a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  max-width: 100%;
-  gap: .3rem;
-  color: var(--accent-ink, #405e29);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.exercise-guide__custom { color: var(--sub, #657268); font-size: .85rem; }
-.exercise-guide__loading {
-  margin: .85rem 0;
-  padding: .7rem;
-  border-radius: 8px;
-  background: var(--surface-soft, #edf2e6);
-}
-.exercise-guide .exercise-guide__loading > p { margin: .4rem 0 0; }
-.exercise-guide .exercise-guide__target { font-weight: 600; }
-.exercise-guide--compact { font-size: .85rem; }
-.exercise-guide--compact > summary { font-size: .85rem; }
-.exercise-guide__intro { padding: .8rem 0 .2rem; }
-.exercise-guide__intro > span { color: var(--sub, #778077); font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; }
-.exercise-guide__intro > p { margin: .35rem 0; }
-.exercise-guide__sections { display: flex; gap: 4px; padding: 4px; margin: .75rem 0; border-radius: 12px; background: var(--canvas, #f3f4ef); }
-.exercise-guide__sections > button { flex: 1; min-height: 44px; border-radius: 9px; color: var(--sub, #778077); font-size: .85rem; font-weight: 600; }
-.exercise-guide__sections > button[aria-pressed=true] { background: var(--surface, #fff); color: var(--ink, #18221b); box-shadow: 0 1px 3px #18221b08; }
-.exercise-guide__alternatives > p { color: var(--sub, #778077); font-size: .85rem; }
-.exercise-guide__alternatives > div { display: grid; padding: .65rem 0; border-bottom: 1px solid var(--line, #edf0e9); }
-.exercise-guide__alternatives > div > p { margin: .25rem 0; font-size: .85rem; line-height: 1.5; color: var(--sub, #778077); }
-.exercise-guide__alternatives a { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent-ink, #375630); font-size: .85rem; text-decoration: underline; text-underline-offset: 3px; }
-.exercise-guide__sections > button:focus-visible, .exercise-guide__alternatives a:focus-visible { outline: 2px solid var(--accent-ink, #375630); outline-offset: 2px; }
-.exercise-guide__overview { display: grid; gap: 15px; margin: 18px 0; }
-.exercise-guide__overview > div { display: grid; gap: 3px; }
-.exercise-guide__overview dt { font-size: .75rem; color: var(--sub, #778077); }
-.exercise-guide__overview dd { margin: 0; font-size: .9rem; color: var(--ink, #1d2921); }
-.exercise-guide__overview dd > span { display: block; margin-top: 3px; font-size: .85rem; color: var(--sub, #778077); }
-.exercise-guide__technique-heading { margin-top: 18px; }
-.exercise-guide__load-toggle { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 44px; padding: 8px 0; border: 0; background: transparent; color: var(--ink, #1d2921); font: inherit; font-weight: 600; text-align: left; }
-.exercise-guide__load-toggle:focus-visible { outline: 2px solid var(--ring, #6a8c43); outline-offset: 2px; }
+.exercise-guide { min-width: 0; max-width: 100%; margin: 12px 0 0; background: none; border: 0; border-radius: 0; color: var(--sub, #697174); }
+.exercise-guide .exercise-guide__trigger { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 48px; padding: 8px 0; border: 0; border-radius: 0; background: none; color: var(--ink, #1c2428); font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer; }
+.exercise-guide__trigger > svg { color: var(--sub, #697174); flex-shrink: 0; }
+.exercise-guide-sheet { color: var(--ink, #1c2428); }
+.exercise-guide-sheet .exercise-guide__header { display: flex; flex-direction: column; gap: 8px; margin: 2px 32px 25px 0; text-align: left; }
+.exercise-guide__header .exercise-guide__category { margin: 0; color: var(--accent, #286975); font-size: 11px; font-weight: 650; letter-spacing: .13em; text-transform: uppercase; }
+.exercise-guide__header .exercise-guide__title { margin: 0; color: var(--ink, #1c2428); font-size: clamp(27px, 7.5vw, 34px); font-weight: 700; line-height: 1.08; letter-spacing: -.035em; overflow-wrap: anywhere; }
+.exercise-guide__content { min-width: 0; padding: 0; border: 0; color: var(--sub, #697174); font-size: 15px; line-height: 1.55; overflow-wrap: anywhere; }
+.exercise-guide__overview { display: grid; gap: 18px; margin: 0 0 26px; }
+.exercise-guide__overview > div { display: grid; gap: 4px; }
+.exercise-guide__overview dt { color: var(--sub, #697174); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.exercise-guide__overview dd { margin: 0; color: var(--ink, #1c2428); font-size: 16px; line-height: 1.4; }
+.exercise-guide__overview dd > span { display: block; margin-top: 4px; color: var(--sub, #697174); font-size: 14px; }
+.exercise-guide__intro { margin-bottom: 22px; }
+.exercise-guide__intro > span { color: var(--accent, #286975); font-size: 12px; }
+.exercise-guide__intro p { margin: 6px 0 0; }
+.exercise-guide__sections { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; margin: 0 0 28px; background: var(--surface-soft, #eae8e3); border-radius: 9px; }
+.exercise-guide__sections > button { min-width: 0; min-height: 44px; margin: 0; padding: 8px; border: 0; border-radius: 7px; background: transparent; color: var(--sub, #697174); font: inherit; font-size: 14px; font-weight: 600; }
+.exercise-guide__sections > button[aria-pressed="true"] { background: var(--surface, #fff); color: var(--ink, #1c2428); box-shadow: 0 1px 3px #0000000a; }
+.exercise-guide__content section { display: block; margin: 0 0 25px; padding: 0; background: none; border: 0; border-radius: 0; }
+.exercise-guide__content section h3 { margin: 0 0 10px; color: var(--ink, #1c2428); font-size: 15px; line-height: 1.3; font-weight: 650; letter-spacing: -.01em; }
+.exercise-guide__content section p { margin: 0; color: var(--sub, #697174); }
+.exercise-guide__content .exercise-guide__steps, .exercise-guide__content .exercise-guide__mistakes ul { margin: 0; padding-left: 21px; list-style-position: outside; }
+.exercise-guide__content .exercise-guide__steps { list-style-type: decimal; }
+.exercise-guide__content .exercise-guide__mistakes ul { list-style-type: disc; }
+.exercise-guide__content .exercise-guide__steps > li, .exercise-guide__content .exercise-guide__mistakes li { display: list-item; margin: 0 0 9px; padding: 0 0 0 3px; border: 0; background: none; color: var(--sub, #697174); font-size: 15px; line-height: 1.55; }
+.exercise-guide__load-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 50px; padding: 11px 0; border: 0; border-top: 1px solid var(--line, #deded9); border-bottom: 1px solid var(--line, #deded9); background: none; color: var(--ink, #1c2428); font: inherit; font-size: 15px; font-weight: 600; text-align: left; }
+.exercise-guide__load-toggle > span { color: var(--sub, #697174); font-size: 20px; font-weight: 400; }
+.exercise-guide__loading { padding: 17px 0 6px; background: none; border-radius: 0; }
+.exercise-guide__loading[hidden] { display: none; }
+.exercise-guide__loading > strong { display: block; color: var(--ink, #1c2428); font-weight: 600; }
+.exercise-guide__loading > p { margin: 8px 0; }
+.exercise-guide__target { color: var(--ink, #1c2428); }
+.exercise-guide__video, .exercise-guide__alternatives a { display: inline-flex; align-items: center; gap: 7px; min-height: 48px; margin-top: 8px; color: var(--accent, #286975); font-size: 15px; font-weight: 600; text-decoration: none; }
+.exercise-guide__alternatives > p { margin: 0 0 13px; }
+.exercise-guide__alternatives > div { padding: 17px 0; border-bottom: 1px solid var(--line, #deded9); }
+.exercise-guide__alternatives strong { display: block; color: var(--ink, #1c2428); font-size: 16px; font-weight: 600; }
+.exercise-guide__alternatives > div > p { margin: 6px 0 0; font-size: 14px; }
+.exercise-guide__alternatives a { margin-top: 3px; font-size: 14px; }
+.exercise-guide__alternatives .exercise-guide__alternative-note { margin-top: 20px; font-size: 13px; }
+.exercise-guide__custom { margin: 0 0 20px; font-size: 13px; }
+.exercise-guide--compact .exercise-guide__trigger { font-size: 14px; }
+.exercise-guide__trigger:focus-visible, .exercise-guide__sections > button:focus-visible, .exercise-guide__load-toggle:focus-visible, .exercise-guide__content a:focus-visible { outline: 2px solid var(--accent, #286975); outline-offset: 3px; }
+@media (prefers-reduced-motion: no-preference) { .exercise-guide__trigger, .exercise-guide__sections > button { transition: opacity 100ms ease, background-color 140ms ease; } .exercise-guide__trigger:active { opacity: .55; } }

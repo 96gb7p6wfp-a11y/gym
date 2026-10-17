@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 
 test('keeps movement dropdown keyboard navigation and restores focus after selection and escape', async ({ page }) => {
   await page.getByRole('tab', { name: 'Progress', exact: true }).click();
-  await page.getByRole('button', { name: 'Strength', exact: true }).click();
+  await page.getByRole('button', { name: 'Strength history', exact: true }).click();
   const trigger = page.getByRole('combobox', { name: 'Movement', exact: true });
   await trigger.focus();
   await page.keyboard.press('ArrowDown');

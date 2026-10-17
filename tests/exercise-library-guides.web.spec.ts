@@ -5,14 +5,12 @@ test('exercise details explain purpose and rank relevant alternatives without cr
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: /^Mon / }).click();
   await page.locator('.planned-preview > summary').click();
-  const guide = page.locator('details.exercise-guide').filter({
-    has: page.locator('summary[aria-label="Exercise details for Chest-Supported Row"]'),
-  }).first();
-  await expect(guide).not.toHaveAttribute('open');
-  await guide.locator(':scope > summary').click();
+  const guide = page.locator('.exercise-guide-sheet');
+  await expect(guide).not.toBeVisible();
+  await page.getByRole('button', { name: 'Exercise details for Chest-Supported Row', exact: true }).click();
   await expect(guide.locator('.exercise-guide__overview')).toContainText('Targets');
   await expect(guide.locator('.exercise-guide__overview')).toContainText('Back');
-  await expect(guide.locator('.exercise-guide__overview')).toContainText('Helps improve');
+  await expect(guide.locator('.exercise-guide__overview')).toContainText('Improves');
   await expect(guide.locator('ol > li')).toHaveCount(3);
   await expect(guide.locator('.exercise-guide__loading')).toBeHidden();
   await guide.getByRole('button', { name: 'Load & reps', exact: true }).click();

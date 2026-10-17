@@ -45,15 +45,17 @@ test('movement loading advice preserves distinct strength and power targets', as
   await openPlan(page);
   await page.locator('.plan-day-details > summary').filter({ hasText: 'Lower Body' }).click();
   await page.locator('.plan-day-details > summary').filter({ hasText: 'Upper Body' }).first().click();
-  const squat = page.locator('details.exercise-guide').filter({ has: page.locator('summary[aria-label="Exercise details for Hack Squat"]') }).first();
-  await squat.locator('summary').click();
-  await expect(squat.locator('.exercise-guide__loading')).toContainText('Your target: 4–6 reps');
-  await expect(squat.locator('.exercise-guide__loading')).toContainText('2 good reps');
-  const slam = page.locator('details.exercise-guide').filter({ has: page.locator('summary[aria-label="Exercise details for Medicine Ball Spike Slam"]') }).first();
-  await slam.locator('summary').click();
-  await expect(slam.locator('.exercise-guide__loading')).toContainText('Your target: 4 reps');
-  await expect(slam.locator('.exercise-guide__loading')).toContainText(/speed|fast/i);
-  await expect(slam.locator('.exercise-guide__loading')).not.toContainText('top of the rep');
+  await page.getByRole('button', { name: 'Exercise details for Hack Squat', exact: true }).first().click();
+  const guide = page.locator('.exercise-guide-sheet');
+  await guide.getByRole('button', { name: 'Load & reps', exact: true }).click();
+  await expect(guide.locator('.exercise-guide__loading')).toContainText('Your target: 4–6 reps');
+  await expect(guide.locator('.exercise-guide__loading')).toContainText('2 good reps');
+  await guide.getByRole('button', { name: 'Close', exact: true }).click();
+  await page.getByRole('button', { name: 'Exercise details for Medicine Ball Spike Slam', exact: true }).first().click();
+  await guide.getByRole('button', { name: 'Load & reps', exact: true }).click();
+  await expect(guide.locator('.exercise-guide__loading')).toContainText('Your target: 4 reps');
+  await expect(guide.locator('.exercise-guide__loading')).toContainText(/speed|fast/i);
+  await expect(guide.locator('.exercise-guide__loading')).not.toContainText('top of the rep');
 });
 
 test('daily targets and explicit supplement tracking save and reload offline', async ({ page, context }) => {

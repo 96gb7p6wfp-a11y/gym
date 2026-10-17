@@ -19,7 +19,7 @@ async function openAllSets(page: Page) {
 
 async function openHistory(page: Page) {
   await page.getByRole('tab', { name: 'Progress', exact: true }).click();
-  await page.getByRole('button', { name: 'History', exact: true }).click();
+  await page.getByRole('button', { name: 'View history', exact: true }).click();
 }
 
 function weightInput(page: Page) {

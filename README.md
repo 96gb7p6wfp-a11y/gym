@@ -1,14 +1,26 @@
-# Setline — standalone Gym app
+# Setline 2 — Performance journal
 
 A complete React + Vite workout tracker and installable PWA, rebuilt from the
 hosted Setline app's delivered React code, styles, and visual reference. The app
 runs on its own: no iframe, sign-in service, old website, external workout API,
 or native iPhone signing is required.
 
+## Setline 2 design
+
+A new warm-paper/petrol system replaces the earlier visual themes. Today is an open
+training statement; workouts use large editable values; the week is a timeline;
+library details and forms use keyboard-aware sheets. More groups secondary features
+into native-style lists. Light and dark modes use semantic components.
+
+Existing `setline.gym.v1` data, plans, session snapshots, imports, backup format and PWA
+identity are unchanged. No migration or reset is needed.
+
+[Design concept](docs/SETLINE_2_CONCEPT.md) · [Research](docs/SETLINE_2_DESIGN_RESEARCH.md)
+
 ## Features
 
 - **8-week volleyball-first plan:** in More → Training plan, choose a start Monday,
-  mark Sunday match weeks, then tap **Use this plan**. The prior weekly plan is
+  open **Programme & customization**, mark Sunday match weeks, then tap **Use this plan**. The prior weekly plan is
   kept for restoration. Match weeks use Saturday's short primer; other weeks use
   Reactive + Hard Lower B. Week 4 deload and week 8 peak/retest adjust new session
   doses. Date-specific readiness moderates jumping; Saturday requires a check.
@@ -34,7 +46,7 @@ or native iPhone signing is required.
   concise load insights. Stable multi-week weight can suggest a small food increase;
   saved calorie targets never change automatically.
 - **Today:** the workout, its goal, one main action and weekly gym progress first;
-  recorded jump height, next volleyball, compact week navigation and nutrition stay quiet.
+  recorded jump height, next volleyball, day selection in a sheet and nutrition stay quiet.
 - **Train:** focused exercise and current-set controls, previous performance,
   quick completion and automatic advancement. All-set editing and the original
   seven-day gym/volleyball/recovery plan remain available, including the Tuesday jump
@@ -44,7 +56,7 @@ or native iPhone signing is required.
   Complex pairs alternate by round in one view while keeping prescribed rest.
   Short timed movements have a per-set countdown with quick duration adjustment,
   pause/resume/reset and explicit completion; longer activities retain manual minutes.
-- **Progress:** a jump-first overview with real dated trends, weekly body-weight
+- **Progress:** an overview with one selected Jump / Weight / Strength chart with real dated trends, weekly body-weight
   averages, comparable strength and recovery-aware training cadence. Detailed charts,
   personal bests, History with editing/deletion/restoration, and weekly reports remain available.
 - **Nutrition:** calories and protein remaining, quick multi-food meals, recent
@@ -74,7 +86,7 @@ or native iPhone signing is required.
   recovery, protein/carbohydrate ranges, long-session fueling and hydration.
 - **Before and after training:** two short reminders with food examples, meal
   timing, hydration, cool-down and sleep, including a lighter recovery-day version.
-- **Exercise guides:** expandable local instructions for every original exercise,
+- **Exercise guides:** native-feeling sheets with local instructions for every original exercise,
   warm-up and cool-down, with technique, working muscles, common mistakes,
   precautions and a link to find a video demonstration. Custom movements receive
   a general checklist and keep your saved coaching cue.

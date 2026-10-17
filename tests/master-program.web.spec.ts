@@ -6,6 +6,7 @@ const read = (page: Page) => page.evaluate(key => JSON.parse(localStorage.getIte
 async function openPlan(page: Page) {
   await page.getByRole('tab', { name: 'More', exact: true }).click();
   await page.getByRole('button', { name: 'Training plan', exact: true }).click();
+  await page.locator('.native-program-options > summary').click();
 }
 async function activate(page: Page, matches: number[] = []) {
   await openPlan(page);
@@ -54,7 +55,7 @@ test('match week uses a short Saturday primer and keeps Sunday match time separa
   await day(page, 'Sun');
   await expect(page.locator('.session-card h2')).toHaveText('Match');
   await page.getByRole('tab', { name: 'Today', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'Your day', exact: true })).toContainText('set actual duration');
+  await expect(page.getByRole('region', { name: 'Your day', exact: true })).toContainText('Match · log your actual duration');
   await expect(page.getByRole('region', { name: 'Your day', exact: true })).not.toContainText('20:00');
   await day(page, 'Sat');
   await expect(page.locator('.session-card h2')).toHaveText('Pre-Match Primer');

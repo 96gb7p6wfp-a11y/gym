@@ -88,7 +88,7 @@ test('strength history groups canonical copies and separates renamed, mode and j
   await seed(page, [chestA, chestB, renamed, bodyweight, jumpA, jumpB, touch]);
   const original = await records(page);
   await page.getByRole('tab', { name: 'Progress', exact: true }).click();
-  await page.getByRole('button', { name: 'Strength', exact: true }).click();
+  await page.getByRole('button', { name: 'Strength history', exact: true }).click();
   const picker = page.getByRole('combobox', { name: 'Movement', exact: true });
   const history = page.locator('.movement-history');
   async function choose(prefix: RegExp, variant = 0) {

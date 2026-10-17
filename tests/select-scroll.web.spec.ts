@@ -33,7 +33,7 @@ for (const screen of [
       }
     }, screen);
     await page.getByRole('tab', { name: 'Progress', exact: true }).tap();
-    await page.getByRole('button', { name: 'Strength', exact: true }).tap();
+    await page.getByRole('button', { name: 'Strength history', exact: true }).tap();
     const trigger = page.getByRole('combobox', { name: 'Movement', exact: true });
     await trigger.tap();
     const list = page.getByRole('listbox');

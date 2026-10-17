@@ -5,7 +5,7 @@ import { TabsList, TabsTrigger } from './ui.jsx';
 type HeaderProps = { eyebrow?: string; title: string; subtitle?: ReactNode; action?: ReactNode };
 
 export function PageHeader({ eyebrow, title, subtitle, action }: HeaderProps) {
-  return <header className="page-header">
+  return <header className="page-header native-page-header">
     <div>
       {eyebrow && <p className="eyebrow">{eyebrow}</p>}
       <h1>{title}</h1>
@@ -64,10 +64,5 @@ export function MenuRow({ title, subtitle, icon, onClick, trailing }: {
 }
 
 export function BottomNavigation({ items, onSelect }: { onSelect?: (value: string) => void; items: { value: string; label: string; icon: ReactNode }[] }) {
-  return <TabsList className="app-nav" aria-label="Main navigation">
-    {items.map(item => <TabsTrigger className="app-nav-item" value={item.value} key={item.value} onClick={() => onSelect?.(item.value)}>
-      <span className="app-nav-icon" aria-hidden="true">{item.icon}</span>
-      <span>{item.label}</span>
-    </TabsTrigger>)}
-  </TabsList>;
+  return <TabsList className="app-nav native-tabbar" aria-label="Main navigation"><div className="app-nav-inner">{items.map(item => <TabsTrigger className="app-nav-item" value={item.value} key={item.value} onClick={() => onSelect?.(item.value)}><span className="app-nav-icon" aria-hidden="true">{item.icon}</span><span className="app-nav-label">{item.label}</span></TabsTrigger>)}</div></TabsList>;
 }

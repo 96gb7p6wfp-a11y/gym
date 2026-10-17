@@ -135,7 +135,7 @@ test('reuses recent meals and saved foods as new records without changing the or
 test('offers a one-tap progress check-in and charts only recorded body weights', async ({ page }) => {
   await tab(page, 'Progress');
   await expect(page.getByRole('img', { name: /^Body weight trend:/ })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Check in', exact: true }).click();
+  await page.getByRole('button', { name: 'Log weight', exact: true }).click();
   let check = page.getByRole('dialog', { name: 'Weight check-in', exact: true });
   await expect(check).toBeVisible();
   await check.getByLabel('Body weight · kg', { exact: true }).fill('64.2');
@@ -179,7 +179,7 @@ test('imports directly from More and keeps activity totals synchronized with the
   await importer.getByRole('button', { name: 'Import 1 selected activity', exact: true }).click();
   await expect(importer).not.toBeVisible();
   await tab(page, 'Progress');
-  await page.getByRole('button', { name: 'Your week', exact: true }).click();
+  await page.getByRole('button', { name: 'Weekly report', exact: true }).click();
   await page.locator('.report-activity-details > summary').click();
   const totals = page.getByRole('region', { name: 'Extra activity progress', exact: true });
   await expect(totals).toContainText('1 extra activities');
@@ -198,7 +198,7 @@ test('editing a saved timed workout cannot start timers or change a separate act
   }, { active, historical, profile: DEFAULT_PROFILE, key: STORE });
   await page.reload();
   await tab(page, 'Progress');
-  await page.getByRole('button', { name: 'History', exact: true }).click();
+  await page.getByRole('button', { name: 'View history', exact: true }).click();
   await page.getByRole('button', { name: /^Volleyball / }).filter({ has: page.getByRole('heading', { name: 'Volleyball', exact: true }) }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Edit this log', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Done editing', exact: true })).toBeVisible();

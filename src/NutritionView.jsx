@@ -4,11 +4,10 @@ import { ChevronLeft } from "lucide-react";
 import { ChevronRight } from "lucide-react";
 import { Camera } from "lucide-react";
 import { Plus } from "lucide-react";
-import { Utensils } from "lucide-react";
 import * as ReactJSX from "react/jsx-runtime";
 import NutritionCalculator from "./NutritionCalculator";
 import { MealRoutineCue } from "./RemindersPanel";
-import "./nutrition-premium.css";
+import "./nutrition-native.css";
 import { simpleFoodGuidance } from "./nutrition-goals";
 import {
   DEFAULT_NUTRITION_TARGETS,
@@ -310,7 +309,7 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
     } finally { setSaving(!1); }
   }
   return (
-    <div className={`nutrition-view`}>
+    <div className="nutrition-view nutrition-native">
       {loadError && (
         <div className={`error-banner`} role={`alert`}>
           <p>{loadError}</p>
@@ -329,33 +328,40 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
       </div>
       <section className="nutrition-totals nutrition-daily" aria-label="Daily nutrition">
         <div className="nutrition-daily__energy">
-          <span className="small-label">Calories</span>
-          <div className="nutrition-daily__number"><strong>{roundNutrient(targets.calories === null ? dailyTotals.calories : Math.max(0, targets.calories - dailyTotals.calories)).toLocaleString('en-GB')}</strong><span>{targets.calories === null ? 'kcal logged' : 'kcal left'}</span></div>
-          <p className="muted">{targets.calories === null ? 'No target set' : `${roundNutrient(dailyTotals.calories).toLocaleString('en-GB')} of ${targets.calories} kcal`}</p>
+          <div className="nutrition-daily__number">
+            <strong>{roundNutrient(targets.calories === null ? dailyTotals.calories : Math.max(0, targets.calories - dailyTotals.calories)).toLocaleString('en-GB')}</strong>
+            <span>{targets.calories === null ? 'kcal logged' : 'kcal remaining'}</span>
+          </div>
+          <p className="nutrition-daily__consumed">{targets.calories === null ? 'No target set' : `${roundNutrient(dailyTotals.calories).toLocaleString('en-GB')} of ${targets.calories} kcal`}</p>
           {targets.calories !== null && targets.calories > 0 && <progress value={Math.min(dailyTotals.calories, targets.calories)} max={targets.calories} aria-label="Calories · kcal daily progress" />}
         </div>
-        <div className="nutrition-daily__protein">
-          <div><span className="small-label">Protein</span><strong>{roundNutrient(dailyTotals.protein)}<span>{targets.protein === null ? ' g logged' : ` / ${targets.protein} g`}</span></strong></div>
-          {targets.protein !== null && <span className="nutrition-daily__left">{roundNutrient(Math.max(0, targets.protein - dailyTotals.protein))} g left</span>}
-          {targets.protein !== null && targets.protein > 0 && <progress value={Math.min(dailyTotals.protein, targets.protein)} max={targets.protein} aria-label="Protein · g daily progress" />}
+        <div className="nutrition-native-ledger">
+          <div className="nutrition-daily__protein">
+            <div className="nutrition-native-ledger__label"><span>Protein</span>{targets.protein !== null && <small>{roundNutrient(Math.max(0, targets.protein - dailyTotals.protein))} g remaining</small>}</div>
+            <strong>{roundNutrient(dailyTotals.protein)}<span>{targets.protein === null ? ' g' : ` / ${targets.protein} g`}</span></strong>
+          </div>
+          <div className="nutrition-daily__macros">{['carbs', 'fat'].map(key => <div key={key}>
+            <span>{key === 'carbs' ? 'Carbs' : 'Fat'}</span>
+            <strong>{roundNutrient(dailyTotals[key])}<span>{targets[key] === null ? ' g' : ` / ${targets[key]} g`}</span></strong>
+          </div>)}</div>
         </div>
-        <div className="nutrition-daily__macros">{['carbs', 'fat'].map(key => <div key={key}><span>{key === 'carbs' ? 'Carbs' : 'Fat'}</span><strong>{roundNutrient(dailyTotals[key])}<span>{targets[key] === null ? ' g' : ` / ${targets[key]} g`}</span></strong></div>)}</div>
-        {targets.calories === null && <button type="button" className="text-button" onClick={() => setProfileOpen(true)}>Set daily targets</button>}
+        {targets.calories === null && <button type="button" className="text-button nutrition-set-targets" onClick={() => setProfileOpen(true)}>Set daily targets<ChevronRight size={16} aria-hidden="true" /></button>}
       </section>
-      <button type="button" className="btn full nutrition-log-action" onClick={addMeal}><Plus size={19} />Log meal</button>
       <MealRoutineCue date={selectedDate} mealSavedToken={mealSavedToken} onOpenRoutine={() => onOpenRoutine?.(selectedDate)} />
       <section className="nutrition-meals" aria-labelledby="nutrition-meals-heading">
-        <div className="panel-heading"><h2 id="nutrition-meals-heading">Meals</h2><span className="muted">{mealsForDay.length} logged</span></div>
-        {mealsForDay.length ? mealsForDay.map(record => {
+        <div className="panel-heading"><h2 id="nutrition-meals-heading">{selectedDate === dateKey(new Date()) ? 'Today’s meals' : 'Meals'}</h2><span className="muted">{mealsForDay.length ? `${mealsForDay.length} logged` : 'Start here'}</span></div>
+        {mealsForDay.length ? mealsForDay.map((record, index) => {
           const meal = record.payload;
           const nutrients = sumNutrients(meal.foods);
           return <button type="button" className="nutrition-meal" onClick={() => { setEditingMeal(record); setMealDate(record.date); setMealDraft(structuredClone(meal)); setDraftError(``); }} key={record.id}>
-            <div><strong>{meal.name}</strong><small>{meal.foods.map(food => food.name).join(', ')}</small></div>
-            <div><strong>{roundNutrient(nutrients.calories)} kcal</strong><small>{roundNutrient(nutrients.protein)} g protein</small></div>
+            <span className="nutrition-meal__index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+            <span className="nutrition-meal__name"><strong>{meal.name}</strong><small>{meal.foods.map(food => food.name).join(', ')}</small></span>
+            <span className="nutrition-meal__energy"><strong>{roundNutrient(nutrients.calories)}{' '}<small>kcal</small></strong><small>{roundNutrient(nutrients.protein)} g protein</small></span>
             <ChevronRight size={17} aria-hidden="true" />
           </button>;
-        }) : <div className="nutrition-empty"><Utensils size={23} aria-hidden="true" /><div><strong>{loaded ? 'No meals yet' : 'Loading your meals…'}</strong></div></div>}
+        }) : <div className="nutrition-empty"><strong>{loaded ? 'Your next meal starts here.' : 'Loading your meals…'}</strong><p>{loaded ? 'Log a meal to see what’s left today.' : 'Your log stays on this device.'}</p></div>}
       </section>
+      <div className="nutrition-log-dock"><button type="button" className="btn full nutrition-log-action" onClick={addMeal}><Plus size={19} aria-hidden="true" />Log meal</button></div>
       <div className="nutrition-tools">
         <button type="button" className="nutrition-tool-row" onClick={() => setProfileOpen(true)}><span><strong>Targets</strong><small>Your daily goals & profile</small></span><ChevronRight size={18} aria-hidden="true" /></button>
         <button type="button" className="nutrition-tool-row" onClick={() => { setWeightError(``); setWeightOpen(true); }}><span><strong>Weight check-in</strong><small>{latestWeightRecord?.payload.kind === 'weight' ? `${latestWeightRecord.payload.kg} kg · latest` : `${bodyWeight} kg · profile`}</small></span><ChevronRight size={18} aria-hidden="true" /></button>
@@ -369,14 +375,14 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
         {photoAnalysisReady && <button type="button" className="nutrition-tool-row" onClick={() => { setPhotoDialogOpen(true); setPhotoError(``); }}><span><strong>Meal photo</strong><small>Estimate, then review</small></span><Camera size={18} aria-hidden="true" /></button>}
       </div>
       <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
-        <DialogContent className="app-dialog nutrition-dialog nutrition-targets-sheet">
+        <DialogContent className="app-dialog nutrition-dialog nutrition-native-sheet nutrition-targets-sheet">
           <DialogHeader><DialogTitle>Daily targets</DialogTitle><DialogDescription>Fuel muscle gain and volleyball.</DialogDescription></DialogHeader>
           <div className="nutrition-targets-summary"><div><span className="small-label">Your goals</span><p>{targets.calories === null ? 'No target set' : `${targets.calories} kcal · ${targets.protein ?? '–'} g protein`}</p><small className="muted">{targets.goalWeight === null ? 'Goal weight is optional' : `Goal weight: ${targets.goalWeight} kg`}</small></div><button type="button" className="text-button" onClick={() => { setTargetsDraft({ ...targets }); setDraftError(``); setProfileOpen(false); setTargetsOpen(true); }}>Edit targets</button></div>
           <NutritionCalculator profile={nutritionProfile} bodyWeight={bodyWeight} disabled={!loaded || saving || !onNutritionProfileChange} onProfileSave={onNutritionProfileChange} onApplyTargets={applyEstimatedTargets} />
         </DialogContent>
       </Dialog>
       <Dialog open={weightOpen} onOpenChange={setWeightOpen}>
-        <DialogContent className="app-dialog nutrition-dialog">
+        <DialogContent className="app-dialog nutrition-dialog nutrition-native-sheet">
           <DialogHeader><DialogTitle>Weight check-in</DialogTitle><DialogDescription>{formatDate(selectedDate)} · Use similar conditions each time.</DialogDescription></DialogHeader>
           <label className="field-label">Body weight · kg<input type="text" inputMode="decimal" value={weightInput} placeholder={todayWeightRecord?.payload.kind === 'weight' ? String(todayWeightRecord.payload.kg) : String(bodyWeight)} onChange={event => setWeightInput(event.target.value)} /></label>
           {weightError && <p className="nutrition-error" role="alert">{weightError}</p>}
@@ -391,7 +397,7 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
           analyzing || setPhotoDialogOpen(e);
         }}
       >
-        <DialogContent className={`app-dialog nutrition-dialog`}>
+        <DialogContent className={`app-dialog nutrition-dialog nutrition-native-sheet`}>
           <DialogHeader>
             <DialogTitle>{`Estimate a meal from a photo`}</DialogTitle>
             <DialogDescription>{`Take a clear photo of the whole serving. Add portion sizes and ingredients you know.`}</DialogDescription>
@@ -482,7 +488,7 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
           !e && !saving && setMealDraft(null);
         }}
       >
-        <DialogContent className={`app-dialog nutrition-dialog`}>
+        <DialogContent className={`app-dialog nutrition-dialog nutrition-native-sheet`}>
           <DialogHeader>
             <DialogTitle>
               {editingMeal
@@ -677,7 +683,7 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
           saving || setTargetsOpen(e);
         }}
       >
-        <DialogContent className={`app-dialog`}>
+        <DialogContent className={`app-dialog nutrition-native-sheet`}>
           <DialogHeader>
             <DialogTitle>{`Your nutrition targets`}</DialogTitle>
             <DialogDescription>{`Optional daily targets. Leave fields empty if you haven’t chosen them yet.`}</DialogDescription>

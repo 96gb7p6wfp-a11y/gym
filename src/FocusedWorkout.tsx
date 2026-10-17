@@ -177,10 +177,19 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
   return (
     <div className="focused-workout" data-session-id={sessionId}>
       <section className="focused-exercise" aria-label="Current exercise" ref={exerciseCard}>
-        {pair && <div className="focused-pair" role="group" aria-label={`Complex pair ${pair.label}`}>
-          <div className="focused-pair__heading"><div><span>Complex {pair.label}</span><strong>Round {setIndex + 1} <span>of {rounds}</span></strong></div>
+        <div className="focused-stage-topline">
+          <span>{allDone ? 'All sets complete' : `${exerciseIndex + 1} / ${exercises.length} · ${exercise.group}`}</span>
+          <div className="focused-stage-tools">
             <button type="button" className="focused-exercise__text-action" aria-expanded={allSetsOpen}
-              onClick={() => { pendingCompletion.current = null; setAllSetsOpen(!allSetsOpen); }}>{allSetsOpen ? 'Current set' : 'All sets'}</button>
+              onClick={() => { pendingCompletion.current = null; setAllSetsOpen(!allSetsOpen); }}>
+              {allSetsOpen ? 'Current set' : 'All sets'}
+            </button>
+            {onExerciseAction && <button type="button" className="icon-button" aria-label={`Options for ${exercise.name}`} onClick={() => onExerciseAction(exercise.key)}><Ellipsis size={22} aria-hidden="true" /></button>}
+          </div>
+        </div>
+        {pair && <div className="focused-pair" role="group" aria-label={`Complex pair ${pair.label}`}>
+          <div className="focused-pair__heading">
+            <span>Complex {pair.label}</span><strong>Round {setIndex + 1} <span>of {rounds}</span></strong>
           </div>
           <div className="focused-pair__steps">{[pair.first, pair.second].map((entry, index) => {
             const roundLog = entry.logs[setIndex];
@@ -189,22 +198,17 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
               onClick={() => { pauseMovementTimer(); pendingCompletion.current = null; setExerciseKey(entry.key); setSetId(roundLog?.id ?? null); setAllSetsOpen(false); }}>
               <span className="focused-pair__position">{roundLog?.done ? <Check size={15} aria-hidden="true" /> : `${pair.label}${index + 1}`}</span>
               <span><strong>{entry.name}</strong></span>
+              <span className="focused-pair__state">{entry.key === exercise.key ? 'Now' : roundLog?.done ? 'Done' : 'Next'}</span>
             </button>;
           })}</div>
           <p>{exercise.rest > 0 ? `${exercise.rest % 60 === 0 ? `${exercise.rest / 60} min` : `${exercise.rest} sec`} rest between steps` : 'Follow your planned rest'}</p>
         </div>}
-        {!pair && <div className="focused-exercise__eyebrow">
-          <span>{allDone ? 'All sets complete' : `${exercise.group} · ${exerciseIndex + 1} of ${exercises.length}`}</span>
-          <button type="button" className="focused-exercise__text-action" aria-expanded={allSetsOpen}
-            onClick={() => { pendingCompletion.current = null; setAllSetsOpen(!allSetsOpen); }}>
-            {allSetsOpen ? 'Current set' : 'All sets'}
-          </button>
-        </div>}
-        <div className="focused-exercise-title"><h2 className="focused-exercise__name">{exercise.name}</h2>{onExerciseAction && <button type="button" className="icon-button" aria-label={`Options for ${exercise.name}`} onClick={() => onExerciseAction(exercise.key)}><Ellipsis size={22} /></button>}</div>
+        <div className="focused-exercise-title"><h2 className="focused-exercise__name">{exercise.name}</h2></div>
         {libraryExercise && <p className="focused-exercise-benefit">{libraryExercise.primaryBenefit}</p>}
-        <p className="focused-exercise__target">{exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.targetRpe ? ` · RPE ${exercise.targetRpe}` : ''}</p>
-        {!allSetsOpen && <p className="focused-exercise-intent">{getExerciseIntent({ ...exercise, category: libraryExercise?.category })}</p>}
-        {!allSetsOpen && !editing && ['load', 'reps', 'hold', 'reduce'].includes(recommendation.kind) && <ProgressionCue recommendation={recommendation} onApply={log.done ? undefined : () => onSet(exercise.key, log.id, { ...(recommendation.kg !== undefined ? { kg: recommendation.kg } : {}), ...(recommendation.reps !== undefined ? { reps: recommendation.reps } : {}) })} />}
+        <div className="focused-exercise-prescription">
+          <p className="focused-exercise__target">{exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.targetRpe ? ` · RPE ${exercise.targetRpe}` : ''}</p>
+          {!allSetsOpen && <p className="focused-exercise-intent">{getExerciseIntent({ ...exercise, category: libraryExercise?.category })}</p>}
+        </div>
         {allSetsOpen ? (
           <div className="focused-workout__all-sets">{renderAllSets(exercise, Math.max(0, exerciseIndex))}</div>
         ) : (
@@ -220,17 +224,22 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
               onSecondsChange={seconds => onSet(exercise.key, log.id, { seconds })} onTimer={onTimer} /> :
             <div className="focused-set-controls" key={`${exercise.key}-${log.id}`}>
               {!exercise.measurement && (
-                <label className="focused-set-field">
+                <div className="focused-set-field">
                   <span>{exercise.mode === 'bodyweight' ? 'Added weight' : 'Weight'} <small>kg</small></span>
-                  <div className="focused-number-stepper"><button type="button" aria-label={`Decrease ${exercise.name} weight by ${weightStep} kg`} onClick={() => onSet(exercise.key, log.id, { kg: Math.max(0, Math.round(((log.kg ?? 0) - weightStep) * 10) / 10) })}><Minus size={17} /></button><DecimalWeightInput value={log.kg} placeholder={exercise.mode === 'bodyweight' ? 'BW' : '0'}
+                  <div className="focused-number-stepper"><DecimalWeightInput value={log.kg} placeholder={exercise.mode === 'bodyweight' ? 'BW' : '0'}
                     label={`${exercise.name} set ${setIndex + 1} weight in kilograms`}
                     onValidityChange={(valid) => valid ? invalidWeightInputs.current.delete(log.id) : invalidWeightInputs.current.add(log.id)}
-                    onChange={(kg, valid) => onSet(exercise.key, log.id, { kg, ...(!valid ? { done: false } : {}) })} /><button type="button" aria-label={`Increase ${exercise.name} weight by ${weightStep} kg`} onClick={() => onSet(exercise.key, log.id, { kg: Math.min(2000, Math.round(((log.kg ?? 0) + weightStep) * 10) / 10) })}><Plus size={17} /></button></div>
-                </label>
+                    onChange={(kg, valid) => onSet(exercise.key, log.id, { kg, ...(!valid ? { done: false } : {}) })} />
+                    <div className="focused-number-stepper__actions">
+                      <button type="button" aria-label={`Decrease ${exercise.name} weight by ${weightStep} kg`} onClick={() => onSet(exercise.key, log.id, { kg: Math.max(0, Math.round(((log.kg ?? 0) - weightStep) * 10) / 10) })}><Minus size={18} aria-hidden="true" /></button>
+                      <button type="button" aria-label={`Increase ${exercise.name} weight by ${weightStep} kg`} onClick={() => onSet(exercise.key, log.id, { kg: Math.min(2000, Math.round(((log.kg ?? 0) + weightStep) * 10) / 10) })}><Plus size={18} aria-hidden="true" /></button>
+                    </div>
+                  </div>
+                </div>
               )}
-              <label className="focused-set-field">
+              <div className="focused-set-field">
                 <span>{exercise.quantityUnit === 'm' ? 'Distance · m / side' : 'Reps'}</span>
-                <div className="focused-number-stepper"><button type="button" aria-label={`Decrease ${exercise.name} ${exercise.quantityUnit ? 'distance' : 'reps'}`} onClick={() => onSet(exercise.key, log.id, { reps: Math.max(1, (log.reps ?? Number(exercise.target.match(/\d+/)?.[0] ?? 1)) - 1) })}><Minus size={17} /></button><input className="set-input" type="number" min="0"
+                <div className="focused-number-stepper"><input className="set-input" type="number" min="0"
                   max={1000} step="1" inputMode="numeric"
                   placeholder={exercise.target.match(/\d+/)?.[0] ?? '0'}
                   aria-label={`${exercise.name} set ${setIndex + 1} ${exercise.quantityUnit === 'm' ? 'distance in metres' : 'reps'}`}
@@ -238,16 +247,21 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                   onChange={(event) => {
                     const next = amount(event.target.value, 1000);
                     onSet(exercise.key, log.id, { reps: next == null ? null : Math.trunc(next) });
-                  }} /><button type="button" aria-label={`Increase ${exercise.name} ${exercise.quantityUnit ? 'distance' : 'reps'}`} onClick={() => onSet(exercise.key, log.id, { reps: Math.min(1000, (log.reps ?? Number(exercise.target.match(/\d+/)?.[0] ?? 0)) + 1) })}><Plus size={17} /></button></div>
-              </label>
+                  }} />
+                  <div className="focused-number-stepper__actions">
+                    <button type="button" aria-label={`Decrease ${exercise.name} ${exercise.quantityUnit ? 'distance' : 'reps'}`} onClick={() => onSet(exercise.key, log.id, { reps: Math.max(1, (log.reps ?? Number(exercise.target.match(/\d+/)?.[0] ?? 1)) - 1) })}><Minus size={18} aria-hidden="true" /></button>
+                    <button type="button" aria-label={`Increase ${exercise.name} ${exercise.quantityUnit ? 'distance' : 'reps'}`} onClick={() => onSet(exercise.key, log.id, { reps: Math.min(1000, (log.reps ?? Number(exercise.target.match(/\d+/)?.[0] ?? 0)) + 1) })}><Plus size={18} aria-hidden="true" /></button>
+                  </div>
+                </div>
+              </div>
               {exercise.measurement && (
-                <label className="focused-set-field">
+                <div className="focused-set-field focused-set-field--measurement">
                   <span>{exercise.measurement === 'touch' ? 'Highest touch' : exercise.measurement === 'height' ? 'Jump height' : 'Distance'} <small>cm · optional</small></span>
                   <input className="set-input" type="number" min="0" max="1000" step="0.1" inputMode="decimal" placeholder="—"
                     aria-label={`${exercise.name} set ${setIndex + 1} ${measurementLabel(exercise)}`}
                     value={log.measurementCm ?? ''}
                     onChange={(event) => onSet(exercise.key, log.id, { measurementCm: amount(event.target.value, 1000) })} />
-                </label>
+                </div>
               )}
             </div>}
             <button type="button" className={`btn focused-complete-set${log.done ? ' secondary' : ''}`}
@@ -266,6 +280,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
             </div>
             <ExerciseGuide exercise={exercise} key={exercise.key} />
             {!log.done && <details className="focused-effort"><summary>Effort <span>{log.rir == null ? 'Optional' : `${log.rir} reps in reserve`}</span></summary><label className="field-label">Reps in reserve<input type="number" min="0" max="10" step="1" inputMode="numeric" aria-label={`${exercise.name} set ${setIndex + 1} reps in reserve`} value={log.rir ?? ''} onChange={event => onSet(exercise.key, log.id, { rir: event.target.value === '' ? null : Math.min(10, Math.max(0, Number(event.target.value))) })} /></label><p className="small-note">How many more clean reps could you do?</p></details>}
+            {!editing && ['load', 'reps', 'hold', 'reduce'].includes(recommendation.kind) && <ProgressionCue recommendation={recommendation} onApply={log.done ? undefined : () => onSet(exercise.key, log.id, { ...(recommendation.kg !== undefined ? { kg: recommendation.kg } : {}), ...(recommendation.reps !== undefined ? { reps: recommendation.reps } : {}) })} />}
           </>
         )}
       </section>

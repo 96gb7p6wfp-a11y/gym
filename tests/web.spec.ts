@@ -11,7 +11,7 @@ const runtimeErrors = new WeakMap<Page, string[]>();
 async function selectTab(page: Page, name: string) {
   if (name === 'History') {
     await page.getByRole('tab', { name: 'Progress', exact: true }).click();
-    await page.getByRole('button', { name: 'History', exact: true }).click();
+    await page.getByRole('button', { name: 'View history', exact: true }).click();
     return;
   }
   if (name === 'My plan') {
@@ -20,7 +20,7 @@ async function selectTab(page: Page, name: string) {
     return;
   }
   await page.getByRole('tab', { name: name === 'Workout' ? 'Train' : name, exact: true }).click();
-  if (name === 'Progress') await page.getByRole('button', { name: 'Strength', exact: true }).click();
+  if (name === 'Progress') await page.getByRole('button', { name: 'Strength history', exact: true }).click();
 }
 
 async function openAllSets(page: Page) {
@@ -51,7 +51,7 @@ async function openWeight(page: Page) {
 
 async function openReport(page: Page) {
   await page.getByRole('tab', { name: 'Progress', exact: true }).click();
-  await page.getByRole('button', { name: 'Your week', exact: true }).click();
+  await page.getByRole('button', { name: 'Weekly report', exact: true }).click();
   const report = page.getByRole('region', { name: 'Weekly training report', exact: true });
   await report.locator(':scope > details > summary').click();
   return report;
@@ -237,6 +237,7 @@ test('provides all five views and usable navigation at iPhone and narrow phone s
     }
   }
   await selectTab(page, 'My plan');
+  await page.locator('.native-program-options > summary').click();
   await page.locator('.plan-program > summary').click();
   await expect(page.getByRole('heading', { name: 'Your 8-week jump block', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Edit primer', exact: true })).toBeVisible();
@@ -273,7 +274,7 @@ test('validates sets, saves a complete workout, edits its log, and deletes and r
 
   await summary.getByRole('button', { name: 'Edit this log', exact: true }).click();
   await selectMovement(page, MOVEMENT);
-  await expect(page.getByText('EDITING SAVED WORKOUT', { exact: true })).toBeVisible();
+  await expect(page.getByText('Editing saved workout', { exact: true })).toBeVisible();
   await page.getByRole('spinbutton', { name: `${MOVEMENT} set 1 reps`, exact: true }).fill('5');
   await page.getByRole('button', { name: 'Done editing', exact: true }).click();
   await selectTab(page, 'History');
@@ -426,7 +427,7 @@ test('adds cycling to the saved workout date during editing and can delete and r
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
   const summary = await finishWorkout(page, '120');
   await summary.getByRole('button', { name: 'Edit this log', exact: true }).click();
-  await expect(page.getByText('EDITING SAVED WORKOUT', { exact: true })).toBeVisible();
+  await expect(page.getByText('Editing saved workout', { exact: true })).toBeVisible();
   await expect(page.locator('.session-card [role="progressbar"]')).toHaveCount(0);
   const cycle = await addExtraActivity(page, 'cycle', '45', '15');
   const date = await cycle.getByLabel('Activity date', { exact: true }).inputValue();
@@ -501,7 +502,8 @@ test('validates and persists editable day plans without changing an existing wor
   const library = page.getByRole('dialog', { name: 'Add exercise', exact: true });
   await library.getByRole('searchbox', { name: 'Search exercises', exact: true }).fill('Bodyweight Squat');
   await library.getByRole('button', { name: 'Select Bodyweight Squat', exact: true }).click();
-  await expect(library).not.toBeVisible();
+  await page.locator('.exercise-library-sheet').getByRole('button', { name: 'Add exercise', exact: true }).click();
+  await expect(page.locator('.exercise-library-sheet')).not.toBeVisible();
   await editor.locator('.builder-exercise-options > summary').click();
   await editor.getByRole('combobox', { name: 'Logging', exact: true }).selectOption('bodyweight');
   await editor.locator('.builder-session-options > summary').click();
@@ -715,8 +717,8 @@ test('serves a standalone PWA manifest, local icons, safe-area HTML, and a worke
   expect(manifest.start_url).toBe('/');
   expect(manifest.scope).toBe('/');
   expect(['standalone', 'fullscreen']).toContain(manifest.display);
-  expect(manifest.theme_color).toBe('#f6f6f6');
-  expect(manifest.background_color).toBe('#f6f6f6');
+  expect(manifest.theme_color).toBe('#f7f5f1');
+  expect(manifest.background_color).toBe('#f7f5f1');
   expect(manifest.display_override).toContain('fullscreen');
   expect(manifest.icons).toEqual(expect.arrayContaining([
     expect.objectContaining({ sizes: '192x192' }),
@@ -971,39 +973,36 @@ test('keeps daily food and recovery tips short and shows local exercise instruct
   for (const tip of await routine.locator('p').allTextContents()) expect(tip.length).toBeLessThanOrEqual(180);
 
   await page.getByRole('button', { name: /^Dynamic warm-up/ }).click();
-  const warmup = page.locator('details.exercise-guide').filter({ has: page.locator('summary[aria-label="Exercise details for Wall Slide"]') });
-  await warmup.locator('summary').click();
-  await expect(warmup.locator('ol li')).toHaveCount(3);
-  await expect(warmup).toContainText(/ribs/i);
-  await expect(warmup.getByRole('link')).toHaveAttribute('href', /^https:\/\/www\.youtube\.com\/results\?search_query=/);
-  const warmupSummaryBounds = await warmup.locator('summary').boundingBox();
-  expect(warmupSummaryBounds!.height).toBeGreaterThanOrEqual(44);
+  const warmupButton = page.getByRole('button', { name: 'Exercise details for Wall Slide', exact: true });
+  const warmupBounds = (await warmupButton.boundingBox())!;
+  expect(warmupBounds.height).toBeGreaterThanOrEqual(44);
+  await warmupButton.click();
+  const guide = page.locator('.exercise-guide-sheet');
+  await expect(guide.locator('ol li')).toHaveCount(3);
+  await expect(guide).toContainText(/ribs/i);
+  await expect(guide.getByRole('link')).toHaveAttribute('href', /^https:\/\/www\.youtube\.com\/results\?search_query=/);
+  await closeDialog(guide);
   await page.locator('.planned-preview > summary').click();
-  const plannedGuide = page.locator('details.exercise-guide').filter({ has: page.locator(`summary[aria-label="Exercise details for ${MOVEMENT}"]`) });
-  await plannedGuide.locator('summary').click();
-  await expect(plannedGuide.locator('ol li')).toHaveCount(3);
-  await expect(plannedGuide.getByRole('link')).toHaveAttribute('target', '_blank');
+  await page.getByRole('button', { name: `Exercise details for ${MOVEMENT}`, exact: true }).click();
+  await expect(guide.locator('ol li')).toHaveCount(3);
+  await expect(guide.getByRole('link')).toHaveAttribute('target', '_blank');
+  await closeDialog(guide);
 
   await startMonday(page);
-  const activeGuide = page.locator('details.exercise-guide').filter({ has: page.locator(`summary[aria-label="Exercise details for ${MOVEMENT}"]`) });
-  await activeGuide.locator('summary').click();
-  await expect(activeGuide.locator('ol li')).toHaveCount(3);
-  await expect(activeGuide).toContainText('Avoid');
-  await expect(activeGuide).toContainText('Feel it');
-  await expect(activeGuide).toContainText('Safety');
+  await page.getByRole('button', { name: `Exercise details for ${MOVEMENT}`, exact: true }).click();
+  await expect(guide.locator('ol li')).toHaveCount(3);
+  await expect(guide).toContainText('Avoid');
+  await expect(guide).toContainText('Feel it');
+  await expect(guide).toContainText('Safety');
   await page.setViewportSize({ width: 320, height: 844 });
-  await activeGuide.scrollIntoViewIfNeeded();
-  await expect(activeGuide.getByRole('link')).toBeVisible();
+  await guide.getByRole('link').scrollIntoViewIfNeeded();
+  await expect(guide.getByRole('link')).toBeVisible();
   const dimensions = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     viewportWidth: document.documentElement.clientWidth,
   }));
   expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
-  for (const summary of [activeGuide.locator('summary')]) {
-    const bounds = await summary.boundingBox();
-    expect(bounds).not.toBeNull();
-    expect(bounds!.height).toBeGreaterThanOrEqual(44);
-  }
+  expect((await guide.getByRole('button', { name: 'Close', exact: true }).boundingBox())!.height).toBeGreaterThanOrEqual(44);
 });
 
 test('decodes an actual FIT binary from the cached app offline and rejects a damaged checksum', async ({ page, context }) => {

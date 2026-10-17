@@ -15,6 +15,7 @@ async function state(page: Page) {
 async function openPlan(page: Page) {
   await tab(page, 'More');
   await page.getByRole('button', { name: 'Training plan', exact: true }).click();
+  await page.locator('.native-program-options > summary').click();
 }
 
 async function openCustomWorkouts(page: Page) {
@@ -32,7 +33,9 @@ async function chooseLibraryExercise(page: Page, title: string, name: string) {
   await expect(library).toBeVisible();
   await library.getByRole('searchbox', { name: 'Search exercises', exact: true }).fill(name);
   await library.getByRole('button', { name: `Select ${name}`, exact: true }).click();
-  await expect(library).not.toBeVisible();
+  const detail = page.locator('.exercise-library-sheet');
+  await detail.getByRole('button', { name: title === 'Replace exercise' ? 'Replace exercise' : 'Add exercise', exact: true }).click();
+  await expect(detail).not.toBeVisible();
 }
 
 async function createWorkout(page: Page, name = 'Travel strength') {
@@ -199,7 +202,10 @@ test('a recovery day requires confirmation and removes only that scheduled day',
   expect(revised[2]).toMatchObject({ name: 'Recovery', kind: 'recovery', goal: 'recovery', exercises: [] });
   expect(revised.filter((_: unknown, index: number) => index !== 2)).toEqual(baseline.filter((_: unknown, index: number) => index !== 2));
   await tab(page, 'Today');
-  await page.getByRole('button', { name: /^Wed / }).click();
+  await page.getByRole('button', { name: 'Choose training day', exact: true }).click();
+  const days = page.getByRole('dialog', { name: 'Choose training day', exact: true });
+  await days.getByRole('button', { name: /^Wed / }).click();
+  await days.getByRole('button', { name: 'Done', exact: true }).click();
   await page.getByRole('button', { name: 'View recovery', exact: true }).click();
   await expect(page.getByRole('tab', { name: 'Train', exact: true })).toHaveAttribute('data-state', 'active');
   await expect(page.getByRole('button', { name: 'Start recovery', exact: true })).toBeDisabled();

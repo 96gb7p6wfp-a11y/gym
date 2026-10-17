@@ -1,3 +1,4 @@
+import { Search, History } from "lucide-react";
 import { exercisePerformanceIdentity, areComparableExercises } from "./performance-insights";
 import { WorkoutCompletion } from "./WorkoutCompletion";
 import { WorkoutBuilder } from "./WorkoutBuilder";
@@ -27,6 +28,7 @@ import { ShortRoutine } from "./ShortRoutine";
 import { TrainingSchedule } from "./TrainingSchedule";
 import { ActivityImport } from "./ActivityImport";
 import { ExerciseGuide } from "./ExerciseGuide";
+import { ExerciseLibrarySheet } from "./ExerciseLibrarySheet";
 import { WeeklyPerformance } from "./WeeklyPerformance";
 import { WeeklyReport } from "./WeeklyReport";
 import { DecimalWeightInput } from "./DecimalWeightInput";
@@ -152,12 +154,13 @@ function GymApp({
   let [saving, setSaving] = React.useState(!1);
   let [loadError, setLoadError] = React.useState(``);
   let [tab, setTab] = React.useState(`today`);
-  React.useEffect(() => { window.scrollTo({ top: 0, behavior: `instant` }); }, [tab]);
   let [progressView, setProgressView] = React.useState(`overview`);
   let [progressReportWeek, setProgressReportWeek] = React.useState(() => dateKey(startOfWeek(new Date(`${initialDate}T12:00:00`))));
   let [moreView, setMoreView] = React.useState(`menu`);
+  React.useEffect(() => { window.scrollTo({ top: 0, behavior: `instant` }); }, [tab, moreView, progressView]);
   let [routineDate, setRoutineDate] = React.useState(initialDate);
   let [nutritionAction, setNutritionAction] = React.useState(null);
+  const [libraryOpen, setLibraryOpen] = React.useState(false);
   let [importOpen, setImportOpen] = React.useState(false);
   let [today, setToday] = React.useState(initialDate);
   let [weekStart, setWeekStart] = React.useState(() =>
@@ -1054,14 +1057,6 @@ function GymApp({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <header className={`topbar`}>
-        <div className={`brand`}>
-          <img src={`/favicon.svg`} alt={``} width={`36`} height={`36`} />
-          <span>
-            {`setline`}
-            <span className={`brand-dot`}>{`.`}</span>
-          </span>
-        </div>
         <BottomNavigation onSelect={(next) => { if (next === `more`) setMoreView(`menu`); if (next === `progress`) setProgressView(`overview`); }} items={[
           { value: `today`, label: `Today`, icon: <House /> },
           { value: `train`, label: `Train`, icon: <Dumbbell /> },
@@ -1069,10 +1064,10 @@ function GymApp({
           { value: `nutrition`, label: `Nutrition`, icon: <Utensils /> },
           { value: `more`, label: `More`, icon: <Ellipsis /> },
         ]} />
-      </header>
-      <main className={`workspace`}>
+      <main className={`workspace ${tab === 'train' && currentSession ? 'workspace--training' : ''}`}>
         <PageHeader title={tab === `today` ? `Today` : tab === `train` ? `Train` : tab === `progress` ? `Progress` : tab === `nutrition` ? `Nutrition` : moreView === `plan` ? `Training plan` : moreView === `routine` ? `Routine` : moreView === `workouts` ? `My workouts` : `More`}
-          action={tab === `today` ? <span className="today-header-date">{new Date(`${selectedDate}T12:00:00`).toLocaleDateString(`en-GB`, { weekday: `short`, day: `numeric`, month: `long` })}</span> : undefined} />
+          action={tab === `train` && !currentSession ? <button type="button" className="icon-button" aria-label="Weekly plan" onClick={openPlan}><ListChecks size={21} /></button> : undefined}
+          subtitle={tab === `today` ? new Date(`${selectedDate}T12:00:00`).toLocaleDateString(`en-GB`, { weekday: `long`, day: `numeric`, month: `long` }) : undefined} />
         {(saving || profileSaving) && <span className="sync-state" role="status">Saving…</span>}
         {loadError && tab !== `nutrition` && (
           <div className={`error-banner`} role={`alert`}>
@@ -1099,7 +1094,6 @@ function GymApp({
         </TabsContent>
         <TabsContent value={`train`}>
           {!currentSession && weekSelector}
-          {!currentSession && <button className="text-button train-plan-link" onClick={openPlan}>Weekly plan <ChevronRight size={15} /></button>}
           <div className={`workout-grid`}>
             <section className={`workout-main`}>
               {!currentSession && scheduledPlan[selectedDay].extraSession && (
@@ -1121,36 +1115,9 @@ function GymApp({
                 </div>
               )}
 
-              <div className={`session-card ${currentSession ? `session-card--active` : ``}`}>
-                <div className={`session-card-top`}>
-                  <span className={`session-tag`}>
-                    <SessionKindIcon
-                      kind={currentSession?.kind ?? selectedPlan.kind}
-                      size={16}
-                    />
-                    {editingHistoryId
-                      ? `EDITING SAVED WORKOUT`
-                      : activeSession
-                        ? `WORKOUT IN PROGRESS`
-                        : `${WEEKDAYS[selectedDay].toUpperCase()} · ${formatDate(selectedDate, !0).toUpperCase()}`}
-                  </span>
-                  {activeSession && (
-                    <span className={`session-clock`}>
-                      <Clock3 size={17} />
-                      {formatElapsedTime(sessionDuration(activeSession, now))}
-                    </span>
-                  )}
-                </div>
-                <div className={`session-card-main`}>
-                  <div>
-                    <h2>{currentSession ? currentSession.goal ? getSessionPurpose(currentSession).title : shortSessionName(currentSession.name) : getSessionPurpose(selectedPlan, selectedDay).title}</h2>
-                    {!currentSession && <p className="session-purpose-line">{getSessionPurpose(selectedPlan, selectedDay).subtitle}</p>}
-                    <p>
-                      {currentSession
-                        ? `${doneSets} of ${totalSets} sets complete`
-                        : `${selectedPlan.exercises.length} exercises · ${totalSets} sets · about ${selectedPlan.minutes} min`}
-                    </p>
-                  </div>
+              <section className={`session-card native-session ${currentSession ? 'session-card--active' : ''} ${editingHistoryId ? 'native-session--editing' : ''}`}>
+                <div className="native-session-overview"><p className="session-tag">{editingHistoryId ? 'Editing saved workout' : activeSession ? 'Session in progress' : `${WEEKDAYS[selectedDay]} · ${formatDate(selectedDate, true)}`}</p><h2>{currentSession ? currentSession.goal ? getSessionPurpose(currentSession).title : shortSessionName(currentSession.name) : getSessionPurpose(selectedPlan, selectedDay).title}</h2>{!currentSession && <p className="session-purpose-line">{getSessionPurpose(selectedPlan, selectedDay).subtitle}</p>}<p className="native-session-prescription">{currentSession ? `${doneSets} / ${totalSets} sets complete` : `${selectedPlan.exercises.length} exercises · ${totalSets} sets · ${selectedPlan.minutes} min`}</p></div>
+                <div className="native-session-actionbar">{activeSession && <span className="session-clock"><Clock3 size={14} />{formatElapsedTime(sessionDuration(activeSession, now))}</span>}
                   {editingHistoryId ? (
                     <button
                       className={`btn lime`}
@@ -1232,7 +1199,7 @@ function GymApp({
                 ) : (
                   <details className="session-note"><summary>Session focus</summary><p>{getSessionPurpose(selectedPlan, selectedDay).focus}</p><p>Intensity · {getSessionPurpose(selectedPlan, selectedDay).intensity}</p><p>{getSessionPurpose(selectedPlan, selectedDay).fatigue}</p><p>{selectedPlan.note}</p></details>
                 )}
-              </div>
+              </section>
               {!currentSession && masterWeek && <>
                 <div className="master-day-note"><p><strong>{`Week ${masterWeek} · ${getMasterProgramPhase(masterWeek)}`}</strong><span>{selectedMasterMatch ? 'Sunday match week' : 'No Sunday match'}</span></p>{dayEvents.map(event => <p key={event.name}><strong>{event.name}</strong><span>{event.detail}</span></p>)}</div>
                 {(selectedPlan.kind === 'strength' || selectedDay === 5) && <MasterProgramReadiness settings={profile.masterProgram} date={selectedDate} disabled={profileSaving || !loaded} onSave={saveMasterProgram} />}
@@ -1574,10 +1541,10 @@ function GymApp({
           </div>
         </TabsContent>
         <TabsContent value="progress">
-          {progressView !== 'details' && <SegmentedControl label="Progress views" value={progressView} onChange={(view) => { setProgressView(view); if (view === `history`) setRecentlyDeletedOpen(false); }} options={[
+          {!['overview', 'details'].includes(progressView) && <><button type="button" className="text-button subpage-back" onClick={() => setProgressView('overview')}><ArrowLeft size={17} />Progress</button><SegmentedControl label="Progress views" value={progressView} onChange={(view) => { setProgressView(view); if (view === `history`) setRecentlyDeletedOpen(false); }} options={[
             { value: `overview`, label: `Overview` }, { value: `strength`, label: `Strength` },
             { value: `history`, label: `History` }, { value: `week`, label: `Your week` },
-          ]} />}
+          ]} /></>}
           {performance.error && <div className="error-state" role="alert"><p>{performance.error}</p><button className="text-button" onClick={performance.reload}>Reload performance</button></div>}
           {progressView === 'details' && <><button className="text-button subpage-back" onClick={() => { setProgressView('overview'); setPerformanceAction(undefined); }}><ArrowLeft size={17} /> Progress</button>
             <PerformanceDetails sessions={sessions} activities={activityRecords} plan={currentWeekPlan} nutritionRecords={reportNutrition}
@@ -1876,7 +1843,11 @@ function GymApp({
           {moreView === `plan` && <>
           <details className="plan-schedule"><summary>Volleyball schedule <span>{volleyballSchedule.startTime}–{volleyballSchedule.endTime}</span></summary><TrainingSchedule schedule={volleyballSchedule} onSave={saveVolleyballSchedule} /></details>
 
-          <VolleyballMasterProgram settings={profile.masterProgram} defaultStartDate={dateKey(addDays(new Date(`${masterWeekStart(today)}T12:00:00`), 7))} selectedDate={selectedDate} onSave={saveMasterProgram} disabled={profileSaving || !loaded} />
+          <section className="native-week" aria-label="Weekly training schedule"><p className="eyebrow">This week</p><div className="plan-timeline">{(profile.masterProgram && !masterWeek ? editableWeekPlan : scheduledPlan).map((e, t) => {
+            const date = dateKey(addDays(weekStart, t)); const recorded = completedSessions.some(session => session.date === date);
+            return <article className={`plan-day${date === today ? ' is-today' : ''}`} key={t}><div className="plan-day__date"><span>{WEEKDAYS[t].slice(0, 3)}</span><strong>{addDays(weekStart, t).getDate()}</strong></div><details className="plan-day-details"><summary><strong>{getSessionPurpose(e, t).title}</strong><span>{e.kind === 'sport' && e.name === 'Volleyball' ? `${volleyballSchedule.startTime}–${volleyballSchedule.endTime}` : e.name === 'Match' ? 'Match · time not set' : `${e.minutes} min · ${getSessionPurpose(e, t).subtitle}`}{recorded ? ' · Recorded' : date === today ? ' · Today' : ''}</span><ChevronRight size={16} /></summary><PlanDayDetails plan={e} /></details><button type="button" className="icon-button" aria-label={`Edit ${WEEKDAYS[t]}`} disabled={!loaded} onClick={() => editPlanDay(t)}>{recorded ? <Check size={17} /> : <Ellipsis size={20} />}</button>{e.extraSession && <div className="plan-day__extra"><details className="plan-day-details"><summary><strong>{shortSessionName(e.extraSession.name)}</strong><span>{e.extraSession.minutes} min</span><ChevronRight size={15} /></summary><PlanDayDetails plan={e.extraSession} /></details><button className="text-button" disabled={!loaded} onClick={() => editPlanDay(t, true)}><Pencil size={14} />Edit primer</button></div>}</article>;
+          })}</div></section>
+          <details className="native-program-options"><summary>Programme & customization</summary>          <VolleyballMasterProgram settings={profile.masterProgram} defaultStartDate={dateKey(addDays(new Date(`${masterWeekStart(today)}T12:00:00`), 7))} selectedDate={selectedDate} onSave={saveMasterProgram} disabled={profileSaving || !loaded} />
           {!profile.masterProgram && <details className="plan-program"><summary>Jump training block</summary>
           <section className={`panel program-overview`}>
             <div className={`panel-heading`}>
@@ -1900,47 +1871,7 @@ function GymApp({
           <WeeklyPlanTools plan={editableWeekPlan} templates={profile.customWorkouts ?? []} disabled={profileSaving || !loaded}
             onChange={saveBaseWeek} onCreateWorkout={day => openCustomWorkout(null, day)}
             onEditTemplate={template => openCustomWorkout(template)} onReset={() => setResetPlanOpen(true)} />
-          <div className={`plan-grid`}>
-            {(profile.masterProgram && !masterWeek ? editableWeekPlan : scheduledPlan).map((e, t) => (
-              <section className={`panel plan-card`} key={t}>
-                <div className={`plan-card-top`}>
-                  <span className={`small-label`}>
-                    {WEEKDAYS[t].toUpperCase()}
-                  </span>
-                  <span className={`kind-badge ${e.kind}`}>
-                    <SessionKindIcon kind={e.kind} size={15} />
-                    {sessionKindLabel(e.kind)}
-                  </span>
-                </div>
-                <details className="plan-day-details">
-                  <summary><strong>{shortSessionName(e.name)}</strong><span>{e.kind === `sport` && e.name === `Volleyball` ? `${volleyballSchedule.startTime}–${volleyballSchedule.endTime}` : e.name === `Match` ? `Time not set` : `${e.minutes} min`}</span><ChevronRight size={17} /></summary>
-                  <PlanDayDetails plan={e} />
-                </details>
-                <button
-                  className={`btn secondary full`}
-                  disabled={!loaded}
-                  onClick={() => editPlanDay(t)}
-                >
-                  <Pencil size={15} />
-                  {` Edit `}
-                  {WEEKDAYS[t]}
-                </button>
-                {e.extraSession && (
-                  <div className={`extra-session-plan`}>
-                    <details className="plan-day-details"><summary>{shortSessionName(e.extraSession.name)}<ChevronRight size={16} /></summary><PlanDayDetails plan={e.extraSession} /></details>
-                    <button
-                      className={`btn secondary full`}
-                      disabled={!loaded}
-                      onClick={() => editPlanDay(t, !0)}
-                    >
-                      <Pencil size={15} />
-                      {` Edit primer`}
-                    </button>
-                  </div>
-                )}
-              </section>
-            ))}
-          </div>
+</details>
 </>}
           {moreView === 'workouts' && <section className="custom-workouts-page">
             <div className="section-line"><h2>Saved sessions</h2><button type="button" className="text-button" onClick={() => openCustomWorkout()}><Plus size={18} /> Create workout</button></div>
@@ -1952,19 +1883,13 @@ function GymApp({
           </section>}
           {moreView === `routine` && <RemindersPanel showHeading={false} date={routineDate} onDateChange={setRoutineDate} />}
           {moreView === `menu` && <div className="more-menu">
-            <div className="menu-group">
-              <MenuRow title="My workouts" subtitle="Your saved sessions" icon={<Dumbbell size={21} />} onClick={() => setMoreView('workouts')} />
-              <MenuRow title="Training plan" subtitle="Your week, with room to recover" icon={<ListChecks size={21} />} onClick={openPlan} />
-              <MenuRow title="Routine" subtitle="Supplements & medication" icon={<CheckCheck size={21} />} onClick={() => setMoreView(`routine`)} />
-              <MenuRow title="Settings" subtitle="Body weight & rest preferences" icon={<Settings2 size={21} />} onClick={openSettings} />
-            </div>
-            <div className="menu-group">
-              <MenuRow title="Import activities" subtitle="Strava, Adidas Running & watch exports" icon={<Upload size={21} />} onClick={() => setImportOpen(true)} />
-              <MenuRow title="Backup & data" subtitle="Keep a copy of your training" icon={<ShieldCheck size={21} />} onClick={openSettings} />
-              <MenuRow title="Install Setline" subtitle="Add to your iPhone Home Screen" icon={<House size={21} />} onClick={() => setInstallOpen(true)} />
-            </div>
+            <section className="native-menu-section"><h2>Training</h2><div className="menu-group"><MenuRow title="Training plan" icon={<ListChecks />} onClick={openPlan} /><MenuRow title="My workouts" icon={<Dumbbell />} onClick={() => setMoreView('workouts')} /><MenuRow title="Exercise library" icon={<Search />} onClick={() => setLibraryOpen(true)} /></div></section>
+            <section className="native-menu-section"><h2>Your records</h2><div className="menu-group"><MenuRow title="History" icon={<History />} onClick={() => { setProgressView('history'); setTab('progress'); }} /><MenuRow title="Body weight" icon={<Activity />} onClick={() => { setNutritionAction('weight'); setTab('nutrition'); }} /><MenuRow title="Jump tests" icon={<ChartColumn />} onClick={() => { setPerformanceAction('log-jump'); setProgressView('details'); setTab('progress'); }} /></div></section>
+            <section className="native-menu-section"><h2>Personal</h2><div className="menu-group"><MenuRow title="Routine" subtitle="Supplements & medication" icon={<CheckCheck />} onClick={() => setMoreView('routine')} /><MenuRow title="Settings" icon={<Settings2 />} onClick={openSettings} /></div></section>
+            <section className="native-menu-section"><h2>Data & app</h2><div className="menu-group"><MenuRow title="Import activities" subtitle="Strava, Adidas Running & watch exports" icon={<Upload />} onClick={() => setImportOpen(true)} /><MenuRow title="Backup & data" icon={<ShieldCheck />} onClick={openSettings} /><MenuRow title="Install Setline" icon={<House />} onClick={() => setInstallOpen(true)} /></div></section>
             <ActivityImport bodyWeight={profile.bodyWeight} records={activityRecords} onImport={importExtraActivities} disabled={!loaded} open={importOpen} onOpenChange={setImportOpen} hideLauncher />
           </div>}
+          <ExerciseLibrarySheet open={libraryOpen} onOpenChange={setLibraryOpen} onSelect={() => {}} browseOnly />
         </TabsContent>
       </main>
       {restEndsAt !== null && (
