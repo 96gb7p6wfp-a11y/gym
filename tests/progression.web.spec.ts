@@ -92,8 +92,11 @@ test('strength history groups canonical copies and separates renamed, mode and j
   const picker = page.getByRole('combobox', { name: 'Movement', exact: true });
   const history = page.locator('.movement-history');
   async function choose(prefix: RegExp, variant = 0) {
-    await picker.click();
-    await page.getByRole('option').filter({ hasText: prefix }).nth(variant).click();
+    await picker.tap();
+    const list = page.getByRole('listbox');
+    await expect(list).toBeVisible();
+    await list.getByRole('option').filter({ hasText: prefix }).nth(variant).tap();
+    await expect(list).not.toBeVisible();
   }
   await choose(/^Machine Chest Press/);
   await expect(history.locator('button')).toHaveCount(2);

@@ -1,0 +1,21 @@
+/* Quiet recovery and court-day tools, using the same monochromatic layers. */
+.stretch-shortcut { display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; min-height:76px; margin:16px 0 0; padding:18px 20px; border:0; border-radius:24px; background:var(--surface); color:var(--ink); box-shadow:var(--shadow-card); text-align:left; }
+.stretch-shortcut>span { display:grid; gap:5px; }
+.stretch-shortcut strong { font-size:15px; line-height:1.4; font-weight:600; letter-spacing:-.02em; }
+.stretch-shortcut small { color:var(--sub); font-size:12px; line-height:1.45; }
+.stretch-shortcut>svg { flex-shrink:0; color:var(--sub); }
+.stretch-shortcut:active { transform:scale(.99); background:var(--surface-soft); }
+.recovery-session { padding:18px; border-radius:26px; background:var(--surface); color:var(--ink); box-shadow:var(--shadow-card); }
+.recovery-session .routine-panel { margin:0; }
+.recovery-session .workout-customizer { margin-top:10px; }
+.sport-reflection { padding:22px; border-radius:26px; background:var(--surface); color:var(--ink); box-shadow:var(--shadow-card); }
+.sport-reflection h3 { margin:0; font-size:22px; font-weight:650; line-height:1.25; letter-spacing:-.035em; }
+.sport-reflection>p { margin:9px 0 16px; color:var(--sub); font-size:13px; line-height:1.5; }
+.sport-reflection textarea { display:block; width:100%; min-height:138px; padding:16px; border:0; border-radius:18px; background:var(--surface-soft); color:var(--ink); font-size:16px; line-height:1.55; }
+.sport-tracking { margin-top:16px; }
+.sport-tracking>summary { display:flex; align-items:center; justify-content:space-between; min-height:48px; padding:10px 4px; color:var(--sub); font-size:14px; list-style:none; }
+.sport-tracking>summary::after { content:'+'; font-size:20px; }
+.sport-tracking[open]>summary::after { content:'−'; }
+.sport-tracking[open]>summary { margin-bottom:8px; }
+.stretch-sheet .routine-panel { margin:0; }
+@media(max-width:350px) { .recovery-session { padding:14px; } .sport-reflection { padding:18px; } .sport-reflection h3 { font-size:20px; } .stretch-shortcut { padding:16px; } }

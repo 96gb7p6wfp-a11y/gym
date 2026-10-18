@@ -18,5 +18,7 @@
 .workout-completion__cue { margin: 6px 0 0; padding: 16px 17px; border-radius: 17px; background: var(--surface-soft, #f0f2eb); color: var(--sub, #737c75); font-size: 14px; line-height: 1.5; }
 .workout-completion__empty { margin: 2px 0 20px; font-size: 14px; color: var(--sub, #737c75); line-height: 1.5; }
 .workout-completion .workout-completion__done { width: 100%; min-height: 52px; margin-top: 20px; background: var(--accent, #cde7ad); color: var(--accent-foreground, #213923); }
+.workout-completion .workout-completion__stretch { width: 100%; min-height: 52px; margin-top: 20px; background: var(--accent); color: var(--on-accent); }
+.workout-completion .workout-completion__done--secondary { margin-top: 8px; background: var(--surface-soft); color: var(--ink); }
 @media (max-width: 360px) { .workout-completion__metrics--records strong { font-size: 33px; } .workout-completion__metrics span { font-size: 12px; } .workout-completion__heading { gap: 10px; } }
 @media (prefers-reduced-motion: no-preference) { .workout-completion { animation: workout-completion-enter 180ms ease-out; } @keyframes workout-completion-enter { from { opacity: .55; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } } }

@@ -207,10 +207,12 @@ test('a recovery day requires confirmation and removes only that scheduled day',
   const days = page.getByRole('dialog', { name: 'Choose a day', exact: true });
   await days.getByRole('button', { name: /^Wed / }).click();
   await days.getByRole('button', { name: 'Done', exact: true }).click();
-  await page.getByRole('button', { name: 'View recovery', exact: true }).click();
+  await page.getByRole('button', { name: 'Start recovery', exact: true }).click();
   await expect(page.getByRole('tab', { name: 'Train', exact: true })).toHaveAttribute('data-state', 'active');
-  await expect(page.getByRole('button', { name: 'Start recovery', exact: true })).toBeDisabled();
-  expect((await state(page)).sessions).toHaveLength(0);
+  await expect(page.getByRole('region', { name: 'Recovery session', exact: true })).toBeVisible();
+  await expect.poll(async () => (await state(page)).sessions.length).toBe(1);
+  expect((await state(page)).sessions[0].session).toMatchObject({ name: 'Recovery', kind: 'recovery', status: 'active', exercises: [] });
+  expect((await state(page)).profile.plan).toEqual(revised);
 });
 
 test('starting a custom workout uses its decimal prescription and leaves the recommended week intact', async ({ page }) => {

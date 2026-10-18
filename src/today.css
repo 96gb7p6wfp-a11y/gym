@@ -15,6 +15,7 @@
 .day-week>button>span:last-child { display:flex; align-items:center; justify-content:flex-end; gap:5px; }
 .day-week strong { color:var(--ink); font-size:18px; font-weight:650; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
 .day-week svg { margin-left:4px; }
+.day-motivation { margin:14px 8px 0; color:var(--sub); font-size:13px; line-height:1.5; text-wrap:pretty; }
 .day-agenda { margin-top:18px; padding:0 20px; border-radius:26px; background:var(--surface); box-shadow:var(--shadow-card); }
 .day-caption { margin:0; color:var(--sub); font-size:11px; line-height:1.4; font-weight:600; letter-spacing:.025em; }
 .day-next { padding:20px 0; }

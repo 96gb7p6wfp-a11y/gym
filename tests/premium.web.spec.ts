@@ -208,6 +208,7 @@ test('editing a saved timed workout cannot start timers or change a separate act
   await page.getByRole('button', { name: /^Volleyball / }).filter({ has: page.getByRole('heading', { name: 'Volleyball', exact: true }) }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Edit this log', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Done editing', exact: true })).toBeVisible();
+  await openDisclosure(page, 'Training log');
   const exercise = page.getByRole('region', { name: 'Current exercise', exact: true });
   await expect(exercise.getByRole('button', { name: /^Start timer for/ })).toHaveCount(0);
   await exercise.getByRole('spinbutton', { name: 'Volleyball practice set 1 minutes', exact: true }).fill('122');

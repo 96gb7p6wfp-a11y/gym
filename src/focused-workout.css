@@ -55,6 +55,14 @@
 .focused-exercise .btn.focused-complete-set { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 54px; margin-top: 20px; padding: 12px 16px; border: 0; border-radius: 99px; gap: 9px; background: var(--accent, #526c5f); color: var(--on-accent, #fffefa); box-shadow: none; font-size: 16px; font-weight: 650; letter-spacing: -.02em; transition: transform 120ms ease; }
 .focused-exercise .btn.focused-complete-set.secondary { background: var(--surface-soft, #e9eeea); color: var(--ink, #27312d); }
 .focused-exercise .btn.focused-complete-set:active { transform: scale(.98); }
+.focused-exercise .focused-set-encouragement { display: grid; align-items: center; min-height: 34px; margin: 12px 0 0; color: var(--sub, #65716a); font-size: 12px; font-weight: 500; line-height: 1.4; text-align: center; text-wrap: balance; }
+.focused-set-encouragement[data-feedback='complete'] { color: var(--accent, #526c5f); }
+.focused-set-encouragement > span { animation: set-cue-arrive 160ms ease-out both; }
+.focused-exercise .focused-set-encouragement + .btn.focused-complete-set { margin-top: 10px; }
+/* No extra reading or geometry changes while the numeric keyboard is in use. */
+html[data-keyboard-open='true'] .focused-set-encouragement { display: none; }
+html[data-keyboard-open='true'] .focused-exercise .focused-set-encouragement + .btn.focused-complete-set { margin-top: 20px; }
+@keyframes set-cue-arrive { from { opacity: .4; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
 .focused-exercise__set-selector { display: flex; justify-content: center; gap: 8px; margin: 10px 0 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .focused-exercise__set-selector > button { display: grid; place-items: center; flex: 0 0 44px; min-width: 44px; min-height: 44px; padding: 8px; border: 0; border-radius: 50%; background: transparent; color: var(--sub, #65716a); font-size: 12px; font-weight: 550; }
 .focused-exercise__set-selector > button.is-current { background: var(--surface-soft, #e9eeea); color: var(--ink, #27312d); font-weight: 650; }
@@ -148,7 +156,8 @@
   .focused-pair__steps > button { gap: 3px; padding: 9px 6px; }
   .focused-pair__steps strong { font-size: 11px; }
   .focused-exercise .btn.focused-complete-set { margin-top: 16px; }
+  html[data-keyboard-open='true'] .focused-exercise .focused-set-encouragement + .btn.focused-complete-set { margin-top: 16px; }
   .focused-exercise .timed-set-controls--short .timed-set-timer { gap: 5px 7px; }
   .focused-exercise .timed-set-controls--short .timed-set-timer__toggle { flex-basis: 76px; width: 76px; }
 }
-@media (prefers-reduced-motion: reduce) { .focused-workout button { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .focused-workout button { transition: none !important; } .focused-set-encouragement > span { animation: none; } }

@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, createSession, stopSessionTimers } from '../src/domain.js';
+import { openDisclosure } from './helpers/navigation';
 
 const STORE = 'setline.gym.v1';
 
@@ -235,6 +236,7 @@ test('keeps volleyball minutes manual and permits correcting saved stopwatch dur
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: /^Tue / }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await openDisclosure(page, 'Training log');
   await expect(current(page).getByRole('spinbutton', { name: 'Volleyball practice set 1 minutes', exact: true })).toHaveValue('120');
   await expect(page.getByRole('timer', { name: 'Elapsed time for Volleyball practice', exact: true })).not.toBeVisible();
   await current(page).locator('.timed-set-stopwatch > summary').click();

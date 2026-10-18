@@ -12,6 +12,7 @@ import { findLibraryExercise } from './exercise-library';
 import { getProgressionRecommendation, type ProgressionContext } from './performance-insights';
 import { ProgressionCue } from './ProgressionCue';
 import type { ReportSession } from './weekly-report';
+import { completedSetCue, setQualityCue } from './set-encouragement';
 
 export interface FocusedSetLog {
   id: string;
@@ -47,7 +48,7 @@ export interface FocusedWorkoutProps {
   editing?: boolean;
   exercises: FocusedExercise[];
   now: number;
-  previous: (exercise: FocusedExercise) => { exercise: { logs: FocusedSetLog[] } } | null;
+  previous: (exercise: FocusedExercise) => { exercise: { logs: FocusedSetLog[]; measurement?: FocusedExercise['measurement'] } } | null;
   onSet: (exerciseKey: string, setId: string, patch: Partial<FocusedSetLog>) => void;
   onDone: (exerciseKey: string, setId: string, done: boolean) => void;
   onTimer: (exerciseKey: string, options?: TimedSetAction) => void;
@@ -81,10 +82,17 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
   const [setId, setSetId] = useState<string | null>(initialStep?.setId ?? null);
   const [allSetsOpen, setAllSetsOpen] = useState(false);
   const [movementsOpen, setMovementsOpen] = useState(false);
+  const [setFeedback, setSetFeedback] = useState<{ id: string; text: string } | null>(null);
   const invalidWeightInputs = useRef(new Set<string>());
   const pendingCompletion = useRef<{ exerciseKey: string; setId: string } | null>(null);
   const exerciseCard = useRef<HTMLElement | null>(null);
   const shownExercise = useRef(exerciseKey);
+
+  useEffect(() => {
+    if (!setFeedback) return;
+    const timeout = window.setTimeout(() => setSetFeedback(null), 6500);
+    return () => window.clearTimeout(timeout);
+  }, [setFeedback]);
 
   useEffect(() => {
     if (shownExercise.current === exerciseKey) return;
@@ -97,6 +105,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
     setExerciseKey(first?.exerciseKey ?? exercises[0]?.key);
     setSetId(first?.setId ?? null);
     setAllSetsOpen(false);
+    setSetFeedback(null);
     pendingCompletion.current = null;
     invalidWeightInputs.current.clear();
     // A restored or different workout starts at its first unfinished set.
@@ -126,11 +135,32 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
       }
     }
     const next = nextStepAfterCompletion(exercises, current.key, completed.id);
+    const nextMovement = exercises.find(entry => entry.key === next?.exerciseKey);
+    const pair = findComplexPair(exercises, current.key);
+    const nextInPair = pair && nextMovement && nextMovement.key !== current.key
+      && findComplexPair(exercises, nextMovement.key)?.startIndex === pair.startIndex
+      ? nextMovement.name : undefined;
+    const previousMovement = previous(current)?.exercise;
+    const previousLogs = previousMovement?.logs.filter(entry => entry.done) ?? [];
+    const completedIndex = current.logs.findIndex(entry => entry.id === completed.id);
+    setSetFeedback({
+      id: `${current.key}-${completed.id}`,
+      text: completedSetCue({
+        exercise: { ...current, category: findLibraryExercise(current)?.category }, completed, previous: previousLogs[completedIndex],
+        previousMeasurement: previousMovement?.measurement,
+        setNumber: completedIndex + 1, totalSets: current.logs.length,
+        allDone: exercises.every(entry => entry.logs.every(entry => entry.done)),
+        movementDone: current.logs.every(entry => entry.done), nextInPair,
+        hasRest: current.rest > 0,
+        easeBack: context?.lowFatigueSession || context?.readiness?.energy === 'low'
+          || context?.readiness?.soreness === 'high',
+      }),
+    });
     if (next) {
       setExerciseKey(next.exerciseKey);
       setSetId(next.setId);
     }
-  }, [editing, exercises, onSet]);
+  }, [context, editing, exercises, onSet, previous]);
 
   const exerciseIndex = exercises.findIndex((exercise) => exercise.key === exerciseKey);
   const exercise = exercises[exerciseIndex] ?? initialExercise;
@@ -141,6 +171,9 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
   const previousLogs = previous(exercise)?.exercise.logs.filter((entry) => entry.done) ?? [];
   const libraryExercise = findLibraryExercise(exercise);
   const recommendation = getProgressionRecommendation(exercise, sessions, date, context);
+  const qualityCue = setQualityCue({ ...exercise, category: libraryExercise?.category },
+    recommendation.kind === 'reduce' || context?.lowFatigueSession
+      || context?.readiness?.energy === 'low' || context?.readiness?.soreness === 'high');
   const weightStep = (log.kg ?? 0) >= 40 ? 2.5 : .5;
   const pair = findComplexPair(exercises, exercise.key);
   const rounds = pair ? Math.max(pair.first.logs.length, pair.second.logs.length) : 0;
@@ -162,6 +195,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
     setSetId(null);
     setAllSetsOpen(false);
     setMovementsOpen(false);
+    setSetFeedback(null);
   }
 
   function completeSet() {
@@ -169,6 +203,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
       toast.error('Enter a weight between 0 and 2,000 kg using . or ,');
       return;
     }
+    if (log.done) setSetFeedback(null);
     if (!editing && !log.done) pendingCompletion.current = { exerciseKey: exercise.key, setId: log.id };
     onDone(exercise.key, log.id, !log.done);
   }
@@ -196,7 +231,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
             const roundLog = entry.logs[setIndex];
             return <button type="button" key={entry.key} aria-label={`View ${entry.name} in pair ${pair.label}`}
               aria-pressed={entry.key === exercise.key} disabled={!roundLog}
-              onClick={() => { pauseMovementTimer(); pendingCompletion.current = null; setExerciseKey(entry.key); setSetId(roundLog?.id ?? null); setAllSetsOpen(false); }}>
+              onClick={() => { pauseMovementTimer(); pendingCompletion.current = null; setSetFeedback(null); setExerciseKey(entry.key); setSetId(roundLog?.id ?? null); setAllSetsOpen(false); }}>
               <span className="focused-pair__position">{roundLog?.done ? <Check size={15} aria-hidden="true" /> : `${pair.label}${index + 1}`}</span>
               <span><strong>{entry.name}</strong></span>
               <span className="focused-pair__state">{entry.key === exercise.key ? 'Now' : roundLog?.done ? 'Done' : 'Next'}</span>
@@ -262,6 +297,10 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                   </div>
                 )}
               </div>}
+              {!editing && <p className="focused-set-encouragement" role="status" aria-label="Set focus" aria-atomic="true"
+                data-feedback={setFeedback ? 'complete' : 'ready'}>
+                <span key={setFeedback?.id ?? `${exercise.key}-focus`}>{setFeedback?.text ?? qualityCue}</span>
+              </p>}
               <button type="button" className={`btn focused-complete-set${log.done ? ' secondary' : ''}`}
                 aria-label={`${log.done ? 'Undo' : 'Complete'} ${exercise.name} set ${setIndex + 1}`} onClick={completeSet}>
                 {log.done ? <RotateCcw size={19} aria-hidden="true" /> : <Check size={20} aria-hidden="true" />}
@@ -271,7 +310,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                 {exercise.logs.map((entry, index) => (
                   <button type="button" key={entry.id} className={`${entry.id === log.id ? ' is-current' : ''}${entry.done ? ' is-done' : ''}`}
                     aria-label={`View ${exercise.name} set ${index + 1}${entry.done ? ', complete' : ''}`}
-                    aria-pressed={entry.id === log.id} onClick={() => { pauseMovementTimer(); pendingCompletion.current = null; setSetId(entry.id); }}>
+                    aria-pressed={entry.id === log.id} onClick={() => { pauseMovementTimer(); pendingCompletion.current = null; setSetFeedback(null); setSetId(entry.id); }}>
                     {entry.done ? <Check size={15} aria-hidden="true" /> : index + 1}
                   </button>
                 ))}

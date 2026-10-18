@@ -3,6 +3,7 @@ import { ChevronRight, Plus } from 'lucide-react';
 import type { ActivityRecord } from './activities';
 import type { PerformanceData } from './performance-data';
 import { getPerformanceSummary } from './performance-insights';
+import { getProgressTakeaway } from './coaching-summary';
 import { getTrendCoordinates } from './progress-chart';
 import { currentReportDate, shiftReportDate, type ReportNutritionRecord, type ReportPlanDay, type ReportSession } from './weekly-report';
 import './progress-overview.css';
@@ -30,6 +31,7 @@ const capitalized = (value: string) => `${value[0].toUpperCase()}${value.slice(1
 
 export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutritionRecords, performance, today = currentReportDate(), onViewStrength, onViewPerformance, onViewHistory, onViewWeek, onLogWeight, onLogJump }: ProgressOverviewProps) {
   const summary = getPerformanceSummary({ sessions, activities, plan, bodyWeight, nutritionRecords, performance, today });
+  const takeaway = getProgressTakeaway(summary);
   // Follow available records until the user explicitly chooses a metric.
   const [selectedMetric, setSelectedMetric] = useState<ChartMetric | null>(null);
   const weight = summary.weight;
@@ -65,14 +67,6 @@ export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutri
     : metric === 'weight'
       ? changeText ? 'in weekly averages' : weightSource
       : strength ? `at ${strength.reps} reps · same movement` : 'No comparable sets yet';
-  const jumpHasEarlierResult = jump?.points.some(point => point.date < jump.points.at(-1)!.date && point.cm < jump.current);
-  const insight = metric === 'jump' && jump && jump.current === jump.best && jumpHasEarlierResult
-    ? 'Your latest test is your best recorded jump.'
-    : metric === 'strength' && strength && strength.percent > 0
-      ? 'You lifted more at the same rep count.'
-      : summary.insights.find(item => metric === 'weight' ? /weight has been stable/i.test(item)
-        : metric === 'jump' ? !/jump is up/i.test(item) : !strength || !item.startsWith(`${strength.name}:`))
-        ?? (metric === 'weight' ? summary.insights[0] : undefined);
   const otherMetrics: { metric: ChartMetric; title: string; value: string; note: string }[] = [
     { metric: 'jump', title: jumpName, value: jump ? `${number(jump.current)} cm` : '—',
       note: jump?.change30Days != null ? `${signed(jump.change30Days)} cm across test days` : jump ? 'Latest jump height' : 'Add your first test' },
@@ -83,6 +77,9 @@ export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutri
   ];
 
   return <section className="progress-overview progress-native" aria-label="Progress overview">
+    <section className="progress-takeaway" aria-label="Progress summary">
+      <p><strong>{takeaway.observation}</strong>{' '}{takeaway.nextStep}</p>
+    </section>
     <div className="progress-lens-card">
     <div className="progress-chart-selector" role="group" aria-label="Chart metric">
       {(['jump', 'weight', 'strength'] as const).map(item => <button key={item} type="button"
@@ -93,10 +90,9 @@ export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutri
       {value === null ? <div className="progress-lens-empty">
         <p className="progress-period">{title}</p>
         <h2 className="progress-lens-title">{metric === 'jump' ? 'Your first jump.' : metric === 'weight' ? 'Begin with a check-in.' : 'Build your strength baseline.'}</h2>
-        <p className="progress-lens-empty__copy">{metric === 'jump'
-          ? 'Log a jump height to compare with your next test.'
-          : metric === 'weight' ? 'Log your weight to follow a steadier weekly trend.'
-            : 'Log the same movement on two days to see how your strength changes.'}</p>
+        {metric !== 'jump' && <p className="progress-lens-empty__copy">{metric === 'weight'
+          ? 'Log your weight to follow a steadier weekly trend.'
+          : 'Log the same movement on two days to see how your strength changes.'}</p>}
         {emptyAction && <button type="button" className="btn progress-empty-action" onClick={emptyAction}><Plus size={18} aria-hidden="true" />{metric === 'jump' ? 'Log jump' : 'Log weight'}</button>}
       </div> : <>
       <p className="progress-period">Last 30 days</p>
@@ -136,7 +132,6 @@ export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutri
       {showJumpCheckIn && <button type="button" className={metric === 'jump' ? 'is-contextual' : ''} onClick={onLogJump}><Plus size={17} aria-hidden="true" />Log jump</button>}
       {showWeightCheckIn && <button type="button" className={metric === 'weight' ? 'is-contextual' : ''} onClick={onLogWeight}><Plus size={17} aria-hidden="true" />Log weight</button>}
     </div>}
-    {value !== null && insight && <p className="progress-single-insight">{insight}</p>}
     </div>
 
     <div className="progress-supporting-metrics" aria-label="Other progress">
