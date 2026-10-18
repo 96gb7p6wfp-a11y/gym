@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
-import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession } from '../src/domain.js';
+import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession, stopSessionTimers } from '../src/domain.js';
 import { createVolleyballMasterPlan, MasterProgramSettingsSchema } from '../src/volleyball-master-plan';
+import { findLibraryExercise, toPlanExercise } from '../src/exercise-library';
 
 const STORE = 'setline.gym.v1';
 const SUNDAY = '2026-10-25';
@@ -63,18 +64,39 @@ test('Progress explains the measured jump improvement and one quality-focused ne
   await page.getByRole('tab', { name: 'Progress', exact: true }).click();
   const overview = page.getByRole('region', { name: 'Progress overview', exact: true });
   const summary = overview.getByRole('region', { name: 'Progress summary', exact: true });
-  await expect(summary).toHaveText('Approach jump is up 2.5 cm across recorded test days. Keep jump reps fast and landings controlled.');
+  await expect(summary).toHaveText('Approach jump is up 2.5 cm; broader strength trends are still forming. Keep training consistent and compare your key lifts next.');
   await expect(overview.getByRole('region', { name: 'Jump performance', exact: true })).toContainText('67.5');
   await expect(overview.getByRole('img', { name: /Approach jump trend: 65 to 67.5 centimetres/ })).toBeVisible();
   expect(await state(page)).toEqual(before);
+});
+
+test('one calf gain does not become an overall improvement verdict', async ({ page }) => {
+  const calf = { ...toPlanExercise(findLibraryExercise('Standing Calf Raise')!), sets: 1 };
+  const sessions = ['2026-10-20', SUNDAY].map((date, index) => {
+    const plan = { name: 'Calf strength', kind: 'strength', minutes: 20, note: '', exercises: [calf] };
+    const session = SessionSchema.parse(stopSessionTimers(createSession(plan, index === 0 ? 1 : 6, date, DEFAULT_PROFILE, []), 'completed'));
+    session.elapsedMs = 1200000;
+    Object.assign(session.exercises[0].logs[0], { done: true, kg: index === 0 ? 40 : 45, reps: 8 });
+    return { session, version: 1 };
+  });
+  await seed(page, { sessions });
+  const before = await state(page);
+  await page.getByRole('tab', { name: 'Progress', exact: true }).click();
+  const summary = page.getByRole('region', { name: 'Progress summary', exact: true });
+  await expect(summary).toContainText('overall trends are still forming');
+  await expect(summary).toContainText('Track several key lifts');
+  await expect(summary).not.toContainText('Standing Calf Raise');
+  await expect(summary).not.toContainText(/overall (?:strength|fitness|performance) (?:is |has )?(?:up|improv)|jump is (?:up|improv)/i);
+  expect(await state(page), 'An overall summary must not invent additional performance records').toEqual(before);
 });
 
 test('an empty recovery day starts real stretches and persists them without creating gym sets', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await seed(page, { appearance: 'dark' });
   const before = await state(page);
-  await expect(page.getByText('Easy movement today, fresher legs for your next jump.', { exact: true })).toBeVisible();
   const cover = page.getByRole('region', { name: 'Your day', exact: true });
+  await expect(cover.locator('[aria-label="Today motivation"]')).toHaveText('Easy movement today, fresher legs for your next jump.');
+  await expect(cover.locator('[aria-label="Today motivation"]')).toBeVisible();
   const start = cover.getByRole('button', { name: 'Start recovery', exact: true });
   await expect(start).toBeEnabled();
   await start.tap();
@@ -146,11 +168,11 @@ test('finishing a workout offers real stretches and saves checks onto that compl
     const target = document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
     return bounds.y >= 47 && bounds.width >= 44 && bounds.height >= 44 && target !== null && element.contains(target);
   }), { message: 'The stretch Close must remain a safe, unobscured touch target' }).toBe(true);
-  await expect(stretch).toContainText('Hip Flexor Stretch');
-  const check = stretch.getByRole('checkbox', { name: 'Complete Hip Flexor Stretch in cooldown', exact: true });
+  await expect(stretch).toContainText('Cross-Body Shoulder Stretch');
+  const check = stretch.getByRole('checkbox', { name: 'Complete Cross-Body Shoulder Stretch in cooldown', exact: true });
   await check.check();
   await expect.poll(async () => (await state(page)).sessions[0].session.cooldown
-    .some((item: any) => item.name === 'Hip Flexor Stretch' && item.done)).toBe(true);
+    .some((item: any) => item.name === 'Cross-Body Shoulder Stretch' && item.done)).toBe(true);
   const saved = (await state(page)).sessions[0].session;
   expect(saved).toMatchObject({ kind: 'strength', status: 'completed', elapsedMs: 3600000, runningSince: null });
   expect(saved.exercises[0].logs[0]).toMatchObject({ kg: 3, reps: 3, done: true });
@@ -179,7 +201,7 @@ test('a restored walk-only recovery keeps its old check while making real stretc
   await expect.poll(async () => (await state(page)).sessions[0].session.cooldown
     .some((item: any) => item.name === 'Hip Flexor Stretch' && item.done)).toBe(true);
   const saved = (await state(page)).sessions[0].session;
-  expect(saved.cooldown[0]).toEqual(session.cooldown![0]);
+  expect(saved.cooldown.find((step: any) => step.key === 'old-walk')).toEqual(session.cooldown![0]);
   expect(saved).toMatchObject({ id: session.id, kind: 'recovery', status: 'active', exercises: [], runningSince: null });
   expect((await state(page)).sessions).toHaveLength(1);
   expect((await state(page)).profile.plan).toEqual(before.profile.plan);
@@ -239,6 +261,7 @@ test('set encouragement acknowledges a logged set without interrupting the next 
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
   const current = page.getByRole('region', { name: 'Current exercise', exact: true });
   const cue = current.getByRole('status', { name: 'Set focus', exact: true });
+  await expect(cue.getByText('Coach', { exact: true })).toBeVisible();
   await expect(cue).toContainText('Fast, fresh reps. Stop if height or speed drops.');
   await current.getByRole('textbox', { name: 'Medicine Ball Spike Slam set 1 weight in kilograms', exact: true }).fill('3');
   await current.getByRole('spinbutton', { name: 'Medicine Ball Spike Slam set 1 reps', exact: true }).fill('3');

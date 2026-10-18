@@ -2,7 +2,7 @@
 .journal-today { width:100%; min-width:0; }
 .journal-today .day-cover { position:relative; margin:0; padding:24px; border-radius:30px; background:radial-gradient(ellipse 100% 100% at 100% 0%,color-mix(in srgb,var(--surface) 68%,transparent),transparent),var(--wash); color:var(--ink); box-shadow:var(--shadow-card); }
 .day-cover__edition { position:relative; display:flex; align-items:center; min-height:28px; padding-right:40px; }
-.day-cover__edition>p { margin:0; color:var(--sub); font-size:11px; line-height:1.4; font-weight:600; letter-spacing:.045em; }
+.day-cover__edition>.day-motivation { margin:0; color:var(--ink); font-size:13px; line-height:1.45; font-weight:550; letter-spacing:-.01em; text-wrap:balance; }
 .day-cover__edition>.icon-button { position:absolute; right:-8px; top:-8px; background:color-mix(in srgb,var(--surface) 65%,transparent); color:var(--accent); }
 .day-cover .day-cover__title { max-width:15ch; margin:16px 0 0; color:var(--ink); font-family:var(--font-display); font-size:clamp(30px,8.3vw,36px); line-height:1.1; letter-spacing:-.045em; font-weight:720; text-wrap:balance; }
 .day-cover__purpose { max-width:30ch; margin:12px 0 0; color:var(--ink); font-size:15px; line-height:1.45; font-weight:450; letter-spacing:-.015em; }
@@ -15,7 +15,6 @@
 .day-week>button>span:last-child { display:flex; align-items:center; justify-content:flex-end; gap:5px; }
 .day-week strong { color:var(--ink); font-size:18px; font-weight:650; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
 .day-week svg { margin-left:4px; }
-.day-motivation { margin:14px 8px 0; color:var(--sub); font-size:13px; line-height:1.5; text-wrap:pretty; }
 .day-agenda { margin-top:18px; padding:0 20px; border-radius:26px; background:var(--surface); box-shadow:var(--shadow-card); }
 .day-caption { margin:0; color:var(--sub); font-size:11px; line-height:1.4; font-weight:600; letter-spacing:.025em; }
 .day-next { padding:20px 0; }
@@ -43,13 +42,14 @@
 .day-utilities>button { display:flex; align-items:center; gap:8px; min-height:44px; padding:8px 0; border:0; background:transparent; color:var(--sub); font-size:12px; line-height:1.4; }
 .day-week:active,.day-fuel:active,.day-recorded>button:active { background:var(--surface-soft); }
 @media(max-width:350px) {
- .journal-today .day-cover { padding:16px; border-radius:26px; }
+ .journal-today .day-cover { padding:14px; border-radius:26px; }
  .day-cover__edition { min-height:22px; }
- .day-cover .day-cover__title { margin-top:10px; font-size:28px; }
- .day-cover__purpose { margin-top:10px; font-size:14px; }
+ .day-cover__edition>.day-motivation { font-size:12px; line-height:1.4; }
+ .day-cover .day-cover__title { margin-top:8px; font-size:28px; }
+ .day-cover__purpose { margin-top:8px; font-size:14px; }
  .day-cover__prescription { margin-top:10px; font-size:12px; }
- .day-cover .day-cover__start { margin-top:14px; min-height:52px; padding-inline:16px; }
- .day-week { margin-top:8px; padding-inline:16px; }
+ .day-cover .day-cover__start { margin-top:10px; min-height:52px; padding-inline:16px; }
+ .day-week { margin-top:6px; padding-inline:16px; }
  .day-week>button { min-height:52px; font-size:11px; }
  .day-agenda { margin-top:14px; padding-inline:16px; }
  .day-next>div { align-items:flex-start; }

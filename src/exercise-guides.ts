@@ -360,7 +360,7 @@ register(['Bodyweight Squat'], [
   'Letting heels lift or knees collapse inward.', 'Forcing a deeper position than you can control.'
 ], 'Use a support or squat to a bench if needed. Knee travel past the toes can be normal when comfortable.');
 
-register(['Progressive Jumps'], [
+register(['Progressive Jumps', 'Jump Ramp-Up'], [
   'Start with small jumps at about half effort after easy movement and ankle preparation.',
   'Increase toward moderate then near-full effort only while take-off and landing stay controlled.',
   'Pause between jumps and finish the warm-up feeling ready, not tired.'
@@ -456,6 +456,102 @@ register(['Pec Stretch'], [
   'Forcing the arm far behind you.', 'Shrugging or arching the back to increase the stretch.'
 ], 'Use a lower elbow position if needed. Stop for shoulder pain, tingling or numbness.');
 
+register(['Cross-Body Shoulder Stretch'], [
+  'Bring one arm across your chest, a little below shoulder height.',
+  'Support the upper arm with the other hand and ease it closer without twisting your trunk.',
+  'Keep the shoulder relaxed, breathe and switch sides.'
+], 'A gentle stretch behind the shoulder, without a pinch at the front.', [
+  'Shrugging or pulling hard on the elbow.', 'Turning the whole body instead of easing the arm across.'
+], 'Keep the pull light. Reduce the range or stop if the shoulder pinches or feels painful.');
+
+register(['Biceps Stretch'], [
+  'Stand tall with one arm straight and low beside your hip.',
+  'Ease the arm slightly behind you without rolling the shoulder forward.',
+  'Hold a mild stretch with a comfortable wrist, breathe and switch sides.'
+], 'Gentle tension along the front of the upper arm, not inside the shoulder.', [
+  'Forcing the arm high behind the body.', 'Overstretching the wrist or locking the elbow hard.'
+], 'Use a small range with no pulling force. Stop for shoulder pain, tingling or numbness.');
+
+register(['Triceps Stretch'], [
+  'Raise one arm only as far overhead as comfortable, then bend the elbow.',
+  'Let the hand rest toward your upper back while keeping ribs over your pelvis.',
+  'Breathe into a gentle stretch, then lower the arm and switch sides.'
+], 'A mild stretch along the back of the upper arm.', [
+  'Arching the low back to reach overhead.', 'Pulling hard on the elbow or forcing the hand lower.'
+], 'Skip the overhead position if it pinches. Do not force the shoulder or elbow into more range.');
+
+register(['Standing Quad Stretch'], [
+  'Hold a stable support and gently bring one heel toward your buttock.',
+  'Hold the ankle if reachable; keep the knees close and gently tuck your pelvis.',
+  'Stand tall, breathe and switch sides without pulling hard.'
+], 'A gentle stretch across the front of the bent-leg thigh.', [
+  'Arching the low back or pulling the heel forcefully.', 'Twisting the knee or losing balance to reach the ankle.'
+], 'Use support throughout. Choose another comfortable quad stretch if reaching the ankle causes knee pain.');
+
+register(['Adductor Stretch'], [
+  'Stand in a comfortable wide stance and hold a stable support.',
+  'Shift gently toward one side with that knee bent; keep the other knee soft and foot grounded.',
+  'Pause at mild inner-thigh tension, breathe and change sides.'
+], 'A gentle inner-thigh stretch on the straighter leg.', [
+  'Dropping into a deep side lunge before you can control it.', 'Letting the bent knee collapse inward or bouncing.'
+], 'Keep the stance shallow and supported. Stop for groin or knee pain; a stronger stretch is unnecessary.');
+
+register(['Arm Circles'], [
+  'Stand comfortably with arms reaching out a little below shoulder height.',
+  'Make small, smooth circles and gradually widen them within an easy range.',
+  'Change direction while keeping your neck relaxed and ribs controlled.'
+], 'Easy shoulder movement with light work around the shoulder blades.', [
+  'Swinging rapidly into a large circle.', 'Shrugging or arching the low back to gain range.'
+], 'Use smaller circles or lower the arms if needed. Do not circle through a shoulder pinch.');
+
+register(['Unloaded Hip Hinge'], [
+  'Stand with soft knees and place your hands at the crease of your hips.',
+  'Send your hips backward while keeping the trunk steady and feet planted.',
+  'Stop at gentle hamstring tension, then bring the hips forward to stand tall.'
+], 'A light stretch in the hamstrings, with the glutes helping you stand.', [
+  'Turning the hinge into a deep squat.', 'Rounding the back or leaning backward at the top.'
+], 'Use no added load. Keep the range small if needed and stop if the low back becomes painful.');
+
+register(['Light Rehearsal Sets'], [
+  'Use the setup and technique guide for your next strength exercise.',
+  'Begin unloaded or with an easy load and rehearse a few controlled reps.',
+  'Increase gradually toward your working weight while staying well short of fatigue.'
+], 'The intended muscles engaging without a hard pump, strain or grind.', [
+  'Treating rehearsal sets as extra hard working sets.', 'Increasing load before the setup and movement feel controlled.'
+], 'Check equipment safety and use the next exercise’s comfortable range. Do not take warm-up sets to failure.');
+
+register(['Easy Walk + Arm Swing'], [
+  'Walk at an easy pace in a clear space with relaxed shoulders.',
+  'Let both arms swing naturally with your steps; avoid forcing them overhead.',
+  'Build warmth gradually while keeping conversation comfortable.'
+], 'Gentle movement through the legs and shoulders with easy breathing.', [
+  'Turning the warm-up into a hard conditioning effort.', 'Forcing a large arm swing or deliberately overstriding.'
+], 'Keep the route clear and choose a comfortable pace. Stop if pain or dizziness develops.');
+
+register(['Easy Walk + Breathing'], [
+  'Walk slowly on a clear, level route after your session.',
+  'Relax the shoulders and let your breathing settle naturally.',
+  'Keep the effort easy; finish without adding extra conditioning.'
+], 'Gentle leg movement and breathing that gradually feels easier.', [
+  'Speeding up to turn the cool-down into another workout.', 'Forcing deep breaths or holding the breath.'
+], 'Adjust the pace to how you feel. Stop and seek help for unusual chest pain, faintness or severe breathlessness.');
+
+register(['90/90 Breathing'], [
+  'Lie comfortably on your back with feet supported on a wall or bench and hips and knees bent.',
+  'Exhale gently and let the ribs settle without pressing the back flat.',
+  'Take easy breaths with relaxed shoulders; avoid straining or holding your breath.'
+], 'Gentle rib movement and easy breathing, without neck or low-back tension.', [
+  'Forcing a maximal inhale or a long breath hold.', 'Arching the back or tensing the neck to move more air.'
+], 'Adjust the leg support for comfort. Return to normal breathing and sit up slowly if you feel light-headed.');
+
+register(['Short-Foot'], [
+  'Stand or sit with the heel, big-toe base and little-toe base resting on the floor.',
+  'Gently draw the ball of the foot toward the heel to lift the arch slightly.',
+  'Keep the toes long and relaxed, hold briefly and release.'
+], 'Light work through the arch, with all three contact points still grounded.', [
+  'Curling the toes or gripping the floor.', 'Rolling onto the outer foot to make the arch look higher.'
+], 'Start seated if balance is difficult. Keep the effort gentle and relax if the foot cramps or hurts.');
+
 type LoadingAdvice = Omit<ExerciseLoadingGuidance, 'target'>;
 const loadingAdvice = new Map<string, LoadingAdvice>();
 const controlledProgression = 'When every set reaches the top of your rep range with clean technique and about 2 good reps left, add the smallest available weight increment.';
@@ -519,6 +615,7 @@ registerLoading([
   'Band / Cable External Rotation', 'Light Face Pull', 'Wall Slide', 'Thoracic Rotation',
   'Light Pulldown / Press', 'Light Squat / Hinge Warm-up', 'Ankle Knee-to-Wall', 'Leg Swings',
   'Walking Lunge + Rotation', '90/90 Hip Switch', 'Bodyweight Squat', 'Easy Pogo', 'Progressive Jumps',
+  'Arm Circles', 'Unloaded Hip Hinge', 'Light Rehearsal Sets', 'Easy Walk + Arm Swing', 'Short-Foot', 'Jump Ramp-Up',
 ], {
   category: 'preparation', label: 'Prepare without fatigue',
   advice: 'Stay light and comfortable. Build range or speed gradually, follow your saved target and finish feeling ready for training rather than tired.',
@@ -527,9 +624,15 @@ registerLoading([
 registerLoading([
   'Easy walk', 'Ankle, hip & thoracic mobility', 'Gastrocnemius Stretch', 'Soleus Stretch',
   'Hip Flexor Stretch', 'Hamstring Stretch', 'Glute Stretch', 'Lat Stretch', 'Pec Stretch',
+  'Cross-Body Shoulder Stretch', 'Biceps Stretch', 'Triceps Stretch', 'Standing Quad Stretch', 'Adductor Stretch', 'Easy Walk + Breathing',
 ], {
   category: 'recovery', label: 'Easy recovery',
   advice: 'Keep the effort easy and stretches gentle for your saved time. Breathe normally; extra load or pushing into discomfort is unnecessary.',
+});
+
+registerLoading(['90/90 Breathing'], {
+  category: 'recovery', label: 'Easy breathing',
+  advice: 'Use a comfortable supported position and follow your saved breaths. Breathe gently without forcing, straining or adding resistance.',
 });
 
 registerLoading(['Volleyball practice'], {

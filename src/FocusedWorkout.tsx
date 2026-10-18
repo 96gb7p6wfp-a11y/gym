@@ -299,7 +299,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
               </div>}
               {!editing && <p className="focused-set-encouragement" role="status" aria-label="Set focus" aria-atomic="true"
                 data-feedback={setFeedback ? 'complete' : 'ready'}>
-                <span key={setFeedback?.id ?? `${exercise.key}-focus`}>{setFeedback?.text ?? qualityCue}</span>
+                <span key={setFeedback?.id ?? `${exercise.key}-focus`}><strong>Coach</strong>{' · '}{setFeedback?.text ?? qualityCue}</span>
               </p>}
               <button type="button" className={`btn focused-complete-set${log.done ? ' secondary' : ''}`}
                 aria-label={`${log.done ? 'Undo' : 'Complete'} ${exercise.name} set ${setIndex + 1}`} onClick={completeSet}>

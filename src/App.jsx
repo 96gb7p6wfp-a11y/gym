@@ -1,7 +1,7 @@
 import { Search, History } from "lucide-react";
 import { exercisePerformanceIdentity, areComparableExercises } from "./performance-insights";
 import { WorkoutCompletion } from "./WorkoutCompletion";
-import { getStretchRoutine } from "./stretch-routine";
+import { getSessionPreparation } from "./session-preparation";
 import './session-extras.css';
 import { WorkoutBuilder } from "./WorkoutBuilder";
 import { WeeklyPlanTools } from "./WeeklyPlanTools";
@@ -355,10 +355,19 @@ function GymApp({
   );
   let currentSession = viewingSession;
   const stretchSession = stretchContext?.sessionId ? sessions.find(session => session.id === stretchContext.sessionId) : null;
-  const stretchItems = getStretchRoutine(stretchSession?.cooldown ?? stretchContext?.items);
+  const preparationSource = currentSession ?? selectedPlan;
+  const warmupItems = preparationFor(preparationSource, 'warmup');
+  const cooldownItems = preparationFor(preparationSource, 'cooldown');
+  const stretchItems = preparationFor(stretchSession ?? stretchContext?.plan ?? selectedPlan, 'cooldown');
+  const stretchDescription = stretchSession?.kind === 'strength' && stretchSession.status === 'completed' && !completedSets(stretchSession)
+    ? 'No sets logged. Based on your planned session.'
+    : stretchSession?.kind === 'recovery' ? 'Easy movement for your recovery day.'
+      : stretchSession?.kind === 'sport' ? 'Gentle mobility after court time.'
+        : stretchSession && completedSets(stretchSession) > 0 ? 'Stretches matched to the movements you logged.'
+          : 'Stretches for this session, after training.';
   function openStretches(session = currentSession ?? dayCompletedSession) {
     setSelectedHistory(null);
-    setStretchContext({ sessionId: session?.id ?? null, items: session?.cooldown ?? selectedPlan.cooldown });
+    setStretchContext({ sessionId: session?.id ?? null, plan: session ? null : selectedPlan });
   }
   React.useLayoutEffect(() => {
     // Enter a newly started/restored session at its heading. Browser scroll
@@ -439,7 +448,7 @@ function GymApp({
   function togglePreparation(e, t, n) {
     updateSession((r) => ({
       ...r,
-      [e]: r[e]?.map((e) =>
+      [e]: preparationFor(r, e).map((e) =>
         e.key === t
           ? {
               ...e,
@@ -541,7 +550,7 @@ function GymApp({
       }
       queueSession(
         createSession(
-          { ...selectedPlan, cooldown: getStretchRoutine(selectedPlan.cooldown) },
+          { ...selectedPlan, warmup: preparationFor(selectedPlan, 'warmup'), cooldown: preparationFor(selectedPlan, 'cooldown') },
           selectedDay,
           selectedDate,
           profile,
@@ -786,7 +795,7 @@ function GymApp({
     if (activeSession || editingHistoryId) { toast('Finish your current workout first.'); return; }
     if (!(await flushPendingWrites())) return;
     const { id: _id, ...workout } = template;
-    const session = createSession(workout, selectedDay, selectedDate, profile, sessionsRef.current);
+    const session = createSession({ ...workout, warmup: preparationFor(workout, 'warmup'), cooldown: preparationFor(workout, 'cooldown') }, selectedDay, selectedDate, profile, sessionsRef.current);
     queueSession(session, true);
     if (!(await flushPendingWrites())) return;
     setWorkoutChooserOpen(false); setTab('train');
@@ -1135,7 +1144,7 @@ function GymApp({
               )}
 
               <section className={`session-card native-session ${currentSession ? 'session-card--active' : ''} ${editingHistoryId ? 'native-session--editing' : ''}`}>
-                <div className="native-session-overview"><p className="session-tag">{editingHistoryId ? 'Editing saved workout' : activeSession ? 'Session in progress' : `${WEEKDAYS[selectedDay]} · ${formatDate(selectedDate, true)}`}</p><h2>{currentSession ? currentSession.goal ? getSessionPurpose(currentSession).title : shortSessionName(currentSession.name) : getSessionPurpose(selectedPlan, selectedDay).title}</h2>{!currentSession && <p className="session-purpose-line">{getSessionPurpose(selectedPlan, selectedDay).subtitle}</p>}<p className="native-session-prescription">{currentSession ? currentSession.kind === `sport` ? `On court · reflect after training` : currentSession.kind === `recovery` && !totalSets ? `${getStretchRoutine(currentSession.cooldown).filter(step => step.done).length} / ${getStretchRoutine(currentSession.cooldown).length} movements complete` : `${doneSets} / ${totalSets} sets complete` : selectedPlan.kind === `recovery` ? `${selectedPlan.minutes} min · mobility & stretching` : selectedPlan.kind === `sport` ? `${selectedPlan.minutes} min · on court` : `${selectedPlan.exercises.length} exercises · ${totalSets} sets · ${selectedPlan.minutes} min`}</p></div>
+                <div className="native-session-overview"><p className="session-tag">{editingHistoryId ? 'Editing saved workout' : activeSession ? 'Session in progress' : `${WEEKDAYS[selectedDay]} · ${formatDate(selectedDate, true)}`}</p><h2>{currentSession ? currentSession.goal ? getSessionPurpose(currentSession).title : shortSessionName(currentSession.name) : getSessionPurpose(selectedPlan, selectedDay).title}</h2>{!currentSession && <p className="session-purpose-line">{getSessionPurpose(selectedPlan, selectedDay).subtitle}</p>}<p className="native-session-prescription">{currentSession ? currentSession.kind === `sport` ? `On court · reflect after training` : currentSession.kind === `recovery` && !totalSets ? `${cooldownItems.filter(step => step.done).length} / ${cooldownItems.length} movements complete` : `${doneSets} / ${totalSets} sets complete` : selectedPlan.kind === `recovery` ? `${selectedPlan.minutes} min · mobility & stretching` : selectedPlan.kind === `sport` ? `${selectedPlan.minutes} min · on court` : `${selectedPlan.exercises.length} exercises · ${totalSets} sets · ${selectedPlan.minutes} min`}</p></div>
                 <div className="native-session-actionbar">{activeSession && <span className="session-clock"><Clock3 size={14} />{formatElapsedTime(sessionDuration(activeSession, now))}</span>}
                   {editingHistoryId ? (
                     <button
@@ -1240,7 +1249,7 @@ function GymApp({
               {!currentSession && <details className="workout-template-actions"><summary>Workout options</summary><div className="workout-template-options"><button type="button" className="text-button" disabled={!loaded} onClick={() => setWorkoutChooserOpen(true)}>Choose workout</button><button type="button" className="text-button" disabled={!loaded} onClick={() => openCustomWorkout()}>Create workout</button></div></details>}
               {currentSession ? (
                 <React.Fragment>
-                  {currentSession.kind === 'recovery' && !currentSession.exercises.length ? <section className="recovery-session" aria-label="Recovery session"><PreparationChecklist items={getStretchRoutine(currentSession.cooldown)} phase="cooldown" kind="recovery" defaultOpen onToggle={(key, done) => updateSession(session => ({ ...session, cooldown: getStretchRoutine(session.cooldown).map(step => step.key === key ? { ...step, done } : step) }))} /><WorkoutCustomizer session={currentSession} selectedKey={exerciseActionKey} onSelectedKeyChange={setExerciseActionKey}
+                  {currentSession.kind === 'recovery' && !currentSession.exercises.length ? <section className="recovery-session" aria-label="Recovery session"><PreparationChecklist items={cooldownItems} phase="cooldown" kind="recovery" defaultOpen onToggle={(key, done) => togglePreparation('cooldown', key, done)} /><WorkoutCustomizer session={currentSession} selectedKey={exerciseActionKey} onSelectedKeyChange={setExerciseActionKey}
                     onChange={customizeSession} onSaveAs={saveCurrentAsWorkout}
                     readiness={performance.data?.readiness.find(row => row.date === currentSession.date)} onReadiness={performance.saveReadiness}
                     disabled={saving || !!loadError} /></section> : <>
@@ -1314,7 +1323,7 @@ function GymApp({
                 <button className="text-button planned-edit" disabled={!loaded} onClick={() => editPlanDay(selectedDay, extraSessionVisible)}><Pencil size={14} /> Edit day</button>
                 </div>
               )}
-              {!(currentSession?.kind === 'recovery' && !currentSession.exercises.length) && <button type="button" className="stretch-shortcut" onClick={() => openStretches()}><span><strong>Cool-down & stretching</strong><small>Gentle holds after training</small></span><ChevronRight size={18} /></button>}
+              {!(currentSession?.kind === 'recovery' && !currentSession.exercises.length) && <button type="button" className="stretch-shortcut" onClick={() => openStretches()}><span><strong>Cool-down & stretching</strong><small>Matched to this session</small></span><ChevronRight size={18} /></button>}
             </section>
             <details className="train-utilities"><summary>Session tools</summary><div className="train-utilities-content"><section className="workout-preparation">
               <details className="train-activities"><summary>Activities</summary>
@@ -1328,10 +1337,7 @@ function GymApp({
               <ActivityImport bodyWeight={profile.bodyWeight} records={activityRecords} onImport={importExtraActivities} disabled={!loaded} />
               </details>
               <PreparationChecklist
-                items={
-                  currentSession?.warmup ??
-                  (currentSession ? void 0 : selectedPlan.warmup)
-                }
+                items={warmupItems}
                 compact
                 phase={`warmup`}
                 kind={currentSession?.kind ?? selectedPlan.kind}
@@ -1343,10 +1349,7 @@ function GymApp({
                 key={`${currentSession?.id ?? selectedDate}-${selectedPlan.name}-warmup`}
               />
               <PreparationChecklist
-                items={
-                  currentSession?.cooldown ??
-                  (currentSession ? void 0 : selectedPlan.cooldown)
-                }
+                items={cooldownItems}
                 compact
                 phase={`cooldown`}
                 kind={currentSession?.kind ?? selectedPlan.kind}
@@ -1885,7 +1888,7 @@ function GymApp({
           <button onClick={() => setRestEndsAt(null)}>{`Skip`}</button>
         </div>
       )}
-      <Dialog open={stretchContext !== null} onOpenChange={open => { if (!open) setStretchContext(null); }}><DialogContent className="app-dialog stretch-sheet"><DialogHeader><DialogTitle>Stretch routine</DialogTitle><DialogDescription>Optional gentle holds. Stop if a movement hurts.</DialogDescription></DialogHeader><PreparationChecklist items={stretchItems} phase="cooldown" kind={stretchSession?.kind ?? 'strength'} defaultOpen onToggle={stretchSession && !loadError ? (key, done) => { const source = sessionsRef.current.find(session => session.id === stretchSession.id); if (source) queueSession({ ...source, cooldown: getStretchRoutine(source.cooldown).map(step => step.key === key ? { ...step, done } : step) }); } : undefined} /><button type="button" className="btn full" onClick={() => setStretchContext(null)}>Done</button></DialogContent></Dialog>
+      <Dialog open={stretchContext !== null} onOpenChange={open => { if (!open) setStretchContext(null); }}><DialogContent className="app-dialog stretch-sheet"><DialogHeader><DialogTitle>Stretch routine</DialogTitle><DialogDescription>{stretchDescription}</DialogDescription></DialogHeader><PreparationChecklist items={stretchItems} phase="cooldown" kind={stretchSession?.kind ?? 'strength'} defaultOpen onToggle={stretchSession && !loadError ? (key, done) => { const source = sessionsRef.current.find(session => session.id === stretchSession.id); if (source) queueSession({ ...source, cooldown: preparationFor(source, 'cooldown').map(step => step.key === key ? { ...step, done } : step) }); } : undefined} /><button type="button" className="btn full" onClick={() => setStretchContext(null)}>Done</button></DialogContent></Dialog>
       <Dialog open={finishOpen} onOpenChange={setFinishOpen}>
         <DialogContent className={`app-dialog`}>
           <DialogHeader>
@@ -2178,12 +2181,12 @@ function GymApp({
                   </section>
                 ))}
               <PreparationChecklist
-                items={selectedHistory.warmup}
+                items={preparationFor(selectedHistory, 'warmup')}
                 phase={`warmup`}
                 kind={selectedHistory.kind}
               />
               <PreparationChecklist
-                items={selectedHistory.cooldown}
+                items={preparationFor(selectedHistory, 'cooldown')}
                 phase={`cooldown`}
                 kind={selectedHistory.kind}
               />
@@ -2244,6 +2247,11 @@ function GymApp({
     </Tabs>
   );
 }
+/** Derive useful guides without rewriting a saved plan or session on read. */
+function preparationFor(source, phase) {
+  return getSessionPreparation({ phase, kind: source.kind, exercises: source.exercises,
+    items: source[phase] });
+}
 function SessionExerciseArea({ sport, editing, children }) {
   return sport ? <details className="sport-tracking" open={editing || undefined}><summary>Training log</summary>{children}</details> : <>{children}</>;
 }
@@ -2285,7 +2293,7 @@ function PreparationChecklist({
         <AccordionContent>
           <p className={`routine-note`}>
             {phase === `warmup`
-              ? `Build up gradually with light, dynamic movements. Before volleyball, focus on ankles, hips and shoulders; save long holds for after training.`
+              ? `Build up gradually with easy movements and light practice sets. Finish ready, not tired.`
               : `Gentle holds on both sides. Stop if it hurts.`}
           </p>
           <ol className={`routine-steps`}>
@@ -2350,13 +2358,13 @@ function PlanDayDetails({ plan: plan }) {
       </ul>
       <p className={`plan-note`}>{plan.note}</p>
       <PreparationChecklist
-        items={plan.warmup}
+        items={preparationFor(plan, 'warmup')}
         phase={`warmup`}
         kind={plan.kind}
         compact={!0}
       />
       <PreparationChecklist
-        items={plan.cooldown}
+        items={preparationFor(plan, 'cooldown')}
         phase={`cooldown`}
         kind={plan.kind}
         compact={!0}

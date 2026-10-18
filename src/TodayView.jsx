@@ -54,12 +54,12 @@ export function TodayView({ date, plan, session, completed, activities, nutritio
   return <div className="today-view journal-today">
     <section className="day-cover" aria-label="Your day">
       <div className="day-cover__edition">
-        <p>{active ? 'In progress' : completed ? 'Workout complete' : programLabel ?? 'Your session'}</p>
+        <p className="day-motivation" aria-label="Today motivation">{getDailyMotivation({ kind: shownPlan.kind, active, completed: !!completed && !active })}</p>
         <button type="button" className="icon-button" aria-label="Choose training day" onClick={() => setDayPickerOpen(true)}><CalendarDays size={19} aria-hidden="true" /></button>
       </div>
       <h2 className="day-cover__title">{purpose.title}</h2>
       <p className="day-cover__purpose">{purpose.subtitle}</p>
-      <p className="day-cover__prescription">{sessionMeta}</p>
+      <p className="day-cover__prescription">{sessionMeta}{programLabel && !active && !completed ? ` · ${programLabel}` : ''}</p>
       {active && plannedSetCount > 0 && <div className="day-cover__track" role="progressbar" aria-label="Current workout" aria-valuemin={0} aria-valuemax={plannedSetCount} aria-valuenow={setCount}><span style={{ width: `${plannedSetCount ? setCount / plannedSetCount * 100 : 0}%` }} /></div>}
       <button className="btn day-cover__start" disabled={disabled} onClick={action}>{actionLabel}<ArrowRight size={20} aria-hidden="true" /></button>
     </section>
@@ -69,8 +69,6 @@ export function TodayView({ date, plan, session, completed, activities, nutritio
         <span>{weekLabel}</span><span><strong>{cadence.completedGymDays} / {cadence.plannedGymDays}</strong> gym days<ChevronRight size={16} aria-hidden="true" /></span>
       </button>
     </section>
-
-    <p className="day-motivation">{getDailyMotivation({ kind: shownPlan.kind, active, completed: !!completed && !active })}</p>
 
     <div className="day-agenda">
       {nextVolleyball && <section className="day-next" aria-label="Next training event">

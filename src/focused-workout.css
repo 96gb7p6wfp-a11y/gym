@@ -56,6 +56,7 @@
 .focused-exercise .btn.focused-complete-set.secondary { background: var(--surface-soft, #e9eeea); color: var(--ink, #27312d); }
 .focused-exercise .btn.focused-complete-set:active { transform: scale(.98); }
 .focused-exercise .focused-set-encouragement { display: grid; align-items: center; min-height: 34px; margin: 12px 0 0; color: var(--sub, #65716a); font-size: 12px; font-weight: 500; line-height: 1.4; text-align: center; text-wrap: balance; }
+.focused-set-encouragement strong { color:var(--accent); font-weight:650; }
 .focused-set-encouragement[data-feedback='complete'] { color: var(--accent, #526c5f); }
 .focused-set-encouragement > span { animation: set-cue-arrive 160ms ease-out both; }
 .focused-exercise .focused-set-encouragement + .btn.focused-complete-set { margin-top: 10px; }
@@ -67,7 +68,7 @@ html[data-keyboard-open='true'] .focused-exercise .focused-set-encouragement + .
 .focused-exercise__set-selector > button { display: grid; place-items: center; flex: 0 0 44px; min-width: 44px; min-height: 44px; padding: 8px; border: 0; border-radius: 50%; background: transparent; color: var(--sub, #65716a); font-size: 12px; font-weight: 550; }
 .focused-exercise__set-selector > button.is-current { background: var(--surface-soft, #e9eeea); color: var(--ink, #27312d); font-weight: 650; }
 .focused-exercise__set-selector > button.is-done { color: var(--accent, #526c5f); }
-.focused-effort { margin: 0; border-top: 1px solid var(--line, #dbe2db); }
+.focused-effort { margin: 0; border: 0; }
 .focused-effort > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 9px 0; color: var(--ink, #27312d); font-size: 13px; font-weight: 550; list-style: none; cursor: pointer; }
 .focused-effort > summary > span { color: var(--sub, #65716a); font-size: 12px; font-weight: 400; text-align: right; }
 .focused-effort > .field-label { color: var(--sub, #65716a); font-size: 12px; }
