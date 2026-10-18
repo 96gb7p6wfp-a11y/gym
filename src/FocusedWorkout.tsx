@@ -9,7 +9,6 @@ import type { TimedSetAction } from './timed-sets';
 import { findComplexPair, firstUnfinishedStep, nextStepAfterCompletion } from './training-flow';
 import './focused-workout.css';
 import { findLibraryExercise } from './exercise-library';
-import { getExerciseIntent } from './training-purpose';
 import { getProgressionRecommendation, type ProgressionContext } from './performance-insights';
 import { ProgressionCue } from './ProgressionCue';
 import type { ReportSession } from './weekly-report';
@@ -178,7 +177,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
     <div className="focused-workout" data-session-id={sessionId}>
       <section className="focused-exercise" aria-label="Current exercise" ref={exerciseCard}>
         <div className="focused-stage-topline">
-          <span>{allDone ? 'All sets complete' : `${exerciseIndex + 1} / ${exercises.length} · ${exercise.group}`}</span>
+          <span>{allDone ? 'All sets complete' : `Exercise ${String(exerciseIndex + 1).padStart(2, '0')} of ${String(exercises.length).padStart(2, '0')}`}</span>
           <div className="focused-stage-tools">
             <button type="button" className="focused-exercise__text-action" aria-expanded={allSetsOpen}
               onClick={() => { pendingCompletion.current = null; setAllSetsOpen(!allSetsOpen); }}>
@@ -187,6 +186,8 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
             {onExerciseAction && <button type="button" className="icon-button" aria-label={`Options for ${exercise.name}`} onClick={() => onExerciseAction(exercise.key)}><Ellipsis size={22} aria-hidden="true" /></button>}
           </div>
         </div>
+        <div className="focused-exercise-title"><h2 className="focused-exercise__name">{exercise.name}</h2></div>
+        {libraryExercise && <p className="focused-exercise-benefit">{libraryExercise.primaryBenefit}</p>}
         {pair && <div className="focused-pair" role="group" aria-label={`Complex pair ${pair.label}`}>
           <div className="focused-pair__heading">
             <span>Complex {pair.label}</span><strong>Round {setIndex + 1} <span>of {rounds}</span></strong>
@@ -203,18 +204,14 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
           })}</div>
           <p>{exercise.rest > 0 ? `${exercise.rest % 60 === 0 ? `${exercise.rest / 60} min` : `${exercise.rest} sec`} rest between steps` : 'Follow your planned rest'}</p>
         </div>}
-        <div className="focused-exercise-title"><h2 className="focused-exercise__name">{exercise.name}</h2></div>
-        {libraryExercise && <p className="focused-exercise-benefit">{libraryExercise.primaryBenefit}</p>}
-        <div className="focused-exercise-prescription">
-          <p className="focused-exercise__target">{exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.targetRpe ? ` · RPE ${exercise.targetRpe}` : ''}</p>
-          {!allSetsOpen && <p className="focused-exercise-intent">{getExerciseIntent({ ...exercise, category: libraryExercise?.category })}</p>}
-        </div>
         {allSetsOpen ? (
           <div className="focused-workout__all-sets">{renderAllSets(exercise, Math.max(0, exerciseIndex))}</div>
         ) : (
           <>
             <div className="focused-exercise__set-heading">
-              <strong>Set {setIndex + 1} <span>of {exercise.logs.length}</span></strong>
+              <div className="focused-exercise__set-position"><strong>Set {setIndex + 1} <span>of {exercise.logs.length}</span></strong>
+                <span className="focused-exercise__target">{exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.targetRpe ? ` · RPE ${exercise.targetRpe}` : ''}</span>
+              </div>
               <span className="focused-exercise__previous">Previous <b>{previousLabel(exercise, previousLogs[setIndex])}</b></span>
             </div>
             {exercise.mode === 'timed' ? <TimedSetControls key={`${exercise.key}-${log.id}`} setId={log.id}

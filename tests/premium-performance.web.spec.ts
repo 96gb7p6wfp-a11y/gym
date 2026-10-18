@@ -1,3 +1,4 @@
+import { openSection } from './helpers/navigation';
 import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, SessionSchema, createSession } from '../src/domain.js';
@@ -6,7 +7,7 @@ const STORE = 'setline.gym.v1';
 const DATE = '2026-10-15';
 
 async function tab(page: Page, name: string) {
-  await page.getByRole('tab', { name, exact: true }).click();
+  await openSection(page, name);
 }
 
 async function settings(page: Page) {
@@ -106,7 +107,7 @@ test('dark appearance persists and narrow iPhone sheets remain reachable', async
     return hit != null && element.contains(hit);
   })).toBe(true);
   await close.tap();
-  for (const name of ['Today', 'Train', 'Progress', 'Nutrition', 'More']) {
+  for (const name of ['Today', 'Train', 'Progress', 'Nutrition', 'You']) {
     await tab(page, name);
     const size = await page.evaluate(() => ({ width: innerWidth, content: document.documentElement.scrollWidth }));
     expect(size.content).toBeLessThanOrEqual(size.width);

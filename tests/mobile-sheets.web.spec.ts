@@ -1,3 +1,4 @@
+import { openSection } from './helpers/navigation';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 async function safeAreas(page: Page) {
@@ -27,7 +28,7 @@ async function clearAction(control: Locator, visibleBottom: number) {
 test('meal sheets fit the visible keyboard viewport and keep the save action reachable', async ({ page }) => {
   await page.goto('/');
   await safeAreas(page);
-  await page.getByRole('tab', { name: 'Nutrition', exact: true }).click();
+  await openSection(page, 'Nutrition');
   await page.getByRole('button', { name: 'Log meal', exact: true }).click();
   const meal = page.getByRole('dialog', { name: 'Add a meal', exact: true });
   await meal.getByLabel('Meal name', { exact: true }).fill('After training');
@@ -48,7 +49,7 @@ test('meal sheets fit the visible keyboard viewport and keep the save action rea
 test('sheets follow visual viewport panning without losing the close control or focused input', async ({ page }) => {
   await page.goto('/');
   await safeAreas(page);
-  await page.getByRole('tab', { name: 'More', exact: true }).click();
+  await openSection(page, 'You');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const settings = page.getByRole('dialog', { name: 'Your preferences', exact: true });
   await settings.getByLabel('Body weight · kg', { exact: true }).focus();
@@ -73,7 +74,7 @@ test('short-phone and landscape sheets resize without the Visual Viewport API', 
   await page.setViewportSize({ width: 320, height: 568 });
   await page.goto('/');
   await safeAreas(page);
-  await page.getByRole('tab', { name: 'More', exact: true }).click();
+  await openSection(page, 'You');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const settings = page.getByRole('dialog', { name: 'Your preferences', exact: true });
   for (const viewport of [{ width: 320, height: 568 }, { width: 320, height: 390 }, { width: 844, height: 390 }]) {

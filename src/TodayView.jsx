@@ -3,12 +3,11 @@ import { ArrowRight, CalendarDays, Check, ChevronRight, Plus } from 'lucide-reac
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui';
 import { dateKey, addDays, sessionDuration, sumNutrients } from './domain';
 import { getSessionPurpose } from './training-purpose';
-import { getPerformanceSummary } from './performance-insights';
 import { getTrainingCadence } from './training-cadence';
 import { currentReportDate, reportWeekStart } from './weekly-report';
+import './today.css';
 
-const number = value => value.toLocaleString('en-GB', { maximumFractionDigits: 1 });
-
+/** A session cover, rather than a collection of daily statistics. */
 export function TodayView({ date, plan, session, completed, activities, nutrition,
   sessions = [], weeklyPlan = [], performance, bodyWeight, today = currentReportDate(),
   volleyballSchedule, onStart, onTrain, onViewLog, onNutrition, onPlan, onActivity,
@@ -21,11 +20,6 @@ export function TodayView({ date, plan, session, completed, activities, nutritio
   const purpose = getSessionPurpose(shownPlan, (day.getDay() + 6) % 7);
   const cadence = useMemo(() => getTrainingCadence({ sessions, activities, plan: weeklyPlan,
     today, weekStart: reportWeekStart(date) }), [sessions, activities, weeklyPlan, today, date]);
-  const summary = useMemo(() => getPerformanceSummary({ sessions, activities, plan: weeklyPlan,
-    performance, nutritionRecords: nutrition, bodyWeight, today }),
-  [sessions, activities, weeklyPlan, performance, nutrition, bodyWeight, today]);
-  const jump = summary.jumps.find(item => item.type === 'approach' && item.measurement === 'height')
-    ?? summary.jumps.find(item => item.measurement === 'height');
   const extras = activities.filter(({ activity }) => activity.date === date && activity.deletedAt === null);
   const targets = nutrition?.find(record => record.payload.kind === 'targets')?.payload;
   const totals = sumNutrients((nutrition ?? []).filter(record => record.date === date && record.payload.kind === 'meal').flatMap(record => record.payload.foods));
@@ -45,25 +39,54 @@ export function TodayView({ date, plan, session, completed, activities, nutritio
   const actionLabel = active ? 'Continue workout' : completed ? 'View workout'
     : unscheduled ? plan.kind === 'recovery' ? 'View recovery' : 'Choose workout'
       : plan.kind === 'recovery' ? 'Start recovery' : 'Start workout';
+  const sessionMeta = active ? `${setCount} / ${plannedSetCount} sets complete`
+    : completed ? `${completedMinutes} min · ${setCount} completed sets`
+      : plan.kind === 'sport' ? plan.name === 'Match' ? 'Match · log your actual duration'
+        : `${volleyballSchedule.startTime}–${volleyballSchedule.endTime} · Berlin time`
+        : `${plan.minutes} min${plan.kind === 'recovery' ? ' · easy pace' : ` · ${plan.exercises.length} exercises`}`;
+  const remainingCalories = targets?.calories == null ? null : Math.max(0, Math.round(targets.calories - totals.calories));
+  const fuelDetail = remainingCalories === null ? 'Meals & daily targets'
+    : `${remainingCalories.toLocaleString('en-GB')} kcal remaining · ${Math.round(totals.protein)}${targets.protein ? ` / ${Math.round(targets.protein)}` : ''} g protein`;
 
-  return <div className="today-view">
-    <section className="today-session" aria-label="Your day">
-      <div className="today-session__topline"><p>{active ? 'In progress' : completed ? 'Workout complete' : shownPlan.kind === 'recovery' ? 'Restore performance' : programLabel ?? 'Your training'}</p><button type="button" className="icon-button" aria-label="Choose training day" onClick={() => setDayPickerOpen(true)}><CalendarDays size={19} aria-hidden="true" /></button></div>
-      <h2>{purpose.title}</h2><p className="today-session__purpose">{purpose.subtitle}</p>
-      <p className="today-session__meta">{active ? `${setCount} / ${plannedSetCount} sets complete` : completed ? `${completedMinutes} min · ${setCount} completed sets` : plan.kind === 'sport' ? plan.name === 'Match' ? 'Match · log your actual duration' : `${volleyballSchedule.startTime}–${volleyballSchedule.endTime} · Berlin time` : `${plan.minutes} min${plan.kind === 'recovery' ? ' · easy pace' : ` · ${plan.exercises.length} exercises`}`}</p>
-      {active && <div className="today-session-track" role="progressbar" aria-label="Current workout" aria-valuemin={0} aria-valuemax={plannedSetCount} aria-valuenow={setCount}><span style={{ width: `${plannedSetCount ? setCount / plannedSetCount * 100 : 0}%` }} /></div>}
-      <button className="btn today-primary" disabled={disabled} onClick={action}>{actionLabel}<ArrowRight size={20} aria-hidden="true" /></button>
+  return <div className="today-view journal-today">
+    <section className="day-cover" aria-label="Your day">
+      <div className="day-cover__edition">
+        <p>{active ? 'In progress' : completed ? 'Workout complete' : programLabel ?? 'Your session'}</p>
+        <button type="button" className="icon-button" aria-label="Choose training day" onClick={() => setDayPickerOpen(true)}><CalendarDays size={19} aria-hidden="true" /></button>
+      </div>
+      <h2 className="day-cover__title">{purpose.title}</h2>
+      <p className="day-cover__purpose">{purpose.subtitle}</p>
+      <p className="day-cover__prescription">{sessionMeta}</p>
+      {active && <div className="day-cover__track" role="progressbar" aria-label="Current workout" aria-valuemin={0} aria-valuemax={plannedSetCount} aria-valuenow={setCount}><span style={{ width: `${plannedSetCount ? setCount / plannedSetCount * 100 : 0}%` }} /></div>}
+      <button className="btn day-cover__start" disabled={disabled} onClick={action}>{actionLabel}<ArrowRight size={20} aria-hidden="true" /></button>
     </section>
-    <section className="today-ledger" aria-label="Training progress">
-      <button type="button" onClick={onProgress} aria-label={`View training progress: ${progressLabel}`}><span className="today-ledger__label">{weekLabel}</span><strong>{cadence.completedGymDays}<small>/ {cadence.plannedGymDays}</small></strong><span className="today-ledger__detail">Gym days</span></button>
-      {jump ? <button type="button" onClick={onProgress} aria-label={`View ${jump.type} jump progress: ${number(jump.current)} centimetres`}><span className="today-ledger__label">{jump.type[0].toUpperCase()}{jump.type.slice(1)} jump</span><strong>{number(jump.current)}<small>cm</small></strong><span className="today-ledger__detail">{jump.change30Days === null ? 'Latest test' : `${jump.change30Days > 0 ? '+' : ''}${number(jump.change30Days)} cm`}</span></button> : <button type="button" onClick={onProgress} aria-label="View body weight progress"><span className="today-ledger__label">Body weight</span><strong>{number(summary.weight.weeklyAverage ?? summary.weight.current ?? bodyWeight)}<small>kg</small></strong><span className="today-ledger__detail">{summary.weight.weeklyAverage !== null ? 'Weekly average' : summary.weight.points.length ? 'Latest check-in' : 'Profile weight'}</span></button>}
-      <button type="button" onClick={onNutrition} aria-label="View today’s nutrition"><span className="today-ledger__label">Protein</span><strong>{Math.round(totals.protein)}<small>g</small></strong><span className="today-ledger__detail">{targets?.protein ? `of ${Math.round(targets.protein)} g` : 'Logged today'}</span></button>
+
+    <section className="day-week" aria-label="Training progress">
+      <button type="button" onClick={onProgress} aria-label={`View training progress: ${progressLabel}`}>
+        <span>{weekLabel}</span><span><strong>{cadence.completedGymDays} / {cadence.plannedGymDays}</strong> gym days<ChevronRight size={16} aria-hidden="true" /></span>
+      </button>
     </section>
-    {nextVolleyball && <section className="today-agenda" aria-label="Next training event"><p className="eyebrow">Next</p><div className="today-agenda__event"><span className="today-agenda__date">{nextVolleyball.toLocaleDateString('en-GB', { weekday: 'short' })}</span><span><strong>Volleyball</strong><small>{volleyballSchedule.startTime}–{volleyballSchedule.endTime} · Berlin time</small></span></div></section>}
-    {scheduledEvents.length > 0 && <section className="today-agenda" aria-label="Also planned"><p className="eyebrow">Also today</p>{scheduledEvents.map(event => <div className="today-agenda__event" key={event.name}><span><strong>{event.name}</strong><small>{event.detail}</small></span></div>)}</section>}
-    <div className="today-links"><button type="button" onClick={onPlan}><span>Weekly plan</span><ChevronRight size={18} aria-hidden="true" /></button><button type="button" onClick={onNutrition}><span>Nutrition<small>{targets?.calories ? `${Math.max(0, Math.round(targets.calories - totals.calories)).toLocaleString('en-GB')} kcal remaining` : 'Plan today’s intake'}</small></span><ChevronRight size={18} aria-hidden="true" /></button></div>
-    {extras.length > 0 && <section className="today-timeline" aria-label={`${day.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })} activity timeline`}><div className="section-line"><h3>Recorded today</h3><button className="text-button" onClick={onActivity}>View all</button></div>{extras.slice(0, 3).map(({ activity }) => <button key={activity.id} onClick={onActivity}><span><strong>{activity.name}</strong><small>{activity.durationMinutes} min{activity.distanceKm !== null ? ` · ${activity.distanceKm} km` : ''}</small></span><Check size={16} aria-label="Recorded" /></button>)}</section>}
-    <button className="today-add-activity text-button" onClick={onActivity}>Add activity<Plus size={18} aria-hidden="true" /></button>
+
+    <div className="day-agenda">
+      {nextVolleyball && <section className="day-next" aria-label="Next training event">
+        <p className="day-caption">Next on court</p>
+        <div><strong>Volleyball</strong><span>{nextVolleyball.toLocaleDateString('en-GB', { weekday: 'short' })} · {volleyballSchedule.startTime}–{volleyballSchedule.endTime}</span></div>
+      </section>}
+      {scheduledEvents.length > 0 && <section className="day-scheduled" aria-label="Also planned">
+        <p className="day-caption">Also today</p>
+        {scheduledEvents.map(event => <div key={event.name}><strong>{event.name}</strong><span>{event.detail}</span></div>)}
+      </section>}
+      <button type="button" className="day-fuel" onClick={onNutrition} aria-label="View today’s nutrition">
+        <span><strong>Fuel</strong><span>{fuelDetail}</span></span><ChevronRight size={18} aria-hidden="true" />
+      </button>
+    </div>
+
+    {extras.length > 0 && <section className="day-recorded" aria-label={`${day.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })} activity timeline`}>
+      <div className="day-recorded__heading"><p className="day-caption">Recorded today</p><button type="button" onClick={onActivity}>View all</button></div>
+      {extras.slice(0, 3).map(({ activity }) => <button key={activity.id} onClick={onActivity}><span><strong>{activity.name}</strong><span>{activity.durationMinutes} min{activity.distanceKm !== null ? ` · ${activity.distanceKm} km` : ''}</span></span><Check size={16} aria-label="Recorded" /></button>)}
+    </section>}
+
+    <div className="day-utilities"><button type="button" onClick={onPlan}>Weekly plan<ChevronRight size={16} aria-hidden="true" /></button><button type="button" onClick={onActivity}>Add activity<Plus size={16} aria-hidden="true" /></button></div>
     <Dialog open={dayPickerOpen} onOpenChange={setDayPickerOpen}><DialogContent className="app-dialog today-day-sheet"><DialogHeader><DialogTitle>Choose a day</DialogTitle><DialogDescription>Your week at a glance.</DialogDescription></DialogHeader>{daySelector}<button className="btn full" onClick={() => setDayPickerOpen(false)}>Done</button></DialogContent></Dialog>
     <span className="sr-only">{dateKey(day)}</span>
   </div>;

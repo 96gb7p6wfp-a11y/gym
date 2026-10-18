@@ -31,8 +31,10 @@ export function initializeInputModality() {
       if (completion && Math.max(field.bottom, completion.bottom) - Math.min(field.top, completion.top) < visibleBottom - visibleTop) {
         first = Math.min(field.top, completion.top); last = Math.max(field.bottom, completion.bottom);
       }
-      if (last > visibleBottom) window.scrollBy({ top: last - visibleBottom, behavior: 'instant' });
-      else if (first < visibleTop) window.scrollBy({ top: first - visibleTop, behavior: 'instant' });
+      // Scroll offsets are rounded by the browser. Round outward so fractional
+      // layout coordinates cannot leave the field or its action under the keyboard.
+      if (last > visibleBottom) window.scrollBy({ top: Math.ceil(last - visibleBottom), behavior: 'instant' });
+      else if (first < visibleTop) window.scrollBy({ top: Math.floor(first - visibleTop), behavior: 'instant' });
     });
   }
   const pointer = () => { root.dataset.inputModality = 'pointer'; };

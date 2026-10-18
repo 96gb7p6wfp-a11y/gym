@@ -1,44 +1,67 @@
-.progress-overview.progress-native { display: flex; flex-direction: column; gap: 0; padding: 0; color: var(--ink); }
-.progress-native .progress-period { margin: 0 0 22px; color: var(--sub); font-size: 11px; font-weight: 650; letter-spacing: .11em; text-transform: uppercase; }
-.progress-native .progress-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 29px 20px; margin: 0; padding: 0 0 32px; }
-.progress-native .progress-metric { min-width: 0; }
-.progress-native .progress-metric dd { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px; margin: 0 0 7px; font-size: clamp(34px, 10vw, 43px); line-height: 1; font-weight: 570; letter-spacing: -.055em; font-variant-numeric: tabular-nums; color: var(--ink); }
-.progress-native .progress-metric dd > span { font-size: 18px; font-weight: 450; letter-spacing: -.02em; color: var(--sub); }
-.progress-native .progress-metric dt { font-size: 14px; font-weight: 600; line-height: 1.4; letter-spacing: -.015em; }
-.progress-native .progress-metric p { margin: 4px 0 0; font-size: 11px; line-height: 1.5; color: var(--sub); overflow-wrap: anywhere; }
-.progress-native .progress-trend { min-width: 0; padding: 23px 0 24px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.progress-native .progress-chart-selector { display: flex; gap: 22px; margin-bottom: 22px; }
-.progress-native .progress-chart-selector > button { min-height: 44px; padding: 0 0 8px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: var(--sub); font-size: 14px; font-weight: 550; }
-.progress-native .progress-chart-selector > button[aria-pressed="true"] { border-color: var(--accent); color: var(--ink); }
-.progress-native .progress-chart-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
-.progress-native .progress-chart-heading h2 { margin: 0; font-size: 17px; font-weight: 600; line-height: 1.35; letter-spacing: -.025em; }
-.progress-native .progress-chart-heading > span { flex: 0 0 auto; max-width: 45%; text-align: right; color: var(--sub); font-size: 11px; }
-.progress-native .progress-native-chart { display: block; width: 100%; height: 158px; overflow: visible; }
-.progress-native .progress-chart-baseline { fill: none; stroke: var(--line); stroke-width: 1; }
-.progress-native .progress-chart-line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
-.progress-native .progress-chart-dot { fill: var(--accent); }
-.progress-native .progress-chart-dates { display: flex; justify-content: space-between; padding: 8px 10px 0; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--sub); }
-.progress-native .progress-chart-empty { display: flex; flex-direction: column; justify-content: center; min-height: 145px; padding: 10px 0; }
-.progress-native .progress-chart-empty > strong { color: var(--ink); font-size: 24px; font-weight: 500; line-height: 1.25; letter-spacing: -.035em; }
-.progress-native .progress-chart-empty p { margin: 9px 0 0; max-width: 30ch; font-size: 13px; line-height: 1.6; color: var(--sub); }
-.progress-native .progress-weight-caption { display: grid; gap: 4px; margin-top: 17px; font-size: 11px; line-height: 1.6; color: var(--sub); }
-.progress-native .progress-weight-caption > span:first-child { color: var(--ink); }
-.progress-native .progress-strength-comparison { display: grid; gap: 20px; padding: 18px 0 21px; }
-.progress-native .progress-strength-comparison > div { display: grid; grid-template-columns: 51px minmax(0, 1fr) auto; align-items: center; gap: 13px; }
-.progress-native .progress-strength-comparison > div > span { color: var(--sub); font-size: 11px; }
-.progress-native .progress-strength-comparison > div > div { min-width: 0; height: 7px; }
-.progress-native .progress-strength-comparison i { display: block; height: 7px; border-radius: 2px; background: var(--accent); }
-.progress-native .progress-strength-comparison > div:first-child i { opacity: .35; }
-.progress-native .progress-strength-comparison strong { display: inline-flex; align-items: baseline; gap: 4px; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.progress-native .progress-strength-comparison small { font-size: 11px; color: var(--sub); font-weight: 400; }
-.progress-native .progress-chart-caption { margin: 5px 0 0; color: var(--sub); font-size: 12px; }
-.progress-native .progress-check-ins { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 19px 0; }
-.progress-native .progress-check-ins > button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 46px; padding: 8px; border: 0; border-radius: 9px; background: var(--surface-soft); color: var(--accent); font-size: 13px; font-weight: 600; }
-.progress-native .progress-single-insight { margin: 1px 0 25px; padding: 4px 0; max-width: 38ch; color: var(--sub); font-size: 13px; line-height: 1.65; }
-.progress-native .progress-overview-links { display: grid; border-top: 1px solid var(--line); }
-.progress-native .progress-overview-links > button { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 58px; width: 100%; padding: 13px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; color: var(--ink); text-align: left; font-size: 15px; font-weight: 500; }
-.progress-native .progress-overview-links svg { flex-shrink: 0; color: var(--sub); }
-.progress-native button:active { opacity: .6; }
-.progress-native button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
-@media (min-width: 760px) { .progress-native .progress-metrics { gap: 32px 48px; } .progress-native .progress-metric dd { font-size: 50px; } .progress-native .progress-native-chart { height: 200px; } }
-@media (max-width: 350px) { .progress-native .progress-metrics { column-gap: 14px; } .progress-native .progress-metric dd { font-size: 34px; } .progress-native .progress-metric dt { font-size: 13px; } .progress-native .progress-chart-selector { gap: 20px; } }
+/* One measured lens. Supporting records stay quiet until selected. */
+.progress-overview.progress-native { display:block; min-width:0; padding:0; color:var(--ink); }
+.progress-native .progress-chart-selector { display:flex; align-items:center; gap:24px; margin:0 0 30px; border-bottom:1px solid var(--line); }
+.progress-native .progress-chart-selector>button { position:relative; min-width:44px; min-height:46px; padding:0 0 12px; border:0; border-radius:0; background:transparent; color:var(--sub); font-size:14px; font-weight:500; line-height:1.2; }
+.progress-native .progress-chart-selector>button::after { content:''; position:absolute; bottom:-1px; left:0; right:0; height:2px; background:transparent; }
+.progress-native .progress-chart-selector>button[aria-pressed='true'] { color:var(--ink); }
+.progress-native .progress-chart-selector>button[aria-pressed='true']::after { background:var(--accent); }
+.progress-native .progress-trend { min-width:0; margin:0; padding:0; border:0; background:transparent; }
+.progress-native .progress-period { margin:0 0 10px; color:var(--sub); font-size:11px; font-weight:500; line-height:1.4; letter-spacing:.09em; text-transform:uppercase; }
+.progress-native .progress-lens-title { max-width:100%; margin:0; color:var(--ink); font-family:var(--font-display,ui-serif,'Iowan Old Style',Palatino,Georgia,serif); font-size:29px; font-weight:400; line-height:1.18; letter-spacing:-.035em; text-wrap:balance; }
+.progress-native .progress-lens-empty { padding:4px 0 22px; }
+.progress-native .progress-lens-empty .progress-lens-title { max-width:14ch; font-size:36px; line-height:1.13; }
+.progress-native .progress-lens-empty__copy { max-width:30ch; margin:18px 0 0; color:var(--sub); font-size:14px; line-height:1.65; }
+.progress-native .progress-lens-empty .progress-empty-action { display:inline-flex; min-height:48px; margin-top:23px; padding:12px 19px; }
+.progress-native .progress-lens-value { display:flex; align-items:baseline; gap:8px; margin-top:15px; font-variant-numeric:tabular-nums; }
+.progress-native .progress-lens-value>span { color:var(--ink); font-size:68px; font-weight:400; line-height:1; letter-spacing:-.065em; }
+.progress-native .progress-lens-value>small { color:var(--sub); font-size:21px; font-weight:400; line-height:1; letter-spacing:-.02em; }
+.progress-native .progress-lens-comparison { display:flex; align-items:baseline; flex-wrap:wrap; gap:5px 7px; margin:13px 0 0; color:var(--sub); font-size:13px; line-height:1.5; }
+.progress-native .progress-lens-comparison>strong { color:var(--accent); font-weight:550; }
+.progress-native .progress-plot { margin-top:27px; min-width:0; }
+.progress-native .progress-native-chart { display:block; width:100%; height:auto; max-height:210px; overflow:visible; }
+.progress-native .progress-chart-baseline { fill:none; stroke:var(--line); stroke-width:1; }
+.progress-native .progress-chart-line { fill:none; stroke:var(--accent); stroke-width:2; stroke-linejoin:round; stroke-linecap:round; }
+.progress-native .progress-chart-dot { fill:var(--accent); }
+.progress-native .progress-chart-dates { display:flex; justify-content:space-between; padding:10px 10px 0; color:var(--sub); font-size:11px; font-variant-numeric:tabular-nums; line-height:1.4; }
+.progress-native .progress-chart-empty { display:flex; align-items:center; min-height:110px; border-block:1px solid var(--line); }
+.progress-native .progress-chart-empty>p { margin:0; max-width:32ch; color:var(--sub); font-size:14px; line-height:1.6; }
+.progress-native .progress-weight-caption { margin:14px 0 0; color:var(--sub); font-size:12px; line-height:1.5; }
+.progress-native .progress-strength-comparison { display:grid; gap:26px; padding:22px 0; }
+.progress-native .progress-strength-comparison>div { display:grid; grid-template-columns:49px minmax(0,1fr) auto; align-items:center; gap:12px; }
+.progress-native .progress-strength-comparison>div>span { color:var(--sub); font-size:11px; }
+.progress-native .progress-strength-comparison>div>div { min-width:0; height:5px; }
+.progress-native .progress-strength-comparison i { display:block; height:5px; border-radius:0 2px 2px 0; background:var(--accent); }
+.progress-native .progress-strength-comparison>div:first-child i { opacity:.4; }
+.progress-native .progress-strength-comparison strong { display:inline-flex; align-items:baseline; gap:4px; color:var(--ink); font-size:18px; font-weight:500; line-height:1.2; font-variant-numeric:tabular-nums; }
+.progress-native .progress-strength-comparison small { color:var(--sub); font-size:11px; font-weight:400; }
+.progress-native .progress-chart-caption { margin:4px 0 0; color:var(--sub); font-size:12px; line-height:1.5; }
+.progress-native .progress-check-ins { display:flex; gap:24px; padding:16px 0 12px; }
+.progress-native .progress-check-ins>button { display:inline-flex; align-items:center; justify-content:flex-start; gap:6px; min-height:44px; padding:5px 0; border:0; border-radius:0; background:transparent; color:var(--sub); font-size:14px; font-weight:500; }
+.progress-native .progress-check-ins>button.is-contextual { color:var(--accent); }
+.progress-native .progress-single-insight { margin:4px 0 24px; padding:0; max-width:38ch; color:var(--ink); font-size:14px; line-height:1.6; }
+.progress-native .progress-supporting-metrics { margin-top:13px; border-top:1px solid var(--line); }
+.progress-native .progress-supporting-row,.progress-native .progress-consistency { display:flex; align-items:center; gap:10px; width:100%; min-height:77px; padding:16px 0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; color:var(--ink); text-align:left; }
+.progress-native .progress-supporting-row>span,.progress-native .progress-consistency>span { display:grid; flex:1; gap:5px; min-width:0; }
+.progress-native .progress-supporting-row strong,.progress-native .progress-consistency strong { color:var(--ink); font-size:15px; font-weight:500; line-height:1.35; }
+.progress-native .progress-supporting-row small,.progress-native .progress-consistency small { color:var(--sub); font-size:12px; line-height:1.4; }
+.progress-native .progress-supporting-row>b,.progress-native .progress-consistency>b { flex-shrink:0; color:var(--ink); font-size:18px; font-weight:450; line-height:1.2; letter-spacing:-.025em; font-variant-numeric:tabular-nums; }
+.progress-native .progress-supporting-row>svg { flex-shrink:0; color:var(--sub); }
+.progress-native .progress-consistency { padding-right:26px; }
+.progress-native .progress-overview-links { display:grid; margin-top:30px; }
+.progress-native .progress-overview-links>button { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:54px; width:100%; padding:13px 0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; color:var(--ink); text-align:left; font-size:15px; font-weight:400; }
+.progress-native .progress-overview-links>button:last-child { border-bottom:0; }
+.progress-native .progress-overview-links svg { flex-shrink:0; color:var(--sub); }
+.progress-native button:active { background:var(--surface-soft); }
+.progress-native button:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+@media(max-width:350px) {
+ .progress-native .progress-chart-selector { margin-bottom:26px; }
+ .progress-native .progress-lens-title { font-size:27px; }
+ .progress-native .progress-lens-empty .progress-lens-title { font-size:32px; }
+ .progress-native .progress-lens-value>span { font-size:60px; }
+ .progress-native .progress-supporting-row,.progress-native .progress-consistency { gap:8px; }
+ .progress-native .progress-supporting-row>b,.progress-native .progress-consistency>b { font-size:16px; }
+}
+@media(min-width:760px) {
+ .progress-native .progress-chart-selector { gap:32px; }
+ .progress-native .progress-lens-value>span { font-size:68px; }
+}

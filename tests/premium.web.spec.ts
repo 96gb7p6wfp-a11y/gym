@@ -1,3 +1,4 @@
+import { openDisclosure, openSection } from './helpers/navigation';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, createSession, stopSessionTimers } from '../src/domain.js';
 
@@ -5,7 +6,7 @@ const STORE = 'setline.gym.v1';
 const MOVEMENT = 'Medicine Ball Spike Slam';
 
 async function tab(page: Page, name: string) {
-  await page.getByRole('tab', { name, exact: true }).click();
+  await openSection(page, name);
 }
 
 async function safeAreas(page: Page) {
@@ -143,6 +144,7 @@ test('offers a one-tap progress check-in and charts only recorded body weights',
   await expect(check.locator('.nutrition-weight-average')).toContainText('64.2 kg');
   await check.getByRole('button', { name: 'Close', exact: true }).click();
   await page.getByLabel('Nutrition date', { exact: true }).fill('2026-10-07');
+  await openDisclosure(page, 'Nutrition options');
   await page.getByRole('button', { name: /^Weight check-in/ }).click();
   check = page.getByRole('dialog', { name: 'Weight check-in', exact: true });
   await check.getByLabel('Body weight · kg', { exact: true }).fill('64');
@@ -152,10 +154,11 @@ test('offers a one-tap progress check-in and charts only recorded body weights',
   await tab(page, 'Progress');
   // Two nearby weigh-ins are useful records, but not a weekly trend.
   await expect(page.getByRole('img', { name: /^Body weight trend:/ })).toHaveCount(0);
-  await expect(page.locator('.progress-weight-caption')).toContainText('2 days');
+  await expect(page.getByRole('region', { name: 'Body weight trend', exact: true })).toContainText('Weekly trends need at least 3 check-in days spread across the week.');
   await tab(page, 'Nutrition');
   for (const [date, kilograms] of [['2026-09-28', '63.8'], ['2026-09-30', '64'], ['2026-10-01', '64.2'], ['2026-10-05', '64.1']]) {
     await page.getByLabel('Nutrition date', { exact: true }).fill(date);
+    await openDisclosure(page, 'Nutrition options');
     await page.getByRole('button', { name: /^Weight check-in/ }).click();
     const entry = page.getByRole('dialog', { name: 'Weight check-in', exact: true });
     await entry.getByLabel('Body weight · kg', { exact: true }).fill(kilograms);
@@ -165,10 +168,13 @@ test('offers a one-tap progress check-in and charts only recorded body weights',
   }
   await tab(page, 'Progress');
   await expect(page.getByRole('img', { name: 'Body weight trend: weekly averages from 64 to 64.1 kilograms', exact: true })).toBeVisible();
-  await expect(page.locator('.progress-weight-caption')).toContainText('+0.1 kg · weekly averages over 30 days');
+  const comparison = page.locator('.progress-lens-comparison');
+  await expect(comparison.locator('strong')).toHaveText('+0.1 kg');
+  await expect(comparison.locator('span')).toHaveText('in weekly averages');
+  await expect(page.locator('.progress-weight-caption')).toHaveText('Average of 3 check-in days this week');
 });
 
-test('imports directly from More and keeps activity totals synchronized with the report week', async ({ page }) => {
+test('imports directly from You and keeps activity totals synchronized with the report week', async ({ page }) => {
   await tab(page, 'More');
   await page.getByRole('button', { name: 'Import activities', exact: true }).click();
   const importer = page.getByRole('dialog', { name: 'Import activities', exact: true });
@@ -233,9 +239,9 @@ test('a changed zinc instruction cannot retain a dose in its display name', asyn
 test('keeps all views contained and readable on desktop and narrow phones', async ({ page }) => {
   for (const width of [320, 1280]) {
     await page.setViewportSize({ width, height: 844 });
-    for (const name of ['Today', 'Train', 'Progress', 'Nutrition', 'More']) {
+    for (const name of ['Today', 'Train', 'Progress', 'Nutrition', 'You']) {
       await tab(page, name);
-      await expect(page.getByRole('tab', { name, exact: true })).toHaveAttribute('data-state', 'active');
+      await expect(page.getByRole('tab', { name: name === 'Nutrition' ? 'You' : name, exact: true })).toHaveAttribute('data-state', 'active');
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), `${name} at ${width}px`).toBe(true);
       for (const input of await page.locator('input:visible').all()) {
         expect(await input.evaluate(element => parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);

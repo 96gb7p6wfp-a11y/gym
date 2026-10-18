@@ -1,11 +1,13 @@
+import { openDisclosure, openSection } from './helpers/navigation';
 import { expect, test, type Page } from '@playwright/test';
 
 async function openPlan(page: Page) {
-  await page.getByRole('tab', { name: 'More', exact: true }).click();
+  await openSection(page, 'You');
   await page.getByRole('button', { name: 'Training plan', exact: true }).click();
 }
 
 async function openTargets(page: Page) {
+  await openDisclosure(page, 'Nutrition options');
   await page.getByRole('button', { name: /^Targets/ }).click();
   await expect(page.getByRole('dialog', { name: 'Daily targets', exact: true })).toBeVisible();
 }
@@ -30,8 +32,9 @@ test('volleyball times validate, persist and update workout and meal guidance', 
   await openPlan(page);
   await page.locator('.plan-schedule > summary').click();
   await expect(schedule).toContainText('21:00–23:00');
-  await page.getByRole('tab', { name: 'Nutrition', exact: true }).click();
+  await openSection(page, 'Nutrition');
   await page.getByLabel('Nutrition date', { exact: true }).fill('2026-10-06');
+  await openDisclosure(page, 'Nutrition options');
   await page.locator('.nutrition-simple-fuel > summary').click();
   await expect(page.locator('.nutrition-simple-fuel')).toContainText('19:00–20:00');
   await expect(page.locator('.nutrition-simple-fuel')).toContainText('After 23:00');
@@ -60,25 +63,25 @@ test('movement loading advice preserves distinct strength and power targets', as
 
 test('daily targets and explicit supplement tracking save and reload offline', async ({ page, context }) => {
   await page.goto('/');
-  await page.getByRole('tab', { name: 'Nutrition', exact: true }).click();
+  await openSection(page, 'Nutrition');
   await expect.poll(() => page.evaluate(() => navigator.serviceWorker.controller?.state), { timeout: 15_000 }).toBe('activated');
   await context.setOffline(true);
   await openTargets(page);
   await page.locator('.nutrition-calculator').getByRole('button', { name: 'Use these daily targets', exact: true }).click();
   await expect(page.locator('.nutrition-totals')).toContainText('of 3000 kcal');
   await page.getByRole('dialog', { name: 'Daily targets', exact: true }).getByRole('button', { name: 'Close', exact: true }).click();
-  await page.getByRole('tab', { name: 'More', exact: true }).click();
+  await openSection(page, 'You');
   await page.getByRole('button', { name: 'Routine', exact: true }).click();
   const reminders = page.getByRole('region', { name: 'Supplement and medication reminders', exact: true });
   await reminders.getByRole('button', { name: 'Mark Mivolis zinc taken', exact: true }).click();
   await expect(reminders.getByRole('button', { name: 'Undo Mivolis zinc taken', exact: true })).toBeVisible();
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.getByRole('tab', { name: 'Nutrition', exact: true }).click();
+  await openSection(page, 'Nutrition');
   await expect(page.locator('.nutrition-totals')).toContainText('of 3000 kcal');
   await openTargets(page);
   await expect(page.locator('.nutrition-calculator')).toContainText('128 g');
   await page.getByRole('dialog', { name: 'Daily targets', exact: true }).getByRole('button', { name: 'Close', exact: true }).click();
-  await page.getByRole('tab', { name: 'More', exact: true }).click();
+  await openSection(page, 'You');
   await page.getByRole('button', { name: 'Routine', exact: true }).click();
   await expect(reminders.getByRole('button', { name: 'Undo Mivolis zinc taken', exact: true })).toBeVisible();
 });

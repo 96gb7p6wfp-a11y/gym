@@ -1,3 +1,4 @@
+import { openDisclosure, openSection } from './helpers/navigation';
 import { readFile } from 'node:fs/promises';
 import { Encoder, Profile, type FileIdMesg, type SessionMesg } from '@garmin/fitsdk';
 import { expect, test, type Locator, type Page } from '@playwright/test';
@@ -15,11 +16,11 @@ async function selectTab(page: Page, name: string) {
     return;
   }
   if (name === 'My plan') {
-    await page.getByRole('tab', { name: 'More', exact: true }).click();
+    await openSection(page, 'You');
     await page.getByRole('button', { name: 'Training plan', exact: true }).click();
     return;
   }
-  await page.getByRole('tab', { name: name === 'Workout' ? 'Train' : name, exact: true }).click();
+  await openSection(page, name);
   if (name === 'Progress') await page.getByRole('button', { name: 'Strength history', exact: true }).click();
 }
 
@@ -35,16 +36,18 @@ async function selectMovement(page: Page, movement: string) {
 }
 
 async function openFuel(page: Page) {
-  const summary = page.locator('summary').filter({ hasText: /^Fuel & recovery$/ });
-  if (!await summary.locator('..').evaluate(element => element.hasAttribute('open'))) await summary.click();
+  await openDisclosure(page, 'Session tools');
+  await openDisclosure(page, 'Fuel & recovery');
 }
 
 async function openTargets(page: Page) {
+  await openDisclosure(page, 'Nutrition options');
   await page.getByRole('button', { name: /^Targets/ }).click();
   return page.getByRole('dialog', { name: 'Daily targets', exact: true });
 }
 
 async function openWeight(page: Page) {
+  await openDisclosure(page, 'Nutrition options');
   await page.getByRole('button', { name: /^Weight check-in/ }).click();
   return page.getByRole('dialog', { name: 'Weight check-in', exact: true });
 }
@@ -64,8 +67,8 @@ async function openMealDetails(meal: Locator) {
 
 async function openActivities(page: Page) {
   await selectTab(page, 'Workout');
-  const activities = page.locator('details').filter({ has: page.locator('summary').getByText('Activities', { exact: true }) });
-  if (!await activities.evaluate(element => element.hasAttribute('open'))) await activities.locator(':scope > summary').click();
+  await openDisclosure(page, 'Session tools');
+  await openDisclosure(page, 'Activities');
 }
 
 function mondayHistory(page: Page) {
@@ -207,16 +210,17 @@ test.afterEach(async ({ page }) => {
   await expect(page.locator('iframe')).toHaveCount(0);
 });
 
-test('provides all five views and usable navigation at iPhone and narrow phone sizes', async ({ page }) => {
+test('provides four primary destinations and secondary Nutrition at iPhone and narrow phone sizes', async ({ page }) => {
   const headings: Record<string, string> = {
     Today: '',
     Train: 'Train',
     Progress: 'Progress',
-    Nutrition: 'Nutrition',
-    More: 'More',
+    You: 'You',
   };
   for (const width of [390, 320]) {
     await page.setViewportSize({ width, height: 844 });
+    await expect(page.getByRole('tablist', { name: 'Main navigation', exact: true }).getByRole('tab')).toHaveCount(4);
+    await expect(page.getByRole('tab', { name: 'Nutrition', exact: true })).toHaveCount(0);
     for (const [name, heading] of Object.entries(headings)) {
       const tab = page.getByRole('tab', { name, exact: true });
       await expect(tab).toBeVisible();
@@ -235,6 +239,12 @@ test('provides all five views and usable navigation at iPhone and narrow phone s
       }));
       expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
     }
+    await openSection(page, 'Nutrition');
+    const dimensions = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    }));
+    expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
   }
   await selectTab(page, 'My plan');
   await page.locator('.native-program-options > summary').click();
@@ -255,12 +265,14 @@ test('validates sets, saves a complete workout, edits its log, and deletes and r
   await expect(page.getByRole('spinbutton', { name: `${MOVEMENT} set 5 reps`, exact: true })).toHaveCount(0);
   await logWeightSet(page, '6', '4');
   await expect(completed).toBeChecked();
-  await page.locator('.train-secondary > summary').filter({ hasText: /^Rest timer$/ }).click();
+  await openDisclosure(page, 'Session tools');
+  await openDisclosure(page, 'Rest timer');
   await expect(page.getByRole('button', { name: 'Skip rest', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Time & RIR', exact: true }).click();
   await page.getByLabel('Time', { exact: true }).first().fill('45');
   await page.getByLabel('RIR', { exact: true }).first().fill('2');
-  await page.locator('.workout-notes > details > summary').click();
+  await openDisclosure(page, 'Session tools');
+  await openDisclosure(page, 'Workout notes');
   await page.getByLabel('Workout notes', { exact: true }).fill('Felt strong; keep the same setup.');
   const summary = await finishWorkout(page, '60', '350');
   await expect(summary).toContainText(/60\s*minutes/);
@@ -300,7 +312,8 @@ test('validates sets, saves a complete workout, edits its log, and deletes and r
 test('preserves a paused active workout across reload, resumes it, and cancels it safely', async ({ page }) => {
   await startMonday(page);
   await logWeightSet(page, '7', '4');
-  await page.locator('.workout-notes > details > summary').click();
+  await openDisclosure(page, 'Session tools');
+  await openDisclosure(page, 'Workout notes');
   await page.getByLabel('Workout notes', { exact: true }).fill('Paused session survives reload.');
   await page.getByRole('button', { name: 'Pause workout', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Resume workout', exact: true })).toBeVisible();
@@ -311,14 +324,17 @@ test('preserves a paused active workout across reload, resumes it, and cancels i
   await expect(page.getByRole('button', { name: 'Resume workout', exact: true })).toBeVisible();
   await expect(page.getByRole('textbox', { name: `${MOVEMENT} set 1 weight in kilograms`, exact: true })).toHaveValue('7');
   await expect(page.getByRole('checkbox', { name: `Complete ${MOVEMENT} set 1`, exact: true })).toBeChecked();
-  await page.locator('.workout-notes > details > summary').click();
+  await openDisclosure(page, 'Session tools');
+  await openDisclosure(page, 'Workout notes');
   await expect(page.getByLabel('Workout notes', { exact: true })).toHaveValue('Paused session survives reload.');
   await page.getByRole('button', { name: 'Resume workout', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Pause workout', exact: true })).toBeVisible();
+  await openDisclosure(page, 'Session tools');
   await page.getByRole('button', { name: 'Discard this workout', exact: true }).click();
   const confirmation = page.getByRole('alertdialog', { name: 'Discard this workout?', exact: true });
   await confirmation.getByRole('button', { name: 'Keep workout', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Finish workout', exact: true })).toBeVisible();
+  await openDisclosure(page, 'Session tools');
   await page.getByRole('button', { name: 'Discard this workout', exact: true }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Discard workout', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Start workout', exact: true })).toBeEnabled();
@@ -386,6 +402,7 @@ test('logs a five-kilometre run independently and includes it in history, progre
   const panel = page.getByRole('region', { name: 'Extra activities', exact: true });
   await expect(panel.getByRole('article', { name: 'Running activity', exact: true })).toContainText('5 km');
   await expect(panel).toContainText('320 active kcal');
+  await openDisclosure(page, 'Session details');
   const metrics = page.locator('.session-stats .stats-grid');
   await expect(metrics.locator('.stat').filter({ hasText: 'Active kcal' }).locator('strong')).toHaveText('320');
   await expect(metrics.locator('.stat').filter({ hasText: 'Minutes' }).locator('strong')).toHaveText('30');
@@ -416,6 +433,7 @@ test('logs a five-kilometre run independently and includes it in history, progre
   await expect(page.getByRole('region', { name: 'Extra activity progress', exact: true })).toContainText('384');
   await selectTab(page, 'Nutrition');
   await page.getByLabel('Nutrition date', { exact: true }).fill(activityDate);
+  await openDisclosure(page, 'Nutrition options');
   await page.locator('.nutrition-simple-fuel > summary').click();
   await expect(guidance.locator('[aria-label="Daily training total"]')).toContainText('384');
   await expect(page.locator('.nutrition-totals')).toContainText('No target set');
@@ -533,6 +551,7 @@ test('validates and persists editable day plans without changing an existing wor
   await expect(editor.getByRole('textbox', { name: 'Session note', exact: true })).toHaveValue('My custom weekly session.');
   await closeDialog(editor);
   await selectTab(page, 'Workout');
+  await openDisclosure(page, 'Session tools');
   await page.getByRole('button', { name: 'Discard this workout', exact: true }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Discard workout', exact: true }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
@@ -689,7 +708,8 @@ test('persists body weight and default rest preferences', async ({ page }) => {
   await preferences.getByRole('button', { name: 'Save preferences', exact: true }).click();
   await expect(preferences).not.toBeVisible();
   await selectTab(page, 'Workout');
-  await page.locator('.train-secondary > summary').filter({ hasText: /^Rest timer$/ }).click();
+  await openDisclosure(page, 'Session tools');
+  await openDisclosure(page, 'Rest timer');
   await expect(page.locator('.rest-clock')).toHaveText('02:00');
   await page.reload();
   const restored = await openPreferences(page);
@@ -717,8 +737,8 @@ test('serves a standalone PWA manifest, local icons, safe-area HTML, and a worke
   expect(manifest.start_url).toBe('/');
   expect(manifest.scope).toBe('/');
   expect(['standalone', 'fullscreen']).toContain(manifest.display);
-  expect(manifest.theme_color).toBe('#f7f5f1');
-  expect(manifest.background_color).toBe('#f7f5f1');
+  expect(manifest.theme_color).toBe('#f4f1eb');
+  expect(manifest.background_color).toBe('#f4f1eb');
   expect(manifest.display_override).toContain('fullscreen');
   expect(manifest.icons).toEqual(expect.arrayContaining([
     expect.objectContaining({ sizes: '192x192' }),
@@ -761,7 +781,8 @@ test('reloads the cached full app offline and saves a complete workout without a
   await expect(page.getByRole('tab', { name: 'Today', exact: true })).toHaveAttribute('data-state', 'active');
   await startMonday(page);
   await logWeightSet(page, '9', '6');
-  await page.locator('.workout-notes > details > summary').click();
+  await openDisclosure(page, 'Session tools');
+  await openDisclosure(page, 'Workout notes');
   await page.getByLabel('Workout notes', { exact: true }).fill('Logged entirely offline.');
   const summary = await finishWorkout(page, '45');
   await expect(summary.locator('.workout-completion__volume')).toContainText(/Volume54\s*kg logged/);

@@ -1,3 +1,4 @@
+import { openSection } from './helpers/navigation';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, SessionSchema, createSession, stopSessionTimers } from '../src/domain.js';
 
@@ -71,12 +72,20 @@ for (const width of [320, 390]) {
       expect(bounds.y + bounds.height).toBeLessThan(nav.y);
       await tappable(action, nav.y);
     }
-    await expect(page.getByRole('button', { name: 'View approach jump progress: 67.5 centimetres', exact: true })).toContainText('+2.5 cm');
+    // The cover keeps one action and one real weekly-progress row; nutrition is
+    // reachable without restoring the rejected home metric grid.
+    const fuel = page.getByRole('button', { name: 'View today’s nutrition', exact: true });
+    await expect(fuel).toContainText('Fuel');
+    await tappable(fuel, nav.y);
+    await fuel.click();
+    await expect(page.getByRole('heading', { name: 'Nutrition', exact: true })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'You', exact: true })).toHaveAttribute('data-state', 'active');
+    await openSection(page, 'Today');
     await progress.click();
     await expect(page.getByRole('tab', { name: 'Progress', exact: true })).toHaveAttribute('data-state', 'active');
     const progressViews = (await page.getByRole('group', { name: 'Chart metric', exact: true }).boundingBox())!;
     expect(progressViews.height).toBeLessThanOrEqual(56);
-    await expect(page.getByRole('img', { name: /^Approach jump trend:/ })).toBeVisible();
+    await expect(page.getByRole('img', { name: /^Approach jump trend:/ })).toHaveAttribute('aria-label', /65 to 67\.5 centimetres/);
     await expect(page.getByRole('region', { name: 'Jump performance', exact: true })).not.toContainText('305');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });

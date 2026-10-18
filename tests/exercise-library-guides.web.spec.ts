@@ -1,3 +1,4 @@
+import { openDisclosure } from './helpers/navigation';
 import { expect, test } from '@playwright/test';
 
 test('exercise details explain purpose and rank relevant alternatives without crowding the workout', async ({ page }) => {
@@ -8,6 +9,9 @@ test('exercise details explain purpose and rank relevant alternatives without cr
   const guide = page.locator('.exercise-guide-sheet');
   await expect(guide).not.toBeVisible();
   await page.getByRole('button', { name: 'Exercise details for Chest-Supported Row', exact: true }).click();
+  await expect(guide.locator('.exercise-guide__overview')).toBeHidden();
+  await openDisclosure(page, 'About this exercise');
+  await expect(guide.locator('.exercise-guide__overview')).toBeVisible();
   await expect(guide.locator('.exercise-guide__overview')).toContainText('Targets');
   await expect(guide.locator('.exercise-guide__overview')).toContainText('Back');
   await expect(guide.locator('.exercise-guide__overview')).toContainText('Improves');

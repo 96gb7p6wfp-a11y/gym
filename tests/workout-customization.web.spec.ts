@@ -1,3 +1,4 @@
+import { openSection } from './helpers/navigation';
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE } from '../src/domain.js';
 
@@ -5,7 +6,7 @@ const STORE = 'setline.gym.v1';
 const FIRST = 'Medicine Ball Spike Slam';
 
 async function tab(page: Page, name: string) {
-  await page.getByRole('tab', { name, exact: true }).click();
+  await openSection(page, name);
 }
 
 async function state(page: Page) {

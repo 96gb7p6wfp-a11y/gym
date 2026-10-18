@@ -1,3 +1,4 @@
+import { openSection } from './helpers/navigation';
 import { expect, test } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
@@ -47,7 +48,7 @@ test('keeps movement dropdown keyboard navigation and restores focus after selec
 
 test('keeps native plan controls selectable and safely contained on a narrow phone', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
-  await page.getByRole('tab', { name: 'More', exact: true }).click();
+  await openSection(page, 'You');
   await page.getByRole('button', { name: 'Training plan', exact: true }).click();
   await page.getByRole('button', { name: 'Edit Monday', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Edit Monday', exact: true });

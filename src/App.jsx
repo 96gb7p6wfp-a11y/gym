@@ -20,7 +20,7 @@ import { shortSessionName } from "./presentation";
 import { VolleyballMasterProgram, MasterProgramReadiness } from './VolleyballMasterProgram';
 import { createVolleyballMasterPlan, getMasterProgramWeek, getMasterProgramPhase, masterWeekStart, masterScheduledEvents, masterPlannedMinutes, resolveMasterProgramPlan } from './volleyball-master-plan';
 import { PageHeader, BottomNavigation, SegmentedControl, MenuRow } from "./components/design";
-import { House, Ellipsis, ArrowLeft, Upload, ShieldCheck } from "lucide-react";
+import { House, Ellipsis, UserRound, ArrowLeft, Upload, ShieldCheck } from "lucide-react";
 import { DataSettings } from "./DataSettings";
 import { ExtraActivities } from "./ExtraActivities";
 import { ActivityHistory } from "./ActivityHistory";
@@ -154,10 +154,14 @@ function GymApp({
   const [completedCelebrationId, setCompletedCelebrationId] = React.useState(null);
   let [saving, setSaving] = React.useState(!1);
   let [loadError, setLoadError] = React.useState(``);
-  let [tab, setTab] = React.useState(`today`);
+  let [tab, setTabState] = React.useState(`today`);
   let [progressView, setProgressView] = React.useState(`overview`);
   let [progressReportWeek, setProgressReportWeek] = React.useState(() => dateKey(startOfWeek(new Date(`${initialDate}T12:00:00`))));
   let [moreView, setMoreView] = React.useState(`menu`);
+  const setTab = React.useCallback((next) => {
+    if (next === `nutrition`) { setMoreView(`nutrition`); setTabState(`more`); }
+    else setTabState(next);
+  }, []);
   React.useEffect(() => { window.scrollTo({ top: 0, behavior: `instant` }); }, [tab, moreView, progressView]);
   let [routineDate, setRoutineDate] = React.useState(initialDate);
   let [nutritionAction, setNutritionAction] = React.useState(null);
@@ -347,6 +351,11 @@ function GymApp({
       e.date >= dateKey(weekStart) && e.date <= dateKey(addDays(weekStart, 6)),
   );
   let currentSession = viewingSession;
+  React.useLayoutEffect(() => {
+    // Enter a newly started/restored session at its heading. Browser scroll
+    // anchoring can otherwise follow the removed overview on a short screen.
+    if (tab === `train`) window.scrollTo({ top: 0, behavior: `instant` });
+  }, [currentSession?.id]);
   let workoutDate = currentSession?.date ?? selectedDate;
   let weekActivities = activityRecords.filter(({ activity }) =>
     activity.deletedAt === null && activity.date >= dateKey(weekStart) &&
@@ -988,7 +997,7 @@ function GymApp({
                   onClick={() => {
                     if (activeSession) {
                       toast(
-                        `Finish your current workout before choosing another day. Your weekly plan is in More.`,
+                        `Finish your current workout before choosing another day.`,
                       );
                       return;
                     }
@@ -1062,15 +1071,15 @@ function GymApp({
           { value: `today`, label: `Today`, icon: <House /> },
           { value: `train`, label: `Train`, icon: <Dumbbell /> },
           { value: `progress`, label: `Progress`, icon: <ChartColumn /> },
-          { value: `nutrition`, label: `Nutrition`, icon: <Utensils /> },
-          { value: `more`, label: `More`, icon: <Ellipsis /> },
+          { value: `more`, label: `You`, icon: <UserRound /> },
         ]} />
-      <main className={`workspace ${tab === 'train' && currentSession ? 'workspace--training' : ''}`}>
-        <PageHeader title={tab === `today` ? `Today` : tab === `train` ? `Train` : tab === `progress` ? progressView === 'history' ? 'History' : progressView === 'strength' ? 'Strength' : progressView === 'week' ? 'Your week' : progressView === 'details' ? 'Performance' : 'Progress' : tab === `nutrition` ? `Nutrition` : moreView === `plan` ? `Training plan` : moreView === `routine` ? `Routine` : moreView === `workouts` ? `My workouts` : `More`}
+      <main className={`workspace workspace--${tab === 'more' ? moreView : tab} ${tab === 'train' && currentSession ? 'workspace--training' : ''}`}>
+        <PageHeader title={tab === `today` ? `Today` : tab === `train` ? `Train` : tab === `progress` ? progressView === 'history' ? 'History' : progressView === 'strength' ? 'Strength' : progressView === 'week' ? 'Your week' : progressView === 'details' ? 'Performance' : 'Progress' : moreView === `nutrition` ? `Nutrition` : moreView === `plan` ? `Training plan` : moreView === `routine` ? `Routine` : moreView === `workouts` ? `My workouts` : `You`}
           action={tab === `train` && !currentSession ? <button type="button" className="icon-button" aria-label="Weekly plan" onClick={openPlan}><ListChecks size={21} /></button> : undefined}
+          back={tab === `more` && moreView !== `menu` ? <button className="text-button" onClick={() => setMoreView(`menu`)}><ArrowLeft size={17} />You</button> : tab === `progress` && progressView !== `overview` ? <button className="text-button" onClick={() => { setProgressView(`overview`); setPerformanceAction(undefined); }}><ArrowLeft size={17} />Progress</button> : undefined}
           subtitle={tab === `today` ? new Date(`${selectedDate}T12:00:00`).toLocaleDateString(`en-GB`, { weekday: `long`, day: `numeric`, month: `long` }) : undefined} />
-        {(saving || profileSaving) && <span className="sync-state" role="status">Saving…</span>}
-        {loadError && tab !== `nutrition` && (
+        {(saving || profileSaving) && <span className="sr-only" role="status">Saving…</span>}
+        {loadError && !(tab === `more` && moreView === `nutrition`) && (
           <div className={`error-banner`} role={`alert`}>
             <p>{loadError}</p>
             <div>
@@ -1091,7 +1100,7 @@ function GymApp({
             onProgress={() => { setProgressView('overview'); setTab('progress'); }}
             disabled={!loaded || saving || !!loadError} onStart={startWorkout} onTrain={() => setTab(`train`)}
             onViewLog={setSelectedHistory} onNutrition={() => setTab(`nutrition`)} onPlan={openPlan}
-            onActivity={() => { setTab(`train`); requestAnimationFrame(() => { const tools = document.querySelector(`.train-activities`); if (tools) { tools.open = true; tools.scrollIntoView({ block: `start`, behavior: `smooth` }); } }); }} />
+            onActivity={() => { setTab(`train`); requestAnimationFrame(() => { const menu = document.querySelector(`.train-utilities`); if (menu) menu.open = true; const tools = document.querySelector(`.train-activities`); if (tools) { tools.open = true; tools.scrollIntoView({ block: `start`, behavior: `smooth` }); } }); }} />
         </TabsContent>
         <TabsContent value={`train`}>
           {!currentSession && weekSelector}
@@ -1219,7 +1228,7 @@ function GymApp({
                   >{`View log`}</button>
                 </div>
               )}
-              {!currentSession && <div className="workout-template-actions"><button type="button" className="text-button" disabled={!loaded} onClick={() => setWorkoutChooserOpen(true)}>Choose workout</button><button type="button" className="text-button" disabled={!loaded} onClick={() => openCustomWorkout()}>Create workout</button></div>}
+              {!currentSession && <details className="workout-template-actions"><summary>Workout options</summary><div className="workout-template-options"><button type="button" className="text-button" disabled={!loaded} onClick={() => setWorkoutChooserOpen(true)}>Choose workout</button><button type="button" className="text-button" disabled={!loaded} onClick={() => openCustomWorkout()}>Create workout</button></div></details>}
               {currentSession ? (
                 <React.Fragment><FocusedWorkout sessionId={currentSession.id} exercises={currentSession.exercises} now={now} editing={!!editingHistoryId}
                   sessions={completedSessions} date={currentSession.date}
@@ -1288,6 +1297,8 @@ function GymApp({
                 <button className="text-button planned-edit" disabled={!loaded} onClick={() => editPlanDay(selectedDay, extraSessionVisible)}><Pencil size={14} /> Edit day</button>
                 </div>
               )}
+            </section>
+            <details className="train-utilities"><summary>Session tools</summary><div className="train-utilities-content"><section className="workout-preparation">
               <details className="train-activities"><summary>Activities</summary>
               <ExtraActivities
                 date={workoutDate}
@@ -1500,13 +1511,12 @@ function GymApp({
                 <ShortRoutine input={dailyContext(workoutDate).input} />
                 {guidanceForDate(workoutDate, false)}
               </details>
-            </aside>
+            </aside></div></details>
           </div>
         </TabsContent>
         <TabsContent value="progress">
-          {!['overview', 'details'].includes(progressView) && <button type="button" className="text-button subpage-back" onClick={() => setProgressView('overview')}><ArrowLeft size={17} />Progress</button>}
           {performance.error && <div className="error-state" role="alert"><p>{performance.error}</p><button className="text-button" onClick={performance.reload}>Reload performance</button></div>}
-          {progressView === 'details' && <><button className="text-button subpage-back" onClick={() => { setProgressView('overview'); setPerformanceAction(undefined); }}><ArrowLeft size={17} /> Progress</button>
+          {progressView === 'details' && <>
             <PerformanceDetails sessions={sessions} activities={activityRecords} plan={currentWeekPlan} nutritionRecords={reportNutrition}
               performance={performance.data} bodyWeight={profile.bodyWeight} today={today} initialAction={performanceAction}
               onSaveJump={performance.saveJump} onDeleteJump={performance.deleteJump}
@@ -1793,20 +1803,17 @@ function GymApp({
           </section>
 </details></>}
         </TabsContent>
-        <TabsContent value="nutrition">
-          <NutritionView bodyWeight={profile.bodyWeight} dailyGuidance={guidanceForDate}
-            nutritionProfile={profile.nutrition}
-            onNutritionProfileChange={saveNutritionProfile} volleyballSchedule={volleyballSchedule} initialAction={nutritionAction} onActionHandled={() => setNutritionAction(null)} onOpenRoutine={(date) => { setRoutineDate(date); setMoreView(`routine`); setTab(`more`); }} />
-</TabsContent>
         <TabsContent value="more">
-          {moreView !== `menu` && <button className="text-button subpage-back" onClick={() => setMoreView(`menu`)}><ArrowLeft size={17} /> More</button>}
+          {moreView === `nutrition` && <NutritionView bodyWeight={profile.bodyWeight} dailyGuidance={guidanceForDate}
+            nutritionProfile={profile.nutrition}
+            onNutritionProfileChange={saveNutritionProfile} volleyballSchedule={volleyballSchedule} initialAction={nutritionAction} onActionHandled={() => setNutritionAction(null)} onOpenRoutine={(date) => { setRoutineDate(date); setMoreView(`routine`); }} />}
           {moreView === `plan` && <>
-          <details className="plan-schedule"><summary>Volleyball schedule <span>{volleyballSchedule.startTime}–{volleyballSchedule.endTime}</span></summary><TrainingSchedule schedule={volleyballSchedule} onSave={saveVolleyballSchedule} /></details>
 
           <section className="native-week" aria-label="Weekly training schedule"><p className="eyebrow">This week</p><div className="plan-timeline">{(profile.masterProgram && !masterWeek ? editableWeekPlan : scheduledPlan).map((e, t) => {
             const date = dateKey(addDays(weekStart, t)); const recorded = completedSessions.some(session => session.date === date);
             return <article className={`plan-day${date === today ? ' is-today' : ''}`} key={t}><div className="plan-day__date"><span>{WEEKDAYS[t].slice(0, 3)}</span><strong>{addDays(weekStart, t).getDate()}</strong></div><details className="plan-day-details"><summary><strong>{getSessionPurpose(e, t).title}</strong><span>{e.kind === 'sport' && e.name === 'Volleyball' ? `${volleyballSchedule.startTime}–${volleyballSchedule.endTime}` : e.name === 'Match' ? 'Match · time not set' : `${e.minutes} min · ${getSessionPurpose(e, t).subtitle}`}{recorded ? ' · Recorded' : date === today ? ' · Today' : ''}</span><ChevronRight size={16} /></summary><PlanDayDetails plan={e} /></details><button type="button" className="icon-button" aria-label={`Edit ${WEEKDAYS[t]}`} disabled={!loaded} onClick={() => editPlanDay(t)}>{recorded ? <Check size={17} /> : <Ellipsis size={20} />}</button>{e.extraSession && <div className="plan-day__extra"><details className="plan-day-details"><summary><strong>{shortSessionName(e.extraSession.name)}</strong><span>{e.extraSession.minutes} min</span><ChevronRight size={15} /></summary><PlanDayDetails plan={e.extraSession} /></details><button className="text-button" disabled={!loaded} onClick={() => editPlanDay(t, true)}><Pencil size={14} />Edit primer</button></div>}</article>;
           })}</div></section>
+          <details className="plan-schedule"><summary>Volleyball schedule <span>{volleyballSchedule.startTime}–{volleyballSchedule.endTime}</span></summary><TrainingSchedule schedule={volleyballSchedule} onSave={saveVolleyballSchedule} /></details>
           <details className="native-program-options"><summary>Programme & customization</summary>          <VolleyballMasterProgram settings={profile.masterProgram} defaultStartDate={dateKey(addDays(new Date(`${masterWeekStart(today)}T12:00:00`), 7))} selectedDate={selectedDate} onSave={saveMasterProgram} disabled={profileSaving || !loaded} />
           {!profile.masterProgram && <details className="plan-program"><summary>Jump training block</summary>
           <section className={`panel program-overview`}>
@@ -1843,10 +1850,10 @@ function GymApp({
           </section>}
           {moreView === `routine` && <RemindersPanel showHeading={false} date={routineDate} onDateChange={setRoutineDate} />}
           {moreView === `menu` && <div className="more-menu">
+            <section className="native-menu-section"><h2>Daily</h2><div className="menu-group"><MenuRow title="Nutrition" subtitle="Meals & daily targets" onClick={() => setTab('nutrition')} /><MenuRow title="Routine" subtitle="Supplements & medication" onClick={() => setMoreView('routine')} /></div></section>
             <section className="native-menu-section"><h2>Training</h2><div className="menu-group"><MenuRow title="Training plan" icon={<ListChecks />} onClick={openPlan} /><MenuRow title="My workouts" icon={<Dumbbell />} onClick={() => setMoreView('workouts')} /><MenuRow title="Exercise library" icon={<Search />} onClick={() => setLibraryOpen(true)} /></div></section>
             <section className="native-menu-section"><h2>Your records</h2><div className="menu-group"><MenuRow title="History" icon={<History />} onClick={() => { setProgressView('history'); setTab('progress'); }} /><MenuRow title="Body weight" icon={<Activity />} onClick={() => { setNutritionAction('weight'); setTab('nutrition'); }} /><MenuRow title="Jump tests" icon={<ChartColumn />} onClick={() => { setPerformanceAction('log-jump'); setProgressView('details'); setTab('progress'); }} /></div></section>
-            <section className="native-menu-section"><h2>Personal</h2><div className="menu-group"><MenuRow title="Routine" subtitle="Supplements & medication" icon={<CheckCheck />} onClick={() => setMoreView('routine')} /><MenuRow title="Settings" icon={<Settings2 />} onClick={openSettings} /></div></section>
-            <section className="native-menu-section"><h2>Data & app</h2><div className="menu-group"><MenuRow title="Import activities" subtitle="Strava, Adidas Running & watch exports" icon={<Upload />} onClick={() => setImportOpen(true)} /><MenuRow title="Backup & data" icon={<ShieldCheck />} onClick={openSettings} /><MenuRow title="Install Setline" icon={<House />} onClick={() => setInstallOpen(true)} /></div></section>
+            <section className="native-menu-section"><h2>App & data</h2><div className="menu-group"><MenuRow title="Settings" onClick={openSettings} /><MenuRow title="Import activities" subtitle="Strava, Adidas Running & watch exports" icon={<Upload />} onClick={() => setImportOpen(true)} /><MenuRow title="Backup & data" icon={<ShieldCheck />} onClick={openSettings} /><MenuRow title="Install Setline" icon={<House />} onClick={() => setInstallOpen(true)} /></div></section>
             <ActivityImport bodyWeight={profile.bodyWeight} records={activityRecords} onImport={importExtraActivities} disabled={!loaded} open={importOpen} onOpenChange={setImportOpen} hideLauncher />
           </div>}
           <ExerciseLibrarySheet open={libraryOpen} onOpenChange={setLibraryOpen} onSelect={() => {}} browseOnly />

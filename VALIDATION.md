@@ -1,5 +1,41 @@
 # Standalone app validation
 
+## Athlete’s Journal reinvention — 18 October 2026
+
+The presentation layer now uses the new journal system throughout Today, Train,
+Progress, secondary Nutrition, You, the plan, library, exercise details and settings.
+Four primary destinations replace the former five-tab structure. Existing storage,
+schemas, workout mutations, training logic and backup envelopes are unchanged.
+
+| Final check | Result |
+| --- | --- |
+| `npm test` | 261 passed, zero failures or skips |
+| `npm run build` | Passed TypeScript, production bundle and generated service worker |
+| `npm run test:web` | 115 passed, zero failures or skips, against the final production build (3.7 minutes) |
+| Rendered review | 160 screen captures across 320×568, 390×844, 430×932, 844×390 landscape and 1280×900 desktop, each in light and dark |
+| Containment | No horizontal overflow in any captured screen; portrait safe areas simulated at 47px top / 34px bottom |
+| Local compatibility | Existing v1 records, old profile defaults, session snapshots, backups, imports and offline workflows passed their regression checks |
+| PWA | Manifest, local icons, standalone launch, worker registration and cached offline logging passed; installation identity/scope/start URL remain `/` |
+
+Coverage includes add/replace/remove/reorder, custom workouts, weekly editing and
+restore, decimal dot/comma weights, conservative progression, complex pairs, timed
+sets, rest, nutrition, routines, history, jump height/touch separation, body-weight
+averages, activity imports, reports and backup/restore. New regression cases verify
+the long Wednesday master-plan title above the tabs on a small phone, session entry
+without browser scroll-anchor jumps, and an honest empty Progress screen.
+
+Actual rendered review led to fixes for short-phone spacing, fractional keyboard
+scroll rounding, landscape picker space and compact exercise-sheet technique.
+Preparation and exercise-preview contrast checks resolve ancestor backgrounds to
+catch the earlier white-text-on-white-surface regression. Screenshots use isolated
+validated fixtures; no demo records are shipped or inserted into user storage.
+
+These are Linux Chromium phone emulations and simulated keyboard/safe-area checks,
+not a physical iPhone/Safari run. The build retains its existing large-chunk warning.
+No Vercel deployment was created or claimed as part of these checks.
+
+## Earlier validation history
+
 Initial validation was performed on 2026-10-08. The athlete-focused redesign
 was checked on 2026-10-16 in the Linux cloud workspace. This repository
 contains the full React + Vite Setline gym app and an installable PWA. The previous

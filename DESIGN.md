@@ -1,90 +1,71 @@
-# Setline interface
+# Setline — Athlete’s Journal
 
-The app keeps its existing training plan, local records and calculation rules.
-Known session titles have short display aliases; saved titles and exercise keys
-remain unchanged.
+The current design is a new presentation system, preserving the existing product,
+training logic and local records. The full concept comparison, tokens, typography,
+spacing and component rules live in the [design system](docs/SETLINE_REINVENTION_DESIGN.md).
+Public benchmark evidence and access limitations are in the
+[research record](docs/SETLINE_REINVENTION_RESEARCH.md).
 
-| Section | Primary question | Secondary tools |
+## Four destinations
+
+| Destination | Primary question | Secondary access |
 | --- | --- | --- |
-| Today | What am I doing today? | Compact week selector, next volleyball session, extra activity timeline, weekly plan |
-| Train | What set do I do next? | All sets, exercise technique, alternatives, preparation, recovery, activity logging |
-| Progress | Am I improving? | Strength, history, weekly report, deleted records |
-| Nutrition | What should I still eat? | Recent meals, saved foods, targets and profile, weight check-in, fuel guidance |
-| More | What else do I need? | Training plan, routine, settings, imports, backup and installation |
+| Today | What matters today? | Session cover, Start/Continue, real weekly gym progress, next volleyball, Fuel, weekly plan |
+| Train | What set do I do next? | Previous set, large number rails, completion, rest, exercise options, Session tools |
+| Progress | Am I improving? | One selected measured lens, jump/weight check-ins, strength, history and weekly report |
+| You | What else do I need? | Nutrition, Routine, plan, saved workouts, library, records, imports, settings and backup |
 
-The visual system uses a cool neutral background, strong dark type and one lime
-accent. Dark mode uses charcoal surfaces with controlled contrast. Primary actions
-are large; secondary actions are simple rows or
-disclosures. Mobile dialogs become bottom sheets with a pinned close button and
-an independently scrolling body. The bottom navigation and popup boundaries
-respect iPhone safe areas.
+Nutrition remains one tap from Today’s Fuel row and You’s Daily group. It answers
+what is still needed today, with remaining calories, protein priority and quick meal
+logging. Configuration stays under Nutrition options. Empty screens invite a real
+first entry instead of displaying fabricated numbers or charts.
 
-Workout logging still uses the original versioned mutations, weight parser,
-timer logic and validation. Focused controls advance only after the saved state
-marks a set complete. Detailed set editing remains available. Nutrition never
-silently replaces saved targets or adds estimated exercise calories to them.
+## Visual identity
 
-Explicit A1/A2 and B1/B2 complex pairs share one card and alternate by round.
-Both names and the current round stay visible; each movement keeps its planned
-rest and its own logs. New values carry only into empty sets of that same movement.
-Short timed work uses a large countdown with the planned duration, quick
-adjustment, pause, resume and reset. Each timer belongs to one set and survives
-refresh. Reaching zero never checks off work automatically. Long activities keep
-manual minutes and an optional stopwatch. Touch states preserve readable button
-contrast. Research and dated customer feedback are in
-[WORKOUT_UX_RESEARCH.md](docs/WORKOUT_UX_RESEARCH.md).
+A warm neutral canvas and restrained wine accent replace the previous palettes.
+Dark mode uses a deep neutral base and a softer accent. Selective serif session
+names and page titles contrast with system sans controls and tabular numbers.
+The centered Today cover, stacked set-entry rails and single-metric Progress
+composition replace the previous dashboard hierarchy. Content uses whitespace,
+alignment and fine dividers; containers represent inputs or genuine modal objects.
 
-The storage key remains `setline.gym.v1`. No records are cleared or recreated.
-Optional routine and timer fields accept older records and backups. Closed-app reminders
-require a push service; the app honestly provides an in-app schedule. Photo
-analysis is hidden when its optional service is unavailable.
+Four integrated tabs respect the home indicator. Contextual tools, short horizontal
+selectors and searchable lists reduce persistent controls. Sheets keep a fixed
+44px Close target outside their single scrolling body. Compact-height layouts make
+technique visible earlier. Touch feedback stays subtle; keyboard focus stays visible.
 
+## Product invariants
 
-## Athlete refinement
+The original versioned workout mutations, decimal parser, timer logic and validation
+remain the only source of stored data. Completing a set is explicit. Weight/reps
+carry only into empty sets of the same movement; invalid input cannot reuse a prior
+weight. Manual +/- controls and dot/comma decimal entry coexist.
 
-The 2026-10-16 refinement keeps those five destinations and the original recommended
-plan, while adding purpose-led previews and a more focused set card. Exercise benefit
-and intent are each one short line. Technique, effort, alternatives and session changes
-open only when requested. Manual +/- controls and decimal text entry coexist.
+Complex pairs alternate A1/A2 or B1/B2 by round in one workspace, retaining each
+movement’s rest and logs. Per-set countdowns support pause/resume/reset and refresh;
+zero never automatically completes work. Long activities keep manual duration.
 
-The semantic visual system has deliberate neutral light and dark surfaces, controlled
-green emphasis, readable on-accent text and consistent phone touch targets. System
-appearance is the default; explicit preferences live in the existing profile. Short
-viewports use normal-flow completion actions so controls do not cover weight inputs.
+Current sessions are snapshots. Editing today, templates, the weekly plan or the
+recommended programme cannot rewrite completed sets or historical sessions.
 
-WorkoutBuilder, ExerciseLibrarySheet, WorkoutCustomizer, WeeklyPlanTools,
-PerformanceDetails, WorkoutCompletion and the shared page/header/sheet primitives
-keep capability behind focused interfaces. Templates and recurring plans are separate
-from live session snapshots. New sessions retain planned duration separately from
-recorded elapsed time, so saving a custom template cannot borrow another day’s duration. Removing or replacing remaining work retains completed
-sets; plan editing and resetting cannot rewrite history.
+Performance comparisons retain stable movement identity, logging mode, matched reps
+and measurement kind. Height, highest touch and distance remain separate. Weight
+trends require adequately sampled weeks. Readiness is self-reported; training load
+and calorie burn are estimates. Recommendations require explicit application and
+never silently change working sets or saved nutrition targets.
 
-Performance comparisons include stable exercise identity, normalized name, logging mode
-and measurement kind. Height, absolute touch and distance remain distinct. Weekly
-weight trends require adequately sampled weeks; readiness is self-reported and training
-load is an estimate, never an invented physiological score. Recommendations are explicit
-actions and never silently alter working sets, weekly volume or nutrition targets.
+The storage key remains `setline.gym.v1`; schemas, portable backups and optimistic
+version checks are unchanged. No migration, reset or demo history is introduced.
+Manifest ID, scope and start URL remain stable. Offline assets remain local.
 
-The v1 storage key and portable backup envelope remain compatible. New appearance,
-template and performance fields are optional; validation and optimistic version checks
-protect writes and reject malformed data without wiping old records.
+## Mobile behavior
 
-## Focus and performance
+Today’s Start and real weekly progress fit above the tabs on a 320×568 viewport
+with simulated safe areas, including the long Wednesday master-plan title. Entering
+a session resets browser scroll anchoring so its heading stays visible. Input and
+completion scroll together when the keyboard leaves enough room. Navigation and
+rest chrome yield to the keyboard without stopping timers. Landscape headers are
+compact enough for the long exercise picker to remain touch-scrollable.
 
-Today puts the session name, one-line training goal, Start and weekly gym progress
-before the calendar. They fit above navigation on 320×568 and 390×844 phones with
-simulated iPhone safe areas. A recorded jump height adds one quiet trend; technique,
-the plan, nutrition and extra activities remain available farther down.
-
-Progress leads with vertical jump, followed by body-weight and comparable-strength
-trends. Charts use real dated records, without placeholder curves or combining
-height with highest touch. Weekly gym progress counts distinct completed days;
-optional primers do not become extra obligations, and recovery does not break a
-daily streak. Further measurements, history and reports stay behind explicit actions.
-
-Phone all-set editing uses compact stacked rows rather than sideways scrolling.
-Visual-viewport changes resize sheets and reveal focused fields. During workout
-entry, navigation and rest chrome give the keyboard room while timers keep running.
-The current input and Complete stay together when they fit. Keyboard Done dismisses
-editing; completing a set remains an explicit action. Pointer interaction is quiet,
-while keyboard navigation retains a visible focus ring.
+Validation combines production browser workflows, unit tests and actual rendered
+light/dark screenshots. See [VALIDATION.md](VALIDATION.md) for results and limits.

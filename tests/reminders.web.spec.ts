@@ -1,15 +1,16 @@
+import { openSection } from './helpers/navigation';
 import { expect, test, type Page } from '@playwright/test';
 
 const KEY = 'setline.gym.v1';
 const panel = (page: Page) => page.getByRole('region', { name: 'Supplement and medication reminders', exact: true });
 async function openNutrition(page: Page) {
   await page.goto('/');
-  await page.getByRole('tab', { name: 'Nutrition', exact: true }).click();
+  await openSection(page, 'Nutrition');
   await page.getByLabel('Nutrition date', { exact: true }).fill('2026-10-08');
 }
 
 async function openRoutine(page: Page) {
-  await page.getByRole('tab', { name: 'More', exact: true }).click();
+  await openSection(page, 'You');
   await page.getByRole('button', { name: 'Routine', exact: true }).click();
   await expect(panel(page)).toBeVisible();
   await page.getByLabel('Routine date', { exact: true }).fill('2026-10-08');

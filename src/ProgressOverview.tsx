@@ -30,14 +30,14 @@ const capitalized = (value: string) => `${value[0].toUpperCase()}${value.slice(1
 
 export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutritionRecords, performance, today = currentReportDate(), onViewStrength, onViewPerformance, onViewHistory, onViewWeek, onLogWeight, onLogJump }: ProgressOverviewProps) {
   const summary = getPerformanceSummary({ sessions, activities, plan, bodyWeight, nutritionRecords, performance, today });
-  // Null follows available live data, including records loaded after the first render.
-  // Once a person chooses a chart, new records never move them to another chart.
+  // Follow available records until the user explicitly chooses a metric.
   const [selectedMetric, setSelectedMetric] = useState<ChartMetric | null>(null);
   const weight = summary.weight;
   const primaryWeight = weight.weeklyAverage ?? weight.current;
   const weightPoints = weight.weeks.filter(point => point.adequate && point.date >= shiftReportDate(today, -30));
-  // Height and touch are different tests; touch results never enter the height trend.
-  const jump = summary.jumps.find(item => item.type === 'approach' && item.measurement === 'height') ?? summary.jumps.find(item => item.measurement === 'height');
+  // A touch result is not a jump height. Never combine the two test protocols.
+  const jump = summary.jumps.find(item => item.type === 'approach' && item.measurement === 'height')
+    ?? summary.jumps.find(item => item.measurement === 'height');
   const jumpPoints = jump?.points.filter(point => point.date >= shiftReportDate(today, -29)) ?? [];
   const strength = summary.strengthChanges[0];
   const metric = selectedMetric ?? (jumpPoints.length ? 'jump' : weight.points.length ? 'weight' : strength ? 'strength' : 'jump');
@@ -49,65 +49,104 @@ export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutri
     ? jump ? `${capitalized(jump.type)} jump trend: ${number(jumpPoints[0]?.cm ?? jump.current)} to ${number(jumpPoints.at(-1)?.cm ?? jump.current)} centimetres across ${jumpPoints.length} recorded test days` : ''
     : `Body weight trend: weekly averages from ${number(weightPoints[0]?.kg ?? 0)} to ${number(weightPoints.at(-1)?.kg ?? 0)} kilograms`;
   const viewDetails = onViewPerformance ?? onViewStrength;
-  const insight = summary.insights[0] ?? (summary.gymSessions ? 'Keep jumps crisp as you build consistent training.' : 'Log your first session to build a clear baseline.');
+  const weightSource = weight.weeklyAverage !== null ? 'This week’s average'
+    : weight.points.length ? 'Latest check-in' : 'Profile weight';
+  const jumpName = `${jump ? capitalized(jump.type) : 'Approach'} jump`;
+  const title = metric === 'jump' ? jumpName : metric === 'weight' ? 'Body weight' : strength?.name ?? 'Strength';
+  const value = metric === 'jump' ? jump?.current ?? null : metric === 'weight' ? primaryWeight : strength?.current ?? null;
+  const unit = value === null ? '' : metric === 'jump' ? 'cm' : 'kg';
+  const emptyAction = value === null ? metric === 'jump' ? onLogJump : metric === 'weight' ? onLogWeight : undefined : undefined;
+  const showJumpCheckIn = onLogJump && !(value === null && metric === 'jump');
+  const showWeightCheckIn = onLogWeight && !(value === null && metric === 'weight');
+  const change = metric === 'jump' ? jump?.change30Days : metric === 'weight' ? weight.change30Days : strength ? strength.current - strength.previous : null;
+  const changeText = change == null ? null : `${signed(change)} ${metric === 'jump' ? 'cm' : 'kg'}`;
+  const comparison = metric === 'jump'
+    ? changeText ? 'across recorded test days' : jump ? `Latest test · ${shortDate(jump.points.at(-1)!.date)}` : 'No jump tests yet'
+    : metric === 'weight'
+      ? changeText ? 'in weekly averages' : weightSource
+      : strength ? `at ${strength.reps} reps · same movement` : 'No comparable sets yet';
+  const jumpHasEarlierResult = jump?.points.some(point => point.date < jump.points.at(-1)!.date && point.cm < jump.current);
+  const insight = metric === 'jump' && jump && jump.current === jump.best && jumpHasEarlierResult
+    ? 'Your latest test is your best recorded jump.'
+    : metric === 'strength' && strength && strength.percent > 0
+      ? 'You lifted more at the same rep count.'
+      : summary.insights.find(item => metric === 'weight' ? /weight has been stable/i.test(item)
+        : metric === 'jump' ? !/jump is up/i.test(item) : !strength || !item.startsWith(`${strength.name}:`))
+        ?? (metric === 'weight' ? summary.insights[0] : undefined);
+  const otherMetrics: { metric: ChartMetric; title: string; value: string; note: string }[] = [
+    { metric: 'jump', title: jumpName, value: jump ? `${number(jump.current)} cm` : '—',
+      note: jump?.change30Days != null ? `${signed(jump.change30Days)} cm across test days` : jump ? 'Latest jump height' : 'Add your first test' },
+    { metric: 'weight', title: 'Body weight', value: primaryWeight === null ? '—' : `${number(primaryWeight)} kg`,
+      note: weight.change30Days !== null ? `${signed(weight.change30Days)} kg in weekly averages` : weightSource },
+    { metric: 'strength', title: 'Strength', value: strength ? `${signed(strength.percent)}%` : '—',
+      note: strength ? `${strength.name} · ${strength.reps} reps` : 'Log comparable sets on two days' },
+  ];
 
   return <section className="progress-overview progress-native" aria-label="Progress overview">
-    <p className="progress-period">Last 30 days</p>
-    <dl className="progress-metrics">
-      <div className="progress-metric" aria-label="Body weight progress">
-        <dd>{weight.change30Days !== null ? signed(weight.change30Days) : primaryWeight === null ? '—' : number(primaryWeight)}<span>{primaryWeight === null ? '' : 'kg'}</span></dd>
-        <dt>Body weight</dt>
-        <p>{weight.change30Days !== null ? 'Change in weekly averages' : weight.weeklyAverage !== null ? 'This week’s average' : weight.points.length ? 'Latest check-in' : 'Profile weight'}</p>
-      </div>
-      <div className="progress-metric">
-        <dd>{jump?.change30Days !== null && jump?.change30Days !== undefined ? signed(jump.change30Days) : jump ? number(jump.current) : '—'}<span>{jump ? 'cm' : ''}</span></dd>
-        <dt>{jump ? `${capitalized(jump.type)} jump` : 'Approach jump'}</dt>
-        <p>{jump?.change30Days !== null && jump?.change30Days !== undefined ? 'Change across test days' : jump ? 'Latest jump height' : 'Add your first test'}</p>
-      </div>
-      <div className="progress-metric" aria-label="Strength progress">
-        <dd>{strength ? signed(strength.percent) : '—'}<span>{strength ? '%' : ''}</span></dd>
-        <dt>Strength</dt>
-        <p>{strength ? `${strength.name} · ${strength.reps} reps` : 'Comparable sets build the trend'}</p>
-      </div>
-      <div className="progress-metric" aria-label="Training consistency">
-        <dd>{summary.consistencyPercent === null ? '—' : number(summary.consistencyPercent)}<span>{summary.consistencyPercent === null ? '' : '%'}</span></dd>
-        <dt>Training consistency</dt>
-        <p>{summary.gymSessions} gym · {summary.volleyballSessions} volleyball</p>
-      </div>
-    </dl>
+    <div className="progress-chart-selector" role="group" aria-label="Chart metric">
+      {(['jump', 'weight', 'strength'] as const).map(item => <button key={item} type="button"
+        aria-pressed={metric === item} onClick={() => setSelectedMetric(item)}>{capitalized(item)}</button>)}
+    </div>
 
     <section className="progress-trend" aria-label={metric === 'jump' ? 'Jump performance' : metric === 'weight' ? 'Body weight trend' : 'Strength trend'}>
-      <div className="progress-chart-selector" role="group" aria-label="Chart metric">
-        {(['jump', 'weight', 'strength'] as const).map(value => <button key={value} type="button" aria-pressed={metric === value} onClick={() => setSelectedMetric(value)}>{capitalized(value)}</button>)}
+      {value === null ? <div className="progress-lens-empty">
+        <p className="progress-period">{title}</p>
+        <h2 className="progress-lens-title">{metric === 'jump' ? 'Your first jump.' : metric === 'weight' ? 'Begin with a check-in.' : 'Build your strength baseline.'}</h2>
+        <p className="progress-lens-empty__copy">{metric === 'jump'
+          ? 'Log a jump height to compare with your next test.'
+          : metric === 'weight' ? 'Log your weight to follow a steadier weekly trend.'
+            : 'Log the same movement on two days to see how your strength changes.'}</p>
+        {emptyAction && <button type="button" className="btn progress-empty-action" onClick={emptyAction}><Plus size={18} aria-hidden="true" />{metric === 'jump' ? 'Log jump' : 'Log weight'}</button>}
+      </div> : <>
+      <p className="progress-period">Last 30 days</p>
+      <h2 className="progress-lens-title">{title}</h2>
+      <div className="progress-lens-value" aria-label={`${title}: ${value === null ? 'not recorded' : `${number(value)} ${unit}`}`}>
+        <span>{value === null ? '—' : number(value)}</span>{unit && <small>{unit}</small>}
       </div>
-      <div className="progress-chart-heading">
-        <h2>{metric === 'jump' ? `${jump ? capitalized(jump.type) : 'Approach'} jump` : metric === 'weight' ? 'Weekly average' : strength?.name ?? 'Strength'}</h2>
-        <span>{metric === 'jump' ? 'cm' : metric === 'weight' ? 'kg' : strength ? `${strength.reps} reps` : 'Same movement · same reps'}</span>
+      <p className="progress-lens-comparison">{changeText && <strong>{changeText}</strong>}<span>{comparison}</span></p>
+
+      <div className="progress-plot">
+        {metric === 'strength' ? strength ? <>
+          <div className="progress-strength-comparison" role="img" aria-label={`${strength.name} strength trend: ${number(strength.previous)} to ${number(strength.current)} kilograms at ${strength.reps} reps`}>
+            {[['Previous', strength.previous], ['Latest', strength.current]].map(([label, amount]) => <div key={String(label)}>
+              <span>{label}</span><div><i style={{ width: `${Math.max(4, Number(amount) / Math.max(strength.previous, strength.current) * 100)}%` }} /></div>
+              <strong>{number(Number(amount))}<small>kg</small></strong>
+            </div>)}
+          </div>
+          <p className="progress-chart-caption">{signed(strength.percent)}% load · matched reps, different training days</p>
+        </> : <div className="progress-chart-empty"><p>Log the same movement on two days to compare your strength.</p></div>
+          : coordinates.length > 1 ? <>
+            <svg className={`progress-native-chart progress-${metric}-chart`} viewBox="0 0 340 158" role="img" aria-label={chartLabel}>
+              <path d="M12 146H328" className="progress-chart-baseline" />
+              <polyline points={coordinates.map(point => `${point.x},${point.y}`).join(' ')} className="progress-chart-line" />
+              {coordinates.map((point, index) => <circle key={point.date} cx={point.x} cy={point.y} r={index === coordinates.length - 1 ? 4 : 2.5} className="progress-chart-dot" />)}
+            </svg>
+            <div className="progress-chart-dates"><span>{shortDate(chartPoints[0].date)}</span><span>{shortDate(chartPoints.at(-1)!.date)}</span></div>
+          </> : <div className="progress-chart-empty"><p>{metric === 'jump'
+            ? jumpPoints.length ? 'One test day recorded. Your next test builds the trend.' : jump ? 'Add another test to compare this month.' : 'Record a baseline. Your progress begins with a measured jump.'
+            : weight.points.length ? 'Weekly trends need at least 3 check-in days spread across the week.' : 'Your profile weight is a starting point. Log a check-in to begin your trend.'}</p></div>}
       </div>
-      {metric === 'strength' ? strength ? <>
-        <div className="progress-strength-comparison" role="img" aria-label={`${strength.name} strength trend: ${number(strength.previous)} to ${number(strength.current)} kilograms at ${strength.reps} reps`}>
-          {[['Previous', strength.previous], ['Latest', strength.current]].map(([label, value]) => <div key={String(label)}><span>{label}</span><div><i style={{ width: `${Math.max(4, Number(value) / Math.max(strength.previous, strength.current) * 100)}%` }} /></div><strong>{number(Number(value))}<small>kg</small></strong></div>)}
-        </div>
-        <p className="progress-chart-caption">{signed(strength.current - strength.previous)} kg at the same rep count.</p>
-      </> : <div className="progress-chart-empty"><strong>Make your next set count.</strong><p>Log the same movement on two days to see your strength trend.</p></div> : coordinates.length > 1 ? <>
-        <svg className={`progress-native-chart progress-${metric}-chart`} viewBox="0 0 340 158" role="img" aria-label={chartLabel}>
-          <path d="M12 146H328" className="progress-chart-baseline" />
-          <polyline points={coordinates.map(point => `${point.x},${point.y}`).join(' ')} className="progress-chart-line" />
-          {coordinates.map((point, index) => <circle key={point.date} cx={point.x} cy={point.y} r={index === coordinates.length - 1 ? 4 : 2.5} className="progress-chart-dot" />)}
-        </svg>
-        <div className="progress-chart-dates"><span>{shortDate(chartPoints[0].date)}</span><span>{shortDate(chartPoints.at(-1)!.date)}</span></div>
-      </> : <div className="progress-chart-empty">
-        <strong>{metric === 'jump' ? jumpPoints.length ? `${number(jumpPoints[0].cm)} cm` : jump ? `${number(jump.current)} cm` : 'Your first jump starts here.' : primaryWeight === null ? 'Start with a check-in.' : `${number(primaryWeight)} kg`}</strong>
-        <p>{metric === 'jump' ? jumpPoints.length ? `Baseline · ${shortDate(jumpPoints[0].date)}. Your next test builds the trend.` : jump ? `Latest test · ${shortDate(jump.points.at(-1)!.date)}. Add a test to compare this month.` : 'Log your baseline to follow your takeoff.' : 'Regular check-ins build a steadier trend than daily fluctuations.'}</p>
-      </div>}
-      {metric === 'weight' && <div className="progress-weight-caption"><span>{weight.weeklyAverage !== null ? `This week’s average · ${weight.weeklyDays} ${weight.weeklyDays === 1 ? 'day' : 'days'}` : weight.points.length ? 'Latest check-in' : 'Profile weight'}</span><span>{weight.change30Days === null ? 'Weekly trends need at least 3 check-in days spread across the week.' : `${signed(weight.change30Days)} kg · weekly averages over 30 days`}</span></div>}
+      {metric === 'weight' && weight.weeklyAverage !== null && <p className="progress-weight-caption">Average of {weight.weeklyDays} {weight.weeklyDays === 1 ? 'check-in day' : 'check-in days'} this week</p>}
+      </>}
     </section>
 
-    {(onLogWeight || onLogJump) && <div className="progress-check-ins">
-      {onLogWeight && <button type="button" onClick={onLogWeight}><Plus size={18} aria-hidden="true" />Log weight</button>}
-      {onLogJump && <button type="button" onClick={onLogJump}><Plus size={18} aria-hidden="true" />Log jump</button>}
+    {(showWeightCheckIn || showJumpCheckIn) && <div className="progress-check-ins">
+      {showJumpCheckIn && <button type="button" className={metric === 'jump' ? 'is-contextual' : ''} onClick={onLogJump}><Plus size={17} aria-hidden="true" />Log jump</button>}
+      {showWeightCheckIn && <button type="button" className={metric === 'weight' ? 'is-contextual' : ''} onClick={onLogWeight}><Plus size={17} aria-hidden="true" />Log weight</button>}
     </div>}
-    <p className="progress-single-insight">{insight}</p>
+    {value !== null && insight && <p className="progress-single-insight">{insight}</p>}
+
+    <div className="progress-supporting-metrics" aria-label="Other progress">
+      {otherMetrics.filter(item => item.metric !== metric).map(item => <button key={item.metric} type="button"
+        className="progress-supporting-row" aria-label={`View ${item.title.toLowerCase()} progress`} onClick={() => setSelectedMetric(item.metric)}>
+        <span><strong>{item.title}</strong><small>{item.note}</small></span>
+        <b>{item.value}</b><ChevronRight size={16} aria-hidden="true" />
+      </button>)}
+      <div className="progress-consistency" aria-label="Training consistency">
+        <span><strong>Gym consistency</strong><small>{summary.gymSessions} gym · {summary.volleyballSessions} volleyball logged</small></span>
+        <b>{summary.consistencyPercent === null || !summary.gymSessions ? '—' : `${number(summary.consistencyPercent)}%`}</b>
+      </div>
+    </div>
     <div className="progress-overview-links">
       {viewDetails && <button type="button" onClick={viewDetails}><span>Performance details</span><ChevronRight size={18} aria-hidden="true" /></button>}
       {onViewStrength && onViewStrength !== viewDetails && <button type="button" onClick={onViewStrength}><span>Strength history</span><ChevronRight size={18} aria-hidden="true" /></button>}

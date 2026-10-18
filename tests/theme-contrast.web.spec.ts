@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE } from '../src/domain.js';
+import { openDisclosure } from './helpers/navigation';
 
 const STORE = 'setline.gym.v1';
 
@@ -68,6 +69,7 @@ test('dark controls keep contrast on hover and while movement and rest timers ru
   await calendar.hover();
   await expectReadable(calendar);
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
+  await openDisclosure(page, 'Workout options');
   const choose = page.getByRole('button', { name: 'Choose workout', exact: true });
   await choose.hover();
   await expectReadable(choose);
@@ -85,6 +87,7 @@ test('dark controls keep contrast on hover and while movement and rest timers ru
   await stop.click();
   await page.getByRole('spinbutton', { name: 'Pogo Jump set 1 seconds', exact: true }).fill('15');
   await page.getByRole('checkbox', { name: 'Complete Pogo Jump set 1', exact: true }).check();
+  await openDisclosure(page, 'Session tools');
   await page.locator('summary').filter({ hasText: /^Rest timer$/ }).click();
   const rest = page.getByRole('timer', { name: 'Rest time remaining', exact: true });
   await expect(rest).toHaveClass(/counting/);
@@ -166,6 +169,7 @@ for (const appearance of ['light', 'dark'] as const) {
   test(`preparation stays readable and its large checklist controls persist in ${appearance}`, async ({ page }) => {
     await seed(page, appearance);
     await page.getByRole('tab', { name: 'Train', exact: true }).click();
+    await openDisclosure(page, 'Session tools');
     const panels = page.locator('.routine-panel');
     await expect(panels).toHaveCount(2);
 
@@ -181,6 +185,7 @@ for (const appearance of ['light', 'dark'] as const) {
     }
 
     await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+    await openDisclosure(page, 'Session tools');
     for (const panel of await panels.all()) {
       await panel.locator('[data-slot="accordion-trigger"]').click();
       const checkbox = panel.getByRole('checkbox').first();
@@ -199,6 +204,7 @@ for (const appearance of ['light', 'dark'] as const) {
     const saved = await readSession(page);
     await page.reload();
     await page.getByRole('tab', { name: 'Train', exact: true }).click();
+    await openDisclosure(page, 'Session tools');
     for (const panel of await panels.all()) {
       const trigger = panel.locator('[data-slot="accordion-trigger"]');
       await expectReadable(trigger.locator('strong, .routine-meta'));

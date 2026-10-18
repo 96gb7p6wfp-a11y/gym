@@ -1,3 +1,4 @@
+import { openSection } from './helpers/navigation';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE } from '../src/domain.js';
 
@@ -17,7 +18,7 @@ async function safeAreas(page: Page) {
 }
 
 async function tab(page: Page, name: string) {
-  await page.getByRole('tab', { name, exact: true }).click();
+  await openSection(page, name);
 }
 
 async function unobscured(control: Locator) {
@@ -60,6 +61,7 @@ for (const appearance of ['light', 'dark'] as const) {
       await page.setViewportSize(screen);
       await seed(page, appearance);
       const nav = page.getByRole('tablist', { name: 'Main navigation', exact: true });
+      await expect(nav.getByRole('tab')).toHaveCount(4);
       const bounds = (await nav.boundingBox())!;
       expect(bounds.x).toBeCloseTo(0, 0);
       expect(bounds.width).toBeCloseTo(screen.width, 0);
@@ -73,7 +75,7 @@ for (const appearance of ['light', 'dark'] as const) {
         expect(box.y + box.height).toBeLessThanOrEqual(bounds.y);
         await unobscured(action);
       }
-      for (const name of ['Train', 'Progress', 'Nutrition', 'More', 'Today']) {
+      for (const name of ['Train', 'Progress', 'Nutrition', 'You', 'Today']) {
         await tab(page, name);
         await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -88,7 +90,7 @@ for (const appearance of ['light', 'dark'] as const) {
   }
 }
 
-test('More offers a read-only searchable library and Back restores the query without modifying data', async ({ page }) => {
+test('You offers a read-only searchable library and Back restores the query without modifying data', async ({ page }) => {
   const before = await read(page);
   await tab(page, 'More');
   await page.getByRole('button', { name: 'Exercise library', exact: true }).click();
@@ -96,12 +98,19 @@ test('More offers a read-only searchable library and Back restores the query wit
   const search = sheet.getByRole('searchbox', { name: 'Search exercises', exact: true });
   await search.fill('Hack');
   await sheet.getByRole('group', { name: 'Exercise categories', exact: true }).getByRole('button', { name: 'Strength', exact: true }).click();
+  await expect(sheet.locator('.exercise-library__filters')).toBeHidden();
+  await sheet.getByRole('button', { name: 'Filters', exact: true }).click();
+  await expect(sheet.getByRole('button', { name: 'Filters', exact: true })).toHaveAttribute('aria-expanded', 'true');
+  await sheet.locator('summary').filter({ hasText: /^Equipment/ }).click();
+  await sheet.getByRole('group', { name: 'Filter by equipment', exact: true }).getByRole('button', { name: 'Machine', exact: true }).click();
+  await expect(sheet.getByRole('button', { name: 'Filters, 1 active', exact: true })).toBeVisible();
   await sheet.getByRole('button', { name: 'View Hack Squat', exact: true }).click();
   await expect(sheet.getByRole('heading', { name: 'Hack Squat', exact: true })).toBeVisible();
   await expect(sheet).toContainText('Quads');
   await expect(sheet.getByRole('button', { name: 'Add exercise', exact: true })).toHaveCount(0);
   await sheet.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(search).toHaveValue('Hack');
+  await expect(sheet.getByRole('button', { name: 'Filters, 1 active', exact: true })).toBeVisible();
   await expect(sheet.getByRole('button', { name: 'View Hack Squat', exact: true })).toBeFocused();
   await sheet.getByRole('button', { name: 'View Hack Squat', exact: true }).click();
   await sheet.getByRole('button', { name: 'Done', exact: true }).click();

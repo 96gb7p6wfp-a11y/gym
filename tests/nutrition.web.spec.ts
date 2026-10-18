@@ -1,7 +1,9 @@
+import { openDisclosure, openSection } from './helpers/navigation';
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, createSession, stopSessionTimers } from '../src/domain.js';
 
 async function openTargets(page: Page) {
+  await openDisclosure(page, 'Nutrition options');
   await page.getByRole('button', { name: /^Targets/, exact: false }).click();
   await expect(page.getByRole('dialog', { name: 'Daily targets', exact: true })).toBeVisible();
 }
@@ -12,7 +14,7 @@ async function closeTargets(page: Page) {
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('tab', { name: 'Nutrition', exact: true }).click();
+  await openSection(page, 'Nutrition');
   await expect(page.getByRole('heading', { name: 'Nutrition', exact: true })).toBeVisible();
   await openTargets(page);
 });
@@ -44,7 +46,7 @@ test('calculated targets require an explicit action and preserve existing meals 
   await expect(calculator.getByRole('status')).toContainText('Daily targets saved');
   await expect(page.locator('.nutrition-totals')).toContainText('of 3000 kcal');
   await page.reload();
-  await page.getByRole('tab', { name: 'Nutrition', exact: true }).click();
+  await openSection(page, 'Nutrition');
   await expect(page.locator('.nutrition-totals')).toContainText('of 3000 kcal');
   await expect(page.locator('.nutrition-meals')).toContainText('Yogurt and oats');
   await openTargets(page);
@@ -66,7 +68,7 @@ test('calculation details support decimal-comma body weight and reject invalid a
   await expect(calculator.getByRole('status')).toContainText('Calculation details saved');
   await expect(page.locator('.nutrition-totals')).toContainText('No target set');
   await page.reload();
-  await page.getByRole('tab', { name: 'Nutrition', exact: true }).click();
+  await openSection(page, 'Nutrition');
   await openTargets(page);
   await calculator.getByText('Edit calculation details', { exact: true }).click();
   await expect(calculator.getByLabel('Weight for calculation · kg', { exact: true })).toHaveValue('64.5');
@@ -96,7 +98,7 @@ test('choosing an unspecified equation preserves privacy and allows manual targe
   await calculator.getByRole('button', { name: 'Save calculation details', exact: true }).click();
   await expect(calculator.getByRole('status')).toContainText('Calculation details saved');
   await page.reload();
-  await page.getByRole('tab', { name: 'Nutrition', exact: true }).click();
+  await openSection(page, 'Nutrition');
   await openTargets(page);
   await expect(calculator).toContainText('edit your targets manually');
   await calculator.getByText('Edit calculation details', { exact: true }).click();
@@ -115,7 +117,7 @@ test('older profiles explicitly load the shared details while historical workout
     }));
   }, { profile: legacyProfile, historical });
   await page.reload();
-  await page.getByRole('tab', { name: 'Nutrition', exact: true }).click();
+  await openSection(page, 'Nutrition');
   await openTargets(page);
   const calculator = page.locator('.nutrition-calculator');
   await expect(calculator).toContainText('2,900 kcal/day');

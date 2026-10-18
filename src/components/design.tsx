@@ -2,16 +2,16 @@ import type { ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { TabsList, TabsTrigger } from './ui.jsx';
 
-type HeaderProps = { eyebrow?: string; title: string; subtitle?: ReactNode; action?: ReactNode };
+type HeaderProps = { eyebrow?: string; title: string; subtitle?: ReactNode; action?: ReactNode; back?: ReactNode };
 
-export function PageHeader({ eyebrow, title, subtitle, action }: HeaderProps) {
+export function PageHeader({ eyebrow, title, subtitle, action, back }: HeaderProps) {
   return <header className="page-header native-page-header">
-    <div>
+    <div className="page-masthead">{back ?? <span className="setline-wordmark">Setline<span aria-hidden="true">.</span></span>}{back ? <span className="setline-wordmark">Setline<span aria-hidden="true">.</span></span> : action && <div className="page-header-action">{action}</div>}</div>
+    <div className="page-heading">
       {eyebrow && <p className="eyebrow">{eyebrow}</p>}
       <h1>{title}</h1>
       {subtitle && <p className="page-subtitle">{subtitle}</p>}
     </div>
-    {action && <div className="page-header-action">{action}</div>}
   </header>;
 }
 
@@ -57,7 +57,6 @@ export function MenuRow({ title, subtitle, icon, onClick, trailing }: {
   trailing?: ReactNode;
 }) {
   return <button aria-label={title} className="menu-row" type="button" onClick={onClick}>
-    {icon && <span className="menu-row-icon">{icon}</span>}
     <span className="menu-row-copy"><strong>{title}</strong>{subtitle && <span>{subtitle}</span>}</span>
     <span className="menu-row-trailing">{trailing ?? <ChevronRight aria-hidden="true" size={18} />}</span>
   </button>;

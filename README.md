@@ -5,22 +5,25 @@ hosted Setline app's delivered React code, styles, and visual reference. The app
 runs on its own: no iframe, sign-in service, old website, external workout API,
 or native iPhone signing is required.
 
-## Setline 2 design
+## Athlete’s Journal design
 
-A new warm-paper/petrol system replaces the earlier visual themes. Today is an open
-training statement; workouts use large editable values; the week is a timeline;
-library details and forms use keyboard-aware sheets. More groups secondary features
-into native-style lists. Light and dark modes use semantic components.
+A new journal composition replaces the earlier layouts: a centered session cover,
+four destinations (**Today / Train / Progress / You**), large set-entry rails and
+one measured progress lens. Warm neutral surfaces, selective serif titles and a
+restrained wine accent define the identity. Nutrition is one tap from Today’s Fuel
+row or You. Preparation and session tools open on demand; exercise details and
+forms use keyboard-aware sheets. Light and dark themes are designed separately.
 
 Existing `setline.gym.v1` data, plans, session snapshots, imports, backup format and PWA
 identity are unchanged. No migration or reset is needed.
 
-[Design concept](docs/SETLINE_2_CONCEPT.md) · [Research](docs/SETLINE_2_DESIGN_RESEARCH.md)
+[Design system and concept](docs/SETLINE_REINVENTION_DESIGN.md) · [Research](docs/SETLINE_REINVENTION_RESEARCH.md)
 
 ## Features
 
-- **8-week volleyball-first plan:** in More → Training plan, choose a start Monday,
-  open **Programme & customization**, mark Sunday match weeks, then tap **Use this plan**. The prior weekly plan is
+- **8-week volleyball-first plan:** in You → Training plan, open
+  **Programme & customization**, choose a start Monday, mark Sunday match weeks,
+  then tap **Use this plan**. The prior weekly plan is
   kept for restoration. Match weeks use Saturday's short primer; other weeks use
   Reactive + Hard Lower B. Week 4 deload and week 8 peak/retest adjust new session
   doses. Date-specific readiness moderates jumping; Saturday requires a check.
@@ -46,7 +49,7 @@ identity are unchanged. No migration or reset is needed.
   concise load insights. Stable multi-week weight can suggest a small food increase;
   saved calorie targets never change automatically.
 - **Today:** the workout, its goal, one main action and weekly gym progress first;
-  recorded jump height, next volleyball, day selection in a sheet and nutrition stay quiet.
+  next volleyball, day selection in a sheet and a Fuel shortcut stay quiet.
 - **Train:** focused exercise and current-set controls, previous performance,
   quick completion and automatic advancement. All-set editing and the original
   seven-day gym/volleyball/recovery plan remain available, including the Tuesday jump
@@ -68,12 +71,12 @@ identity are unchanged. No migration or reset is needed.
   profile is 18, male, 180 cm and 64 kg, with four gym and two volleyball sessions.
 - **Volleyball schedule:** Tuesday and Friday, 20:00–22:00 Europe/Berlin, with
   editable times and short meal guidance that follows the selected date.
-- **Routine:** supplement and medication instructions in More, with separate
+- **Routine:** supplement and medication instructions in You, with separate
   Taken/Later/Undo records for each date. Saving a meal prompts relevant pending
   reminders without marking a dose taken. Confirmed clock reminders show a cue
   while Routine is open. Optional dosage text and before/with/after-food timing
   preserve older records. Reminders, history and settings are included in backups.
-- **Training plan:** in More or via Today/Train; edit days and movements,
+- **Training plan:** in You or via Today/Train; edit days and movements,
   sets/targets/rest, logging mode and preparation.
 - **Settings:** system/light/dark appearance, body weight, default rest, home-screen installation, validated backup
   export/import, recovery export and confirmed local-data reset.
@@ -142,7 +145,7 @@ methods are visible in the app and all calculations work offline.
 
 ## Import from Strava or Adidas Running
 
-In **More → Import activities** or **Train → Activities**, choose exported GPX, TCX, FIT or CSV files,
+In **You → Import activities** or **Train → Session tools → Activities**, choose exported GPX, TCX, FIT or CSV files,
 review the date, moving minutes, distance, effort and body weight, then import.
 Strava provides GPX/original-file exports per activity and an activities CSV in
 its account archive. For Adidas Running, request your account data export and
@@ -228,10 +231,11 @@ See `VALIDATION.md` for the performed checks and limitations.
 
 ## Structure
 
-`src/App.jsx` coordinates the five sections and preserves the original workout
+`src/App.jsx` coordinates the four destinations and preserves the original workout
 mutations. `TodayView.jsx`, `FocusedWorkout.tsx` and `ProgressOverview.tsx` provide
-the focused views. `components/design.tsx`, `premium.css` and the existing sheet
-components provide the shared visual system; see [DESIGN.md](DESIGN.md).
+the focused views. `components/design.tsx`, `native-system.css`, `native-shell.css`
+and the screen styles provide the shared visual system; see the
+[current design system](docs/SETLINE_REINVENTION_DESIGN.md).
 `NutritionView.jsx` and `domain.js` retain the existing nutrition and training rules.
 `storage.ts` provides validated local persistence; `DataSettings.tsx` provides
 backups and reset; `activities.ts` and `ExtraActivities.tsx` implement dated extra
@@ -245,8 +249,7 @@ files; `exercise-guides.ts` and `ExerciseGuide.tsx` provide movement instruction
 
 ## Product review
 
-The refinement audit and verified public UX benchmarks are recorded in
-[PREMIUM_PRODUCT_AUDIT.md](docs/PREMIUM_PRODUCT_AUDIT.md) and
-[PREMIUM_BENCHMARKS.md](docs/PREMIUM_BENCHMARKS.md). Hevy and Strong documentation
-was accessible; five other benchmark destinations were blocked by the cloud
-network policy and are identified as unverified rather than cited as evidence.
+The current audit, three concepts and verified public UX benchmarks are recorded in
+[the design rationale](docs/SETLINE_REINVENTION_DESIGN.md) and
+[the research record](docs/SETLINE_REINVENTION_RESEARCH.md). Accessible official
+pages and screenshots are distinguished from destinations the cloud proxy blocked.

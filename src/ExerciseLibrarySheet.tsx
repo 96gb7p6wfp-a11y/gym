@@ -36,6 +36,7 @@ export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacement
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<LibraryFilters>({});
   const [category, setCategory] = useState<Category>('All');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [selected, setSelected] = useState<LibraryExercise | null>(null);
   const [limit, setLimit] = useState(30);
   const body = useRef<HTMLDivElement>(null);
@@ -45,7 +46,7 @@ export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacement
   const replacementIdentity = replacementFor?.exerciseId ?? replacementFor?.name ?? replacementFor?.key ?? '';
   useEffect(() => {
     if (!open) return;
-    setQuery(''); setFilters({}); setCategory('All'); setSelected(null); setLimit(30);
+    setQuery(''); setFilters({}); setCategory('All'); setFiltersOpen(false); setSelected(null); setLimit(30);
     listScroll.current = 0; selectedId.current = null; confirming.current = false;
   }, [open, replacementIdentity]);
   useLayoutEffect(() => {
@@ -83,7 +84,7 @@ export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacement
     return <li className="exercise-library__item" key={item.id}>
       <button className="exercise-library__select" type="button" data-exercise-id={item.id} aria-label={`${browseOnly ? 'View' : 'Select'} ${item.name}`} onClick={() => showDetails(item)}>
         <span className="exercise-library__row-copy"><strong>{item.name}</strong><span>{tradeoff ?? item.muscles.join(' · ')}</span></span>
-        <span className="exercise-library__row-type">{item.category}</span><ChevronRight size={16} aria-hidden="true" />
+        <ChevronRight size={16} aria-hidden="true" />
       </button>
     </li>;
   }
@@ -96,24 +97,21 @@ export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacement
             <DialogDescription className="exercise-library__category">{selected.category}</DialogDescription>
             <DialogTitle className="exercise-library__detail-title">{selected.name}</DialogTitle>
           </DialogHeader>
-          <dl className="exercise-library__setup">
-            <div><dt>Equipment</dt><dd>{selected.equipment.join(' · ')}</dd></div>
-            <div><dt>Level</dt><dd>{selected.difficulty}</dd></div>
-            <div><dt>Starting point</dt><dd>{selected.recommendedSets} × {selected.recommendedReps}{selected.perSide ? ' / side' : ''}</dd></div>
-          </dl>
           <ExerciseGuideBody key={selected.id} exercise={{ name: selected.name, key: selected.id, mode: selected.mode, target: selected.recommendedReps }} />
           <div className="exercise-library__confirmation"><button type="button" className="btn full" onClick={confirm}>{browseOnly ? 'Done' : confirmationLabel ?? (replacementFor ? 'Replace exercise' : 'Add exercise')}</button></div>
         </> : <>
           <DialogHeader className="exercise-library__header">
             <DialogTitle className="exercise-library__title">{title ?? (browseOnly ? 'Exercises' : replacementFor ? 'Replace exercise' : 'Add exercise')}</DialogTitle>
-            <DialogDescription className="exercise-library__description">{replacementFor ? `Similar purpose. A setup that works for you.` : 'Find your next movement.'}</DialogDescription>
+            <DialogDescription className="sr-only">{replacementFor ? 'Find a similar movement for your workout.' : 'Search movements and open a technique guide.'}</DialogDescription>
           </DialogHeader>
           <div className="exercise-library__search"><Search size={19} aria-hidden="true" />
             <input type="search" aria-label="Search exercises" placeholder="Search exercises" value={query} onChange={event => { setQuery(event.target.value); setLimit(30); }} autoComplete="off" autoCorrect="off" spellCheck={false} />
           </div>
-          <div className="exercise-library__categories" role="group" aria-label="Exercise categories">{categories.map(value => <button key={value} type="button" aria-pressed={category === value} onClick={() => { setCategory(value); setLimit(30); }}>{value}</button>)}</div>
-          <details className="exercise-library__filters">
-            <summary><SlidersHorizontal size={16} aria-hidden="true" />Filters{filterCount > 0 && <span>{filterCount}</span>}</summary>
+          <div className="exercise-library__tools">
+            <div className="exercise-library__categories" role="group" aria-label="Exercise categories">{categories.map(value => <button key={value} type="button" aria-pressed={category === value} onClick={() => { setCategory(value); setLimit(30); }}>{value}</button>)}</div>
+            <button type="button" className="exercise-library__filter-toggle" aria-label={filterCount ? `Filters, ${filterCount} active` : 'Filters'} aria-expanded={filtersOpen} onClick={() => setFiltersOpen(value => !value)}><SlidersHorizontal size={18} aria-hidden="true" />{filterCount > 0 && <span>{filterCount}</span>}</button>
+          </div>
+          <div className="exercise-library__filters" hidden={!filtersOpen}>
             <div className="exercise-library__filter-body">
               {facets.map(facet => <details key={facet.key} className="exercise-library__facet">
                 <summary>{facet.label}<span>{filters[facet.key] || 'All'}</span></summary>
@@ -124,10 +122,10 @@ export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacement
               </details>)}
               {filterCount > 0 && <button type="button" className="exercise-library__clear" onClick={() => setFilters({})}>Clear filters</button>}
             </div>
-          </details>
+          </div>
           {suggested.length > 0 && <section className="exercise-library__section" aria-label="Suggested alternatives"><h3>Closest alternatives</h3><ul>{suggested.map(item => row(item.exercise, item.tradeoff))}</ul></section>}
           <section className="exercise-library__section" aria-label="Exercise results">
-            <h3>{filtered ? `${remaining.length} ${remaining.length === 1 ? 'exercise' : 'exercises'}` : suggested.length ? 'All movements' : 'All exercises'}</h3>
+            {(filtered || suggested.length > 0) && <h3>{filtered ? `${remaining.length} ${remaining.length === 1 ? 'exercise' : 'exercises'}` : 'All movements'}</h3>}
             {remaining.length ? <ul>{remaining.slice(0, limit).map(item => row(item))}</ul> : <p className="exercise-library__empty">No matches.<span>Try another name or clear a filter.</span></p>}
             {remaining.length > limit && <button className="exercise-library__more" type="button" onClick={() => setLimit(value => value + 30)}>Show more</button>}
           </section>

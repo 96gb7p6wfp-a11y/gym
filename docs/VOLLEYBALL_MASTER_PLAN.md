@@ -1,6 +1,6 @@
 # Eight-week volleyball-first master plan
 
-Activate in **More → Training plan → Use this plan**. Choose a Monday and select
+Activate in **You → Training plan → Programme & customization → Use this plan**. Choose a Monday and select
 the weeks with a Sunday match. No match is assumed. The program preserves the
 previous weekly plan, historical sessions, measurements, meals, activities,
 templates and preferences. **Return to saved plan** restores the previous week;

@@ -41,6 +41,7 @@ export function ExerciseGuideBody({ exercise }: { exercise: GuideExercise }) {
   const swaps = movement ? rankAlternatives(movement.id, 4) : [];
   const steps = guide.isGeneric && movement ? movement.cues : guide.steps;
   const mistakes = guide.isGeneric && movement ? movement.mistakes : guide.mistakes;
+  const benefit = movement?.primaryBenefit ?? exercise.cue;
   const intent = movement && (['Power', 'Plyometric', 'Speed'].includes(movement.category)
     ? 'Move explosively. Stop when speed or jump quality drops.'
     : movement.category === 'Hypertrophy' ? 'Controlled reps. Use your full comfortable range.'
@@ -49,21 +50,13 @@ export function ExerciseGuideBody({ exercise }: { exercise: GuideExercise }) {
     : 'Stay steady. Keep your ribs and pelvis controlled.');
 
   return <div className="exercise-guide__content">
-    {movement ? <dl className="exercise-guide__overview">
-      <div><dt>Targets</dt><dd>{movement.muscles.join(' · ')}</dd></div>
-      <div><dt>Improves</dt><dd>{movement.primaryBenefit}<span>{movement.secondaryBenefit}</span></dd></div>
-      <div><dt>Intent</dt><dd>{intent}</dd></div>
-    </dl> : (exercise.group || exercise.cue) && <div className="exercise-guide__intro">
-      {exercise.group && <span>{exercise.group}</span>}
-      {exercise.cue && <p>{exercise.cue}</p>}
-    </div>}
+    {benefit && <p className="exercise-guide__benefit">{benefit}</p>}
     <div className="exercise-guide__sections" role="group" aria-label={`Guide sections for ${exercise.name}`}>
       <button type="button" aria-pressed={section === 'technique'} onClick={() => setSection('technique')}>Technique</button>
       <button type="button" aria-pressed={section === 'alternatives'} onClick={() => setSection('alternatives')}>Alternatives</button>
     </div>
     {section === 'alternatives' ? <div className="exercise-guide__alternatives">
       {swaps.length ? <>
-        <p>Similar purpose. Choose what fits your equipment and recovery.</p>
         {swaps.map(({ exercise: alternativeExercise, tradeoff }) => {
           const alternative = getExerciseGuide({ name: alternativeExercise.name });
           return <div key={alternativeExercise.id}>
@@ -76,11 +69,16 @@ export function ExerciseGuideBody({ exercise }: { exercise: GuideExercise }) {
     </div> : <>
       {guide.isGeneric && !movement && <p className="exercise-guide__custom">Custom movement · general guidance</p>}
       <section className="exercise-guide__technique"><h3>Technique</h3>
-        <ol className="exercise-guide__steps">{steps.map((step, index) => <li key={index}>{step}</li>)}</ol>
+        <ol className="exercise-guide__steps">{steps.slice(0, 3).map((step, index) => <li key={index}>{step}</li>)}</ol>
+        {steps.length > 3 && <details className="exercise-guide__disclosure"><summary>More technique</summary><ol className="exercise-guide__steps" start={4}>{steps.slice(3).map((step, index) => <li key={index}>{step}</li>)}</ol></details>}
       </section>
-      <section className="exercise-guide__feel"><h3>Feel it</h3><p>{guide.isGeneric && movement ? movement.muscles.join(' · ') : guide.feel}</p></section>
-      <section className="exercise-guide__mistakes"><h3>Avoid</h3><ul>{mistakes.map((mistake, index) => <li key={index}>{mistake}</li>)}</ul></section>
-      <section className="exercise-guide__safety"><h3>Safety</h3><p>{guide.isGeneric && movement ? 'Use a setup you can control. Stop for sharp pain, dizziness or loss of technique.' : guide.caution}</p></section>
+      <details className="exercise-guide__disclosure exercise-guide__form"><summary>Form &amp; safety</summary>
+        <div className="exercise-guide__disclosure-body">
+          <section className="exercise-guide__feel"><h3>Feel it</h3><p>{guide.isGeneric && movement ? movement.muscles.join(' · ') : guide.feel}</p></section>
+          <section className="exercise-guide__mistakes"><h3>Avoid</h3><ul>{mistakes.map((mistake, index) => <li key={index}>{mistake}</li>)}</ul></section>
+          <section className="exercise-guide__safety"><h3>Safety</h3><p>{guide.isGeneric && movement ? 'Use a setup you can control. Stop for sharp pain, dizziness or loss of technique.' : guide.caution}</p></section>
+        </div>
+      </details>
       <button type="button" className="exercise-guide__load-toggle" aria-expanded={loadingOpen} onClick={() => setLoadingOpen(value => !value)}>Load &amp; reps<span aria-hidden="true">{loadingOpen ? '−' : '+'}</span></button>
       <div className="exercise-guide__loading" hidden={!loadingOpen}>
         <strong>{guide.loading.label}</strong>
@@ -88,6 +86,16 @@ export function ExerciseGuideBody({ exercise }: { exercise: GuideExercise }) {
         <p>{guide.loading.advice}</p>
         {guide.loading.progression && <p>{guide.loading.progression}</p>}
       </div>
+      {movement ? <details className="exercise-guide__disclosure exercise-guide__about"><summary>About this exercise</summary>
+        <dl className="exercise-guide__overview">
+          <div><dt>Targets</dt><dd>{movement.muscles.join(' · ')}</dd></div>
+          <div><dt>Improves</dt><dd>{movement.primaryBenefit}<span>{movement.secondaryBenefit}</span></dd></div>
+          <div><dt>Intent</dt><dd>{intent}</dd></div>
+          <div><dt>Equipment</dt><dd>{movement.equipment.join(' · ')}</dd></div>
+          <div><dt>Level</dt><dd>{movement.difficulty}</dd></div>
+          <div><dt>Starting point</dt><dd>{movement.recommendedSets} × {movement.recommendedReps}{movement.perSide ? ' / side' : ''}</dd></div>
+        </dl>
+      </details> : exercise.group && <p className="exercise-guide__custom">{exercise.group}</p>}
       <a className="exercise-guide__video" href={guide.demonstration.url} target="_blank" rel="noopener noreferrer">{guide.demonstration.label}<ArrowUpRight size={17} aria-hidden="true" /></a>
     </>}
   </div>;

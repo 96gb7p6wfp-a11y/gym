@@ -1,10 +1,11 @@
+import { openSection } from './helpers/navigation';
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE } from '../src/domain.js';
 
 const STORE = 'setline.gym.v1';
 const read = (page: Page) => page.evaluate(key => JSON.parse(localStorage.getItem(key)!), STORE);
 async function openPlan(page: Page) {
-  await page.getByRole('tab', { name: 'More', exact: true }).click();
+  await openSection(page, 'You');
   await page.getByRole('button', { name: 'Training plan', exact: true }).click();
   await page.locator('.native-program-options > summary').click();
 }
