@@ -83,6 +83,7 @@ export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutri
   ];
 
   return <section className="progress-overview progress-native" aria-label="Progress overview">
+    <div className="progress-lens-card">
     <div className="progress-chart-selector" role="group" aria-label="Chart metric">
       {(['jump', 'weight', 'strength'] as const).map(item => <button key={item} type="button"
         aria-pressed={metric === item} onClick={() => setSelectedMetric(item)}>{capitalized(item)}</button>)}
@@ -118,6 +119,7 @@ export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutri
           : coordinates.length > 1 ? <>
             <svg className={`progress-native-chart progress-${metric}-chart`} viewBox="0 0 340 158" role="img" aria-label={chartLabel}>
               <path d="M12 146H328" className="progress-chart-baseline" />
+              <polygon points={`${coordinates[0].x},146 ${coordinates.map(point => `${point.x},${point.y}`).join(' ')} ${coordinates.at(-1)!.x},146`} className="progress-chart-area" />
               <polyline points={coordinates.map(point => `${point.x},${point.y}`).join(' ')} className="progress-chart-line" />
               {coordinates.map((point, index) => <circle key={point.date} cx={point.x} cy={point.y} r={index === coordinates.length - 1 ? 4 : 2.5} className="progress-chart-dot" />)}
             </svg>
@@ -135,6 +137,7 @@ export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutri
       {showWeightCheckIn && <button type="button" className={metric === 'weight' ? 'is-contextual' : ''} onClick={onLogWeight}><Plus size={17} aria-hidden="true" />Log weight</button>}
     </div>}
     {value !== null && insight && <p className="progress-single-insight">{insight}</p>}
+    </div>
 
     <div className="progress-supporting-metrics" aria-label="Other progress">
       {otherMetrics.filter(item => item.metric !== metric).map(item => <button key={item.metric} type="button"

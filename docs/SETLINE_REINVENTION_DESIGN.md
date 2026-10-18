@@ -1,4 +1,8 @@
-# Setline — Athlete’s Journal
+# Setline — Athlete’s Journal (previous direction)
+
+This document records the previous release. The user’s later five visual references
+supersede its flat/serif/card-minimal presentation. See the current
+[Setline Soft design system](SETLINE_SOFT_DESIGN.md). Product/data constraints still apply.
 
 ## Decision
 

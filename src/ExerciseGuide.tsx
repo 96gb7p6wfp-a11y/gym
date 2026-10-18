@@ -3,6 +3,7 @@ import { ArrowUpRight, ChevronRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui';
 import { getExerciseGuide, type GuideExercise } from './exercise-guides';
 import { findLibraryExercise, rankAlternatives } from './exercise-library';
+import { MuscleMap } from './MuscleMap';
 import './exercise-guides.css';
 
 export interface ExerciseGuideProps {
@@ -87,6 +88,7 @@ export function ExerciseGuideBody({ exercise }: { exercise: GuideExercise }) {
         {guide.loading.progression && <p>{guide.loading.progression}</p>}
       </div>
       {movement ? <details className="exercise-guide__disclosure exercise-guide__about"><summary>About this exercise</summary>
+        <MuscleMap muscles={movement.muscles} />
         <dl className="exercise-guide__overview">
           <div><dt>Targets</dt><dd>{movement.muscles.join(' · ')}</dd></div>
           <div><dt>Improves</dt><dd>{movement.primaryBenefit}<span>{movement.secondaryBenefit}</span></dd></div>

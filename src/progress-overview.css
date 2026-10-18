@@ -1,67 +1,67 @@
-/* One measured lens. Supporting records stay quiet until selected. */
-.progress-overview.progress-native { display:block; min-width:0; padding:0; color:var(--ink); }
-.progress-native .progress-chart-selector { display:flex; align-items:center; gap:24px; margin:0 0 30px; border-bottom:1px solid var(--line); }
-.progress-native .progress-chart-selector>button { position:relative; min-width:44px; min-height:46px; padding:0 0 12px; border:0; border-radius:0; background:transparent; color:var(--sub); font-size:14px; font-weight:500; line-height:1.2; }
-.progress-native .progress-chart-selector>button::after { content:''; position:absolute; bottom:-1px; left:0; right:0; height:2px; background:transparent; }
-.progress-native .progress-chart-selector>button[aria-pressed='true'] { color:var(--ink); }
-.progress-native .progress-chart-selector>button[aria-pressed='true']::after { background:var(--accent); }
+/* A quiet, tactile lens on recorded performance. */
+.progress-overview.progress-native { display:grid; gap:18px; min-width:0; padding:0; color:var(--ink); }
+.progress-native .progress-lens-card { min-width:0; padding:10px 22px 18px; border-radius:28px; background:var(--surface); box-shadow:var(--shadow-card,0 4px 24px rgb(25 39 33 / 3%)); }
+.progress-native .progress-chart-selector { display:flex; align-items:center; gap:3px; margin:0 -12px 24px; padding:4px; border:0; border-radius:100px; background:var(--surface-soft); }
+.progress-native .progress-chart-selector>button { flex:1; min-width:0; min-height:44px; padding:10px 8px; border:0; border-radius:100px; background:transparent; color:var(--sub); font-size:13px; font-weight:600; line-height:1.25; transition:background 160ms ease,color 160ms ease,box-shadow 160ms ease; }
+.progress-native .progress-chart-selector>button[aria-pressed='true'] { background:var(--surface); color:var(--ink); box-shadow:0 2px 7px rgb(25 39 33 / 7%); }
 .progress-native .progress-trend { min-width:0; margin:0; padding:0; border:0; background:transparent; }
-.progress-native .progress-period { margin:0 0 10px; color:var(--sub); font-size:11px; font-weight:500; line-height:1.4; letter-spacing:.09em; text-transform:uppercase; }
-.progress-native .progress-lens-title { max-width:100%; margin:0; color:var(--ink); font-family:var(--font-display,ui-serif,'Iowan Old Style',Palatino,Georgia,serif); font-size:29px; font-weight:400; line-height:1.18; letter-spacing:-.035em; text-wrap:balance; }
-.progress-native .progress-lens-empty { padding:4px 0 22px; }
-.progress-native .progress-lens-empty .progress-lens-title { max-width:14ch; font-size:36px; line-height:1.13; }
-.progress-native .progress-lens-empty__copy { max-width:30ch; margin:18px 0 0; color:var(--sub); font-size:14px; line-height:1.65; }
-.progress-native .progress-lens-empty .progress-empty-action { display:inline-flex; min-height:48px; margin-top:23px; padding:12px 19px; }
-.progress-native .progress-lens-value { display:flex; align-items:baseline; gap:8px; margin-top:15px; font-variant-numeric:tabular-nums; }
-.progress-native .progress-lens-value>span { color:var(--ink); font-size:68px; font-weight:400; line-height:1; letter-spacing:-.065em; }
-.progress-native .progress-lens-value>small { color:var(--sub); font-size:21px; font-weight:400; line-height:1; letter-spacing:-.02em; }
-.progress-native .progress-lens-comparison { display:flex; align-items:baseline; flex-wrap:wrap; gap:5px 7px; margin:13px 0 0; color:var(--sub); font-size:13px; line-height:1.5; }
-.progress-native .progress-lens-comparison>strong { color:var(--accent); font-weight:550; }
-.progress-native .progress-plot { margin-top:27px; min-width:0; }
-.progress-native .progress-native-chart { display:block; width:100%; height:auto; max-height:210px; overflow:visible; }
+.progress-native .progress-period { margin:0 0 8px; color:var(--sub); font-size:12px; font-weight:500; line-height:1.4; letter-spacing:0; }
+.progress-native .progress-lens-title { max-width:100%; margin:0; color:var(--ink); font-family:var(--font-display,var(--font-body)); font-size:24px; font-weight:650; line-height:1.2; letter-spacing:-.035em; text-wrap:balance; }
+.progress-native .progress-lens-empty { padding:6px 0 8px; }
+.progress-native .progress-lens-empty .progress-lens-title { max-width:15ch; font-size:32px; line-height:1.1; }
+.progress-native .progress-lens-empty__copy { max-width:29ch; margin:14px 0 0; color:var(--sub); font-size:14px; line-height:1.6; }
+.progress-native .progress-lens-empty .progress-empty-action { display:inline-flex; min-height:48px; margin-top:22px; padding:12px 20px; border-radius:100px; }
+.progress-native .progress-lens-value { display:flex; align-items:baseline; gap:7px; margin-top:18px; font-variant-numeric:tabular-nums; }
+.progress-native .progress-lens-value>span { color:var(--ink); font-family:var(--font-display,var(--font-body)); font-size:66px; font-weight:650; line-height:1; letter-spacing:-.06em; }
+.progress-native .progress-lens-value>small { color:var(--sub); font-size:20px; font-weight:500; line-height:1; letter-spacing:-.02em; }
+.progress-native .progress-lens-comparison { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 7px; margin:12px 0 0; color:var(--sub); font-size:12px; line-height:1.5; }
+.progress-native .progress-lens-comparison>strong { color:var(--accent); font-weight:650; }
+.progress-native .progress-plot { margin-top:22px; min-width:0; }
+.progress-native .progress-native-chart { display:block; width:100%; height:auto; max-height:200px; overflow:visible; }
 .progress-native .progress-chart-baseline { fill:none; stroke:var(--line); stroke-width:1; }
-.progress-native .progress-chart-line { fill:none; stroke:var(--accent); stroke-width:2; stroke-linejoin:round; stroke-linecap:round; }
+.progress-native .progress-chart-area { fill:var(--accent-soft); opacity:.55; }
+.progress-native .progress-chart-line { fill:none; stroke:var(--accent); stroke-width:2.5; stroke-linejoin:round; stroke-linecap:round; }
 .progress-native .progress-chart-dot { fill:var(--accent); }
-.progress-native .progress-chart-dates { display:flex; justify-content:space-between; padding:10px 10px 0; color:var(--sub); font-size:11px; font-variant-numeric:tabular-nums; line-height:1.4; }
-.progress-native .progress-chart-empty { display:flex; align-items:center; min-height:110px; border-block:1px solid var(--line); }
-.progress-native .progress-chart-empty>p { margin:0; max-width:32ch; color:var(--sub); font-size:14px; line-height:1.6; }
-.progress-native .progress-weight-caption { margin:14px 0 0; color:var(--sub); font-size:12px; line-height:1.5; }
-.progress-native .progress-strength-comparison { display:grid; gap:26px; padding:22px 0; }
+.progress-native .progress-chart-dates { display:flex; justify-content:space-between; padding:9px 10px 0; color:var(--sub); font-size:11px; font-variant-numeric:tabular-nums; line-height:1.4; }
+.progress-native .progress-chart-empty { display:flex; align-items:center; min-height:100px; padding:18px; border:0; border-radius:18px; background:var(--surface-soft); }
+.progress-native .progress-chart-empty>p { margin:0; max-width:32ch; color:var(--sub); font-size:13px; line-height:1.6; }
+.progress-native .progress-weight-caption { margin:13px 0 0; color:var(--sub); font-size:12px; line-height:1.5; }
+.progress-native .progress-strength-comparison { display:grid; gap:24px; padding:18px 0; }
 .progress-native .progress-strength-comparison>div { display:grid; grid-template-columns:49px minmax(0,1fr) auto; align-items:center; gap:12px; }
 .progress-native .progress-strength-comparison>div>span { color:var(--sub); font-size:11px; }
-.progress-native .progress-strength-comparison>div>div { min-width:0; height:5px; }
-.progress-native .progress-strength-comparison i { display:block; height:5px; border-radius:0 2px 2px 0; background:var(--accent); }
-.progress-native .progress-strength-comparison>div:first-child i { opacity:.4; }
-.progress-native .progress-strength-comparison strong { display:inline-flex; align-items:baseline; gap:4px; color:var(--ink); font-size:18px; font-weight:500; line-height:1.2; font-variant-numeric:tabular-nums; }
+.progress-native .progress-strength-comparison>div>div { min-width:0; height:8px; border-radius:100px; background:var(--surface-soft); }
+.progress-native .progress-strength-comparison i { display:block; height:8px; border-radius:100px; background:var(--accent); }
+.progress-native .progress-strength-comparison>div:first-child i { opacity:.45; }
+.progress-native .progress-strength-comparison strong { display:inline-flex; align-items:baseline; gap:4px; color:var(--ink); font-size:18px; font-weight:600; line-height:1.2; font-variant-numeric:tabular-nums; }
 .progress-native .progress-strength-comparison small { color:var(--sub); font-size:11px; font-weight:400; }
 .progress-native .progress-chart-caption { margin:4px 0 0; color:var(--sub); font-size:12px; line-height:1.5; }
-.progress-native .progress-check-ins { display:flex; gap:24px; padding:16px 0 12px; }
-.progress-native .progress-check-ins>button { display:inline-flex; align-items:center; justify-content:flex-start; gap:6px; min-height:44px; padding:5px 0; border:0; border-radius:0; background:transparent; color:var(--sub); font-size:14px; font-weight:500; }
-.progress-native .progress-check-ins>button.is-contextual { color:var(--accent); }
-.progress-native .progress-single-insight { margin:4px 0 24px; padding:0; max-width:38ch; color:var(--ink); font-size:14px; line-height:1.6; }
-.progress-native .progress-supporting-metrics { margin-top:13px; border-top:1px solid var(--line); }
-.progress-native .progress-supporting-row,.progress-native .progress-consistency { display:flex; align-items:center; gap:10px; width:100%; min-height:77px; padding:16px 0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; color:var(--ink); text-align:left; }
-.progress-native .progress-supporting-row>span,.progress-native .progress-consistency>span { display:grid; flex:1; gap:5px; min-width:0; }
-.progress-native .progress-supporting-row strong,.progress-native .progress-consistency strong { color:var(--ink); font-size:15px; font-weight:500; line-height:1.35; }
-.progress-native .progress-supporting-row small,.progress-native .progress-consistency small { color:var(--sub); font-size:12px; line-height:1.4; }
-.progress-native .progress-supporting-row>b,.progress-native .progress-consistency>b { flex-shrink:0; color:var(--ink); font-size:18px; font-weight:450; line-height:1.2; letter-spacing:-.025em; font-variant-numeric:tabular-nums; }
+.progress-native .progress-check-ins { display:flex; flex-wrap:wrap; gap:8px; padding:18px 0 0; }
+.progress-native .progress-check-ins>button { display:inline-flex; align-items:center; justify-content:center; flex:1; gap:6px; min-height:44px; padding:10px 12px; border:0; border-radius:100px; background:var(--surface-soft); color:var(--ink); font-size:13px; font-weight:600; }
+.progress-native .progress-check-ins>button.is-contextual { color:var(--accent); background:var(--accent-soft); }
+.progress-native .progress-single-insight { margin:16px 0 0; padding:15px 0 0; border-top:1px solid var(--line); color:var(--sub); font-size:13px; line-height:1.6; }
+.progress-native .progress-supporting-metrics { overflow:hidden; min-width:0; border:0; border-radius:24px; padding:0 18px; background:var(--surface); }
+.progress-native .progress-supporting-row,.progress-native .progress-consistency { display:flex; align-items:center; gap:10px; width:100%; min-height:76px; padding:17px 0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; color:var(--ink); text-align:left; }
+.progress-native .progress-supporting-row>span,.progress-native .progress-consistency>span { display:grid; flex:1; gap:4px; min-width:0; }
+.progress-native .progress-supporting-row strong,.progress-native .progress-consistency strong { color:var(--ink); font-size:14px; font-weight:600; line-height:1.35; }
+.progress-native .progress-supporting-row small,.progress-native .progress-consistency small { color:var(--sub); font-size:11px; line-height:1.45; }
+.progress-native .progress-supporting-row>b,.progress-native .progress-consistency>b { flex-shrink:0; color:var(--ink); font-size:19px; font-weight:600; line-height:1.2; letter-spacing:-.035em; font-variant-numeric:tabular-nums; }
 .progress-native .progress-supporting-row>svg { flex-shrink:0; color:var(--sub); }
-.progress-native .progress-consistency { padding-right:26px; }
-.progress-native .progress-overview-links { display:grid; margin-top:30px; }
-.progress-native .progress-overview-links>button { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:54px; width:100%; padding:13px 0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; color:var(--ink); text-align:left; font-size:15px; font-weight:400; }
+.progress-native .progress-consistency { padding-right:26px; border-bottom:0; }
+.progress-native .progress-overview-links { display:grid; padding:0 18px; border-radius:24px; background:var(--surface); }
+.progress-native .progress-overview-links>button { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:56px; width:100%; padding:14px 0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; color:var(--ink); text-align:left; font-size:14px; font-weight:500; }
 .progress-native .progress-overview-links>button:last-child { border-bottom:0; }
 .progress-native .progress-overview-links svg { flex-shrink:0; color:var(--sub); }
-.progress-native button:active { background:var(--surface-soft); }
+.progress-native button:active { filter:brightness(.97); }
 .progress-native button:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
 @media(max-width:350px) {
- .progress-native .progress-chart-selector { margin-bottom:26px; }
- .progress-native .progress-lens-title { font-size:27px; }
- .progress-native .progress-lens-empty .progress-lens-title { font-size:32px; }
- .progress-native .progress-lens-value>span { font-size:60px; }
+ .progress-native .progress-lens-card { padding:9px 18px 18px; border-radius:26px; }
+ .progress-native .progress-chart-selector { margin-inline:-9px; margin-bottom:21px; }
+ .progress-native .progress-lens-title { font-size:22px; }
+ .progress-native .progress-lens-empty .progress-lens-title { font-size:29px; }
+ .progress-native .progress-lens-value>span { font-size:58px; }
  .progress-native .progress-supporting-row,.progress-native .progress-consistency { gap:8px; }
- .progress-native .progress-supporting-row>b,.progress-native .progress-consistency>b { font-size:16px; }
+ .progress-native .progress-supporting-row>b,.progress-native .progress-consistency>b { font-size:17px; }
 }
-@media(min-width:760px) {
- .progress-native .progress-chart-selector { gap:32px; }
- .progress-native .progress-lens-value>span { font-size:68px; }
+@media(prefers-reduced-motion:reduce) {
+ .progress-native .progress-chart-selector>button { transition:none; }
 }

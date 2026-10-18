@@ -737,8 +737,8 @@ test('serves a standalone PWA manifest, local icons, safe-area HTML, and a worke
   expect(manifest.start_url).toBe('/');
   expect(manifest.scope).toBe('/');
   expect(['standalone', 'fullscreen']).toContain(manifest.display);
-  expect(manifest.theme_color).toBe('#f4f1eb');
-  expect(manifest.background_color).toBe('#f4f1eb');
+  expect(manifest.theme_color).toBe('#f1f4ef');
+  expect(manifest.background_color).toBe('#f1f4ef');
   expect(manifest.display_override).toContain('fullscreen');
   expect(manifest.icons).toEqual(expect.arrayContaining([
     expect.objectContaining({ sizes: '192x192' }),

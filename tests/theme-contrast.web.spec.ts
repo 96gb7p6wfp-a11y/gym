@@ -109,6 +109,58 @@ const phoneSizes = [
 ];
 
 for (const appearance of ['light', 'dark'] as const) {
+  test(`rounded surfaces keep the main decision, tabs, set completion and routine actions readable in ${appearance}`, async ({ page }) => {
+    await seed(page, appearance);
+    const today = page.getByRole('region', { name: 'Your day', exact: true });
+    await expectReadable(today.locator('h2, p, .day-cover__start'));
+    const nav = page.getByRole('tablist', { name: 'Main navigation', exact: true });
+    for (const item of await nav.getByRole('tab').all()) {
+      await expectReadable(item);
+      await item.hover();
+      await expectReadable(item);
+    }
+
+    await page.getByRole('tab', { name: 'Train', exact: true }).click();
+    await page.getByRole('button', { name: /^Mon / }).click();
+    await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+    const current = page.getByRole('region', { name: 'Current exercise', exact: true });
+    const weight = current.getByRole('textbox', { name: 'Medicine Ball Spike Slam set 1 weight in kilograms', exact: true });
+    const reps = current.getByRole('spinbutton', { name: 'Medicine Ball Spike Slam set 1 reps', exact: true });
+    await weight.fill('12.5');
+    await reps.fill('3');
+    await expectReadable(current.locator('.focused-exercise__name, .focused-exercise-benefit, .focused-exercise__set-heading strong, .focused-exercise__previous, .focused-set-field > span, .focused-set-controls input'));
+    const complete = current.getByRole('button', { name: 'Complete Medicine Ball Spike Slam set 1', exact: true });
+    await expectReadable(complete);
+    await complete.tap();
+
+    // Set completion used to leave a dark unreadable action. Check the next
+    // live action and retained decimal input against their own layered surface.
+    const next = current.getByRole('button', { name: 'Complete Medicine Ball Spike Slam set 2', exact: true });
+    await expect(next).toBeVisible();
+    await expectReadable(next);
+    await expect(current.getByRole('textbox', { name: 'Medicine Ball Spike Slam set 2 weight in kilograms', exact: true })).toHaveValue('12.5');
+    await expectReadable(page.locator('.rest-floating > span, .rest-floating > strong, .rest-floating > button'));
+
+    await page.getByRole('tab', { name: 'You', exact: true }).click();
+    await page.getByRole('button', { name: 'Routine', exact: true }).click();
+    const routine = page.getByRole('region', { name: 'Supplement and medication reminders', exact: true });
+    await routine.getByRole('button', { name: 'Mark Mivolis zinc taken', exact: true }).tap();
+    const taken = routine.getByRole('button', { name: 'Undo Mivolis zinc taken', exact: true });
+    await expect(taken).toHaveAttribute('aria-pressed', 'true');
+    await expectReadable(taken.locator('.reminder-panel__check-circle'));
+    await expectReadable(routine.locator('.reminder-panel__status'));
+    await routine.getByRole('button', { name: 'Edit Mivolis zinc reminder', exact: true }).click();
+    const form = page.getByRole('form', { name: 'Reminder form', exact: true });
+    const save = form.getByRole('button', { name: 'Save reminder', exact: true });
+    await save.scrollIntoViewIfNeeded();
+    await expectReadable(save);
+    await save.hover();
+    await expectReadable(save);
+    await save.tap();
+    await expect(form).not.toBeVisible();
+    await expect(taken).toHaveAttribute('aria-pressed', 'true');
+  });
+
   for (const size of phoneSizes) {
     test(`exercise previews stay compact, readable and read-only at ${size.width}px in ${appearance}`, async ({ page }) => {
       await page.setViewportSize(size);
@@ -130,14 +182,15 @@ for (const appearance of ['light', 'dark'] as const) {
         // Test the actual background chain rather than just the page theme:
         // the original bug was a white list containing inherited white text.
         await expectReadable(sequence.locator('.workout-preview__index, .workout-preview__copy > strong, .workout-preview__copy > span, .workout-preview__dose > strong, .workout-preview__dose > span'));
-        for (const element of [sequence, rows.first()]) {
-          const surface = await element.evaluate(node => {
-            const style = getComputedStyle(node);
-            return { background: style.backgroundColor, radius: style.borderRadius };
-          });
-          expect(surface.background).toBe('rgba(0, 0, 0, 0)');
-          expect(surface.radius).toBe('0px');
-        }
+        // One rounded group contains the compact exercise rows. The full
+        // composited contrast check above catches inherited text on any
+        // mismatched row surface, including the original white-on-white bug.
+        const surface = await sequence.evaluate(node => {
+          const style = getComputedStyle(node);
+          return { background: style.backgroundColor, radius: parseFloat(style.borderTopLeftRadius) };
+        });
+        expect(surface.background).not.toBe('rgba(0, 0, 0, 0)');
+        expect(surface.radius).toBeGreaterThanOrEqual(20);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
         expect(await sequence.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
 
@@ -145,7 +198,7 @@ for (const appearance of ['light', 'dark'] as const) {
         const bounds = (await first.boundingBox())!;
         expect(bounds.width).toBeGreaterThanOrEqual(44);
         expect(bounds.height).toBeGreaterThanOrEqual(44);
-        // A single full-width action replaces the oversized exercise cards.
+        // Each compact row remains a single full-width action.
         expect(bounds.height).toBeLessThanOrEqual(132);
         const name = await rows.first().locator('.workout-preview__copy > strong').innerText();
         if (day === 'Sun') expect(name).toBe('Approach Jump');

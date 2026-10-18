@@ -10,8 +10,12 @@ test('exercise details explain purpose and rank relevant alternatives without cr
   await expect(guide).not.toBeVisible();
   await page.getByRole('button', { name: 'Exercise details for Chest-Supported Row', exact: true }).click();
   await expect(guide.locator('.exercise-guide__overview')).toBeHidden();
+  await expect(guide.getByRole('img', { name: 'Front target areas', exact: true })).toBeHidden();
   await openDisclosure(page, 'About this exercise');
   await expect(guide.locator('.exercise-guide__overview')).toBeVisible();
+  await expect(guide.getByRole('img', { name: 'Front target areas', exact: true })).toBeVisible();
+  await expect(guide.getByRole('img', { name: 'Back target areas', exact: true })).toBeVisible();
+  await expect(guide.locator('figcaption')).toContainText('Broad muscle groups · schematic');
   await expect(guide.locator('.exercise-guide__overview')).toContainText('Targets');
   await expect(guide.locator('.exercise-guide__overview')).toContainText('Back');
   await expect(guide.locator('.exercise-guide__overview')).toContainText('Improves');

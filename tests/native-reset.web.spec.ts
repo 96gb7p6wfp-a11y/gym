@@ -57,15 +57,19 @@ test.beforeEach(async ({ page }) => {
 
 for (const appearance of ['light', 'dark'] as const) {
   for (const screen of screens) {
-    test(`native pages fit ${screen.width}px in ${appearance} with reachable training and integrated tabs`, async ({ page }) => {
+    test(`native pages fit ${screen.width}px in ${appearance} with reachable training and safe floating tabs`, async ({ page }) => {
       await page.setViewportSize(screen);
       await seed(page, appearance);
       const nav = page.getByRole('tablist', { name: 'Main navigation', exact: true });
       await expect(nav.getByRole('tab')).toHaveCount(4);
       const bounds = (await nav.boundingBox())!;
-      expect(bounds.x).toBeCloseTo(0, 0);
-      expect(bounds.width).toBeCloseTo(screen.width, 0);
-      expect(await nav.evaluate(element => getComputedStyle(element).borderRadius)).toBe('0px');
+      // The pill floats above the home indicator rather than extending the
+      // touch surface into it. Keep both horizontal gutters clear as well.
+      expect(bounds.x).toBeGreaterThanOrEqual(14);
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(screen.width - 14);
+      expect(bounds.y + bounds.height).toBeLessThanOrEqual(screen.height - 34 - 12);
+      expect(await nav.evaluate(element => parseFloat(getComputedStyle(element).borderTopLeftRadius))).toBeGreaterThanOrEqual(24);
+      for (const item of await nav.getByRole('tab').all()) await unobscured(item);
       for (const action of [
         page.getByRole('button', { name: 'Start workout', exact: true }),
         page.getByRole('button', { name: /^View training progress:/ }),
@@ -89,6 +93,25 @@ for (const appearance of ['light', 'dark'] as const) {
     });
   }
 }
+
+test('floating tabs stay clear of both landscape notches and the home indicator', async ({ page }) => {
+  await page.setViewportSize({ width: 844, height: 390 });
+  for (const appearance of ['light', 'dark'] as const) {
+    await seed(page, appearance);
+    await page.evaluate(() => {
+      for (const [side, value] of Object.entries({ top: 0, bottom: 21, left: 59, right: 59 })) {
+        document.documentElement.style.setProperty(`--app-safe-area-${side}`, `${value}px`);
+      }
+    });
+    const nav = page.getByRole('tablist', { name: 'Main navigation', exact: true });
+    const bounds = (await nav.boundingBox())!;
+    expect(bounds.x).toBeGreaterThanOrEqual(59 + 14);
+    expect(bounds.x + bounds.width).toBeLessThanOrEqual(844 - 59 - 14);
+    expect(bounds.y + bounds.height).toBeLessThanOrEqual(390 - 21 - 12);
+    for (const item of await nav.getByRole('tab').all()) await unobscured(item);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+});
 
 test('You offers a read-only searchable library and Back restores the query without modifying data', async ({ page }) => {
   const before = await read(page);

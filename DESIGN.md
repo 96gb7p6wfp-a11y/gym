@@ -1,10 +1,10 @@
-# Setline — Athlete’s Journal
+# Setline Soft — approachable luxury
 
-The current design is a new presentation system, preserving the existing product,
-training logic and local records. The full concept comparison, tokens, typography,
-spacing and component rules live in the [design system](docs/SETLINE_REINVENTION_DESIGN.md).
-Public benchmark evidence and access limitations are in the
-[research record](docs/SETLINE_REINVENTION_RESEARCH.md).
+The current presentation follows the user’s five supplied iPhone references:
+soft rounded cards, monochromatic Morandi sage tones, layered surfaces and calm,
+fast interactions. The [current design system](docs/SETLINE_SOFT_DESIGN.md) defines
+the palette, controls and reference interpretation. It supersedes the earlier flat,
+serif Athlete’s Journal direction while preserving the same product and data.
 
 ## Four destinations
 
@@ -22,17 +22,20 @@ first entry instead of displaying fabricated numbers or charts.
 
 ## Visual identity
 
-A warm neutral canvas and restrained wine accent replace the previous palettes.
-Dark mode uses a deep neutral base and a softer accent. Selective serif session
-names and page titles contrast with system sans controls and tabular numbers.
-The centered Today cover, stacked set-entry rails and single-metric Progress
-composition replace the previous dashboard hierarchy. Content uses whitespace,
-alignment and fine dividers; containers represent inputs or genuine modal objects.
+A muted sage wash sits behind soft white cards in light mode. Dark mode uses deep
+green-neutral surfaces and a softer sage accent. System rounded titles, large
+numerals, circular steppers, pill actions and an inset four-tab capsule make the
+visual language consistent. The Today session is one purposeful card; secondary
+information forms quiet groups rather than a dashboard.
 
-Four integrated tabs respect the home indicator. Contextual tools, short horizontal
-selectors and searchable lists reduce persistent controls. Sheets keep a fixed
-44px Close target outside their single scrolling body. Compact-height layouts make
-technique visible earlier. Touch feedback stays subtle; keyboard focus stays visible.
+Exercise selection, technique, Progress, Nutrition, the plan, Routine, history,
+settings and offline fallback share these materials. The original target-muscle
+schematic uses the same palette and lives inside About this exercise. It is a
+broad muscle-group guide, not an exercise-form demonstration.
+
+Sheets keep a fixed 44px Close target outside their single scrolling body.
+Compact-height layouts keep the first technique cue visible. Touch feedback is
+subtle, keyboard focus remains clear, and reduced-motion preferences are respected.
 
 ## Product invariants
 

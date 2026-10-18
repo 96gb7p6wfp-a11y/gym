@@ -1,58 +1,77 @@
-/* Technique sheets: identity, benefit, then the movement itself. */
+/* Soft movement sheets: one technique surface, calm controls, detail on demand. */
 .exercise-guide { min-width:0; max-width:100%; margin:12px 0 0; border:0; border-radius:0; background:none; color:var(--sub); }
-.exercise-guide .exercise-guide__trigger { display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; min-height:48px; padding:8px 0; border:0; border-radius:0; background:none; color:var(--ink); font:inherit; font-size:14px; font-weight:550; text-align:left; cursor:pointer; }
+.exercise-guide .exercise-guide__trigger { display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; min-height:48px; padding:10px 14px; border:0; border-radius:16px; background:var(--surface-soft); color:var(--ink); font:inherit; font-size:14px; font-weight:600; text-align:left; cursor:pointer; }
 .exercise-guide__trigger > svg { color:var(--sub); flex-shrink:0; }
 .exercise-guide-sheet { color:var(--ink); }
-.exercise-guide-sheet .exercise-guide__header { display:flex; flex-direction:column; gap:10px; margin:8px 32px 20px 0; text-align:left; }
-.exercise-guide__header .exercise-guide__category { margin:0; color:var(--sub); font-size:11px; font-weight:550; letter-spacing:.1em; text-transform:uppercase; }
-.exercise-guide-sheet .exercise-guide__header .exercise-guide__title { margin:0; color:var(--ink); font-family:var(--font-display,ui-serif,'Iowan Old Style',Palatino,Georgia,serif); font-size:clamp(30px,8vw,36px); font-weight:400; line-height:1.12; letter-spacing:-.025em; text-wrap:balance; overflow-wrap:anywhere; }
-.exercise-guide__content { min-width:0; padding:0; border:0; color:var(--sub); font-size:15px; line-height:1.55; overflow-wrap:anywhere; }
-.exercise-guide__benefit { margin:0 0 18px; color:var(--ink); font-size:16px; line-height:1.45; }
-.exercise-guide__sections { display:flex; gap:26px; margin:0 0 24px; border-bottom:1px solid var(--line); }
-.exercise-guide__sections > button { position:relative; min-width:44px; min-height:46px; margin:0 0 -1px; padding:8px 0 12px; border:0; border-bottom:2px solid transparent; border-radius:0; background:none; color:var(--sub); font:inherit; font-size:14px; font-weight:500; }
-.exercise-guide__sections > button[aria-pressed='true'] { border-bottom-color:var(--accent); background:none; color:var(--ink); box-shadow:none; }
-.exercise-guide__content section { display:block; margin:0 0 24px; padding:0; border:0; border-radius:0; background:none; }
-.exercise-guide__content section h3 { margin:0 0 12px; color:var(--sub); font-size:11px; font-weight:550; line-height:1.4; letter-spacing:.08em; text-transform:uppercase; }
+.exercise-guide-sheet .exercise-guide__header { display:flex; align-items:flex-start; flex-direction:column; gap:12px; margin:6px 32px 14px 0; text-align:left; }
+.exercise-guide__header .exercise-guide__category { display:inline-flex; align-items:center; min-height:26px; margin:0; padding:4px 10px; border-radius:99px; background:var(--accent-soft); color:var(--accent); font-size:11px; font-weight:650; line-height:1.4; letter-spacing:.02em; }
+.exercise-guide-sheet .exercise-guide__header .exercise-guide__title { margin:0; color:var(--ink); font-family:var(--font-display,var(--font-body)); font-size:clamp(27px,7.5vw,33px); font-weight:700; line-height:1.1; letter-spacing:-.045em; text-wrap:balance; overflow-wrap:anywhere; }
+.exercise-guide__content { min-width:0; padding:0; border:0; color:var(--sub); font-size:15px; line-height:1.5; overflow-wrap:anywhere; }
+.exercise-guide__benefit { max-width:34ch; margin:0 0 20px; color:var(--sub); font-size:15px; line-height:1.5; }
+.exercise-guide__sections { display:flex; gap:4px; margin:0 0 18px; padding:4px; border:0; border-radius:99px; background:var(--surface-soft); }
+.exercise-guide__sections > button { flex:1; min-width:44px; min-height:44px; margin:0; padding:9px 12px; border:0; border-radius:99px; background:transparent; color:var(--sub); font:inherit; font-size:14px; font-weight:600; }
+.exercise-guide__sections > button[aria-pressed='true'] { background:var(--surface); color:var(--ink); box-shadow:0 2px 8px rgb(19 30 26 / 5%); }
+.exercise-guide__content section { display:block; margin:0; padding:0; border:0; border-radius:0; background:none; }
+.exercise-guide__content section h3 { margin:0 0 8px; color:var(--ink); font-size:13px; font-weight:650; line-height:1.4; letter-spacing:-.01em; }
+.exercise-guide__content .exercise-guide__technique { margin:0 0 12px; padding:18px 16px; border-radius:22px; background:var(--surface-soft); }
 .exercise-guide__content .exercise-guide__technique > h3 { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 .exercise-guide__content section p { margin:0; color:var(--sub); }
-.exercise-guide__content .exercise-guide__steps { display:grid; gap:14px; margin:0; padding:0; counter-reset:technique; list-style:none; }
-.exercise-guide__content .exercise-guide__steps > li { display:grid; grid-template-columns:22px minmax(0,1fr); gap:8px; margin:0; padding:0; border:0; background:none; color:var(--ink); font-size:15px; line-height:1.5; counter-increment:technique; }
-.exercise-guide__steps > li::before { content:counter(technique,decimal-leading-zero); padding-top:2px; color:var(--sub); font-size:11px; font-variant-numeric:tabular-nums; }
+.exercise-guide__content .exercise-guide__steps { display:grid; gap:18px; margin:0; padding:0; counter-reset:technique; list-style:none; }
+.exercise-guide__content .exercise-guide__steps > li { display:grid; grid-template-columns:26px minmax(0,1fr); align-items:start; gap:11px; margin:0; padding:0; border:0; background:none; color:var(--ink); font-size:15px; line-height:1.5; counter-increment:technique; }
+.exercise-guide__steps > li::before { display:grid; place-items:center; content:counter(technique); width:26px; height:26px; border-radius:50%; background:var(--surface); color:var(--accent); font-size:12px; font-weight:650; font-variant-numeric:tabular-nums; }
 .exercise-guide__steps[start='4'] { counter-reset:technique 3; }
 .exercise-guide__content .exercise-guide__mistakes ul { margin:0; padding-left:17px; list-style:disc; }
-.exercise-guide__content .exercise-guide__mistakes li { display:list-item; margin:0 0 8px; padding:0 0 0 2px; border:0; background:none; color:var(--sub); font-size:15px; line-height:1.5; }
-.exercise-guide__disclosure { margin:0; border-top:1px solid var(--line); }
-.exercise-guide__disclosure > summary { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:54px; padding:12px 0; list-style:none; color:var(--ink); font-size:14px; font-weight:500; cursor:pointer; }
+.exercise-guide__content .exercise-guide__mistakes li { display:list-item; margin:0 0 7px; padding:0 0 0 2px; border:0; background:none; color:var(--sub); font-size:14px; line-height:1.5; }
+.exercise-guide__disclosure { margin:10px 0 0; padding:0 16px; border:0; border-radius:18px; background:var(--surface-soft); }
+.exercise-guide__disclosure > summary { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:54px; padding:12px 0; list-style:none; color:var(--ink); font-size:14px; font-weight:600; cursor:pointer; }
 .exercise-guide__disclosure > summary::-webkit-details-marker { display:none; }
-.exercise-guide__disclosure > summary::after { content:'+'; color:var(--sub); font-size:20px; font-weight:300; }
+.exercise-guide__disclosure > summary::after { content:'+'; color:var(--sub); font-size:20px; font-weight:400; }
 .exercise-guide__disclosure[open] > summary::after { content:'−'; }
 .exercise-guide__disclosure-body { padding:4px 0 2px; }
-.exercise-guide__content .exercise-guide__disclosure-body section { margin-bottom:22px; }
-.exercise-guide__overview { display:grid; gap:18px; margin:3px 0 24px; }
-.exercise-guide__overview > div { display:grid; gap:4px; }
-.exercise-guide__overview dt { color:var(--sub); font-size:11px; font-weight:500; letter-spacing:.07em; text-transform:uppercase; }
+.exercise-guide__content .exercise-guide__disclosure-body section { margin-bottom:18px; }
+.exercise-guide__content .exercise-guide__disclosure-body p { font-size:14px; }
+.exercise-guide__technique > .exercise-guide__disclosure { margin-top:14px; padding:0; background:none; }
+.exercise-guide__technique > .exercise-guide__disclosure > summary { border-top:1px solid var(--line); }
+.exercise-guide__overview { display:grid; gap:0; margin:0; padding:0 0 5px; }
+.exercise-guide__overview > div { display:grid; gap:5px; padding:14px 0; border-top:1px solid var(--line); }
+.exercise-guide__overview dt { color:var(--sub); font-size:12px; font-weight:550; }
 .exercise-guide__overview dd { margin:0; color:var(--ink); font-size:14px; line-height:1.5; }
-.exercise-guide__overview dd > span { display:block; margin-top:4px; color:var(--sub); font-size:14px; }
-.exercise-guide__load-toggle { display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; min-height:54px; padding:12px 0; border:0; border-top:1px solid var(--line); border-radius:0; background:none; color:var(--ink); font:inherit; font-size:14px; font-weight:500; text-align:left; }
-.exercise-guide__load-toggle > span { color:var(--sub); font-size:20px; font-weight:300; }
-.exercise-guide__loading { padding:4px 0 24px; border-radius:0; background:none; }
+.exercise-guide__overview dd > span { display:block; margin-top:4px; color:var(--sub); font-size:13px; }
+.exercise-guide__load-toggle { display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; min-height:54px; margin-top:10px; padding:12px 16px; border:0; border-radius:18px; background:var(--surface-soft); color:var(--ink); font:inherit; font-size:14px; font-weight:600; text-align:left; }
+.exercise-guide__load-toggle > span { color:var(--sub); font-size:20px; font-weight:400; }
+.exercise-guide__load-toggle[aria-expanded='true'] { border-radius:18px 18px 0 0; }
+.exercise-guide__loading { padding:0 16px 18px; border-radius:0 0 18px 18px; background:var(--surface-soft); }
 .exercise-guide__loading[hidden] { display:none; }
-.exercise-guide__loading > strong { display:block; color:var(--ink); font-size:15px; font-weight:550; }
+.exercise-guide__loading > strong { display:block; color:var(--ink); font-size:15px; font-weight:650; }
 .exercise-guide__loading > p { margin:10px 0 0; font-size:14px; }
 .exercise-guide__target { color:var(--ink); }
-.exercise-guide__video,.exercise-guide__alternatives a { display:inline-flex; align-items:center; gap:7px; min-height:48px; margin-top:12px; color:var(--accent); font-size:14px; font-weight:550; text-decoration:none; }
-.exercise-guide__alternatives > div { padding:0 0 20px; margin:0 0 20px; border-bottom:1px solid var(--line); }
-.exercise-guide__alternatives strong { display:block; color:var(--ink); font-size:16px; font-weight:550; line-height:1.4; }
-.exercise-guide__alternatives > div > p { margin:7px 0 0; font-size:14px; line-height:1.45; }
+.exercise-guide__video,.exercise-guide__alternatives a { display:inline-flex; align-items:center; gap:7px; min-height:48px; margin-top:12px; color:var(--accent); font-size:14px; font-weight:600; text-decoration:none; }
+.exercise-guide__video { width:100%; justify-content:space-between; padding:8px 14px; }
+.exercise-guide__alternatives > div { padding:17px 16px 12px; margin:0 0 10px; border:0; border-radius:20px; background:var(--surface-soft); }
+.exercise-guide__alternatives strong { display:block; color:var(--ink); font-size:16px; font-weight:650; line-height:1.35; }
+.exercise-guide__alternatives > div > p { margin:7px 0 0; font-size:14px; line-height:1.5; }
 .exercise-guide__alternatives a { margin-top:4px; }
-.exercise-guide__alternatives .exercise-guide__alternative-note { margin:4px 0 20px; font-size:13px; }
+.exercise-guide__alternatives .exercise-guide__alternative-note { margin:16px 4px 20px; font-size:13px; }
 .exercise-guide__custom { margin:0 0 18px; color:var(--sub); font-size:13px; }
+.muscle-map { margin:0 0 4px; padding:4px 0 16px; }
+.muscle-map__views { display:flex; align-items:center; justify-content:center; gap:26px; padding:10px 0 12px; }
+.muscle-map__views > div { display:grid; justify-items:center; gap:6px; }
+.muscle-map__views svg { display:block; width:78px; height:154px; overflow:visible; }
+.muscle-map__views > div > span { color:var(--sub); font-size:11px; }
+.muscle-map__body { fill:var(--surface); stroke:var(--line); stroke-width:1; }
+.muscle-map__areas > path { fill:var(--line); opacity:.65; stroke:none; }
+.muscle-map__areas > path.muscle-map__target { fill:var(--accent); opacity:.85; }
+.muscle-map figcaption { color:var(--ink); font-size:12px; font-weight:600; text-align:center; }
+.muscle-map figcaption > span { display:block; margin-top:3px; color:var(--sub); font-size:11px; font-weight:400; }
 .exercise-guide__trigger:focus-visible,.exercise-guide__sections > button:focus-visible,.exercise-guide__load-toggle:focus-visible,.exercise-guide__disclosure > summary:focus-visible,.exercise-guide__content a:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
-@media (prefers-reduced-motion:no-preference) { .exercise-guide__trigger { transition:opacity 100ms ease; } .exercise-guide__trigger:active { opacity:.6; } }
+@media (prefers-reduced-motion:no-preference) {
+ .exercise-guide__trigger,.exercise-guide__sections > button,.exercise-guide__load-toggle { transition:transform 140ms ease,background 140ms ease; }
+ .exercise-guide__trigger:active,.exercise-guide__load-toggle:active { transform:scale(.985); }
+}
 @media (max-height:650px) {
- .exercise-guide-sheet .exercise-guide__header { gap:6px; margin-top:0; margin-bottom:12px; }
- .exercise-guide__benefit { margin-bottom:8px; }
- .exercise-guide__sections { margin-bottom:14px; }
- .exercise-guide__content .exercise-guide__steps { gap:12px; }
- .exercise-guide__content .exercise-guide__technique { margin-bottom:16px; }
+ .exercise-guide-sheet .exercise-guide__header { gap:8px; margin-top:0; margin-bottom:10px; }
+ .exercise-guide__benefit { margin-bottom:12px; font-size:14px; }
+ .exercise-guide__sections { margin-bottom:12px; }
+ .exercise-guide__content .exercise-guide__technique { padding:15px 13px; }
+ .exercise-guide__content .exercise-guide__steps { gap:14px; }
 }

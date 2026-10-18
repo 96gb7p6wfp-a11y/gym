@@ -1,23 +1,26 @@
-# Setline 2 — Performance journal
+# Setline — Performance PWA
 
 A complete React + Vite workout tracker and installable PWA, rebuilt from the
 hosted Setline app's delivered React code, styles, and visual reference. The app
 runs on its own: no iframe, sign-in service, old website, external workout API,
 or native iPhone signing is required.
 
-## Athlete’s Journal design
+## Setline Soft design
 
-A new journal composition replaces the earlier layouts: a centered session cover,
-four destinations (**Today / Train / Progress / You**), large set-entry rails and
-one measured progress lens. Warm neutral surfaces, selective serif titles and a
-restrained wine accent define the identity. Nutrition is one tap from Today’s Fuel
-row or You. Preparation and session tools open on demand; exercise details and
-forms use keyboard-aware sheets. Light and dark themes are designed separately.
+The latest design follows the user’s five visual references: rounded native controls,
+layered cards and a monochromatic Morandi sage palette with gentle wash tones.
+System rounded titles, large readable numbers, circular steppers and a floating
+four-tab capsule replace the flat serif journal presentation. Today keeps one
+obvious training action. Progress uses one real measured chart at a time.
 
-Existing `setline.gym.v1` data, plans, session snapshots, imports, backup format and PWA
-identity are unchanged. No migration or reset is needed.
+Nutrition, exercise details, the weekly plan, Routine, history and settings share
+the same light/dark surfaces. Exercise details include an original optional muscle
+schematic; no third-party photos or remote assets are required.
 
-[Design system and concept](docs/SETLINE_REINVENTION_DESIGN.md) · [Research](docs/SETLINE_REINVENTION_RESEARCH.md)
+Existing `setline.gym.v1` data, plans, session snapshots, imports, backup format and
+PWA identity are unchanged. No migration or reset is needed.
+
+[Current design system](docs/SETLINE_SOFT_DESIGN.md) · [Reference research](docs/SETLINE_REINVENTION_RESEARCH.md)
 
 ## Features
 
@@ -235,7 +238,7 @@ See `VALIDATION.md` for the performed checks and limitations.
 mutations. `TodayView.jsx`, `FocusedWorkout.tsx` and `ProgressOverview.tsx` provide
 the focused views. `components/design.tsx`, `native-system.css`, `native-shell.css`
 and the screen styles provide the shared visual system; see the
-[current design system](docs/SETLINE_REINVENTION_DESIGN.md).
+[current design system](docs/SETLINE_SOFT_DESIGN.md).
 `NutritionView.jsx` and `domain.js` retain the existing nutrition and training rules.
 `storage.ts` provides validated local persistence; `DataSettings.tsx` provides
 backups and reset; `activities.ts` and `ExtraActivities.tsx` implement dated extra
@@ -249,7 +252,7 @@ files; `exercise-guides.ts` and `ExerciseGuide.tsx` provide movement instruction
 
 ## Product review
 
-The current audit, three concepts and verified public UX benchmarks are recorded in
-[the design rationale](docs/SETLINE_REINVENTION_DESIGN.md) and
+The current visual direction and verified public UX benchmarks are recorded in
+[the current design rationale](docs/SETLINE_SOFT_DESIGN.md) and
 [the research record](docs/SETLINE_REINVENTION_RESEARCH.md). Accessible official
 pages and screenshots are distinguished from destinations the cloud proxy blocked.

@@ -7,8 +7,8 @@
   "scope": "/",
   "display": "standalone",
   "display_override": ["fullscreen", "standalone"],
-  "background_color": "#f4f1eb",
-  "theme_color": "#f4f1eb",
+  "background_color": "#f1f4ef",
+  "theme_color": "#f1f4ef",
   "lang": "en",
   "icons": [
     {

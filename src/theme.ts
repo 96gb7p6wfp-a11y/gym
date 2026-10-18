@@ -18,7 +18,7 @@ function applyAppearance(appearance: Appearance) {
   const resolved = resolveAppearance(appearance, systemPrefersDark());
   document.documentElement.dataset.theme = resolved;
   document.documentElement.style.colorScheme = resolved;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'dark' ? '#1a1b20' : '#f4f1eb');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'dark' ? '#171d1a' : '#f1f4ef');
 }
 
 /** Read the existing profile only. A failed/blocked read never changes user data. */

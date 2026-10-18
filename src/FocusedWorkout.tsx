@@ -208,72 +208,74 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
           <div className="focused-workout__all-sets">{renderAllSets(exercise, Math.max(0, exerciseIndex))}</div>
         ) : (
           <>
-            <div className="focused-exercise__set-heading">
-              <div className="focused-exercise__set-position"><strong>Set {setIndex + 1} <span>of {exercise.logs.length}</span></strong>
-                <span className="focused-exercise__target">{exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.targetRpe ? ` · RPE ${exercise.targetRpe}` : ''}</span>
+            <div className="focused-working-set">
+              <div className="focused-exercise__set-heading">
+                <div className="focused-exercise__set-position"><strong>Set {setIndex + 1} <span>of {exercise.logs.length}</span></strong>
+                  <span className="focused-exercise__target">{exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.targetRpe ? ` · RPE ${exercise.targetRpe}` : ''}</span>
+                </div>
+                <span className="focused-exercise__previous">Previous <b>{previousLabel(exercise, previousLogs[setIndex])}</b></span>
               </div>
-              <span className="focused-exercise__previous">Previous <b>{previousLabel(exercise, previousLogs[setIndex])}</b></span>
-            </div>
-            {exercise.mode === 'timed' ? <TimedSetControls key={`${exercise.key}-${log.id}`} setId={log.id}
-              seconds={log.seconds} target={exercise.target} exerciseKey={exercise.key} exerciseName={exercise.name}
-              elapsedMs={exercise.elapsedMs} runningSince={exercise.runningSince} timerSetId={exercise.timerSetId ?? null}
-              now={now} editing={editing} setNumber={setIndex + 1} done={log.done}
-              onSecondsChange={seconds => onSet(exercise.key, log.id, { seconds })} onTimer={onTimer} /> :
-            <div className="focused-set-controls" key={`${exercise.key}-${log.id}`}>
-              {!exercise.measurement && (
+              {exercise.mode === 'timed' ? <TimedSetControls key={`${exercise.key}-${log.id}`} setId={log.id}
+                seconds={log.seconds} target={exercise.target} exerciseKey={exercise.key} exerciseName={exercise.name}
+                elapsedMs={exercise.elapsedMs} runningSince={exercise.runningSince} timerSetId={exercise.timerSetId ?? null}
+                now={now} editing={editing} setNumber={setIndex + 1} done={log.done}
+                onSecondsChange={seconds => onSet(exercise.key, log.id, { seconds })} onTimer={onTimer} /> :
+              <div className="focused-set-controls" key={`${exercise.key}-${log.id}`}>
+                {!exercise.measurement && (
+                  <div className="focused-set-field">
+                    <span>{exercise.mode === 'bodyweight' ? 'Added weight' : 'Weight'} <small>kg</small></span>
+                    <div className="focused-number-stepper"><DecimalWeightInput value={log.kg} placeholder={exercise.mode === 'bodyweight' ? 'BW' : '0'}
+                      label={`${exercise.name} set ${setIndex + 1} weight in kilograms`}
+                      onValidityChange={(valid) => valid ? invalidWeightInputs.current.delete(log.id) : invalidWeightInputs.current.add(log.id)}
+                      onChange={(kg, valid) => onSet(exercise.key, log.id, { kg, ...(!valid ? { done: false } : {}) })} />
+                      <div className="focused-number-stepper__actions">
+                        <button type="button" aria-label={`Decrease ${exercise.name} weight by ${weightStep} kg`} onClick={() => onSet(exercise.key, log.id, { kg: Math.max(0, Math.round(((log.kg ?? 0) - weightStep) * 10) / 10) })}><Minus size={18} aria-hidden="true" /></button>
+                        <button type="button" aria-label={`Increase ${exercise.name} weight by ${weightStep} kg`} onClick={() => onSet(exercise.key, log.id, { kg: Math.min(2000, Math.round(((log.kg ?? 0) + weightStep) * 10) / 10) })}><Plus size={18} aria-hidden="true" /></button>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="focused-set-field">
-                  <span>{exercise.mode === 'bodyweight' ? 'Added weight' : 'Weight'} <small>kg</small></span>
-                  <div className="focused-number-stepper"><DecimalWeightInput value={log.kg} placeholder={exercise.mode === 'bodyweight' ? 'BW' : '0'}
-                    label={`${exercise.name} set ${setIndex + 1} weight in kilograms`}
-                    onValidityChange={(valid) => valid ? invalidWeightInputs.current.delete(log.id) : invalidWeightInputs.current.add(log.id)}
-                    onChange={(kg, valid) => onSet(exercise.key, log.id, { kg, ...(!valid ? { done: false } : {}) })} />
+                  <span>{exercise.quantityUnit === 'm' ? 'Distance · m / side' : 'Reps'}</span>
+                  <div className="focused-number-stepper"><input className="set-input" type="number" min="0"
+                    max={1000} step="1" inputMode="numeric"
+                    placeholder={exercise.target.match(/\d+/)?.[0] ?? '0'}
+                    aria-label={`${exercise.name} set ${setIndex + 1} ${exercise.quantityUnit === 'm' ? 'distance in metres' : 'reps'}`}
+                    value={log.reps ?? ''}
+                    onChange={(event) => {
+                      const next = amount(event.target.value, 1000);
+                      onSet(exercise.key, log.id, { reps: next == null ? null : Math.trunc(next) });
+                    }} />
                     <div className="focused-number-stepper__actions">
-                      <button type="button" aria-label={`Decrease ${exercise.name} weight by ${weightStep} kg`} onClick={() => onSet(exercise.key, log.id, { kg: Math.max(0, Math.round(((log.kg ?? 0) - weightStep) * 10) / 10) })}><Minus size={18} aria-hidden="true" /></button>
-                      <button type="button" aria-label={`Increase ${exercise.name} weight by ${weightStep} kg`} onClick={() => onSet(exercise.key, log.id, { kg: Math.min(2000, Math.round(((log.kg ?? 0) + weightStep) * 10) / 10) })}><Plus size={18} aria-hidden="true" /></button>
+                      <button type="button" aria-label={`Decrease ${exercise.name} ${exercise.quantityUnit ? 'distance' : 'reps'}`} onClick={() => onSet(exercise.key, log.id, { reps: Math.max(1, (log.reps ?? Number(exercise.target.match(/\d+/)?.[0] ?? 1)) - 1) })}><Minus size={18} aria-hidden="true" /></button>
+                      <button type="button" aria-label={`Increase ${exercise.name} ${exercise.quantityUnit ? 'distance' : 'reps'}`} onClick={() => onSet(exercise.key, log.id, { reps: Math.min(1000, (log.reps ?? Number(exercise.target.match(/\d+/)?.[0] ?? 0)) + 1) })}><Plus size={18} aria-hidden="true" /></button>
                     </div>
                   </div>
                 </div>
-              )}
-              <div className="focused-set-field">
-                <span>{exercise.quantityUnit === 'm' ? 'Distance · m / side' : 'Reps'}</span>
-                <div className="focused-number-stepper"><input className="set-input" type="number" min="0"
-                  max={1000} step="1" inputMode="numeric"
-                  placeholder={exercise.target.match(/\d+/)?.[0] ?? '0'}
-                  aria-label={`${exercise.name} set ${setIndex + 1} ${exercise.quantityUnit === 'm' ? 'distance in metres' : 'reps'}`}
-                  value={log.reps ?? ''}
-                  onChange={(event) => {
-                    const next = amount(event.target.value, 1000);
-                    onSet(exercise.key, log.id, { reps: next == null ? null : Math.trunc(next) });
-                  }} />
-                  <div className="focused-number-stepper__actions">
-                    <button type="button" aria-label={`Decrease ${exercise.name} ${exercise.quantityUnit ? 'distance' : 'reps'}`} onClick={() => onSet(exercise.key, log.id, { reps: Math.max(1, (log.reps ?? Number(exercise.target.match(/\d+/)?.[0] ?? 1)) - 1) })}><Minus size={18} aria-hidden="true" /></button>
-                    <button type="button" aria-label={`Increase ${exercise.name} ${exercise.quantityUnit ? 'distance' : 'reps'}`} onClick={() => onSet(exercise.key, log.id, { reps: Math.min(1000, (log.reps ?? Number(exercise.target.match(/\d+/)?.[0] ?? 0)) + 1) })}><Plus size={18} aria-hidden="true" /></button>
+                {exercise.measurement && (
+                  <div className="focused-set-field focused-set-field--measurement">
+                    <span>{exercise.measurement === 'touch' ? 'Highest touch' : exercise.measurement === 'height' ? 'Jump height' : 'Distance'} <small>cm · optional</small></span>
+                    <input className="set-input" type="number" min="0" max="1000" step="0.1" inputMode="decimal" placeholder="—"
+                      aria-label={`${exercise.name} set ${setIndex + 1} ${measurementLabel(exercise)}`}
+                      value={log.measurementCm ?? ''}
+                      onChange={(event) => onSet(exercise.key, log.id, { measurementCm: amount(event.target.value, 1000) })} />
                   </div>
-                </div>
+                )}
+              </div>}
+              <button type="button" className={`btn focused-complete-set${log.done ? ' secondary' : ''}`}
+                aria-label={`${log.done ? 'Undo' : 'Complete'} ${exercise.name} set ${setIndex + 1}`} onClick={completeSet}>
+                {log.done ? <RotateCcw size={19} aria-hidden="true" /> : <Check size={20} aria-hidden="true" />}
+                {log.done ? 'Undo set' : 'Complete set'}
+              </button>
+              <div className="focused-exercise__set-selector" role="group" aria-label={`Sets for ${exercise.name}`}>
+                {exercise.logs.map((entry, index) => (
+                  <button type="button" key={entry.id} className={`${entry.id === log.id ? ' is-current' : ''}${entry.done ? ' is-done' : ''}`}
+                    aria-label={`View ${exercise.name} set ${index + 1}${entry.done ? ', complete' : ''}`}
+                    aria-pressed={entry.id === log.id} onClick={() => { pauseMovementTimer(); pendingCompletion.current = null; setSetId(entry.id); }}>
+                    {entry.done ? <Check size={15} aria-hidden="true" /> : index + 1}
+                  </button>
+                ))}
               </div>
-              {exercise.measurement && (
-                <div className="focused-set-field focused-set-field--measurement">
-                  <span>{exercise.measurement === 'touch' ? 'Highest touch' : exercise.measurement === 'height' ? 'Jump height' : 'Distance'} <small>cm · optional</small></span>
-                  <input className="set-input" type="number" min="0" max="1000" step="0.1" inputMode="decimal" placeholder="—"
-                    aria-label={`${exercise.name} set ${setIndex + 1} ${measurementLabel(exercise)}`}
-                    value={log.measurementCm ?? ''}
-                    onChange={(event) => onSet(exercise.key, log.id, { measurementCm: amount(event.target.value, 1000) })} />
-                </div>
-              )}
-            </div>}
-            <button type="button" className={`btn focused-complete-set${log.done ? ' secondary' : ''}`}
-              aria-label={`${log.done ? 'Undo' : 'Complete'} ${exercise.name} set ${setIndex + 1}`} onClick={completeSet}>
-              {log.done ? <RotateCcw size={19} aria-hidden="true" /> : <Check size={20} aria-hidden="true" />}
-              {log.done ? 'Undo set' : 'Complete set'}
-            </button>
-            <div className="focused-exercise__set-selector" role="group" aria-label={`Sets for ${exercise.name}`}>
-              {exercise.logs.map((entry, index) => (
-                <button type="button" key={entry.id} className={`${entry.id === log.id ? ' is-current' : ''}${entry.done ? ' is-done' : ''}`}
-                  aria-label={`View ${exercise.name} set ${index + 1}${entry.done ? ', complete' : ''}`}
-                  aria-pressed={entry.id === log.id} onClick={() => { pauseMovementTimer(); pendingCompletion.current = null; setSetId(entry.id); }}>
-                  {entry.done ? <Check size={15} aria-hidden="true" /> : index + 1}
-                </button>
-              ))}
             </div>
             <ExerciseGuide exercise={exercise} key={exercise.key} />
             {!log.done && <details className="focused-effort"><summary>Effort <span>{log.rir == null ? 'Optional' : `${log.rir} reps in reserve`}</span></summary><label className="field-label">Reps in reserve<input type="number" min="0" max="10" step="1" inputMode="numeric" aria-label={`${exercise.name} set ${setIndex + 1} reps in reserve`} value={log.rir ?? ''} onChange={event => onSet(exercise.key, log.id, { rir: event.target.value === '' ? null : Math.min(10, Math.max(0, Number(event.target.value))) })} /></label><p className="small-note">How many more clean reps could you do?</p></details>}

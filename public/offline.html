@@ -3,17 +3,23 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#141a1d" />
+    <meta name="theme-color" content="#f1f4ef" />
+    <meta name="theme-color" content="#171d1a" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
     <title>Setline — offline</title>
     <style>
+      :root { color-scheme: light; --canvas: #f1f4ef; --surface: #fbfcf9; --ink: #24322b; --secondary: #5b6b62; --accent: #476159; --on-accent: #f1f4ef; --shadow: 0 14px 48px #24322b0a; }
       * { box-sizing: border-box; }
-      body { margin: 0; min-height: 100svh; display: grid; place-items: center; padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); color: #f1f1eb; background: #141a1d; font-family: system-ui, sans-serif; }
-      main { width: min(100%, 420px); padding: 24px 0; text-align: left; }
-      img { width: 72px; height: 72px; border-radius: 20px; }
-      h1 { font-size: 24px; }
-      p { color: #9ca7ab; line-height: 1.6; }
-      a { display: inline-block; min-height: 48px; padding: 14px 24px; border-radius: 12px; color: #141a1d; background: #7ebbc1; text-decoration: none; }
-      a:focus-visible { outline: 3px solid #7ebbc1; outline-offset: 4px; }
+      body { margin: 0; min-height: 100svh; display: grid; place-items: center; padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); color: var(--ink); background: var(--canvas); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+      main { width: min(100%, 420px); padding: 32px; border-radius: 32px; background: var(--surface); box-shadow: var(--shadow); text-align: left; }
+      img { display: block; width: 64px; height: 64px; border-radius: 16px; }
+      h1 { margin: 28px 0 16px; max-width: 10em; font-size: clamp(28px, 7.5vw, 34px); font-weight: 650; line-height: 1.12; letter-spacing: -.045em; }
+      p { margin: 0 0 28px; color: var(--secondary); font-size: 15px; line-height: 1.65; }
+      a { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 54px; padding: 14px 24px; border-radius: 999px; color: var(--on-accent); background: var(--accent); font-size: 16px; font-weight: 600; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+      a:active { opacity: .86; }
+      a:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+      @media (prefers-color-scheme: dark) { :root { color-scheme: dark; --canvas: #171d1a; --surface: #232c27; --ink: #edf2e9; --secondary: #b5c2b8; --accent: #bbcec0; --on-accent: #21332a; --shadow: 0 14px 48px #00000014; } }
+      @media (max-width: 350px) { main { padding: 26px; } }
     </style>
   </head>
   <body>

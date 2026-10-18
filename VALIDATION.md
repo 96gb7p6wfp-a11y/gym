@@ -1,6 +1,38 @@
 # Standalone app validation
 
-## Athlete’s Journal reinvention — 18 October 2026
+## Setline Soft reference redesign — 18 October 2026
+
+The user’s five supplied screenshots supersede the prior flat serif design.
+The current release uses rounded Morandi sage surfaces, layered cards, circular
+set controls, pill actions and floating safe-area navigation. The original target
+muscle schematic is secondary inside exercise details. PWA icons and the offline
+fallback match the same design. See [the current system](docs/SETLINE_SOFT_DESIGN.md).
+
+| Final check | Result |
+| --- | --- |
+| `npm test` | 261 passed; zero failures or skips |
+| `npm run build` | Passed TypeScript, Vite production output and generated service worker |
+| `npm run test:web` | 118 passed against the final production build; zero failures or skips (4.4 minutes) |
+| Rendered review | 160 screen states across 320×568, 390×844, 430×932, 844×390 landscape and 1280×900 desktop, both themes |
+| Containment | Zero horizontal overflow across all captured states |
+| Mobile geometry | Simulated portrait 47/34px insets, landscape 59px horizontal notches and 21px home indicator; long-title Start/progress controls above the inset nav |
+| Contrast | Ancestor-composited AA text checks for the main action, selected/unselected navigation, set inputs/completion, rest/movement timers, exercise rows, preparation and Routine controls |
+| Artwork | Original catalogue-based front/back schematic; normal/maskable 192/512px icons and opaque 180px Apple icon validated |
+| Compatibility | Existing storage key/schemas, version handling, training rules, session logs, backup format, PWA ID/scope/start URL unchanged |
+
+The production suite covers decimal-dot/comma weights, complex pairs, per-set
+timers, keyboard visibility, add/replace/remove/reorder, custom workouts and plan
+restore, history, measured charts, jump protocols, nutrition, routines, imported
+activities, reports, backups and offline persistence. New checks cover floating
+navigation gutters/touch targets and the optional muscle schematic. Routine Save
+and Taken controls also retain readable text/checkmarks on the accent surface.
+
+Screenshots use isolated validated fixtures; no demo records are inserted into
+user storage. These checks use Linux Chromium phone emulation rather than a
+physical iPhone/Safari. The existing large-bundle warning remains. No Vercel
+deployment is claimed by this validation record.
+
+## Previous Athlete’s Journal reinvention — 18 October 2026
 
 The presentation layer now uses the new journal system throughout Today, Train,
 Progress, secondary Nutrition, You, the plan, library, exercise details and settings.
