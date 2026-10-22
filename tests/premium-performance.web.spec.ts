@@ -1,4 +1,4 @@
-import { openSection } from './helpers/navigation';
+import { openSection, finishWarmup } from './helpers/navigation';
 import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, SessionSchema, createSession } from '../src/domain.js';
@@ -42,6 +42,7 @@ async function checkIn(page: Page) {
   await tab(page, 'Train');
   await page.getByRole('button', { name: /^Mon / }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   await page.getByRole('button', { name: 'Workout options', exact: true }).click();
   const sheet = page.getByRole('dialog', { name: 'Your session', exact: true });
   await expect(sheet.getByRole('button', { name: 'Save check-in', exact: true })).toBeDisabled();

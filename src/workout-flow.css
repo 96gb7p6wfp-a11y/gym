@@ -1,0 +1,19 @@
+/* Existing Setline materials, with one quiet route into today's plan. */
+.day-cover__plan-row { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px; }
+.day-cover__plan-row .day-cover__prescription { margin:0; }
+.day-cover__preview { display:flex; align-items:center; gap:3px; flex-shrink:0; min-height:44px; padding:8px 0 8px 5px; border:0; background:transparent; color:var(--accent); font-size:12px; font-weight:550; }
+.day-cover .day-cover__plan-row+.day-cover__start { margin-top:10px; }
+.app-shell .rest-floating { gap:5px; padding-inline:12px; }
+.app-shell .rest-floating>strong { margin-left:auto; font-size:25px; }
+.app-shell .rest-floating>button { min-width:44px; padding-inline:5px; }
+@media(max-width:350px) {
+ .day-cover__plan-row { margin-top:4px; gap:4px; }
+ .day-cover__plan-row { position:relative; display:block; padding-right:84px; min-height:31px; }
+ .day-cover__plan-row .day-cover__preview { position:absolute; right:0; top:50%; transform:translateY(-50%); }
+ .day-cover__plan-row .day-cover__prescription { font-size:11px; line-height:1.4; }
+ .day-cover__preview { font-size:11px; }
+ .day-cover .day-cover__plan-row+.day-cover__start { margin-top:4px; }
+ .app-shell .rest-floating { gap:3px; padding-inline:10px; }
+ .app-shell .rest-floating>svg { display:none; }
+ .app-shell .rest-floating>strong { font-size:24px; }
+}

@@ -1,0 +1,58 @@
+/* The day's plan is a readable sequence; editing stays one contextual step away. */
+.workout-plan-preview-sheet .dialog-scroll { gap:16px; }
+.plan-preview__metadata { display:grid; gap:8px; }
+.plan-preview__header { padding-right:34px; }
+.plan-preview__header .eyebrow { font-size:10px; letter-spacing:.06em; }
+.plan-preview__summary { display:flex; flex-wrap:wrap; align-items:center; gap:8px 18px; color:var(--sub); font-size:13px; line-height:1.5; font-variant-numeric:tabular-nums; }
+.plan-preview__summary>span { display:inline-flex; align-items:center; gap:6px; }
+.plan-preview__scope { max-width:36ch; color:var(--sub); font-size:12px; line-height:1.5; }
+.plan-preview__warmup { padding:0 16px; border-radius:22px; background:var(--surface-soft); }
+.plan-preview__warmup>summary { display:flex; align-items:center; gap:14px; min-height:68px; list-style:none; cursor:pointer; }
+.plan-preview__warmup>summary::-webkit-details-marker { display:none; }
+.plan-preview__warmup>summary>span { display:grid; gap:5px; flex:1; min-width:0; }
+.plan-preview__warmup>summary strong { color:var(--ink); font-size:16px; font-weight:600; }
+.plan-preview__warmup>summary>span>span { color:var(--sub); font-size:12px; line-height:1.5; }
+.plan-preview__warmup>summary>svg { color:var(--sub); }
+.plan-preview__warmup[open]>summary>svg { rotate:90deg; }
+.plan-preview__warmup ol { margin:0; padding:0 0 12px; list-style:none; }
+.plan-preview__warmup li { display:grid; gap:4px; padding:13px 0; }
+.plan-preview__warmup li strong { color:var(--ink); font-size:14px; font-weight:600; }
+.plan-preview__warmup li>span { color:var(--sub); font-size:12px; }
+.plan-preview__warmup li p { margin-top:3px; color:var(--sub); font-size:12px; line-height:1.6; }
+.plan-preview__main { min-width:0; }
+.plan-preview__main>h3 { margin:0 0 8px; color:var(--sub); font-size:12px; font-weight:550; }
+.plan-preview__list { display:grid; margin:0; padding:0; list-style:none; }
+.plan-preview__exercise { display:flex; gap:4px; align-items:flex-start; min-width:0; padding:16px 0; border-bottom:1px solid var(--line); }
+.plan-preview__exercise:last-child { border-bottom:0; }
+.plan-preview__exercise-main { display:flex; align-items:flex-start; gap:12px; flex:1; min-width:0; min-height:60px; padding:0; text-align:left; background:transparent; border:0; color:var(--ink); }
+.plan-preview__number { min-width:23px; padding-top:3px; font-size:11px; line-height:20px; font-variant-numeric:tabular-nums; color:var(--sub); }
+.plan-preview__exercise-copy { display:grid; gap:6px; min-width:0; }
+.plan-preview__exercise-copy>strong { color:var(--ink); font-family:var(--font-display); font-weight:650; font-size:17px; line-height:1.3; letter-spacing:-.025em; }
+.plan-preview__exercise-copy>span { color:var(--sub); font-size:12px; line-height:1.45; }
+.plan-preview__exercise-copy>.plan-preview__dose { color:var(--ink); font-size:13px; line-height:1.5; font-variant-numeric:tabular-nums; }
+.plan-preview__dose>span { display:block; margin-top:3px; color:var(--sub); font-size:11px; }
+.plan-preview__options { margin-top:-9px; flex-shrink:0; }
+.plan-preview__add { margin:8px 0 0; }
+.plan-preview__empty { margin:16px 0; color:var(--sub); font-size:14px; line-height:1.6; }
+.plan-preview__start { position:sticky; bottom:-24px; z-index:1; padding:14px 0 4px; background:var(--surface); }
+.plan-preview__start>span { display:block; margin-top:10px; text-align:center; font-size:11px; line-height:1.5; color:var(--sub); }
+.plan-preview__error { margin:0 0 12px; color:var(--danger); font-size:13px; line-height:1.5; }
+.plan-preview__menu { display:grid; min-width:0; }
+.plan-preview__menu>button,.plan-preview__reorder { display:flex; align-items:center; gap:14px; min-height:58px; width:100%; padding:8px 0; border:0; border-bottom:1px solid var(--line); background:transparent; color:var(--ink); text-align:left; font-size:15px; line-height:1.4; }
+.plan-preview__menu>button>span,.plan-preview__reorder>span { flex:1; min-width:0; }
+.plan-preview__menu>.plan-preview__remove { color:var(--danger); border-bottom:0; }
+.plan-preview__menu>button>svg { color:var(--sub); }
+.plan-preview__menu>.plan-preview__remove>svg { color:inherit; }
+.plan-preview__reorder { gap:6px; }
+.plan-preview__editor { display:grid; gap:18px; }
+.plan-preview__editor fieldset { display:grid; gap:18px; padding:0; margin:0; border:0; min-width:0; }
+.plan-preview__fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; min-width:0; }
+.plan-preview__fields input { width:100%; }
+.plan-preview__more { min-width:0; }
+.plan-preview__more>summary { min-height:44px; display:flex; align-items:center; justify-content:space-between; list-style:none; color:var(--sub); font-size:13px; cursor:pointer; }
+.plan-preview__more>summary::after { content:'+'; font-size:18px; }
+.plan-preview__more[open]>summary::after { content:'−'; }
+.plan-preview__more>.field-label { margin-top:14px; }
+@media(max-width:350px) { .plan-preview__exercise-main { gap:8px; } .plan-preview__number { min-width:18px; } .plan-preview__exercise-copy>strong { font-size:16px; } .plan-preview__fields { gap:12px; } }
+
+@media(max-height:640px) { .workout-plan-preview-sheet .dialog-scroll { gap:14px; } .plan-preview__start>span { display:none; } .plan-preview__start { position:static; padding-top:10px; } }

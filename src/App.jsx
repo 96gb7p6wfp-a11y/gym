@@ -1,3 +1,9 @@
+import { WorkoutPlanPreview } from "./WorkoutPlanPreview";
+import { WarmupFlow } from "./WarmupFlow";
+import { findSessionDraft, putSessionDraft, resetDraftPreparation, resolveSessionDraft, warmupReady } from "./workout-drafts";
+import { useRestAudio } from "./useRestAudio";
+import { TimerSoundSettings } from "./TimerSoundSettings";
+import './workout-flow.css';
 import { Search, History } from "lucide-react";
 import { exercisePerformanceIdentity, areComparableExercises } from "./performance-insights";
 import { WorkoutCompletion } from "./WorkoutCompletion";
@@ -20,7 +26,7 @@ import { ProgressOverview } from "./ProgressOverview";
 import { RemindersPanel } from "./RemindersPanel";
 import { shortSessionName } from "./presentation";
 import { VolleyballMasterProgram, MasterProgramReadiness } from './VolleyballMasterProgram';
-import { createVolleyballMasterPlan, getMasterProgramWeek, getMasterProgramPhase, masterWeekStart, masterScheduledEvents, masterPlannedMinutes, resolveMasterProgramPlan } from './volleyball-master-plan';
+import { applyMasterReadiness, createVolleyballMasterPlan, getMasterProgramWeek, getMasterProgramPhase, masterWeekStart, masterScheduledEvents, masterPlannedMinutes, resolveMasterProgramPlan } from './volleyball-master-plan';
 import { PageHeader, BottomNavigation, SegmentedControl, MenuRow } from "./components/design";
 import { House, Ellipsis, UserRound, ArrowLeft, Upload, ShieldCheck } from "lucide-react";
 import { DataSettings } from "./DataSettings";
@@ -156,6 +162,9 @@ function GymApp({
   const [completedCelebrationId, setCompletedCelebrationId] = React.useState(null);
   let [saving, setSaving] = React.useState(!1);
   let [loadError, setLoadError] = React.useState(``);
+  const [previewOpen, setPreviewOpen] = React.useState(false);
+  const [warmupContext, setWarmupContext] = React.useState(null);
+  const startingMainRef = React.useRef(false);
   const [stretchContext, setStretchContext] = React.useState(null);
   let [tab, setTabState] = React.useState(`today`);
   let [progressView, setProgressView] = React.useState(`overview`);
@@ -180,6 +189,8 @@ function GymApp({
   let [now, setNow] = React.useState(initialNow);
   let [restEndsAt, setRestEndsAt] = React.useState(null);
   let [restSeconds, setRestSeconds] = React.useState(90);
+  const restAudio = useRestAudio({ enabled: profile.timerSoundEnabled !== false, endsAt: restEndsAt,
+    onComplete: () => { setRestEndsAt(null); setNow(Date.now()); toast('Rest finished', { icon: <Timer size={18} /> }); } });
   let [finishOpen, setFinishOpen] = React.useState(!1);
   let [finishMinutes, setFinishMinutes] = React.useState(``);
   let [watchCalories, setWatchCalories] = React.useState(``);
@@ -336,10 +347,21 @@ function GymApp({
   let selectedMasterMatch = !!masterWeek && profile.masterProgram.matchWeeks.includes(masterWeek);
   let editableWeekPlan = selectedMasterMatch ? [...profile.plan.slice(0, 5), ...(profile.masterMatchWeekend ?? createVolleyballMasterPlan(true).slice(5))] : profile.plan;
   let dayEvents = masterScheduledEvents(profile.masterProgram, selectedDate);
-  let selectedPlan =
+  let scheduledSelectedPlan =
     extraSessionVisible && scheduledPlan[selectedDay].extraSession
       ? scheduledPlan[selectedDay].extraSession
       : scheduledPlan[selectedDay];
+  const selectedSlot = extraSessionVisible && scheduledPlan[selectedDay].extraSession ? 'extra' : 'main';
+  const selectedDraft = findSessionDraft(profile.sessionDrafts, selectedDate, selectedSlot);
+  const masterReadiness = masterWeek ? profile.masterProgram.readiness?.find(row => row.date === selectedDate)?.status : undefined;
+  const resolvedDayPlan = resolveSessionDraft(selectedDraft, scheduledSelectedPlan);
+  const selectedPlan = selectedDraft && selectedDraft.customized !== false && selectedDraft.readiness !== masterReadiness
+    ? applyMasterReadiness(resolvedDayPlan, masterReadiness) : resolvedDayPlan;
+  const warmupIsCurrent = selectedDraft && (selectedDraft.customized !== false || resolvedDayPlan !== scheduledSelectedPlan)
+    && selectedDraft.readiness === masterReadiness;
+  const preparationDraft = warmupContext && findSessionDraft(profile.sessionDrafts, warmupContext.date, warmupContext.slot);
+  const warmupPlan = preparationDraft?.plan ?? selectedPlan;
+  const gateWarmupItems = preparationFor(warmupPlan, 'warmup');
   let completedSessions = sessions
     .filter((e) => e.status === `completed`)
     .sort((e, t) => t.date.localeCompare(e.date) || t.startedAt - e.startedAt);
@@ -531,36 +553,54 @@ function GymApp({
       }),
     }));
   }
-  function startWorkout() {
-    if (!(
-      !loaded ||
-      activeSession ||
-      pendingWritesRef.current.size ||
-      activeWriteRef.current
-    )) {
-      if (masterWeek && selectedDay === 5 && !profile.masterProgram.readiness?.some(row => row.date === selectedDate)) {
-        setTab('train');
-        requestAnimationFrame(() => document.querySelector('.master-readiness')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
-        toast('Check readiness during your warm-up first.');
-        return;
-      }
-      if (!selectedPlan.exercises.length && selectedPlan.kind !== `recovery`) {
-        toast.error(`Add an exercise to this day before starting.`);
-        return;
-      }
-      queueSession(
-        createSession(
-          { ...selectedPlan, warmup: preparationFor(selectedPlan, 'warmup'), cooldown: preparationFor(selectedPlan, 'cooldown') },
-          selectedDay,
-          selectedDate,
-          profile,
-          sessionsRef.current,
-        ),
-        !0,
-      );
-      setTab(`train`);
-      setEditingHistoryId(null);
+  async function saveDayDraft(plan, { date = selectedDate, slot = selectedSlot, override = false,
+    customized = findSessionDraft(profile.sessionDrafts, date, slot)?.customized ?? !!findSessionDraft(profile.sessionDrafts, date, slot) } = {}) {
+    if (!loaded || loadError || profileSaving) return false;
+    return saveProfile({ ...profile, sessionDrafts: putSessionDraft(profile.sessionDrafts,
+      { date, slot, plan, warmupOverride: override, customized, readiness: profile.masterProgram?.readiness?.find(row => row.date === date)?.status }) }, { notify: false });
+  }
+  async function startWorkout() {
+    void restAudio.unlock();
+    if (!loaded || activeSession || profileSaving || pendingWritesRef.current.size || activeWriteRef.current) return;
+    if (masterWeek && selectedDay === 5 && !profile.masterProgram.readiness?.some(row => row.date === selectedDate)) {
+      setPreviewOpen(false); setTab('train');
+      requestAnimationFrame(() => document.querySelector('.master-readiness')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+      toast('Check readiness during your warm-up first.'); return;
     }
+    if (!selectedPlan.exercises.length && selectedPlan.kind !== 'recovery') {
+      toast.error('Add an exercise to this day before starting.'); return;
+    }
+    const plan = { ...selectedPlan, warmup: preparationFor(selectedPlan, 'warmup').map(step => ({ ...step, done: warmupIsCurrent ? step.done : false })) };
+    if (!(await saveDayDraft(plan, { override: warmupIsCurrent && selectedDraft.warmupOverride === true }))) return;
+    setPreviewOpen(false);
+    setWarmupContext({ date: selectedDate, day: selectedDay, slot: selectedSlot });
+  }
+  async function startMainWorkout() {
+    void restAudio.unlock();
+    if (!warmupContext || !preparationDraft || activeSession || startingMainRef.current || profileSaving
+      || !warmupReady(gateWarmupItems, preparationDraft.warmupOverride)) return;
+    startingMainRef.current = true;
+    try {
+      if (!(await flushPendingWrites()) || sessionsRef.current.some(session => session.status === 'active')) return;
+      const session = createSession({ ...warmupPlan, cooldown: preparationFor(warmupPlan, 'cooldown') },
+        warmupContext.day, warmupContext.date, profile, sessionsRef.current);
+      session.warmup = gateWarmupItems.map(step => ({ ...step }));
+      session.warmupCompletedAt = Date.now();
+      session.warmupOverride = preparationDraft.warmupOverride === true;
+      // A weight deliberately planned for this date takes precedence over the
+      // previous-session suggestion used by createSession.
+      session.exercises = session.exercises.map(exercise => exercise.defaultKg == null ? exercise : {
+        ...exercise, logs: exercise.logs.map(log => ({ ...log, kg: exercise.defaultKg })),
+      });
+      queueSession(SessionSchema.parse(session), true);
+      if (!(await flushPendingWrites())) return;
+      // Keep the date-specific prescription, but do not reuse this warm-up for another session.
+      const next = resetDraftPreparation(preparationDraft);
+      if (next.customized === false) {
+        await saveProfile({ ...profile, sessionDrafts: (profile.sessionDrafts ?? []).filter(draft => draft.date !== next.date || draft.slot !== next.slot) }, { notify: false });
+      } else await saveDayDraft(next.plan, { date: next.date, slot: next.slot });
+      setWarmupContext(null); setTab('train'); setEditingHistoryId(null);
+    } finally { startingMainRef.current = false; }
   }
   function toggleWorkoutTimer() {
     activeSession &&
@@ -628,6 +668,7 @@ function GymApp({
     if (set) toggleMovementTimer(key, { action: exercise.runningSince === null ? `start` : `pause`, setId: set.id }, !0);
   }
   function markSetDone(e, t, n) {
+    if (n && !editingHistoryId) void restAudio.unlock();
     let r = sessionsRef.current.find(
       (e) => e.id === (editingHistoryId ?? activeSession?.id),
     );
@@ -792,13 +833,14 @@ function GymApp({
     return saveProfile({ ...profile, ...updates, plan: profile.plan.map((day, index) => index < 5 ? plan[index] : day), masterMatchWeekend: plan.slice(5) });
   }
   async function startCustomWorkout(template) {
+    void restAudio.unlock();
     if (activeSession || editingHistoryId) { toast('Finish your current workout first.'); return; }
     if (!(await flushPendingWrites())) return;
     const { id: _id, ...workout } = template;
-    const session = createSession({ ...workout, warmup: preparationFor(workout, 'warmup'), cooldown: preparationFor(workout, 'cooldown') }, selectedDay, selectedDate, profile, sessionsRef.current);
-    queueSession(session, true);
-    if (!(await flushPendingWrites())) return;
-    setWorkoutChooserOpen(false); setTab('train');
+    const plan = { ...workout, warmup: preparationFor(workout, 'warmup').map(step => ({ ...step, done: false })) };
+    if (!(await saveDayDraft(plan, { customized: true }))) return;
+    setWorkoutChooserOpen(false);
+    setWarmupContext({ date: selectedDate, day: selectedDay, slot: selectedSlot });
   }
   async function customizeSession(next) {
     queueSession(SessionSchema.parse(next), true);
@@ -873,15 +915,6 @@ function GymApp({
       }
     );
   }, []);
-  React.useEffect(() => {
-    restEndsAt !== null &&
-      now >= restEndsAt &&
-      (setRestEndsAt(null),
-      toast(`Rest finished`, {
-        icon: <Timer size={18} />,
-      }),
-      `vibrate` in navigator && navigator.vibrate([150, 80, 150]));
-  }, [restEndsAt, now]);
   async function loadReportNutrition() {
     try {
       const saved = await requestLocal(`/api/nutrition`);
@@ -1116,7 +1149,7 @@ function GymApp({
             sessions={sessions} weeklyPlan={scheduledPlan} performance={performance.data} bodyWeight={profile.bodyWeight} today={today}
             programLabel={masterWeek ? `Week ${masterWeek} · ${getMasterProgramPhase(masterWeek)}` : undefined} scheduledEvents={dayEvents}
             onProgress={() => { setProgressView('overview'); setTab('progress'); }}
-            disabled={!loaded || saving || !!loadError} onStart={startWorkout} onTrain={() => setTab(`train`)}
+            disabled={!loaded || saving || profileSaving || !!loadError} onPreview={() => setPreviewOpen(true)} onStart={startWorkout} onTrain={() => setTab(`train`)}
             onViewLog={setSelectedHistory} onNutrition={() => setTab(`nutrition`)} onPlan={openPlan}
             onActivity={() => { setTab(`train`); requestAnimationFrame(() => { const menu = document.querySelector(`.train-utilities`); if (menu) menu.open = true; const tools = document.querySelector(`.train-activities`); if (tools) { tools.open = true; tools.scrollIntoView({ block: `start`, behavior: `smooth` }); } }); }} />
         </TabsContent>
@@ -1320,7 +1353,7 @@ function GymApp({
                   return best ? `${formatNumber(best.kg)} kg × ${best.reps}` : previous
                     ? `${previous.exercise.logs.filter(log => log.done).length} sets last time` : undefined;
                 }} /></details>
-                <button className="text-button planned-edit" disabled={!loaded} onClick={() => editPlanDay(selectedDay, extraSessionVisible)}><Pencil size={14} /> Edit day</button>
+                <button className="text-button planned-edit" disabled={!loaded} onClick={() => setPreviewOpen(true)}><Pencil size={14} /> Edit today</button>
                 </div>
               )}
               {!(currentSession?.kind === 'recovery' && !currentSession.exercises.length) && <button type="button" className="stretch-shortcut" onClick={() => openStretches()}><span><strong>Cool-down & stretching</strong><small>Matched to this session</small></span><ChevronRight size={18} /></button>}
@@ -1490,7 +1523,7 @@ function GymApp({
                       onClick={() => {
                         setRestSeconds(e);
                         restEndsAt !== null &&
-                          setRestEndsAt(Date.now() + e * 1e3);
+                          (void restAudio.unlock(), setRestEndsAt(Date.now() + e * 1e3));
                       }}
                       key={e}
                     >
@@ -1504,7 +1537,7 @@ function GymApp({
                     <button
                       className={`btn full`}
                       onClick={() =>
-                        setRestEndsAt(Date.now() + restSeconds * 1e3)
+                        (void restAudio.unlock(), setRestEndsAt(Date.now() + restSeconds * 1e3))
                       }
                     >
                       <Play size={16} />
@@ -1514,8 +1547,8 @@ function GymApp({
                     <ReactJSX.Fragment>
                       <button
                         className={`btn secondary`}
-                        onClick={() => setRestEndsAt(restEndsAt + 3e4)}
-                      >{`+30 sec`}</button>
+                        onClick={() => setRestEndsAt(restEndsAt + 15e3)}
+                      >{`+15 sec`}</button>
                       <button
                         className={`btn`}
                         onClick={() => setRestEndsAt(null)}
@@ -1885,9 +1918,22 @@ function GymApp({
           <Timer size={18} />
           <span>{`Rest`}</span>
           <strong>{formatElapsedTime(restRemaining)}</strong>
-          <button onClick={() => setRestEndsAt(null)}>{`Skip`}</button>
+          <button aria-label="Reduce rest by 15 seconds" onClick={() => { setNow(Date.now()); setRestEndsAt(Math.max(Date.now(), restEndsAt - 15000)); }}>−15</button>
+          <button aria-label="Add 15 seconds rest" onClick={() => setRestEndsAt(restEndsAt + 15000)}>+15</button>
+          <button onClick={() => setRestEndsAt(null)} aria-label="Skip rest">Skip</button>
         </div>
       )}
+      <WorkoutPlanPreview open={previewOpen} onOpenChange={setPreviewOpen} plan={selectedPlan}
+        dayLabel={formatDate(selectedDate, true)} warmup={preparationFor(selectedPlan, 'warmup')}
+        disabled={!loaded || profileSaving || !!loadError || !!activeSession}
+        onChange={plan => saveDayDraft({ ...plan, warmup: preparationFor({ ...plan, warmup: plan.warmup?.map(step => ({ ...step, done: false })) }, 'warmup') }, { customized: true })}
+        onStart={startWorkout} />
+      <WarmupFlow open={warmupContext !== null} onOpenChange={open => { if (!open) setWarmupContext(null); }}
+        plan={warmupPlan} items={gateWarmupItems} override={preparationDraft?.warmupOverride === true}
+        disabled={profileSaving || saving || !!loadError}
+        onChange={items => saveDayDraft({ ...warmupPlan, warmup: items }, { date: warmupContext.date, slot: warmupContext.slot, override: preparationDraft?.warmupOverride ?? false })}
+        onOverride={() => saveDayDraft(warmupPlan, { date: warmupContext.date, slot: warmupContext.slot, override: true })}
+        onStart={startMainWorkout} />
       <Dialog open={stretchContext !== null} onOpenChange={open => { if (!open) setStretchContext(null); }}><DialogContent className="app-dialog stretch-sheet"><DialogHeader><DialogTitle>Stretch routine</DialogTitle><DialogDescription>{stretchDescription}</DialogDescription></DialogHeader><PreparationChecklist items={stretchItems} phase="cooldown" kind={stretchSession?.kind ?? 'strength'} defaultOpen onToggle={stretchSession && !loadError ? (key, done) => { const source = sessionsRef.current.find(session => session.id === stretchSession.id); if (source) queueSession({ ...source, cooldown: preparationFor(source, 'cooldown').map(step => step.key === key ? { ...step, done } : step) }); } : undefined} /><button type="button" className="btn full" onClick={() => setStretchContext(null)}>Done</button></DialogContent></Dialog>
       <Dialog open={finishOpen} onOpenChange={setFinishOpen}>
         <DialogContent className={`app-dialog`}>
@@ -2024,6 +2070,9 @@ function GymApp({
           >
             {profileSaving ? `Saving…` : `Save preferences`}
           </button>
+          <TimerSoundSettings enabled={profile.timerSoundEnabled !== false} disabled={profileSaving || !loaded}
+            onChange={timerSoundEnabled => saveProfile({ ...profile, timerSoundEnabled }, { notify: false })}
+            testSound={restAudio.testSound} unlock={restAudio.unlock} />
           <AppearanceSettings value={profile.appearance ?? 'system'} disabled={profileSaving} onChange={appearance => saveProfile({ ...profile, appearance }, { notify: false })} />
           <DataSettings beforeExport={flushPendingWrites} onReplace={replaceLocalData} />
           <button
@@ -2250,7 +2299,7 @@ function GymApp({
 /** Derive useful guides without rewriting a saved plan or session on read. */
 function preparationFor(source, phase) {
   return getSessionPreparation({ phase, kind: source.kind, exercises: source.exercises,
-    items: source[phase] });
+    items: source[phase], name: source.name, goal: source.goal, minutes: source.minutes ?? source.plannedMinutes });
 }
 function SessionExerciseArea({ sport, editing, children }) {
   return sport ? <details className="sport-tracking" open={editing || undefined}><summary>Training log</summary>{children}</details> : <>{children}</>;

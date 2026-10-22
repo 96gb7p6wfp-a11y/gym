@@ -181,21 +181,22 @@ export function resolveMasterProgramPlan(basePlan: PlanDay[], settings: MasterPr
   return plan.map((day, index) => {
     const currentDate = new Date(timestamp(start) + index * DAY).toISOString().slice(0, 10);
     const readiness = settings.readiness?.find(item => item.date === currentDate)?.status;
-    function adapt(workout: PlanDay): PlanDay {
-      if (!readiness || readiness === 'green' || workout.kind !== 'strength') return workout;
-      if (readiness === 'red' && workout.exercises.some(isJump)) return {
-        name: 'Recovery', kind: 'recovery', goal: 'recovery', minutes: 20, exercises: [],
-        note: 'No maximal jumping today. Sharp/worsening joint, Achilles, knee or back pain, painful movement or poor landings: stop painful work. Seek assessment for persistent or worsening symptoms.',
-        warmup: [], cooldown: cooldown(),
-      };
-      if (readiness === 'red') return { ...workout, note: `Stop painful movements; choose pain-free upper work or recovery. ${workout.note}`.slice(0, 500) };
-      return { ...workout, exercises: workout.exercises.filter(item => !/Hurdle/.test(item.name)).map(item => isJump(item) ? { ...item, sets: Math.max(1, Math.ceil(item.sets * 0.5)) } : item),
-        note: `Yellow: jump sets reduced about 30–50%; hurdles omitted. Keep strength controlled, no grinding. ${workout.note}`.slice(0, 500),
-        warmup: workout.warmup?.filter(item => !/Pogo/.test(item.name)) };
-    }
-    return { ...adapt(day), ...(day.extraSession ? { extraSession: adapt(day.extraSession) } : {}) };
+    return { ...applyMasterReadiness(day, readiness), ...(day.extraSession ? { extraSession: applyMasterReadiness(day.extraSession, readiness) } : {}) };
   });
 }
+export function applyMasterReadiness(workout: PlanDay, readiness?: MasterReadiness): PlanDay {
+  if (!readiness || readiness === 'green' || workout.kind !== 'strength') return workout;
+  if (readiness === 'red' && workout.exercises.some(isJump)) return {
+    name: 'Recovery', kind: 'recovery', goal: 'recovery', minutes: 20, exercises: [],
+    note: 'No maximal jumping today. Sharp/worsening joint, Achilles, knee or back pain, painful movement or poor landings: stop painful work. Seek assessment for persistent or worsening symptoms.',
+    warmup: [], cooldown: cooldown(),
+  };
+  if (readiness === 'red') return { ...workout, note: `Stop painful movements; choose pain-free upper work or recovery. ${workout.note}`.slice(0, 500) };
+  return { ...workout, exercises: workout.exercises.filter(item => !/Hurdle/.test(item.name)).map(item => isJump(item) ? { ...item, sets: Math.max(1, Math.ceil(item.sets * 0.5)) } : item),
+    note: `Yellow: jump sets reduced about 30–50%; hurdles omitted. Keep strength controlled, no grinding. ${workout.note}`.slice(0, 500),
+    warmup: workout.warmup?.filter(item => !/Pogo/.test(item.name)) };
+}
+
 export function masterScheduledEvents(settings: MasterProgramSettings | undefined, date: string) {
   if (!settings || !getMasterProgramWeek(settings.startDate, date)) return [];
   const day = (new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7;

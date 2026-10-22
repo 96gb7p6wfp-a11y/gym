@@ -1,4 +1,4 @@
-import { openDisclosure, openSection } from './helpers/navigation';
+import { openDisclosure, openSection, finishWarmup } from './helpers/navigation';
 import { readFile } from 'node:fs/promises';
 import { Encoder, Profile, type FileIdMesg, type SessionMesg } from '@garmin/fitsdk';
 import { expect, test, type Locator, type Page } from '@playwright/test';
@@ -81,6 +81,7 @@ async function startMonday(page: Page) {
   await selectTab(page, 'Workout');
   await page.getByRole('button', { name: /^Mon / }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   await expect(page.getByRole('button', { name: 'Finish workout', exact: true })).toBeVisible();
   await openAllSets(page);
 }
@@ -267,7 +268,7 @@ test('validates sets, saves a complete workout, edits its log, and deletes and r
   await expect(completed).toBeChecked();
   await openDisclosure(page, 'Session tools');
   await openDisclosure(page, 'Rest timer');
-  await expect(page.getByRole('button', { name: 'Skip rest', exact: true })).toBeVisible();
+  await expect(page.locator('.rest-panel').getByRole('button', { name: 'Skip rest', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Time & RIR', exact: true }).click();
   await page.getByLabel('Time', { exact: true }).first().fill('45');
   await page.getByLabel('RIR', { exact: true }).first().fill('2');
@@ -349,6 +350,7 @@ test('preserves a paused active workout across reload, resumes it, and cancels i
 test('keeps the close button tappable while a tall Volleyball log scrolls in iPhone safe areas', async ({ page }) => {
   await page.getByRole('button', { name: /^Tue / }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   await closeDialog(await finishWorkout(page, '120'));
   const toastClose = page.getByRole('button', { name: 'Close toast', exact: true });
   if (await toastClose.isVisible()) await toastClose.click();
@@ -443,6 +445,7 @@ test('logs a five-kilometre run independently and includes it in history, progre
 test('adds cycling to the saved workout date during editing and can delete and restore it', async ({ page }) => {
   await page.getByRole('button', { name: /^Tue / }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   const summary = await finishWorkout(page, '120');
   await summary.getByRole('button', { name: 'Edit this log', exact: true }).click();
   await expect(page.getByText('Editing saved workout', { exact: true })).toBeVisible();
@@ -555,6 +558,7 @@ test('validates and persists editable day plans without changing an existing wor
   await page.getByRole('button', { name: 'Discard this workout', exact: true }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Discard workout', exact: true }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   await openAllSets(page);
   await expect(page.getByRole('heading', { name: 'Custom strength', exact: true })).toBeVisible();
   await expect(page.getByRole('spinbutton', { name: 'Custom press set 1 reps', exact: true })).toHaveAttribute('placeholder', '8');
@@ -569,6 +573,7 @@ test('charts completed workout progress and excludes unchecked heavy sets', asyn
   await closeDialog(await finishWorkout(page));
   await page.getByRole('button', { name: 'Previous week', exact: true }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   await openAllSets(page);
   await logWeightSet(page, '8', '5');
   await closeDialog(await finishWorkout(page));
@@ -591,6 +596,7 @@ test('charts completed workout progress and excludes unchecked heavy sets', asyn
 test('records jump measurements and timed movement sets', async ({ page }) => {
   await page.getByRole('button', { name: /^Sun / }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   await openAllSets(page);
   await page.getByRole('spinbutton', { name: 'Approach Jump set 1 reps', exact: true }).fill('2');
   await page.getByRole('spinbutton', { name: 'Approach Jump set 1 Highest touch · cm', exact: true }).fill('310');

@@ -1,4 +1,4 @@
-import { openSection } from './helpers/navigation';
+import { openSection, finishWarmup } from './helpers/navigation';
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE } from '../src/domain.js';
 
@@ -7,7 +7,8 @@ const read = (page: Page) => page.evaluate(key => JSON.parse(localStorage.getIte
 async function openPlan(page: Page) {
   await openSection(page, 'You');
   await page.getByRole('button', { name: 'Training plan', exact: true }).click();
-  await page.locator('.native-program-options > summary').click();
+  const options = page.locator('.native-program-options');
+  if (!await options.evaluate(element => element.hasAttribute('open'))) await options.locator(':scope > summary').click();
 }
 async function activate(page: Page, matches: number[] = []) {
   await openPlan(page);
@@ -64,6 +65,7 @@ test('match week uses a short Saturday primer and keeps Sunday match time separa
   expect((await read(page)).sessions).toHaveLength(0);
   await page.getByRole('group', { name: 'Program readiness', exact: true }).getByRole('button', { name: 'Green', exact: true }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   await expect(page.getByRole('region', { name: 'Current exercise', exact: true })).toBeVisible();
   const active = (await read(page)).sessions[0].session;
   expect(active.name).toBe('Pre-Match Primer'); expect(active.exercises[0].logs).toHaveLength(3);
@@ -83,6 +85,7 @@ test('Saturday yellow and red adjust only future work, then green restores the b
   await readiness.getByRole('button', { name: 'Green', exact: true }).click();
   await expect(page.locator('.session-card h2')).toHaveText('Reactive + Hard Lower B');
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   await expect(page.getByRole('region', { name: 'Current exercise', exact: true })).toBeVisible();
   const active = (await read(page)).sessions[0].session;
   expect(active.exercises.find((exercise: { name: string }) => exercise.name === 'Approach Jump').logs).toHaveLength(3);
@@ -94,6 +97,7 @@ test('week four creates reduced snapshot doses and later plan edits cannot rewri
   for (let week = 0; week < 3; week++) await page.getByRole('button', { name: 'Next week', exact: true }).click();
   await day(page, 'Wed'); await expect(page.locator('.master-day-note')).toContainText('Week 4 · Deload');
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   await expect(page.getByRole('region', { name: 'Current exercise', exact: true })).toBeVisible();
   const active = (await read(page)).sessions[0].session;
   expect(active.exercises.find((exercise: { name: string }) => exercise.name === 'Approach Jump').logs).toHaveLength(3);
@@ -110,6 +114,7 @@ test('logs a decimal loaded carry as metres and preserves the unit after refresh
   await page.setViewportSize({ width: 320, height: 568 });
   await activate(page); await day(page, 'Wed');
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   await page.locator('.focused-movements > summary').click();
   await page.getByRole('button', { name: 'Train Suitcase Carry', exact: true }).click();
   const current = page.getByRole('region', { name: 'Current exercise', exact: true });
@@ -126,6 +131,7 @@ test('logs a decimal loaded carry as metres and preserves the unit after refresh
 test('returning to the saved plan restores it exactly without deleting program workout history', async ({ page }) => {
   const before = await read(page); await activate(page);
   await day(page, 'Mon'); await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   await expect(page.getByRole('region', { name: 'Current exercise', exact: true })).toBeVisible();
   const active = (await read(page)).sessions[0];
   await openPlan(page); await page.getByRole('button', { name: 'Return to saved plan', exact: true }).click();
@@ -139,20 +145,23 @@ test('returning to the saved plan restores it exactly without deleting program w
 test('editing a deload preview retains the normal base prescription instead of permanently reducing it', async ({ page }) => {
   await activate(page); await page.getByRole('tab', { name: 'Train', exact: true }).click();
   for (let week = 0; week < 3; week++) await page.getByRole('button', { name: 'Next week', exact: true }).click();
-  await day(page, 'Wed'); await page.getByRole('button', { name: 'Edit day', exact: true }).click();
+  await day(page, 'Wed'); await openPlan(page);
+  await page.getByRole('button', { name: 'Edit Wednesday', exact: true }).click();
   const builder = page.getByRole('dialog', { name: 'Edit Wednesday', exact: true });
   await builder.getByRole('button', { name: 'Edit Approach Jump', exact: true }).click();
   await expect(builder.getByLabel('Sets', { exact: true })).toHaveValue('4');
   await builder.getByRole('button', { name: 'Save day', exact: true }).click();
   await expect(builder).not.toBeVisible();
   expect((await read(page)).profile.plan[2].exercises[0].sets).toBe(4);
+  await day(page, 'Wed');
   await page.locator('.planned-preview > summary').click();
   await expect(page.getByRole('list', { name: 'Planned exercises' }).getByRole('listitem').filter({ hasText: 'Approach Jump' })).toContainText('3 sets');
 });
 
 test('a custom match-weekend edit does not replace the non-match lower day', async ({ page }) => {
   await activate(page, [1]); await day(page, 'Sat');
-  await page.getByRole('button', { name: 'Edit day', exact: true }).click();
+  await openPlan(page);
+  await page.getByRole('button', { name: 'Edit Saturday', exact: true }).click();
   const builder = page.getByRole('dialog', { name: 'Edit Saturday', exact: true });
   await builder.getByRole('button', { name: 'Edit Chest-Supported Row', exact: true }).click();
   await builder.getByLabel('Sets', { exact: true }).fill('1');

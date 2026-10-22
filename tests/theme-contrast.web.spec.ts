@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE } from '../src/domain.js';
-import { openDisclosure } from './helpers/navigation';
+import { openDisclosure, finishWarmup } from './helpers/navigation';
 
 const STORE = 'setline.gym.v1';
 
@@ -76,6 +76,7 @@ test('dark controls keep contrast on hover and while movement and rest timers ru
 
   await page.getByRole('button', { name: /^Sun / }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   await page.locator('summary').filter({ hasText: /^Movements/ }).click();
   await page.getByRole('button', { name: 'Train Pogo Jump', exact: true }).click();
   await page.getByRole('button', { name: 'All sets', exact: true }).click();
@@ -123,6 +124,7 @@ for (const appearance of ['light', 'dark'] as const) {
     await page.getByRole('tab', { name: 'Train', exact: true }).click();
     await page.getByRole('button', { name: /^Mon / }).click();
     await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
     const current = page.getByRole('region', { name: 'Current exercise', exact: true });
     const weight = current.getByRole('textbox', { name: 'Medicine Ball Spike Slam set 1 weight in kilograms', exact: true });
     const reps = current.getByRole('spinbutton', { name: 'Medicine Ball Spike Slam set 1 reps', exact: true });
@@ -238,6 +240,7 @@ for (const appearance of ['light', 'dark'] as const) {
     }
 
     await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
     await openDisclosure(page, 'Session tools');
     for (const panel of await panels.all()) {
       await panel.locator('[data-slot="accordion-trigger"]').click();

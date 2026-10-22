@@ -11,7 +11,7 @@ import './today.css';
 /** A session cover, rather than a collection of daily statistics. */
 export function TodayView({ date, plan, session, completed, activities, nutrition,
   sessions = [], weeklyPlan = [], performance, bodyWeight, today = currentReportDate(),
-  volleyballSchedule, onStart, onTrain, onViewLog, onNutrition, onPlan, onActivity,
+  volleyballSchedule, onStart, onPreview, onTrain, onViewLog, onNutrition, onPlan, onActivity,
   onProgress, disabled, daySelector, programLabel, scheduledEvents = [] }) {
   const [dayPickerOpen, setDayPickerOpen] = useState(false);
   const day = new Date(`${date}T12:00:00`);
@@ -59,7 +59,9 @@ export function TodayView({ date, plan, session, completed, activities, nutritio
       </div>
       <h2 className="day-cover__title">{purpose.title}</h2>
       <p className="day-cover__purpose">{purpose.subtitle}</p>
-      <p className="day-cover__prescription">{sessionMeta}{programLabel && !active && !completed ? ` · ${programLabel}` : ''}</p>
+      <div className="day-cover__plan-row"><p className="day-cover__prescription">{sessionMeta}{programLabel && !active && !completed ? ` · ${programLabel}` : ''}</p>
+        {!active && !completed && <button type="button" className="day-cover__preview" disabled={disabled} onClick={onPreview}>View workout<ChevronRight size={14} aria-hidden="true" /></button>}
+      </div>
       {active && plannedSetCount > 0 && <div className="day-cover__track" role="progressbar" aria-label="Current workout" aria-valuemin={0} aria-valuemax={plannedSetCount} aria-valuenow={setCount}><span style={{ width: `${plannedSetCount ? setCount / plannedSetCount * 100 : 0}%` }} /></div>}
       <button className="btn day-cover__start" disabled={disabled} onClick={action}>{actionLabel}<ArrowRight size={20} aria-hidden="true" /></button>
     </section>

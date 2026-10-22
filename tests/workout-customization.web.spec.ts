@@ -1,4 +1,4 @@
-import { openSection } from './helpers/navigation';
+import { openSection, finishWarmup } from './helpers/navigation';
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE } from '../src/domain.js';
 
@@ -53,6 +53,7 @@ async function startMonday(page: Page) {
   await tab(page, 'Train');
   await page.getByRole('button', { name: /^Mon / }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   await expect(page.getByRole('region', { name: 'Current exercise', exact: true })).toBeVisible();
 }
 
@@ -208,6 +209,7 @@ test('a recovery day requires confirmation and removes only that scheduled day',
   await days.getByRole('button', { name: /^Wed / }).click();
   await days.getByRole('button', { name: 'Done', exact: true }).click();
   await page.getByRole('button', { name: 'Start recovery', exact: true }).click();
+  await finishWarmup(page);
   await expect(page.getByRole('tab', { name: 'Train', exact: true })).toHaveAttribute('data-state', 'active');
   await expect(page.getByRole('region', { name: 'Recovery session', exact: true })).toBeVisible();
   await expect.poll(async () => (await state(page)).sessions.length).toBe(1);
@@ -224,6 +226,7 @@ test('starting a custom workout uses its decimal prescription and leaves the rec
   await builder.getByRole('button', { name: 'Save workout', exact: true }).click();
   await expect(builder).not.toBeVisible();
   await page.getByRole('button', { name: 'Use custom workout Quick legs', exact: true }).click();
+  await finishWarmup(page);
   const current = page.getByRole('region', { name: 'Current exercise', exact: true });
   await expect(current.getByRole('heading', { name: 'Goblet Squat', exact: true })).toBeVisible();
   await expect(current.getByRole('textbox', { name: 'Goblet Squat set 1 weight in kilograms', exact: true })).toHaveValue('12.5');

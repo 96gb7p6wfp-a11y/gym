@@ -60,6 +60,15 @@ PWA identity are unchanged. No migration or reset is needed.
   weights/reps/time/RIR, jump measurements, session and movement timers, automatic
   rest timer, notes, intensity and calorie estimates/watch calories.
   Complex pairs alternate by round in one view while keeping prescribed rest.
+  Today → View workout opens the complete date-specific plan without starting a
+  timer or writing history. Its exercise options edit that date only; the weekly
+  plan remains separate. Start workout first opens a tailored warm-up checklist.
+  Finish its steps (or explicitly confirm Already warmed up), then tap Start main
+  workout. Preparation checks survive refresh and are saved with the session.
+  Rest alerts use a local two-tone chime, absolute deadlines and ±15-second controls.
+  Settings → Rest timer has Timer sounds and Test sound. A direct tap unlocks
+  browser audio. Sound is supported while the app is active; locked/background
+  iPhone playback is not promised. Overdue rests update silently on return.
   Short timed movements have a per-set countdown with quick duration adjustment,
   pause/resume/reset and explicit completion; longer activities retain manual minutes.
 - **Progress:** an overview with one selected Jump / Weight / Strength chart with real dated trends, weekly body-weight

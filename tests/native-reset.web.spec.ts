@@ -1,4 +1,4 @@
-import { openSection } from './helpers/navigation';
+import { openSection, finishWarmup } from './helpers/navigation';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE } from '../src/domain.js';
 
@@ -179,6 +179,7 @@ for (const appearance of ['light', 'dark'] as const) {
     await tab(page, 'Train');
     await page.getByRole('button', { name: /^Mon / }).click();
     await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
     const current = page.getByRole('region', { name: 'Current exercise', exact: true });
     const complete = current.getByRole('button', { name: 'Complete Medicine Ball Spike Slam set 1', exact: true });
     await current.getByRole('textbox', { name: 'Medicine Ball Spike Slam set 1 weight in kilograms', exact: true }).fill('12.5');

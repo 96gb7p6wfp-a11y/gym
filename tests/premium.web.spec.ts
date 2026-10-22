@@ -1,4 +1,4 @@
-import { openDisclosure, openSection } from './helpers/navigation';
+import { openDisclosure, openSection, finishWarmup } from './helpers/navigation';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, createSession, stopSessionTimers } from '../src/domain.js';
 
@@ -45,6 +45,7 @@ test('keeps the Today action immediately reachable on a short iPhone with safe a
   const action = await start.boundingBox();
   expect(action!.y + action!.height).toBeLessThan(nav!.y);
   await start.tap();
+  await finishWarmup(page);
   await expect(page.getByRole('tab', { name: 'Train', exact: true })).toHaveAttribute('data-state', 'active');
   await expect(page.getByRole('region', { name: 'Current exercise', exact: true })).toBeVisible();
   await expect(page.locator('.session-card h2')).toBeVisible();
@@ -56,6 +57,7 @@ test('completes a focused decimal set, carries only into empty sets and keeps ac
   await tab(page, 'Train');
   await page.getByRole('button', { name: /^Mon / }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   const exercise = page.getByRole('region', { name: 'Current exercise', exact: true });
   const weight = exercise.getByRole('textbox', { name: `${MOVEMENT} set 1 weight in kilograms`, exact: true });
   await weight.fill('');
@@ -88,6 +90,7 @@ test('an invalid focused set stays current and cannot advance or save a complete
   await tab(page, 'Train');
   await page.getByRole('button', { name: /^Mon / }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   const exercise = page.getByRole('region', { name: 'Current exercise', exact: true });
   await exercise.getByRole('textbox', { name: `${MOVEMENT} set 1 weight in kilograms`, exact: true }).fill('12..5');
   await exercise.getByRole('spinbutton', { name: `${MOVEMENT} set 1 reps`, exact: true }).fill('4');

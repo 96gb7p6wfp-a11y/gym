@@ -1,3 +1,4 @@
+import { finishWarmup } from './helpers/navigation';
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession, stopSessionTimers } from '../src/domain.js';
 import { createVolleyballMasterPlan, MasterProgramSettingsSchema } from '../src/volleyball-master-plan';
@@ -100,6 +101,7 @@ test('an empty recovery day starts real stretches and persists them without crea
   const start = cover.getByRole('button', { name: 'Start recovery', exact: true });
   await expect(start).toBeEnabled();
   await start.tap();
+  await finishWarmup(page);
   await expect(page.getByRole('tab', { name: 'Train', exact: true })).toHaveAttribute('data-state', 'active');
   const routine = page.getByRole('region', { name: 'Recovery session', exact: true });
   await expect(routine).toBeVisible();
@@ -147,6 +149,7 @@ test('finishing a workout offers real stretches and saves checks onto that compl
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: /^Mon / }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   const exercise = page.getByRole('region', { name: 'Current exercise', exact: true });
   await exercise.getByRole('textbox', { name: 'Medicine Ball Spike Slam set 1 weight in kilograms', exact: true }).fill('3');
   await exercise.getByRole('spinbutton', { name: 'Medicine Ball Spike Slam set 1 reps', exact: true }).fill('3');
@@ -224,6 +227,7 @@ test('volleyball has a simple reflection without requiring or inventing a comple
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: /^Tue / }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   const reflection = page.getByRole('textbox', { name: 'Volleyball reflection', exact: true });
   await expect(reflection).toBeVisible();
   await reflection.fill('Approach felt quick today. Next time: calmer serve receive.');
@@ -259,6 +263,7 @@ test('set encouragement acknowledges a logged set without interrupting the next 
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: /^Mon / }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   const current = page.getByRole('region', { name: 'Current exercise', exact: true });
   const cue = current.getByRole('status', { name: 'Set focus', exact: true });
   await expect(cue.getByText('Coach', { exact: true })).toBeVisible();

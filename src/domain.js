@@ -851,6 +851,17 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     (workout) => new Set(workout.exercises.map((exercise) => exercise.key)).size === workout.exercises.length,
     `Exercises need unique identifiers.`,
   ),
+  SessionDraftSchema = zObject({
+    date: zString().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
+      const date = new Date(`${value}T12:00:00Z`);
+      return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+    }),
+    slot: zEnum([`main`, `extra`]),
+    plan: PlanDaySchema.refine(day => new Set(day.exercises.map(exercise => exercise.key)).size === day.exercises.length, `Exercises need unique identifiers.`),
+    warmupOverride: zBoolean().optional(),
+    readiness: zEnum([`green`, `yellow`, `red`]).optional(),
+    customized: zBoolean().optional(),
+  }),
   ProfileWeeklyPlanSchema = zArray(
       PlanDaySchema.extend({
         extraSession: PlanDaySchema.optional(),
@@ -865,6 +876,8 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     ).length(7),
   ProfileSchema = zObject({
     plan: ProfileWeeklyPlanSchema,
+    sessionDrafts: zArray(SessionDraftSchema).max(1000).refine(drafts => new Set(drafts.map(draft => `${draft.date}:${draft.slot}`)).size === drafts.length, `Each day needs a unique session draft.`).optional(),
+    timerSoundEnabled: zBoolean().optional(),
     masterProgram: MasterProgramSettingsSchema.optional(),
     preMasterPlan: ProfileWeeklyPlanSchema.optional(),
     masterMatchWeekend: zArray(PlanDaySchema.refine(day => new Set(day.exercises.map(exercise => exercise.key)).size === day.exercises.length, 'Exercises need unique identifiers.')).length(2).optional(),
@@ -940,6 +953,8 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     exercises: zArray(SessionExerciseSchema).max(40),
     warmup: PreparationSchema.optional(),
     cooldown: PreparationSchema.optional(),
+    warmupCompletedAt: zNumber().finite().min(0).optional(),
+    warmupOverride: zBoolean().optional(),
     deletedAt: zNumber().finite().min(0).nullable().optional(),
   }).superRefine((e, t) => {
     (e.status !== `active` &&

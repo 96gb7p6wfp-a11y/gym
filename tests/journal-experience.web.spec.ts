@@ -1,3 +1,4 @@
+import { finishWarmup } from './helpers/navigation';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, ProfileSchema } from '../src/domain.js';
 import { createVolleyballMasterPlan, MasterProgramSettingsSchema } from '../src/volleyball-master-plan';
@@ -85,6 +86,7 @@ for (const appearance of ['light', 'dark'] as const) {
     await page.getByRole('tab', { name: 'Train', exact: true }).click();
     await page.getByRole('button', { name: /^Mon / }).click();
     await page.getByRole('button', { name: 'Start workout', exact: true }).tap();
+  await finishWarmup(page);
     const current = page.getByRole('region', { name: 'Current exercise', exact: true });
     const heading = current.getByRole('heading', { level: 2 });
     await expect(heading).toBeVisible();

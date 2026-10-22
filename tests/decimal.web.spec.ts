@@ -1,3 +1,4 @@
+import { finishWarmup } from './helpers/navigation';
 import { expect, test, type Page } from '@playwright/test';
 
 const MOVEMENT = 'Medicine Ball Spike Slam';
@@ -8,6 +9,7 @@ async function startWorkout(page: Page, day = 'Mon') {
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: new RegExp(`^${day} `) }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   await expect(page.getByRole('button', { name: 'Finish workout', exact: true })).toBeVisible();
   await openAllSets(page);
 }

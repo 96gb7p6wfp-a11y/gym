@@ -1,4 +1,4 @@
-import { openSection } from './helpers/navigation';
+import { openSection, finishWarmup } from './helpers/navigation';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, SessionSchema, createSession, stopSessionTimers } from '../src/domain.js';
 
@@ -96,6 +96,7 @@ test('a workout keyboard keeps the current inputs and completion reachable witho
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: /^Mon / }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   const focused = page.getByRole('region', { name: 'Current exercise', exact: true });
   const weight = focused.getByRole('textbox', { name: 'Medicine Ball Spike Slam set 1 weight in kilograms', exact: true });
   const reps = focused.getByRole('spinbutton', { name: 'Medicine Ball Spike Slam set 1 reps', exact: true });
@@ -136,6 +137,7 @@ test('all-set controls fit a small phone for loaded, timed and measured exercise
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: /^Sun / }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   const focused = page.getByRole('region', { name: 'Current exercise', exact: true });
   for (const name of ['Approach Jump', 'Pogo Jump', 'Hack Squat']) {
     const movements = page.locator('.focused-movements');

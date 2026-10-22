@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession } from '../src/domain.js';
 import { findLibraryExercise, toPlanExercise } from '../src/exercise-library';
-import { openDisclosure } from './helpers/navigation';
+import { openDisclosure, finishWarmup } from './helpers/navigation';
 
 const STORE = 'setline.gym.v1';
 const DATE = '2026-10-19';
@@ -55,6 +55,7 @@ test('a shoulder-only session offers shoulder preparation and stretches without 
   const cover = page.getByRole('region', { name: 'Your day', exact: true });
   await expect(cover.locator('[aria-label="Today motivation"]')).toBeVisible();
   await cover.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   const current = page.getByRole('region', { name: 'Current exercise', exact: true });
   const coach = current.getByRole('status', { name: 'Set focus', exact: true });
   await expect(coach.getByText('Coach', { exact: true })).toBeVisible();
@@ -96,6 +97,7 @@ test('post-workout stretching follows performed shoulder work rather than skippe
   await seed(page, { mixed: true });
   const plan = (await state(page)).profile.plan;
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   const current = page.getByRole('region', { name: 'Current exercise', exact: true });
   await current.getByRole('textbox', { name: `${SHOULDER} set 1 weight in kilograms`, exact: true }).fill('6');
   await current.getByRole('spinbutton', { name: `${SHOULDER} set 1 reps`, exact: true }).fill('12');
@@ -121,6 +123,7 @@ test('finishing without set logs keeps planned shoulder stretches available and 
   await seed(page, { appearance: 'dark' });
   const plan = (await state(page)).profile.plan;
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await finishWarmup(page);
   await page.getByRole('button', { name: 'Finish workout', exact: true }).click();
   const finish = page.getByRole('dialog', { name: 'Finish your workout', exact: true });
   await finish.getByLabel('Workout duration · minutes', { exact: true }).fill('25');
