@@ -86,13 +86,13 @@ export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutri
         aria-pressed={metric === item} onClick={() => setSelectedMetric(item)}>{capitalized(item)}</button>)}
     </div>
 
-    <section className="progress-trend" aria-label={metric === 'jump' ? 'Jump performance' : metric === 'weight' ? 'Body weight trend' : 'Strength trend'}>
+    <section key={metric} className="progress-trend" aria-label={metric === 'jump' ? 'Jump performance' : metric === 'weight' ? 'Body weight trend' : 'Strength trend'}>
       {value === null ? <div className="progress-lens-empty">
         <p className="progress-period">{title}</p>
         <h2 className="progress-lens-title">{metric === 'jump' ? 'Your first jump.' : metric === 'weight' ? 'Begin with a check-in.' : 'Build your strength baseline.'}</h2>
-        {metric !== 'jump' && <p className="progress-lens-empty__copy">{metric === 'weight'
+        <p className="progress-lens-empty__copy">{metric === 'jump' ? 'Log jump height, not total touch height.' : metric === 'weight'
           ? 'Log your weight to follow a steadier weekly trend.'
-          : 'Log the same movement on two days to see how your strength changes.'}</p>}
+          : 'Log the same movement on two days to see how your strength changes.'}</p>
         {emptyAction && <button type="button" className="btn progress-empty-action" onClick={emptyAction}><Plus size={18} aria-hidden="true" />{metric === 'jump' ? 'Log jump' : 'Log weight'}</button>}
       </div> : <>
       <p className="progress-period">Last 30 days</p>
@@ -116,7 +116,7 @@ export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutri
             <svg className={`progress-native-chart progress-${metric}-chart`} viewBox="0 0 340 158" role="img" aria-label={chartLabel}>
               <path d="M12 146H328" className="progress-chart-baseline" />
               <polygon points={`${coordinates[0].x},146 ${coordinates.map(point => `${point.x},${point.y}`).join(' ')} ${coordinates.at(-1)!.x},146`} className="progress-chart-area" />
-              <polyline points={coordinates.map(point => `${point.x},${point.y}`).join(' ')} className="progress-chart-line" />
+              <polyline pathLength="1" points={coordinates.map(point => `${point.x},${point.y}`).join(' ')} className="progress-chart-line" />
               {coordinates.map((point, index) => <circle key={point.date} cx={point.x} cy={point.y} r={index === coordinates.length - 1 ? 4 : 2.5} className="progress-chart-dot" />)}
             </svg>
             <div className="progress-chart-dates"><span>{shortDate(chartPoints[0].date)}</span><span>{shortDate(chartPoints.at(-1)!.date)}</span></div>

@@ -67,3 +67,22 @@
 @media(prefers-reduced-motion:reduce) {
  .progress-native .progress-chart-selector>button { transition:none; }
 }
+/* One measured trend at a time, with a short transition rather than a dashboard. */
+.progress-native .progress-lens-value>span { font-weight:680; }
+.progress-native .progress-chart-line { stroke-width:3; }
+.progress-native .progress-chart-area { opacity:.36; }
+.progress-native .progress-lens-comparison>strong { font-variant-numeric:tabular-nums; }
+@media(prefers-reduced-motion:no-preference) {
+ .progress-native .progress-trend { animation:progress-lens-arrive 200ms ease-out both; }
+ .progress-native .progress-chart-line { stroke-dasharray:1; stroke-dashoffset:0; animation:progress-line-arrive 440ms ease-out both; }
+ .progress-native .progress-strength-comparison i { transform-origin:left center; animation:progress-bar-arrive 320ms ease-out both; }
+ @keyframes progress-lens-arrive { from { opacity:.45; transform:translateY(3px); } to { opacity:1; transform:translateY(0); } }
+ @keyframes progress-line-arrive { from { stroke-dashoffset:1; } to { stroke-dashoffset:0; } }
+ @keyframes progress-bar-arrive { from { transform:scaleX(.92); } to { transform:scaleX(1); } }
+}
+@media(max-width:350px) {
+ .progress-native .progress-lens-empty { padding:0; }
+ .progress-native .progress-chart-selector { margin-bottom:9px; }
+ .progress-native .progress-lens-empty__copy { margin-top:3px; font-size:12px; line-height:1.45; }
+ .progress-native .progress-lens-empty .progress-empty-action { margin-top:6px; }
+}

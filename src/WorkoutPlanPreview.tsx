@@ -9,7 +9,7 @@ import { findLibraryExercise, toPlanExercise, type LibraryExercise } from './exe
 import { getSessionPurpose } from './training-purpose';
 import { addPlanExercise, movePlanExercise, removePlanExercise, replacePlanExercise, type PlanDay, type PlanExercise } from './workout-customization';
 import type { StretchStep } from './stretch-routine';
-import { getWarmupPresentation } from './session-preparation';
+import { getQuickWarmupPresentation } from './session-preparation';
 import './workout-plan-preview.css';
 
 export interface WorkoutPlanPreviewProps {
@@ -40,7 +40,7 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
   const menuExercise = plan.exercises.find(exercise => exercise.key === menuKey);
   const replacement = plan.exercises.find(exercise => exercise.key === replaceKey);
   const purpose = getSessionPurpose(plan);
-  const preparation = getWarmupPresentation(plan);
+  const preparation = getQuickWarmupPresentation(plan);
   const workingSets = plan.exercises.reduce((count, exercise) => count + exercise.sets, 0);
   const locked = disabled || busy;
 

@@ -22,3 +22,18 @@
 .workout-completion .workout-completion__done--secondary { margin-top: 8px; background: var(--surface-soft); color: var(--ink); }
 @media (max-width: 360px) { .workout-completion__metrics--records strong { font-size: 33px; } .workout-completion__metrics span { font-size: 12px; } .workout-completion__heading { gap: 10px; } }
 @media (prefers-reduced-motion: no-preference) { .workout-completion { animation: workout-completion-enter 180ms ease-out; } @keyframes workout-completion-enter { from { opacity: .55; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } } }
+/* A calm finish line, with distinction reserved for real recorded improvements. */
+.workout-completion__heading { margin-bottom:28px; align-items:center; }
+.workout-completion__heading>span { width:42px; height:42px; flex-shrink:0; border-radius:50%; background:var(--accent-soft); color:var(--accent); }
+.workout-completion__heading h2 { font-family:var(--font-display,var(--font-body)); font-size:28px; font-weight:680; line-height:1.12; letter-spacing:-.04em; }
+.workout-completion__metrics { align-items:baseline; }
+.workout-completion__metrics>div:first-child strong { font-family:var(--font-display,var(--font-body)); font-size:clamp(44px,13vw,58px); font-weight:650; }
+.workout-completion[data-has-records='true'] .workout-completion__metrics>div:last-child strong { color:var(--accent); }
+.workout-completion[data-has-records='true'] .workout-completion__highlight>span { color:var(--accent); font-weight:600; }
+.workout-completion__highlight h3 { font-family:var(--font-display,var(--font-body)); font-size:18px; font-weight:620; }
+.workout-completion__cue { padding:2px 0 2px 14px; border-left:2px solid var(--accent-soft); border-radius:0; background:transparent; }
+@media(max-width:350px) { .workout-completion__heading h2 { font-size:25px; } .workout-completion__metrics--records>div:first-child strong { font-size:42px; } }
+@media(prefers-reduced-motion:no-preference) {
+ .workout-completion__heading>span svg { animation:completion-check-arrive 260ms cubic-bezier(.2,.8,.2,1) both; }
+ @keyframes completion-check-arrive { from { opacity:.2; transform:scale(.8); } to { opacity:1; transform:scale(1); } }
+}

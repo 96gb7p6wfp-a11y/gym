@@ -21,12 +21,12 @@ export async function openDisclosure(page: Page, name: string) {
   if (!await summary.evaluate(element => element.closest('details')?.open ?? false)) await summary.click();
 }
 
-/** Complete the explicit already-warm path when a test covers the main session.
- * Dedicated preparation tests exercise the full required checklist instead. */
+/** Use the explicit already-warm path when a test covers the main session.
+ * Dedicated quick-prep tests cover direct start, individual and bulk completion. */
 export async function finishWarmup(page: Page) {
   const warmup = page.getByRole('dialog', { name: 'Warm-up', exact: true });
   await expect(warmup).toBeVisible();
   await warmup.getByRole('button', { name: 'Already warmed up', exact: true }).click();
-  await warmup.getByRole('button', { name: 'Start main workout', exact: true }).click();
+  await warmup.getByRole('button', { name: 'Start workout', exact: true }).click();
   await expect(warmup).not.toBeVisible();
 }

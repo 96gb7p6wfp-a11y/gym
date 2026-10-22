@@ -52,12 +52,12 @@ export function TodayView({ date, plan, session, completed, activities, nutritio
     : `${remainingCalories.toLocaleString('en-GB')} kcal remaining · ${Math.round(totals.protein)}${targets.protein ? ` / ${Math.round(targets.protein)}` : ''} g protein`;
 
   return <div className="today-view journal-today">
-    <section className="day-cover" aria-label="Your day">
+    <section className="day-cover" aria-label="Your day" data-session-state={active ? 'active' : completed ? 'complete' : shownPlan.kind === 'recovery' ? 'recovery' : 'ready'}>
       <div className="day-cover__edition">
         <p className="day-motivation" aria-label="Today motivation">{getDailyMotivation({ kind: shownPlan.kind, active, completed: !!completed && !active })}</p>
         <button type="button" className="icon-button" aria-label="Choose training day" onClick={() => setDayPickerOpen(true)}><CalendarDays size={19} aria-hidden="true" /></button>
       </div>
-      <h2 className="day-cover__title">{purpose.title}</h2>
+      <h2 key={`${date}-${purpose.title}`} className="day-cover__title">{purpose.title}</h2>
       <p className="day-cover__purpose">{purpose.subtitle}</p>
       <div className="day-cover__plan-row"><p className="day-cover__prescription">{sessionMeta}{programLabel && !active && !completed ? ` · ${programLabel}` : ''}</p>
         {!active && !completed && <button type="button" className="day-cover__preview" disabled={disabled} onClick={onPreview}>View workout<ChevronRight size={14} aria-hidden="true" /></button>}

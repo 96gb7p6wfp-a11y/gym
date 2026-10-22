@@ -55,7 +55,7 @@ export function WorkoutCompletion({ session, sessions, onDone, onStretch, volley
       ? `${number(highlight.log.seconds! / 60)} min` : `${number(highlight.log.seconds!)} sec`
       : `${highlight.log.kg != null && highlight.log.kg > 0 ? `${number(highlight.log.kg)} kg` : 'Bodyweight'} × ${highlight.log.reps}`;
 
-  return <section className="workout-completion" aria-label="Workout complete summary">
+  return <section className="workout-completion" aria-label="Workout complete summary" data-has-records={records.length > 0}>
     <header className="workout-completion__heading"><span aria-hidden="true"><Check size={21} strokeWidth={2} /></span><h2>{recoveryOnly ? 'Recovery complete' : session.kind === 'sport' ? 'Training recorded' : 'Workout complete'}</h2></header>
     <div className={`workout-completion__metrics${records.length ? ' workout-completion__metrics--records' : ''}`}>
       <div><strong>{minutes}</strong><span>{duration > 0 ? 'minutes' : 'duration not recorded'}</span></div>

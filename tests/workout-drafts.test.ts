@@ -3,7 +3,7 @@ import test from 'node:test';
 import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession, stopSessionTimers } from '../src/domain.js';
 import { createLocalClient, STORAGE_KEY } from '../src/storage.ts';
 import { defaultReminderState } from '../src/reminders.ts';
-import { findSessionDraft, putSessionDraft, resetDraftPreparation, resolveSessionDraft, warmupReady, type SessionDraft } from '../src/workout-drafts.ts';
+import { findSessionDraft, getPreparationStatus, putSessionDraft, resetDraftPreparation, resolveSessionDraft, type SessionDraft } from '../src/workout-drafts.ts';
 
 class MemoryStorage {
   values = new Map<string, string>();
@@ -41,13 +41,13 @@ test('date-specific drafts distinguish main and extra sessions without changing 
   assert.notEqual(findSessionDraft(replaced, main.date, 'extra')?.plan.exercises[0].sets, 20);
 });
 
-test('main-workout readiness requires every warm-up step or an explicit override', () => {
-  assert.equal(warmupReady([]), false);
-  assert.equal(warmupReady([step()]), false);
-  assert.equal(warmupReady([step(true), { ...step(), key: 'second-step' }]), false);
-  assert.equal(warmupReady([step(true)]), true);
-  assert.equal(warmupReady([step()], true), true);
-  assert.equal(warmupReady([], true), true);
+test('warm-up status describes completed, elsewhere and unrecorded preparation without requiring a start gate', () => {
+  assert.equal(getPreparationStatus([]), 'not-recorded');
+  assert.equal(getPreparationStatus([step()]), 'not-recorded');
+  assert.equal(getPreparationStatus([step(true), { ...step(), key: 'second-step' }]), 'not-recorded');
+  assert.equal(getPreparationStatus([step(true)]), 'prepared');
+  assert.equal(getPreparationStatus([step()], true), 'elsewhere');
+  assert.equal(getPreparationStatus([], true), 'elsewhere');
 });
 
 test('preparation-only drafts follow weekly edits while intentional date changes stay independent', () => {

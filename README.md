@@ -62,13 +62,17 @@ PWA identity are unchanged. No migration or reset is needed.
   Complex pairs alternate by round in one view while keeping prescribed rest.
   Today → View workout opens the complete date-specific plan without starting a
   timer or writing history. Its exercise options edit that date only; the weekly
-  plan remains separate. Start workout first opens a tailored warm-up checklist.
-  Finish its steps (or explicitly confirm Already warmed up), then tap Start main
-  workout. Preparation checks survive refresh and are saved with the session.
+  plan remains separate. Start workout opens compact, session-specific quick prep
+  (usually 3–5 minutes) with one-tap completion or Already warmed up. Start workout
+  stays available without checklist gates. Specific lifting/jump preparation follows
+  when needed; full saved preparation remains available. Checks survive refresh
+  and are saved honestly with the session, including unrecorded preparation.
   Rest alerts use a local two-tone chime, absolute deadlines and ±15-second controls.
-  Settings → Rest timer has Timer sounds and Test sound. A direct tap unlocks
-  browser audio. Sound is supported while the app is active; locked/background
-  iPhone playback is not promised. Overdue rests update silently on return.
+  Settings → Rest timer has Timer sounds, alert volume and Test sound. The same
+  local double-beep is used for the test and real alerts, with gesture initialization
+  and bounded foreground audio recovery. Only the listener can confirm audibility.
+  Locked/background iPhone playback is not promised; overdue rests update silently
+  on return. See [the audio findings and exact iPhone verification steps](docs/AUDIO_AND_QUICK_PREP_VERIFICATION.md).
   Short timed movements have a per-set countdown with quick duration adjustment,
   pause/resume/reset and explicit completion; longer activities retain manual minutes.
 - **Progress:** an overview with one selected Jump / Weight / Strength chart with real dated trends, weekly body-weight

@@ -85,10 +85,11 @@ for (const [name, concept] of [
 // This registry reads recommendation templates; it never mutates a plan or saved session.
 const signature = (item: Omit<StretchStep, 'done'>) => JSON.stringify([item.key, item.name, item.target, item.cue]);
 const automatic = new Map<string, string>();
+const conceptByKey = new Map<string, string>();
 const register = (items: readonly Omit<StretchStep, 'done'>[]) => {
   for (const item of items) {
     const concept = conceptByName.get(normalize(item.name));
-    if (concept) automatic.set(signature(item), concept);
+    if (concept) { automatic.set(signature(item), concept); conceptByKey.set(item.key, concept); }
   }
 };
 register(allTemplates);
@@ -244,6 +245,77 @@ export function getSessionPreparation(options: SessionPreparationOptions): Stret
 }
 
 export type WarmupPlan = Pick<SessionPreparationOptions, 'kind' | 'exercises' | 'name' | 'goal' | 'minutes'>;
+
+/** Stable, short view of preparation. The full saved routine is never changed. */
+export function getQuickWarmup(plan: WarmupPlan, items: readonly StretchStep[] = []): StretchStep[] {
+  const available = items.length ? items : getSessionPreparation({ ...plan, phase: 'warmup' });
+  const focus = focusFor(plan.exercises);
+  const upper = ['shoulders', 'chest', 'back', 'biceps', 'triceps'].some(value => focus.has(value as Focus));
+  const lower = ['quads', 'glutes', 'hamstrings', 'hips', 'adductors', 'calves'].some(value => focus.has(value as Focus));
+  const primer = /primer|technique/i.test(plan.name ?? '');
+  const upperPower = isUpperPower(plan.exercises, plan.goal, upper);
+  const firstLift = plan.exercises.find(item => item.mode === 'weight' && !/throw|slam|jump/i.test(item.name ?? ''));
+  const pattern = /deadlift|romanian|hinge/i.test(firstLift?.name ?? '') ? 'hinge' : 'squat';
+  const desired = plan.kind === 'recovery' ? ['hips', 'thoracic', 'wall']
+    : plan.kind === 'sport' ? ['ankle', 'hips', 'arms', 'wall']
+      : primer ? ['ankle', 'hips', 'landing']
+        : focus.has('jump') ? ['ankle', 'hips', pattern, 'pogo']
+          : upperPower ? ['arms', 'thoracic', 'wall']
+            : upper && lower ? ['arms', 'wall', 'ankle', 'hips']
+              : lower ? ['ankle', 'hips', pattern]
+                : upper ? ['arms', 'wall', 'cuff'] : ['easy', 'breathing'];
+  const concept = (item: StretchStep) => automatic.get(signature(item)) ?? conceptByKey.get(item.key) ?? conceptByName.get(normalize(item.name));
+  const selected: StretchStep[] = [];
+  for (const wanted of desired) {
+    const exact = available.find(item => concept(item) === wanted && !selected.some(chosen => chosen.key === item.key));
+    // A plan without prescribed pogos uses a no-impact landing rehearsal. Never
+    // add jump contacts or change an existing prescribed dose for the quick view.
+    const fallback = wanted === 'pogo' ? ['landing', 'foot'] : wanted === 'squat' ? ['glute', 'landing', 'lower-rehearsal', 'rehearsal'] : wanted === 'hinge' ? ['glute', 'rehearsal'] : wanted === 'cuff' ? ['scapular', 'upper-rehearsal', 'rehearsal'] : [];
+    const match = exact ?? available.find(item => fallback.includes(concept(item) ?? '') && !selected.some(chosen => chosen.key === item.key));
+    if (match) selected.push(match);
+  }
+  // Unknown/custom sessions still have an immediately usable saved routine.
+  if (selected.length < 2) {
+    for (const item of available) {
+      if (selected.length >= Math.min(3, available.length)) break;
+      if (!selected.some(chosen => chosen.key === item.key)) selected.push(item);
+    }
+  }
+  return selected;
+}
+
+export function getQuickWarmupPresentation(plan: WarmupPlan): { title: string; duration: string; purpose: string; rampUp: string } {
+  const detailed = getWarmupPresentation(plan);
+  const firstLift = plan.exercises.find(item => item.mode === 'weight' && !/throw|slam|jump/i.test(item.name ?? ''));
+  const primer = /primer|technique/i.test(plan.name ?? '');
+  const focus = focusFor(plan.exercises);
+  const jumping = focus.has('jump');
+  const upperPower = isUpperPower(plan.exercises, plan.goal, ['shoulders', 'chest', 'back', 'biceps', 'triceps'].some(value => focus.has(value as Focus)));
+  const rampUp = plan.kind === 'recovery' ? 'Stay easy. Add more mobility only where it feels useful.'
+    : plan.kind === 'sport' ? 'Build court movement and hitting speed gradually before full play.'
+      : primer ? 'Use your planned progressive jumps. Do not add extra contacts.'
+        : jumping ? 'Build jump intensity gradually. Take light ramp-up sets before heavy lifts.'
+          : upperPower ? 'Build throwing speed gradually. Use light ramp-up sets at the first lift.'
+          : firstLift ? `Then build up with lighter sets of ${firstLift.name}.`
+            : 'Build the first movement gradually before working sets.';
+  return { ...detailed, duration: plan.kind === 'recovery' ? '2–3 min' : plan.kind === 'sport' || jumping ? '4–5 min' : '3–4 min', rampUp };
+}
+
+/** One glanceable instruction; saved technique remains available in details. */
+export function getQuickWarmupCue(item: StretchStep): string {
+  const concept = conceptByName.get(normalize(item.name));
+  const cues: Record<string, string> = {
+    easy: 'Move easily; breathe comfortably.', arms: 'Circle gently; stay comfortable.',
+    wall: 'Ribs down. Slide without shrugging.', thoracic: 'Turn gently; keep hips quiet.',
+    ankle: 'Heel down. Guide the knee forward smoothly.', hips: 'Turn gently through a comfortable hip range.',
+    squat: 'Feet planted. Knees follow the toes.', hinge: 'Soft knees. Hips back; keep the back comfortable.',
+    glute: 'Lift through the hips without arching the back.', cuff: 'Use a light load; keep elbows by your sides.',
+    scapular: 'Draw the shoulder blades back; keep the neck easy.', landing: 'Settle softly; knees track with the feet.',
+    foot: 'Keep the heel and both toe bases grounded.', pogo: 'Light, quick contacts. Skip if calves or Achilles hurt.',
+    breathing: 'Exhale gently and let the ribs settle.', rehearsal: 'Start very light. Finish ready, not tired.',
+  };
+  return cues[concept ?? ''] ?? item.cue.split(/(?<=[.!?])\s/)[0];
+}
 
 /** Small shared labels for the preview and the preparation sheet. No session is created. */
 export function getWarmupPresentation(plan: WarmupPlan): { title: string; duration: string; purpose: string } {

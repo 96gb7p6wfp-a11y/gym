@@ -56,3 +56,19 @@
  .day-next>div>span { max-width:132px; text-align:right; }
 }
 @media(prefers-reduced-motion:no-preference) { .day-cover__track>span { transition:width 220ms ease; } }
+/* The training title is the focal point; the material stays quiet and matte. */
+.journal-today .day-cover { background:var(--wash); box-shadow:inset 0 1px 0 color-mix(in srgb,var(--surface) 32%,transparent),var(--shadow-card); }
+.day-cover[data-session-state='active'] { background:color-mix(in srgb,var(--wash) 86%,var(--surface)); }
+.day-cover .day-cover__title { font-synthesis:none; }
+.day-cover__edition>.icon-button { background:color-mix(in srgb,var(--surface) 54%,transparent); }
+.day-cover .day-cover__start { font-weight:650; }
+.day-cover .day-cover__start>svg { transition:transform 160ms ease; }
+.day-cover .day-cover__start:active>svg { transform:translateX(3px); }
+.day-cover .day-cover__start:active { filter:brightness(.95); }
+@media(prefers-reduced-motion:no-preference) {
+ .day-cover .day-cover__title { animation:day-title-arrive 220ms ease-out both; }
+ .day-cover .day-cover__start,.day-utilities>button,.day-fuel { transition:transform 140ms ease,background 140ms ease; }
+ .day-cover .day-cover__start:active { transform:scale(.985); }
+ @keyframes day-title-arrive { from { opacity:.5; transform:translateY(3px); } to { opacity:1; transform:translateY(0); } }
+}
+@media(prefers-reduced-motion:reduce) { .day-cover .day-cover__start>svg { transition:none; } }

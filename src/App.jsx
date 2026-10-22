@@ -1,13 +1,13 @@
 import { WorkoutPlanPreview } from "./WorkoutPlanPreview";
 import { WarmupFlow } from "./WarmupFlow";
-import { findSessionDraft, putSessionDraft, resetDraftPreparation, resolveSessionDraft, warmupReady } from "./workout-drafts";
+import { findSessionDraft, getPreparationStatus, putSessionDraft, resetDraftPreparation, resolveSessionDraft } from "./workout-drafts";
 import { useRestAudio } from "./useRestAudio";
 import { TimerSoundSettings } from "./TimerSoundSettings";
 import './workout-flow.css';
 import { Search, History } from "lucide-react";
 import { exercisePerformanceIdentity, areComparableExercises } from "./performance-insights";
 import { WorkoutCompletion } from "./WorkoutCompletion";
-import { getSessionPreparation } from "./session-preparation";
+import { getQuickWarmup, getSessionPreparation } from "./session-preparation";
 import './session-extras.css';
 import { WorkoutBuilder } from "./WorkoutBuilder";
 import { WeeklyPlanTools } from "./WeeklyPlanTools";
@@ -187,10 +187,15 @@ function GymApp({
     () => (new Date(`${initialDate}T12:00:00`).getDay() + 6) % 7,
   );
   let [now, setNow] = React.useState(initialNow);
-  let [restEndsAt, setRestEndsAt] = React.useState(null);
+  let [restEndsAt, setRestDeadline] = React.useState(null);
+  const [restFinished, setRestFinished] = React.useState(null);
+  function setRestEndsAt(deadline) { setRestFinished(null); setRestDeadline(deadline); }
   let [restSeconds, setRestSeconds] = React.useState(90);
-  const restAudio = useRestAudio({ enabled: profile.timerSoundEnabled !== false, endsAt: restEndsAt,
-    onComplete: () => { setRestEndsAt(null); setNow(Date.now()); toast('Rest finished', { icon: <Timer size={18} /> }); } });
+  const restAudio = useRestAudio({ enabled: profile.timerSoundEnabled !== false, volume: profile.timerSoundVolume ?? 0.85, endsAt: restEndsAt,
+    onComplete: result => {
+      setRestEndsAt(null); setNow(Date.now());
+      setRestFinished({ resumed: result.resumed, needsAudioTap: !result.resumed && profile.timerSoundEnabled !== false && !result.audible });
+    } });
   let [finishOpen, setFinishOpen] = React.useState(!1);
   let [finishMinutes, setFinishMinutes] = React.useState(``);
   let [watchCalories, setWatchCalories] = React.useState(``);
@@ -577,16 +582,17 @@ function GymApp({
   }
   async function startMainWorkout() {
     void restAudio.unlock();
-    if (!warmupContext || !preparationDraft || activeSession || startingMainRef.current || profileSaving
-      || !warmupReady(gateWarmupItems, preparationDraft.warmupOverride)) return;
+    if (!warmupContext || !preparationDraft || activeSession || startingMainRef.current || profileSaving) return;
     startingMainRef.current = true;
     try {
       if (!(await flushPendingWrites()) || sessionsRef.current.some(session => session.status === 'active')) return;
       const session = createSession({ ...warmupPlan, cooldown: preparationFor(warmupPlan, 'cooldown') },
         warmupContext.day, warmupContext.date, profile, sessionsRef.current);
       session.warmup = gateWarmupItems.map(step => ({ ...step }));
-      session.warmupCompletedAt = Date.now();
+      const quickSteps = getQuickWarmup(warmupPlan, gateWarmupItems);
       session.warmupOverride = preparationDraft.warmupOverride === true;
+      session.warmupStatus = getPreparationStatus(quickSteps, session.warmupOverride);
+      if (session.warmupStatus !== 'not-recorded') session.warmupCompletedAt = Date.now();
       // A weight deliberately planned for this date takes precedence over the
       // previous-session suggestion used by createSession.
       session.exercises = session.exercises.map(exercise => exercise.defaultKg == null ? exercise : {
@@ -1369,6 +1375,7 @@ function GymApp({
               />
               <ActivityImport bodyWeight={profile.bodyWeight} records={activityRecords} onImport={importExtraActivities} disabled={!loaded} />
               </details>
+              {currentSession?.warmupStatus && <p className="preparation-record" aria-label="Recorded warm-up">{{ prepared: 'Quick warm-up complete', elsewhere: 'Warmed up elsewhere', 'not-recorded': 'Warm-up not marked complete' }[currentSession.warmupStatus]}</p>}
               <PreparationChecklist
                 items={warmupItems}
                 compact
@@ -1559,6 +1566,7 @@ function GymApp({
                 <p
                   className={`small-note`}
                 >{`Starts after each completed gym set. Keep the app open for the rest alert.`}</p>
+                <button type="button" className="text-button" onClick={() => { openSettings(); setTimeout(() => document.querySelector('.timer-sound-settings')?.scrollIntoView({ block: 'start' }), 0); }}>Timer sound</button>
               </section>
               </details>
               <details className="train-secondary"><summary>Fuel &amp; recovery</summary>
@@ -1923,8 +1931,13 @@ function GymApp({
           <button onClick={() => setRestEndsAt(null)} aria-label="Skip rest">Skip</button>
         </div>
       )}
+      {restFinished && <section className="rest-finished" role="status" aria-label="Rest complete">
+        <Check size={21} aria-hidden="true" /><div><strong>Rest complete</strong><span>{restFinished.resumed ? 'Finished while you were away.' : restFinished.needsAudioTap ? 'Sound needs a tap.' : 'Ready when you are.'}</span></div>
+        {restFinished.needsAudioTap && <button type="button" className="text-button" onClick={() => { openSettings(); setTimeout(() => document.querySelector('.timer-sound-settings')?.scrollIntoView({ block: 'start' }), 0); }}>Check sound</button>}
+        <button type="button" className="icon-button" aria-label="Dismiss rest complete" onClick={() => setRestFinished(null)}><X size={18} /></button>
+      </section>}
       <WorkoutPlanPreview open={previewOpen} onOpenChange={setPreviewOpen} plan={selectedPlan}
-        dayLabel={formatDate(selectedDate, true)} warmup={preparationFor(selectedPlan, 'warmup')}
+        dayLabel={formatDate(selectedDate, true)} warmup={getQuickWarmup(selectedPlan, preparationFor(selectedPlan, 'warmup'))}
         disabled={!loaded || profileSaving || !!loadError || !!activeSession}
         onChange={plan => saveDayDraft({ ...plan, warmup: preparationFor({ ...plan, warmup: plan.warmup?.map(step => ({ ...step, done: false })) }, 'warmup') }, { customized: true })}
         onStart={startWorkout} />
@@ -2070,9 +2083,10 @@ function GymApp({
           >
             {profileSaving ? `Saving…` : `Save preferences`}
           </button>
-          <TimerSoundSettings enabled={profile.timerSoundEnabled !== false} disabled={profileSaving || !loaded}
+          <TimerSoundSettings enabled={profile.timerSoundEnabled !== false} volume={profile.timerSoundVolume ?? 0.85} disabled={profileSaving || !loaded}
             onChange={timerSoundEnabled => saveProfile({ ...profile, timerSoundEnabled }, { notify: false })}
-            testSound={restAudio.testSound} unlock={restAudio.unlock} />
+            onVolumeChange={timerSoundVolume => saveProfile({ ...profile, timerSoundVolume }, { notify: false })}
+            audioState={restAudio.audioState} testSound={restAudio.testSound} unlock={restAudio.unlock} />
           <AppearanceSettings value={profile.appearance ?? 'system'} disabled={profileSaving} onChange={appearance => saveProfile({ ...profile, appearance }, { notify: false })} />
           <DataSettings beforeExport={flushPendingWrites} onReplace={replaceLocalData} />
           <button

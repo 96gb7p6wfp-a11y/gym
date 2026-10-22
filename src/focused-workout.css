@@ -162,3 +162,13 @@ html[data-keyboard-open='true'] .focused-exercise .focused-set-encouragement + .
   .focused-exercise .timed-set-controls--short .timed-set-timer__toggle { flex-basis: 76px; width: 76px; }
 }
 @media (prefers-reduced-motion: reduce) { .focused-workout button { transition: none !important; } .focused-set-encouragement > span { animation: none; } }
+/* A set receipt occupies the existing cue line, never a blocking overlay. */
+.focused-set-receipt { display:inline-block; vertical-align:-3px; color:var(--accent); }
+.focused-exercise__set-selector>button.is-done { background:var(--accent-soft); color:var(--accent); }
+.focused-exercise__set-selector>button.is-current.is-done { box-shadow:inset 0 0 0 1px var(--accent); }
+@media(prefers-reduced-motion:no-preference) {
+ .focused-set-receipt path { stroke-dasharray:32; stroke-dashoffset:0; animation:set-receipt-draw 240ms ease-out both; }
+ .focused-exercise__set-selector>button { transition:background 160ms ease,color 160ms ease,transform 120ms ease; }
+ .focused-exercise__set-selector>button:active { transform:scale(.94); }
+ @keyframes set-receipt-draw { from { stroke-dashoffset:32; } to { stroke-dashoffset:0; } }
+}

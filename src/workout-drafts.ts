@@ -38,6 +38,7 @@ export function resetDraftPreparation(draft: SessionDraft): SessionDraft {
     plan: { ...draft.plan, warmup: draft.plan.warmup?.map(step => ({ ...step, done: false })) } };
 }
 
-export function warmupReady(items: readonly StretchStep[], override = false): boolean {
-  return override || (items.length > 0 && items.every(step => step.done));
+/** Report what was recorded; preparation is recommended and never a start gate. */
+export function getPreparationStatus(items: readonly StretchStep[], override = false): 'prepared' | 'elsewhere' | 'not-recorded' {
+  return override ? 'elsewhere' : items.length > 0 && items.every(step => step.done) ? 'prepared' : 'not-recorded';
 }

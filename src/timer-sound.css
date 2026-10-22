@@ -6,6 +6,24 @@
 .timer-sound-toggle input[type='checkbox']:checked { background:var(--accent); }
 .timer-sound-toggle input[type='checkbox']:checked::before { transform:translateX(18px); background:var(--on-accent); }
 .timer-sound-toggle:has(input:disabled) { opacity:.5; }
+.timer-sound-toggle>span { display:flex; align-items:center; gap:10px; }
+.timer-sound-toggle small { color:var(--sub); font-size:12px; }
+.timer-sound-volume { display:grid; gap:2px; margin-top:12px; color:var(--ink); }
+.timer-sound-volume>span { display:flex; justify-content:space-between; align-items:center; font-size:14px; }
+.timer-sound-volume output { color:var(--sub); font-size:13px; font-variant-numeric:tabular-nums; }
+.timer-sound-volume input[type='range'] { width:100%; min-height:44px; padding:0; border:0; accent-color:var(--accent); background:transparent; }
+.timer-sound-volume-note { margin:0 0 16px; font-size:12px; line-height:1.5; color:var(--sub); }
+.timer-sound-test { margin-top:4px; }
+.timer-sound-confirm { display:flex; align-items:center; gap:16px; margin-top:12px; }
+.timer-sound-confirm>.btn { min-height:44px; font-size:13px; padding:10px 16px; }
+.timer-sound-confirm>.text-button { min-height:44px; }
+.timer-sound-help { margin-top:14px; padding:16px; border-radius:20px; background:var(--surface-soft); color:var(--ink); font-size:13px; line-height:1.6; }
+.timer-sound-help ol { margin:0; padding-left:19px; }
+.timer-sound-help li+li { margin-top:7px; }
+.timer-sound-help details { margin-top:8px; }
+.timer-sound-help summary { min-height:44px; display:flex; align-items:center; color:var(--accent); cursor:pointer; }
+.timer-sound-help details p { margin-top:8px; color:var(--sub); overflow-wrap:anywhere; }
+.timer-sound-limit { margin-top:16px; }
 .timer-sound-feedback:empty { display:none; }
 .timer-sound-feedback { margin-top:8px; }
 @media(prefers-reduced-motion:reduce) { .timer-sound-toggle input[type='checkbox'],.timer-sound-toggle input[type='checkbox']::before { transition:none; } }
