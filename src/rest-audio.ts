@@ -6,20 +6,27 @@ export interface AudioDiagnostics {
   reason: string | null;
 }
 
-/** Two clear, rounded beeps, with smooth attack/release and a useful gym-frequency harmonic. */
+export const DEFAULT_REST_VOLUME = 1;
+
+/** Sustained midrange double-beep: audible over music, with smooth edges and no clipping. */
 export function createRestChimeSamples(sampleRate = 48_000): Float32Array {
   const rate = Math.max(8_000, Math.min(192_000, sampleRate));
-  const samples = new Float32Array(Math.ceil(rate * 0.72));
-  for (const [offset, frequency] of [[0.02, 880], [0.37, 1046.5]]) {
-    const length = 0.25;
+  const samples = new Float32Array(Math.ceil(rate * 0.98));
+  let peak = 0;
+  for (const [offset, frequency] of [[0.02, 1046.5], [0.52, 1318.5]]) {
+    const length = 0.38;
     for (let i = Math.floor(offset * rate); i < Math.min(samples.length, Math.ceil((offset + length) * rate)); i++) {
       const t = i / rate - offset;
-      const attack = Math.min(1, Math.max(0, t / 0.012));
-      const release = Math.min(1, Math.max(0, (length - t) / 0.075));
-      const wave = Math.sin(2 * Math.PI * frequency * t) + 0.18 * Math.sin(4 * Math.PI * frequency * t);
-      samples[i] = wave * 0.64 * attack * release;
+      const attack = Math.min(1, Math.max(0, t / 0.01));
+      const release = Math.min(1, Math.max(0, (length - t) / 0.05));
+      const phase = 2 * Math.PI * frequency * t;
+      const wave = Math.sin(phase) + 0.12 * Math.sin(2 * phase) + 0.12 * Math.sin(3 * phase);
+      samples[i] = wave * attack * release;
+      peak = Math.max(peak, Math.abs(samples[i]));
     }
   }
+  // Use available headroom, rather than increasing gain beyond the digital limit.
+  if (peak > 0) for (let i = 0; i < samples.length; i++) samples[i] *= 0.96 / peak;
   return samples;
 }
 
@@ -33,7 +40,7 @@ type AudioSessionPort = { type: string };
 export class RestChime {
   private context: AudioContext | null = null;
   private buffer: AudioBuffer | null = null;
-  private volume = 0.85;
+  private volume = DEFAULT_REST_VOLUME;
   private unlocked = false;
   private listeners = new Set<() => void>();
   private snapshot: AudioDiagnostics = { phase: 'idle', contextState: 'not initialized', sessionType: 'automatic', reason: null };
@@ -43,7 +50,7 @@ export class RestChime {
 
   getSnapshot = (): AudioDiagnostics => this.snapshot;
   subscribe = (listener: () => void): (() => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
-  setVolume(value: number): void { this.volume = Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0.85; }
+  setVolume(value: number): void { this.volume = Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : DEFAULT_REST_VOLUME; }
   private report(phase: AudioDiagnostics['phase'], reason: string | null = null): void {
     const next = { phase, reason, contextState: this.context ? String(this.context.state) : 'not initialized', sessionType: this.session?.type ?? 'automatic' };
     if (JSON.stringify(next) === JSON.stringify(this.snapshot)) return;

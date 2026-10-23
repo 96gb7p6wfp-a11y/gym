@@ -3,6 +3,7 @@ import { WorkoutPlanPreview } from "./WorkoutPlanPreview";
 import { WarmupFlow } from "./WarmupFlow";
 import { findSessionDraft, getPreparationStatus, putSessionDraft, resetDraftPreparation, resolveSessionDraft } from "./workout-drafts";
 import { useRestAudio } from "./useRestAudio";
+import { DEFAULT_REST_VOLUME } from "./rest-audio";
 import { TimerSoundSettings } from "./TimerSoundSettings";
 import './workout-flow.css';
 import { Search, History } from "lucide-react";
@@ -193,7 +194,7 @@ function GymApp({
   const [restFinished, setRestFinished] = React.useState(null);
   function setRestEndsAt(deadline) { setRestFinished(null); setRestDeadline(deadline); }
   let [restSeconds, setRestSeconds] = React.useState(90);
-  const restAudio = useRestAudio({ enabled: profile.timerSoundEnabled !== false, volume: profile.timerSoundVolume ?? 0.85, endsAt: restEndsAt,
+  const restAudio = useRestAudio({ enabled: profile.timerSoundEnabled !== false, volume: profile.timerSoundVolume ?? DEFAULT_REST_VOLUME, endsAt: restEndsAt,
     onComplete: result => {
       setRestEndsAt(null); setNow(Date.now());
       setRestFinished({ resumed: result.resumed, needsAudioTap: !result.resumed && profile.timerSoundEnabled !== false && !result.audible });
@@ -2108,7 +2109,7 @@ function GymApp({
           >
             {profileSaving ? `Saving…` : `Save preferences`}
           </button>
-          <TimerSoundSettings enabled={profile.timerSoundEnabled !== false} volume={profile.timerSoundVolume ?? 0.85} disabled={profileSaving || !loaded}
+          <TimerSoundSettings enabled={profile.timerSoundEnabled !== false} volume={profile.timerSoundVolume ?? DEFAULT_REST_VOLUME} disabled={profileSaving || !loaded}
             onChange={timerSoundEnabled => saveProfile({ ...profile, timerSoundEnabled }, { notify: false })}
             onVolumeChange={timerSoundVolume => saveProfile({ ...profile, timerSoundVolume }, { notify: false })}
             audioState={restAudio.audioState} testSound={restAudio.testSound} unlock={restAudio.unlock} />

@@ -95,7 +95,8 @@ test('plays one foreground double-beep at the deadline and keeps ±15 second con
   await finishRest(page, 1);
   await expect(page.getByRole('status', { name: 'Rest complete', exact: true })).toBeVisible();
   expect(await plays(page)).toBe(1);
-  expect(await page.evaluate(() => (window as any).__restAudioProbe.peaks[0])).toBeGreaterThan(0.1);
+  expect(await page.evaluate(() => (window as any).__restAudioProbe.peaks[0])).toBeGreaterThan(0.94);
+  expect(await page.evaluate(() => (window as any).__restAudioProbe.gains[0])).toBe(1);
   await page.clock.fastForward(30_000);
   expect(await plays(page)).toBe(1);
 });
@@ -168,6 +169,7 @@ test('sound and volume preferences persist while Test sound uses the same actual
   const sound = settings.getByRole('switch', { name: 'Timer sounds', exact: true });
   const volume = settings.getByRole('slider', { name: 'Timer volume', exact: true });
   await expect(sound).toBeChecked();
+  await expect(volume).toHaveValue('1');
   await volume.fill('0.35');
   await volume.blur();
   await expect.poll(async () => page.evaluate(key => JSON.parse(localStorage.getItem(key)!).profile.timerSoundVolume, STORE)).toBe(0.35);

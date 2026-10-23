@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { Check, Volume2 } from 'lucide-react';
-import type { AudioDiagnostics } from './rest-audio';
+import { DEFAULT_REST_VOLUME, type AudioDiagnostics } from './rest-audio';
 import './timer-sound.css';
 
 /** Browsers can inspect their audio engine, but only the listener can confirm sound. */
-export function TimerSoundSettings({ enabled, volume = 0.85, disabled = false, onChange, onVolumeChange, unlock, testSound, audioState }: {
+export function TimerSoundSettings({ enabled, volume = DEFAULT_REST_VOLUME, disabled = false, onChange, onVolumeChange, unlock, testSound, audioState }: {
   enabled: boolean;
   volume?: number;
   disabled?: boolean;
@@ -56,7 +56,7 @@ export function TimerSoundSettings({ enabled, volume = 0.85, disabled = false, o
         onChange={event => { setVolumeDraft(Number(event.target.value)); setCheck('idle'); setFeedback(''); }}
         onPointerUp={() => void commitVolume()} onKeyUp={() => void commitVolume()} onBlur={() => void commitVolume()} />
     </label>
-    <p className="timer-sound-volume-note">Alert volume. Your iPhone’s media volume also controls what you hear.</p>
+    <p className="timer-sound-volume-note">For music, try 100% here. Your iPhone controls the overall listening volume.</p>
     <button type="button" className="btn secondary full timer-sound-test" disabled={disabled || testing} onClick={runTest}><Volume2 size={18} aria-hidden="true" />{testing ? 'Testing…' : 'Test sound'}</button>
     <p className="small-note timer-sound-feedback" role="status">{feedback}</p>
     {check === 'listening' && <div className="timer-sound-confirm" role="group" aria-label="Confirm timer sound">

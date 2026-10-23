@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { RestAlertTimer, RestChime, type RestCompletion } from './rest-audio';
+import { DEFAULT_REST_VOLUME, RestAlertTimer, RestChime, type RestCompletion } from './rest-audio';
 
 // App-wide service survives tab navigation and sheet mounting/unmounting.
 const chime = new RestChime();
-export function useRestAudio({ enabled, endsAt, volume = 0.85, onComplete }: {
+export function useRestAudio({ enabled, endsAt, volume = DEFAULT_REST_VOLUME, onComplete }: {
   enabled: boolean;
   endsAt: number | null;
   volume?: number;

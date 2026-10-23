@@ -153,15 +153,22 @@ async function audioFixture(run: (audio: RestChime, session: { type: string }, a
   }
 }
 
-test('the actual PCM alert has two nonzero, bounded beeps separated by silence', () => {
-  const rate = 48_000; const data = createRestChimeSamples(rate);
-  assert.equal(data.length, Math.ceil(rate * 0.72));
-  const peak = (from: number, to: number) => Math.max(...Array.from(data.slice(from * rate, to * rate), Math.abs));
-  assert.ok(peak(0.02, 0.27) > 0.6);
-  assert.ok(peak(0.37, 0.62) > 0.6);
-  assert.equal(peak(0.28, 0.36), 0);
-  assert.ok(peak(0, 0.72) < 1);
-  assert.ok(data.every(Number.isFinite));
+test('the stronger double-beep sustains audible energy without clipping at common device sample rates', () => {
+  for (const rate of [44_100, 48_000]) {
+    const data = createRestChimeSamples(rate);
+    const section = (from: number, to: number) => data.slice(Math.floor(from * rate), Math.floor(to * rate));
+    const peak = (from: number, to: number) => section(from, to).reduce((top, n) => Math.max(top, Math.abs(n)), 0);
+    const rms = (from: number, to: number) => Math.sqrt(section(from, to).reduce((sum, n) => sum + n * n, 0) / section(from, to).length);
+    assert.ok(data.length / rate < 1, 'the complete alert remains brief');
+    for (const [start, end] of [[0.04, 0.34], [0.54, 0.84]]) {
+      assert.ok(peak(start, end) > 0.94);
+      assert.ok(rms(start, end) > 0.68, 'sustained loudness, rather than a single high peak');
+    }
+    assert.equal(peak(0.41, 0.51), 0, 'two recognizable pulses with a silent gap');
+    assert.ok(peak(0, 0.98) <= 0.961, 'headroom remains below the clipping limit');
+    assert.ok(data.every(Number.isFinite));
+    assert.equal(data[0], 0); assert.equal(data.at(-1), 0);
+  }
 });
 
 test('a real gesture primes audio synchronously without beeping or taking over the music session', async () => {
