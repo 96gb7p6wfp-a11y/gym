@@ -37,6 +37,10 @@ export function usePerformanceData(enabled: boolean) {
   return {
     data, error, saving, reload: load,
     saveJump: (entry: JumpEntry) => save(current => ({ ...current, jumps: [...current.jumps.filter(jump => jump.id !== entry.id), entry] })),
+    saveJumps: (entries: JumpEntry[]) => save(current => {
+      const ids = new Set(entries.map(entry => entry.id));
+      return { ...current, jumps: [...current.jumps.filter(jump => !ids.has(jump.id)), ...entries] };
+    }),
     deleteJump: (id: string) => save(current => ({ ...current, jumps: current.jumps.filter(jump => jump.id !== id) })),
     saveReadiness: (entry: ReadinessEntry) => save(current => ({ ...current, readiness: [...current.readiness.filter(row => row.date !== entry.date), entry] })),
   };

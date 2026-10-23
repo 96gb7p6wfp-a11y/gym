@@ -1,6 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { ArrowRight, CalendarDays, Check, ChevronRight, Plus } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui';
 import { dateKey, addDays, sessionDuration, sumNutrients } from './domain';
 import { getSessionPurpose } from './training-purpose';
 import { getTrainingCadence } from './training-cadence';
@@ -9,11 +8,10 @@ import { getDailyMotivation } from './coaching-summary';
 import './today.css';
 
 /** A session cover, rather than a collection of daily statistics. */
-export function TodayView({ date, plan, session, completed, activities, nutrition,
+export function TodayView({ date, plan, session, otherSession, completed, activities, nutrition, now = Date.now(),
   sessions = [], weeklyPlan = [], performance, bodyWeight, today = currentReportDate(),
-  volleyballSchedule, onStart, onPreview, onTrain, onViewLog, onNutrition, onPlan, onActivity,
-  onProgress, disabled, daySelector, programLabel, scheduledEvents = [] }) {
-  const [dayPickerOpen, setDayPickerOpen] = useState(false);
+  volleyballSchedule, onStart, onPreview, onTrain, onBrowseTrain, onViewLog, onNutrition, onPlan, onActivity,
+  onProgress, disabled, programLabel, scheduledEvents = [] }) {
   const day = new Date(`${date}T12:00:00`);
   const active = session?.status === 'active';
   const unscheduled = !active && !completed && plan.exercises.length === 0 && plan.kind !== 'recovery';
@@ -29,15 +27,16 @@ export function TodayView({ date, plan, session, completed, activities, nutritio
   const plannedSetCount = active ? session.exercises.reduce((count, exercise) => count + exercise.logs.length, 0) : 0;
   const completedMinutes = completed ? Math.round(sessionDuration(completed) / 60000) : 0;
   let nextVolleyball;
-  for (let offset = 1; offset <= 7; offset++) {
+  const berlinTime = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(now);
+  for (let offset = 0; offset <= 7; offset++) {
     const next = addDays(day, offset);
-    if (volleyballSchedule.days.includes((next.getDay() + 6) % 7)) { nextVolleyball = next; break; }
+    if (volleyballSchedule.days.includes((next.getDay() + 6) % 7) && (offset > 0 || berlinTime < volleyballSchedule.endTime)) { nextVolleyball = next; break; }
   }
   const weekLabel = cadence.weekStart === reportWeekStart(today) ? 'This week'
     : `Week of ${new Date(`${cadence.weekStart}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
   const progressLabel = `${cadence.completedGymDays} of ${cadence.plannedGymDays} planned gym days recorded`;
-  const action = active ? onTrain : completed ? () => onViewLog(completed) : unscheduled ? onTrain : onStart;
-  const actionLabel = active ? 'Continue workout' : completed ? 'View workout'
+  const action = otherSession || active ? onTrain : completed ? () => onViewLog(completed) : unscheduled ? onTrain : onStart;
+  const actionLabel = otherSession ? `Resume ${new Date(`${otherSession.date}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} workout` : active ? 'Continue workout' : completed ? 'View workout'
     : unscheduled ? 'Choose workout'
       : plan.kind === 'recovery' ? 'Start recovery' : 'Start workout';
   const sessionMeta = active && shownPlan.kind === 'recovery' && !plannedSetCount ? 'Gentle mobility · follow your stretch checklist'
@@ -55,7 +54,7 @@ export function TodayView({ date, plan, session, completed, activities, nutritio
     <section className="day-cover" aria-label="Your day" data-session-state={active ? 'active' : completed ? 'complete' : shownPlan.kind === 'recovery' ? 'recovery' : 'ready'}>
       <div className="day-cover__edition">
         <p className="day-motivation" aria-label="Today motivation">{getDailyMotivation({ kind: shownPlan.kind, active, completed: !!completed && !active })}</p>
-        <button type="button" className="icon-button" aria-label="Choose training day" onClick={() => setDayPickerOpen(true)}><CalendarDays size={19} aria-hidden="true" /></button>
+        <button type="button" className="icon-button" aria-label="Choose training day" onClick={onBrowseTrain ?? onTrain}><CalendarDays size={19} aria-hidden="true" /></button>
       </div>
       <h2 key={`${date}-${purpose.title}`} className="day-cover__title">{purpose.title}</h2>
       <p className="day-cover__purpose">{purpose.subtitle}</p>
@@ -75,7 +74,7 @@ export function TodayView({ date, plan, session, completed, activities, nutritio
     <div className="day-agenda">
       {nextVolleyball && <section className="day-next" aria-label="Next training event">
         <p className="day-caption">Next on court</p>
-        <div><strong>Volleyball</strong><span>{nextVolleyball.toLocaleDateString('en-GB', { weekday: 'short' })} · {volleyballSchedule.startTime}–{volleyballSchedule.endTime}</span></div>
+        <div><strong>Volleyball</strong><span>{dateKey(nextVolleyball) === date ? 'Today' : nextVolleyball.toLocaleDateString('en-GB', { weekday: 'short' })} · {volleyballSchedule.startTime}–{volleyballSchedule.endTime}</span></div>
       </section>}
       {scheduledEvents.length > 0 && <section className="day-scheduled" aria-label="Also planned">
         <p className="day-caption">Also today</p>
@@ -92,7 +91,6 @@ export function TodayView({ date, plan, session, completed, activities, nutritio
     </section>}
 
     <div className="day-utilities"><button type="button" onClick={onPlan}>Weekly plan<ChevronRight size={16} aria-hidden="true" /></button><button type="button" onClick={onActivity}>Add activity<Plus size={16} aria-hidden="true" /></button></div>
-    <Dialog open={dayPickerOpen} onOpenChange={setDayPickerOpen}><DialogContent className="app-dialog today-day-sheet"><DialogHeader><DialogTitle>Choose a day</DialogTitle><DialogDescription>Your week at a glance.</DialogDescription></DialogHeader>{daySelector}<button className="btn full" onClick={() => setDayPickerOpen(false)}>Done</button></DialogContent></Dialog>
     <span className="sr-only">{dateKey(day)}</span>
   </div>;
 }

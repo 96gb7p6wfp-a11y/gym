@@ -29,6 +29,7 @@ async function logJump(page: Page, cm: string, measurement: 'height' | 'touch' =
   await page.getByRole('button', { name: 'Log jump', exact: true }).click();
   const sheet = page.getByRole('dialog', { name: 'Log jump', exact: true });
   await expect(sheet).toBeVisible();
+  await sheet.getByRole('button', { name: 'Other measurement', exact: true }).click();
   await sheet.getByRole('group', { name: 'Measurement', exact: true }).getByRole('button', {
     name: measurement === 'height' ? 'Jump height' : 'Highest touch', exact: true,
   }).click();

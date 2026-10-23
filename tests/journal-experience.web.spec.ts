@@ -111,8 +111,10 @@ for (const appearance of ['light', 'dark'] as const) {
 
     const entry = page.getByRole('dialog', { name: 'Log jump', exact: true });
     await expect(entry).toBeVisible();
+    await expect(entry.getByRole('textbox', { name: 'Standing reach in centimetres', exact: true })).toHaveValue('');
+    await expect(entry.getByRole('group', { name: 'Entry method', exact: true }).getByRole('button', { name: 'Reach + touch', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await entry.getByRole('button', { name: 'Other measurement', exact: true }).tap();
     await expect(entry.getByRole('textbox', { name: 'Jump height in centimetres', exact: true })).toHaveValue('');
-    await expect(entry.getByRole('group', { name: 'Measurement', exact: true }).getByRole('button', { name: 'Jump height', exact: true })).toHaveAttribute('aria-pressed', 'true');
     await expect(entry.getByRole('button', { name: 'Save jump', exact: true })).toBeVisible();
     await entry.getByRole('button', { name: 'Close', exact: true }).tap();
     expect(await readStore(page), 'Opening and dismissing entry must not create a test result').toEqual(before);

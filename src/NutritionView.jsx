@@ -1,3 +1,4 @@
+import { berlinDate } from "./calendar-date";
 import { requestLocal } from "./storage";
 import * as React from "react";
 import { ChevronLeft } from "lucide-react";
@@ -84,7 +85,7 @@ async function resizeMealPhoto(e) {
 }
 function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile, onNutritionProfileChange, volleyballSchedule, onOpenRoutine, initialAction, onActionHandled }) {
   let [selectedDate, setSelectedDate] = React.useState(() =>
-    dateKey(new Date()),
+    berlinDate(),
   );
   let [records, setRecords] = React.useState([]);
   let [loaded, setLoaded] = React.useState(!1);
@@ -145,7 +146,7 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
     .sort((e, t) => t.date.localeCompare(e.date));
   let latestWeightRecord = weightRecords[0];
   function averageWeight(e, t) {
-    let n = dateKey(new Date());
+    let n = berlinDate();
     let r = dateKey(addDays(new Date(n + `T12:00:00`), -t));
     let i = dateKey(addDays(new Date(n + `T12:00:00`), -e));
     let a = weightRecords.filter((e) => e.date >= r && e.date <= i);
@@ -272,7 +273,7 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
     (e) => e.id === `weight-` + selectedDate,
   );
   let foodGuidance = simpleFoodGuidance(selectedDate, volleyballSchedule);
-  const isToday = selectedDate === dateKey(new Date());
+  const isToday = selectedDate === berlinDate();
   const nutritionDay = new Date(selectedDate + `T12:00:00`);
   const nutritionDateLabel = `${isToday ? 'Today' : nutritionDay.toLocaleDateString('en-GB', { weekday: 'short' })} · ${nutritionDay.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}`;
   const hasTargets = NUTRIENT_KEYS.some(key => targets[key] !== null);

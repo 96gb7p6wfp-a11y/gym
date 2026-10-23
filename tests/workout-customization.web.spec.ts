@@ -203,11 +203,8 @@ test('a recovery day requires confirmation and removes only that scheduled day',
   const revised = (await state(page)).profile.plan;
   expect(revised[2]).toMatchObject({ name: 'Recovery', kind: 'recovery', goal: 'recovery', exercises: [] });
   expect(revised.filter((_: unknown, index: number) => index !== 2)).toEqual(baseline.filter((_: unknown, index: number) => index !== 2));
-  await tab(page, 'Today');
-  await page.getByRole('button', { name: 'Choose training day', exact: true }).click();
-  const days = page.getByRole('dialog', { name: 'Choose a day', exact: true });
-  await days.getByRole('button', { name: /^Wed / }).click();
-  await days.getByRole('button', { name: 'Done', exact: true }).click();
+  await tab(page, 'Train');
+  await page.getByRole('button', { name: /^Wed / }).click();
   await page.getByRole('button', { name: 'Start recovery', exact: true }).click();
   await finishWarmup(page);
   await expect(page.getByRole('tab', { name: 'Train', exact: true })).toHaveAttribute('data-state', 'active');

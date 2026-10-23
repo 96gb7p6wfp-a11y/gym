@@ -56,9 +56,13 @@ test('match week uses a short Saturday primer and keeps Sunday match time separa
   await activate(page, [1]);
   await day(page, 'Sun');
   await expect(page.locator('.session-card h2')).toHaveText('Match');
+  await page.getByRole('button', { name: 'View workout', exact: true }).click();
+  const matchPreview = page.getByRole('dialog', { name: 'Workout preview', exact: true });
+  await expect(matchPreview).toContainText('Match');
+  await matchPreview.getByRole('button', { name: 'Close', exact: true }).click();
   await page.getByRole('tab', { name: 'Today', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'Your day', exact: true })).toContainText('Match · log your actual duration');
-  await expect(page.getByRole('region', { name: 'Your day', exact: true })).not.toContainText('20:00');
+  await expect(page.getByRole('region', { name: 'Your day', exact: true })).toContainText('Upper Power A');
+  await expect(page.locator('.page-header')).toContainText(/Monday,? 19 October/);
   await day(page, 'Sat');
   await expect(page.locator('.session-card h2')).toHaveText('Pre-Match Primer');
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();

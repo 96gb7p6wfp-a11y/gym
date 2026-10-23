@@ -51,7 +51,7 @@
 .performance-jump-input input { border: 0; background: transparent; padding: 0; font-size: 46px; font-weight: 650; letter-spacing: -.045em; outline-offset: 6px; }
 .performance-jump-input > span { color: var(--sub); font-size: 16px; }
 .performance-jump-form .performance-field-hint { margin-top: -11px; }
-.performance-jump-form .segmented-control { min-width: 0; }
+.performance-jump-form .segmented-control { min-width: 0; margin: 0; }
 .performance-jump-form .segmented-control button { font-size: 12px; padding-inline: 7px; }
 .progression-cue { margin: 16px 0 0; color: var(--ink); }
 .progression-cue > summary { display: flex; align-items: baseline; flex-wrap: wrap; gap: 5px 10px; min-height: 44px; padding: 10px 0; cursor: pointer; list-style: none; }
@@ -64,3 +64,32 @@
 .progression-cue .btn { margin-top: 12px; min-height: 44px; width: 100%; }
 @media (max-width: 350px) { .performance-jump-card { padding: 20px; } .performance-three-values { gap: 8px; } .performance-three-values dd small { font-size: 10px; margin-left: 3px; } .performance-weight-values { padding-inline: 15px; } .performance-three-values dt { font-size: 11px; } .performance-section-heading h2 { font-size: 22px; } }
 @media (prefers-reduced-motion: no-preference) { .performance-mini-chart polyline { animation: performance-line-reveal .35s ease-out; } @keyframes performance-line-reveal { from { opacity: .15; } to { opacity: 1; } } }
+
+/* Reach and touch share one compact test, while their jump results stay separate. */
+.performance-touch-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.performance-touch-fields label { display: grid; gap: 8px; color: var(--sub); font-size: 12px; line-height: 1.4; }
+.performance-touch-fields .performance-jump-input { gap: 5px; padding: 12px; }
+.performance-touch-fields .performance-jump-input input { min-height: 44px; font-size: clamp(26px, 8vw, 34px); }
+.performance-touch-fields .performance-jump-input > span { font-size: 12px; }
+.performance-reach-input input { font-size: 36px; }
+/* These numbers are part of one control, rather than a form inside a form. */
+.performance-jump-form .performance-jump-input input:not([type='checkbox']):not([type='radio']) {
+  min-height:44px; border:0; border-radius:0; padding:0; background:transparent;
+  font-size:clamp(28px,8vw,36px); font-weight:650; line-height:1.2;
+  font-variant-numeric:tabular-nums; letter-spacing:-.045em;
+}
+.performance-calculated-jumps { display: grid; gap: 12px; padding: 16px 18px; background: var(--soft); border-radius: 18px; }
+.performance-calculated-jumps p { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0; color: var(--sub); font-size: 13px; }
+.performance-calculated-jumps strong { color: var(--ink); font-size: 21px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
+.performance-measure-guide { min-width: 0; color: var(--sub); font-size: 13px; line-height: 1.6; }
+.performance-measure-guide > summary { display: flex; align-items: center; justify-content: space-between; min-height: 48px; color: var(--ink); font-size: 15px; font-weight: 600; cursor: pointer; list-style: none; }
+.performance-measure-guide > summary::-webkit-details-marker { display: none; }
+.performance-measure-guide > summary::after { content: '+'; color: var(--sub); font-size: 21px; font-weight: 400; }
+.performance-measure-guide[open] > summary::after { content: '−'; }
+.performance-measure-guide ol { padding-left: 22px; margin: 4px 0 16px; }
+.performance-measure-guide li + li { margin-top: 8px; }
+.performance-measure-guide p { margin: 10px 0; }
+.performance-measure-guide strong { color: var(--ink); font-weight: 600; }
+.performance-source .performance-disclaimer { margin-top: 12px; }
+.performance-estimate-note { margin: -8px 0 0; color: var(--sub); font-size: 13px; line-height: 1.5; }
+.performance-next-test { margin-top: 18px; }

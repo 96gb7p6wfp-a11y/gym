@@ -158,7 +158,7 @@ test('a saved day draft still respects later Saturday readiness changes', async 
   await page.locator('.master-readiness > summary').click();
   const readiness = page.getByRole('group', { name: 'Program readiness', exact: true });
   await readiness.getByRole('button', { name: 'Yellow', exact: true }).click();
-  await page.getByRole('button', { name: 'Edit today', exact: true }).click();
+  await page.getByRole('button', { name: 'View workout', exact: true }).click();
   const preview = page.getByRole('dialog', { name: 'Workout preview', exact: true });
   await expect(preview).not.toContainText('Hurdle Hops');
   await expect(preview.getByRole('listitem').filter({ hasText: 'Approach Jump' })).toContainText('2 ×');

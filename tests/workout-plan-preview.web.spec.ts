@@ -97,7 +97,7 @@ test('Today previews the entire scheduled session and technique without starting
   await expect(page.locator('.rest-floating')).toHaveCount(0);
   await expect(page.getByRole('region', { name: 'Current exercise', exact: true })).toHaveCount(0);
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
-  await page.getByRole('button', { name: 'Edit today', exact: true }).click();
+  await page.getByRole('button', { name: 'View workout', exact: true }).click();
   await expect(sheet).toBeVisible();
   expect((await state(page)).profile.sessionDrafts ?? []).toEqual([]);
 });
@@ -144,11 +144,9 @@ test('preview edits, decimal defaults and exercise changes persist for one date 
   await expect(sheet).toContainText('2 × 6–8 reps · 62.5 kg');
   await expect(sheet.getByRole('list', { name: 'Scheduled exercises', exact: true })).not.toContainText('Standing Calf Raise');
   await sheet.getByRole('button', { name: 'Close', exact: true }).click();
-  await page.getByRole('button', { name: 'Choose training day', exact: true }).click();
-  const days = page.getByRole('dialog', { name: 'Choose a day', exact: true });
-  await days.getByRole('button', { name: 'Next week', exact: true }).click();
-  await days.getByRole('button', { name: /^Mon / }).click();
-  await days.getByRole('button', { name: 'Close', exact: true }).click();
+  await page.getByRole('tab', { name: 'Train', exact: true }).click();
+  await page.getByRole('button', { name: 'Next week', exact: true }).click();
+  await page.getByRole('button', { name: /^Mon / }).click();
   const nextWeek = await preview(page);
   await expect(nextWeek).toContainText('3 × 4–6 reps · 50 kg');
   await expect(nextWeek.getByRole('list', { name: 'Scheduled exercises', exact: true })).toContainText('Standing Calf Raise');

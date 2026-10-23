@@ -186,7 +186,9 @@ export function getJumpSummaries(sessions: readonly ReportSession[], jumps: read
     const group = series.get(key) ?? { type, measurement, points: [] };
     group.points.push(point); series.set(key, group);
   };
-  for (const jump of jumps) if (validDate(jump.date) && jump.date <= today && positive(jump.cm)) add(jump.type, jump.measurement, { date: jump.date, cm: jump.cm, id: jump.id });
+  // Video estimates remain available in the log, but do not become confirmed
+  // PRs, trends or improvements alongside directly measured tests.
+  for (const jump of jumps) if (jump.source !== 'video-estimate' && validDate(jump.date) && jump.date <= today && positive(jump.cm)) add(jump.type, jump.measurement, { date: jump.date, cm: jump.cm, id: jump.id });
   for (const session of savedSessions(sessions, today)) for (const exercise of session.exercises) {
     if (exercise.quantityUnit || /assisted.*pull.?up|pull.?up.*assisted/i.test(exercise.name)) continue;
     const type = inferredJumpType(exercise.name);

@@ -90,7 +90,7 @@ export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutri
       {value === null ? <div className="progress-lens-empty">
         <p className="progress-period">{title}</p>
         <h2 className="progress-lens-title">{metric === 'jump' ? 'Your first jump.' : metric === 'weight' ? 'Begin with a check-in.' : 'Build your strength baseline.'}</h2>
-        <p className="progress-lens-empty__copy">{metric === 'jump' ? 'Log jump height, not total touch height.' : metric === 'weight'
+        <p className="progress-lens-empty__copy">{metric === 'jump' ? 'Enter reach and touch heights to calculate your jump.' : metric === 'weight'
           ? 'Log your weight to follow a steadier weekly trend.'
           : 'Log the same movement on two days to see how your strength changes.'}</p>
         {emptyAction && <button type="button" className="btn progress-empty-action" onClick={emptyAction}><Plus size={18} aria-hidden="true" />{metric === 'jump' ? 'Log jump' : 'Log weight'}</button>}
