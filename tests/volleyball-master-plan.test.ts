@@ -1,16 +1,18 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession, stopSessionTimers, estimatedCalories } from '../src/domain.js';
-import { createVolleyballMasterPlan, resolveMasterProgramPlan, getMasterProgramWeek, getMasterProgramPhase, MasterProgramSettingsSchema, masterScheduledEvents, masterPlannedMinutes } from '../src/volleyball-master-plan.ts';
+import { createRecommendedMasterPlan, resolveMasterProgramPlan, getMasterProgramWeek, getMasterProgramPhase, MasterProgramSettingsSchema, masterScheduledEvents, masterPlannedMinutes } from '../src/volleyball-master-plan.ts';
 import { findComplexPair } from '../src/training-flow.ts';
 import { createLocalClient } from '../src/storage.ts';
 import { getPersonalRecords, getProgressionRecommendation, getPerformanceSummary } from '../src/performance-insights.ts';
 import { findLibraryExercise, toPlanExercise } from '../src/exercise-library.ts';
 
+// Compatibility fixtures deliberately keep the original, unversioned prescription.
 const settings = { version: 1 as const, startDate: '2026-10-19', matchWeeks: [2] };
+const createVolleyballMasterPlan = (matchWeek = false) => createRecommendedMasterPlan(settings, matchWeek);
 const exercise = (day: ReturnType<typeof createVolleyballMasterPlan>[number], name: string) => day.exercises.find(item => item.name === name)!;
 
-test('both master weeks validate, keep volleyball twice and leave optional arms and pogos out', () => {
+test('legacy compatibility: both master weeks validate, keep volleyball twice and leave optional arms and pogos out', () => {
   for (const match of [false, true]) {
     const plan = createVolleyballMasterPlan(match);
     assert.equal(ProfileSchema.safeParse({ ...DEFAULT_PROFILE, plan, masterProgram: settings, preMasterPlan: DEFAULT_PROFILE.plan, masterMatchWeekend: createVolleyballMasterPlan(true).slice(5) }).success, true);
@@ -23,7 +25,7 @@ test('both master weeks validate, keep volleyball twice and leave optional arms 
   }
 });
 
-test('Wednesday has 14 maximal jumps and one rested, adjacent complex pair', () => {
+test('legacy compatibility: Wednesday has 14 maximal jumps and one rested, adjacent complex pair', () => {
   const day = createVolleyballMasterPlan()[2];
   assert.equal(exercise(day, 'Approach Jump').sets * 2, 8);
   assert.equal(exercise(day, 'CMJ with Arm Swing').sets * 2, 6);
@@ -36,7 +38,7 @@ test('Wednesday has 14 maximal jumps and one rested, adjacent complex pair', () 
   assert.equal(exercise(day, 'Hack Squat').targetRpe, 8);
 });
 
-test('Sunday match replaces only the weekend and never mutates a saved session or base plan', () => {
+test('legacy compatibility: Sunday match replaces only the weekend and never mutates a saved session or base plan', () => {
   const base = createVolleyballMasterPlan(); base[0].exercises[0].sets = 2;
   const active = createSession(base[2], 2, '2026-10-21', DEFAULT_PROFILE, []);
   const snapshot = structuredClone(active), old = structuredClone(base);
@@ -50,7 +52,7 @@ test('Sunday match replaces only the weekend and never mutates a saved session o
   assert.equal(resolveMasterProgramPlan(base, settings, '2026-10-24')[5].name, 'Reactive + Hard Lower B');
 });
 
-test('week four deloads exact jump doses and week eight peaks without raising box height', () => {
+test('legacy compatibility: week four deloads exact jump doses and week eight peaks without raising box height', () => {
   const base = createVolleyballMasterPlan();
   const four = resolveMasterProgramPlan(base, settings, '2026-11-11');
   assert.equal(exercise(four[2], 'Approach Jump').sets, 3);
@@ -66,7 +68,7 @@ test('week four deloads exact jump doses and week eight peaks without raising bo
   assert.ok(!eight[5].exercises.some(item => /Hurdle/.test(item.name)));
 });
 
-test('readiness is date-specific, reduces jumping and removes maximal work for red', () => {
+test('legacy compatibility: readiness is date-specific, reduces jumping and removes maximal work for red', () => {
   const base = createVolleyballMasterPlan();
   const yellow = resolveMasterProgramPlan(base, { ...settings, readiness: [{ date: '2026-10-24', status: 'yellow' }] }, '2026-10-24');
   assert.equal(exercise(yellow[5], 'Approach Jump').sets, 2);
@@ -79,14 +81,14 @@ test('readiness is date-specific, reduces jumping and removes maximal work for r
   assert.equal(resolveMasterProgramPlan(base, { ...settings, readiness: [{ date: '2026-10-24', status: 'green' }] }, '2026-10-24')[5].exercises.length, base[5].exercises.length);
 });
 
-test('a red Tuesday check also removes jumping from the separate technique primer', () => {
+test('legacy compatibility: a red Tuesday check also removes jumping from the separate technique primer', () => {
   const plan = resolveMasterProgramPlan(createVolleyballMasterPlan(), { ...settings, readiness: [{ date: '2026-10-20', status: 'red' }] }, '2026-10-20');
   assert.equal(plan[1].name, 'Volleyball');
   assert.equal(plan[1].extraSession!.kind, 'recovery');
   assert.equal(plan[1].extraSession!.exercises.length, 0);
 });
 
-test('custom match weekends remain distinct from the saved non-match base', () => {
+test('legacy compatibility: custom match weekends remain distinct from the saved non-match base', () => {
   const base = createVolleyballMasterPlan(); base[5].exercises[3].sets = 2;
   const weekend = createVolleyballMasterPlan(true).slice(5); weekend[0].exercises[2].sets = 1;
   const resolved = resolveMasterProgramPlan(base, settings, '2026-10-31', weekend);
@@ -95,7 +97,7 @@ test('custom match weekends remain distinct from the saved non-match base', () =
   assert.equal(base[5].exercises[2].name, 'Hurdle Hops');
 });
 
-test('calendar weeks cross DST, reject invalid settings and do not repeat after eight weeks', () => {
+test('legacy compatibility: calendar weeks cross DST, reject invalid settings and do not repeat after eight weeks', () => {
   assert.equal(getMasterProgramWeek(settings.startDate, '2026-10-18'), null);
   assert.equal(getMasterProgramWeek(settings.startDate, '2026-10-25'), 1);
   assert.equal(getMasterProgramWeek(settings.startDate, '2026-10-26'), 2);
@@ -105,14 +107,14 @@ test('calendar weeks cross DST, reject invalid settings and do not repeat after 
   for (const invalid of [{ ...settings, startDate: '2026-10-20' }, { ...settings, matchWeeks: [1, 1] }, { ...settings, matchWeeks: [9] }, { ...settings, startDate: '2026-02-30' }]) assert.equal(MasterProgramSettingsSchema.safeParse(invalid).success, false);
 });
 
-test('easy running and PE are scheduled cues, never invented completed activities', () => {
+test('legacy compatibility: easy running and PE are scheduled cues, never invented completed activities', () => {
   assert.equal(masterScheduledEvents(settings, '2026-10-22')[0].name, 'Easy 5 km');
   assert.match(masterScheduledEvents(settings, '2026-10-23')[0].detail, /2 h/);
   assert.deepEqual(masterScheduledEvents(settings, '2026-10-24'), []);
   assert.deepEqual(masterScheduledEvents(settings, '2026-10-15'), []);
 });
 
-test('PE fueling time counts the scheduled load without counting a recorded PE extra twice', () => {
+test('legacy compatibility: PE fueling time counts the scheduled load without counting a recorded PE extra twice', () => {
   assert.equal(masterPlannedMinutes(settings, '2026-10-23', 120, []), 240);
   const extras = [{ name: 'School PE', durationMinutes: 120 }];
   assert.equal(masterPlannedMinutes(settings, '2026-10-23', 120, extras) + 120, 240);
@@ -120,7 +122,7 @@ test('PE fueling time counts the scheduled load without counting a recorded PE e
   assert.equal(masterPlannedMinutes(settings, '2026-10-22', 80, extras), 80);
 });
 
-test('optional work is explicit and base plans stay unchanged', () => {
+test('legacy compatibility: optional work is explicit and base plans stay unchanged', () => {
   const base = createVolleyballMasterPlan();
   const plan = resolveMasterProgramPlan(base, { ...settings, optional: { mondayArms: true, thursdayArms: true, tuesdayPogos: true } }, '2026-10-19');
   assert.equal(plan[0].exercises.length, 10); assert.equal(plan[3].exercises.length, 11);
@@ -128,7 +130,7 @@ test('optional work is explicit and base plans stay unchanged', () => {
   assert.equal(base[0].exercises.length, 8);
 });
 
-test('carry metres persist without generating rep volume, strength PRs or load progression', () => {
+test('legacy compatibility: carry metres persist without generating rep volume, strength PRs or load progression', () => {
   const carry = exercise(createVolleyballMasterPlan()[2], 'Suitcase Carry');
   assert.equal(toPlanExercise(findLibraryExercise('Suitcase Carry')!).quantityUnit, 'm');
   const session = SessionSchema.parse(stopSessionTimers(createSession({ ...createVolleyballMasterPlan()[2], exercises: [carry] }, 2, '2026-10-21', DEFAULT_PROFILE, []), 'completed'));
@@ -142,7 +144,7 @@ test('carry metres persist without generating rep volume, strength PRs or load p
   assert.equal(getProgressionRecommendation(assisted, [], '2026-10-22').kind, 'quality');
 });
 
-test('primer and yellow-day lifting cannot suggest extra load after strong historical sets', () => {
+test('legacy compatibility: primer and yellow-day lifting cannot suggest extra load after strong historical sets', () => {
   const row = exercise(createVolleyballMasterPlan(true)[5], 'Chest-Supported Row');
   const history = ['2026-10-19', '2026-10-22'].map(date => {
     const session = SessionSchema.parse(stopSessionTimers(createSession({ ...createVolleyballMasterPlan()[0], exercises: [row] }, 0, date, DEFAULT_PROFILE, []), 'completed'));
@@ -153,7 +155,7 @@ test('primer and yellow-day lifting cannot suggest extra load after strong histo
   assert.equal(getProgressionRecommendation({ ...row, targetRpe: undefined }, history, '2026-10-24', { lowFatigueSession: true }).kg, undefined);
 });
 
-test('legacy profiles and full backups preserve the old plan, master configuration and session snapshots', async () => {
+test('legacy compatibility: legacy profiles and full backups preserve the old plan, master configuration and session snapshots', async () => {
   const values = new Map<string, string>();
   const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); }, removeItem: (key: string) => { values.delete(key); } };
   const client = createLocalClient(storage);

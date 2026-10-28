@@ -17,7 +17,7 @@ async function seedJournal(page: Page, appearance: 'light' | 'dark', masterPlan 
       plan: createVolleyballMasterPlan(),
       preMasterPlan: structuredClone(DEFAULT_PROFILE.plan),
       masterMatchWeekend: createVolleyballMasterPlan(true).slice(5),
-      masterProgram: MasterProgramSettingsSchema.parse({ version: 1, startDate: '2026-10-19', matchWeeks: [] }),
+      masterProgram: MasterProgramSettingsSchema.parse({ version: 1, revision: '8.1', startDate: '2026-10-19', matchWeeks: [] }),
     } : {}),
   });
   await page.evaluate(({ key, profile }) => localStorage.setItem(key, JSON.stringify({
@@ -64,7 +64,7 @@ for (const appearance of ['light', 'dark'] as const) {
     const before = await readStore(page);
     const cover = page.getByRole('region', { name: 'Your day', exact: true });
     await expect(cover.getByRole('heading', { name: LONG_SESSION, exact: true })).toBeVisible();
-    await expect(cover).toContainText('Approach height + maximal force');
+    await expect(cover).toContainText('Vertical Jump + Maximum Force Production');
     await expectFirstScreenAction(page, cover.getByRole('button', { name: 'Start workout', exact: true }));
     await expectFirstScreenAction(page, page.getByRole('button', {
       name: 'View training progress: 0 of 4 planned gym days recorded', exact: true,

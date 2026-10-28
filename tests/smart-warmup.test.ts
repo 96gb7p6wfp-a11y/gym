@@ -40,9 +40,10 @@ test('upper power adds gradual throwing preparation without extra lower-body wor
 test('master jump preparation preserves prescribed contacts and starts with general movement', () => {
   const plan = createVolleyballMasterPlan()[2];
   const items = getSessionPreparation({ ...plan, phase: 'warmup', items: plan.warmup });
-  assert.equal(items[0].name, 'Easy Walk + Arm Swing');
-  assert.equal(items.at(-1)?.name, 'Jump Ramp-Up');
-  assert.ok(items.some(item => item.name === 'Snap-Down Landing'));
+  assert.equal(items[0].name, 'Light Bike');
+  assert.equal(items.at(-1)?.name, 'Progressive Practice Jumps');
+  assert.equal(items.length, 7);
+  assert.equal(items.find(item => item.name === 'Low-intensity Pogos')?.target, '2 × 8');
   for (const original of plan.warmup ?? []) assert.deepEqual(items.find(item => item.key === original.key), original);
   assert.deepEqual(getSessionPreparation({ ...plan, phase: 'warmup', items }), items);
   assert.equal(PreparationSchema.safeParse(items).success, true);
@@ -61,7 +62,7 @@ test('short technique and pre-match primers do not gain additional jumps or pogo
 test('safe substitutes persist through regeneration and do not re-add the replaced drill', () => {
   const plan = createVolleyballMasterPlan()[2];
   const items = getSessionPreparation({ ...plan, phase: 'warmup', items: plan.warmup });
-  const jump = items.find(item => item.name === 'Jump Ramp-Up')!;
+  const jump = items.find(item => item.name === 'Progressive Practice Jumps')!;
   const replacement = getWarmupStepInfo(jump, plan).alternatives.find(item => item.name === 'No-Impact Takeoff Rehearsal')!;
   const substituted = items.map(item => item.key === jump.key ? { ...item, ...replacement, done: false } : item);
   const restored = getSessionPreparation({ ...plan, phase: 'warmup', items: substituted });
@@ -73,7 +74,7 @@ test('safe substitutes persist through regeneration and do not re-add the replac
 
 test('specific lift preparation refers to the first strength exercise, not a throw or jump', () => {
   const plan = createVolleyballMasterPlan()[2];
-  const rehearsal = generate(plan).find(item => item.name === 'Light Rehearsal Sets')!;
+  const rehearsal = generate(lower).find(item => item.name === 'Light Rehearsal Sets')!;
   const info = getWarmupStepInfo(rehearsal, plan);
   assert.match(info.followUp ?? '', /^At Hack Squat:/);
   assert.match(info.followUp ?? '', /before working sets/);
@@ -91,12 +92,13 @@ test('custom preparation instructions and checks remain intact in smart warm-up'
 });
 
 
-test('quick preparation is a stable three-to-four-drill subset of actual saved preparation', () => {
+test('quick preparation keeps the prescribed V8.1 sequence and is a stable subset for other sessions', () => {
   for (const plan of [...createVolleyballMasterPlan(), createVolleyballMasterPlan(true)[5]]) {
     const full = getSessionPreparation({ ...plan, phase: 'warmup', items: plan.warmup });
     const before = structuredClone(full);
     const quick = getQuickWarmup(plan, full);
-    assert.ok(quick.length >= 2 && quick.length <= 4, `${plan.name}: ${quick.length}`);
+    if (plan.programRevision === '8.1' && /main jump.*heavy lower a/i.test(plan.name)) assert.equal(quick.length, 7);
+    else assert.ok(quick.length >= 1 && quick.length <= 5, `${plan.name}: ${quick.length}`);
     for (const item of quick) assert.deepEqual(item, full.find(saved => saved.key === item.key));
     const completed = full.map(item => ({ ...item, done: quick.some(selected => selected.key === item.key) }));
     assert.deepEqual(getQuickWarmup(plan, completed).map(item => item.key), quick.map(item => item.key));
@@ -108,7 +110,8 @@ test('quick preparation is a stable three-to-four-drill subset of actual saved p
 test('quick prep fits normal session demands while specific loading remains explicit', () => {
   assert.equal(getQuickWarmupPresentation(upper).duration, '3–4 min');
   assert.equal(getQuickWarmupPresentation(lower).duration, '3–4 min');
-  assert.equal(getQuickWarmupPresentation(createVolleyballMasterPlan()[2]).duration, '4–5 min');
+  assert.equal(getQuickWarmupPresentation(createVolleyballMasterPlan()[2]).duration, '6–9 min');
+  assert.equal(getQuickWarmupPresentation(createVolleyballMasterPlan()[6]).duration, '5–7 min');
   assert.match(getQuickWarmupPresentation(lower).rampUp, /lighter sets of Hack Squat/);
   assert.match(getQuickWarmupPresentation(createVolleyballMasterPlan()[0]).rampUp, /Build throwing speed gradually/);
   assert.match(getQuickWarmupPresentation(createVolleyballMasterPlan()[2]).rampUp, /Build jump intensity gradually/);

@@ -22,6 +22,7 @@ export interface LibraryExercise {
   perSide: boolean;
   measurement?: 'touch' | 'height' | 'distance';
   quantityUnit?: 'm';
+  jumpContactsPerRep?: number;
   aliases?: string[];
   legacyKeys?: string[];
 }
@@ -48,7 +49,7 @@ family('Strength', 'Squat', 'Leg strength for stronger takeoff', 'Quad and glute
   ['front-squat', 'Front Squat', 'Quads|Glutes|Core', 'Barbell|Rack', { difficulty: 'Intermediate', substitutions: ['back-squat', 'hack-squat', 'goblet-squat'] }],
   ['hack-squat', 'Hack Squat', 'Quads|Glutes', 'Machine', { legacyKeys: ['hack-squat'], substitutions: ['leg-press', 'front-squat', 'back-squat'], cues: ['Keep heels supported.', 'Lower only as far as you can control.'] }],
   ['safety-bar-squat', 'Safety Bar Squat', 'Quads|Glutes|Core', 'Safety bar|Rack', { difficulty: 'Intermediate', substitutions: ['back-squat', 'front-squat', 'hack-squat'] }],
-  ['leg-press', 'Leg Press', 'Quads|Glutes', 'Machine', { substitutions: ['hack-squat', 'goblet-squat', 'bulgarian-split-squat'], cues: ['Keep the pelvis supported.', 'Control the depth and return.'] }],
+  ['leg-press', 'Leg Press', 'Quads|Glutes', 'Machine', { substitutions: ['hack-squat', 'goblet-squat', 'bulgarian-split-squat', 'trap-bar-deadlift'], cues: ['Keep the pelvis supported.', 'Control the depth and return.'] }],
   ['goblet-squat', 'Goblet Squat', 'Quads|Glutes|Core', 'Dumbbell|Kettlebell', { substitutions: ['front-squat', 'bodyweight-squat', 'leg-press'] }],
   ['belt-squat', 'Belt Squat', 'Quads|Glutes', 'Machine', { substitutions: ['hack-squat', 'leg-press', 'goblet-squat'] }],
 ], { recommendedReps: '5–8 reps', rest: 150, cues: ['Keep the whole foot planted.', 'Lower with control; stand with intent.'], mistakes: ['Losing your brace.', 'Forcing a depth you cannot control.'] });
@@ -65,7 +66,7 @@ family('Strength', 'Single-leg squat', 'Single-leg strength and stability', 'Jum
 family('Strength', 'Hip hinge', 'Posterior-chain strength', 'Hip drive and takeoff force', [
   ['romanian-deadlift', 'Romanian Deadlift', 'Hamstrings|Glutes|Back', 'Barbell|Dumbbell', { aliases: ['RDL'], legacyKeys: ['rdl'], substitutions: ['dumbbell-rdl', 'single-leg-rdl', 'cable-pull-through'], cues: ['Push the hips back.', 'Keep weights close to the legs.'], mistakes: ['Rounding to reach the floor.', 'Letting weights drift forward.'] }],
   ['dumbbell-rdl', 'Dumbbell Romanian Deadlift', 'Hamstrings|Glutes|Back', 'Dumbbell', { substitutions: ['romanian-deadlift', 'single-leg-rdl', 'cable-pull-through'] }],
-  ['trap-bar-deadlift', 'Trap Bar Deadlift', 'Glutes|Quads|Hamstrings|Back', 'Trap bar', { difficulty: 'Intermediate', substitutions: ['deadlift', 'romanian-deadlift'], primaryBenefit: 'Whole-body force production' }],
+  ['trap-bar-deadlift', 'Trap Bar Deadlift', 'Glutes|Quads|Hamstrings|Back', 'Trap bar', { difficulty: 'Intermediate', recommendedSets: 3, recommendedReps: '4–6 reps', rest: 180, substitutions: ['leg-press', 'deadlift', 'romanian-deadlift'], primaryBenefit: 'Whole-body force production', cues: ['Learn the setup with an unloaded hinge, then the 20 kg empty bar.', 'Brace, push through the floor and finish tall without leaning back.'], mistakes: ['Adding load before technique is consistent.', 'Treating this alternative as extra work on top of Leg Press.'] }],
   ['deadlift', 'Barbell Deadlift', 'Glutes|Hamstrings|Back|Quads', 'Barbell', { difficulty: 'Intermediate', substitutions: ['trap-bar-deadlift', 'romanian-deadlift'] }],
   ['single-leg-rdl', 'Single-Leg Romanian Deadlift', 'Hamstrings|Glutes', 'Dumbbell', { perSide: true, substitutions: ['dumbbell-rdl', 'romanian-deadlift'], secondaryBenefit: 'Single-leg balance and hip control' }],
   ['cable-pull-through', 'Cable Pull-through', 'Glutes|Hamstrings', 'Cable', { substitutions: ['dumbbell-rdl', 'romanian-deadlift'] }],
@@ -175,7 +176,7 @@ family('Core', 'Anti-extension', 'Trunk control and bracing', 'Stable force tran
 family('Core', 'Lateral stability', 'Lateral trunk strength', 'Hip and landing control', [
   ['side-plank', 'Side Plank', 'Core|Glutes', 'Mat', { legacyKeys: ['side-plank'], substitutions: ['suitcase-carry', 'copenhagen-plank'] }],
   ['copenhagen-plank', 'Copenhagen Plank', 'Adductors|Core', 'Bench', { legacyKeys: ['copenhagen'], difficulty: 'Intermediate', recommendedReps: '15–25 sec', substitutions: ['side-plank', 'adductor-squeeze'], cues: ['Start with the knee supported.', 'Keep a steady shoulder-to-hip line.'], mistakes: ['Starting with a long lever too soon.', 'Continuing through groin pain.'] }],
-  ['suitcase-carry', 'Suitcase Carry', 'Core|Forearms|Glutes', 'Dumbbell|Kettlebell', { quantityUnit: 'm', perSide: true, recommendedReps: '20–30 m', substitutions: ['side-plank', 'farmer-carry'] }],
+  ['suitcase-carry', 'Suitcase Carry', 'Core|Forearms|Glutes', 'Dumbbell|Kettlebell', { mode: 'weight', quantityUnit: 'm', perSide: true, recommendedReps: '20–30 m', substitutions: ['side-plank', 'farmer-carry'] }],
 ], { perSide: true, mode: 'timed', recommendedSets: 2, recommendedReps: '20–40 sec', rest: 60 });
 family('Core', 'Trunk flexion', 'Abdominal strength', 'Trunk and hip control', [
   ['cable-crunch', 'Cable Crunch', 'Core', 'Cable', { substitutions: ['reverse-crunch', 'hanging-knee-raise'] }],
@@ -187,7 +188,7 @@ family('Strength', 'Carry', 'Grip and whole-body strength', 'Trunk stability und
 ]);
 
 family('Power', 'Throw', 'Explosive upper-body power', 'Fast force transfer for hitting', [
-  ['spike-slam', 'Medicine Ball Spike Slam', 'Shoulders|Core|Back', 'Medicine ball', { legacyKeys: ['spike-slam'], substitutions: ['overhead-throw', 'rotational-throw'] }],
+  ['spike-slam', 'Medicine Ball Spike Slam', 'Shoulders|Core|Back', 'Medicine ball', { legacyKeys: ['spike-slam'], recommendedReps: '3 reps', substitutions: ['overhead-throw', 'rotational-throw'], primaryBenefit: 'Explosive overhead force', cues: ['Start with a 2–3 kg slam ball in an approved clear area.', 'Use both hands overhead, drive down fast and reset fully.'], mistakes: ['Using a ball or surface not approved for slams.', 'Forcing ballistic shoulder work when sore or fatigued.'] }],
   ['overhead-throw', 'Medicine Ball Overhead Throw / Slam', 'Shoulders|Core|Glutes', 'Medicine ball', { legacyKeys: ['overhead-throw'], substitutions: ['spike-slam', 'chest-pass'] }],
   ['rotational-throw', 'Medicine Ball Rotational Throw', 'Core|Shoulders|Glutes', 'Medicine ball', { legacyKeys: ['rotational-throw'], perSide: true, substitutions: ['scoop-toss', 'spike-slam'], primaryBenefit: 'Rotational power from hips to hands' }],
   ['chest-pass', 'Medicine Ball Chest Pass', 'Chest|Triceps|Core', 'Medicine ball', { substitutions: ['overhead-throw', 'explosive-push-up'] }],
@@ -216,7 +217,7 @@ family('Plyometric', 'Reactive ankle', 'Reactive ankle stiffness', 'Quick ground
   ['lateral-hop', 'Lateral Line Hop', 'Calves|Glutes', 'Bodyweight', { substitutions: ['pogo-jump', 'low-hurdle-hop'] }],
 ], { mode: 'timed', recommendedSets: 2, recommendedReps: '10–15 sec', rest: 60, goals: ['Jump', 'Power'], cues: ['Keep contacts quick and quiet.', 'Stop when the spring or rhythm fades.'], mistakes: ['Turning short contacts into deep squats.', 'Continuing through Achilles pain.'] });
 family('Power', 'Horizontal push', 'Explosive pushing power', 'Fast upper-body force production', [
-  ['explosive-push-up', 'Explosive Push-up', 'Chest|Triceps|Core', 'Bodyweight', { mode: 'bodyweight', difficulty: 'Intermediate', substitutions: ['chest-pass', 'push-up'], recommendedReps: '3–5 reps', rest: 90, cues: ['Drive up as fast as possible.', 'Land with soft elbows and reset.'] }],
+  ['explosive-push-up', 'Explosive Push-up', 'Chest|Triceps|Core', 'Bodyweight', { aliases: ['Plyometric Push-up'], mode: 'bodyweight', difficulty: 'Intermediate', recommendedSets: 2, substitutions: ['chest-pass', 'push-up'], recommendedReps: '3 reps', rest: 90, cues: ['Drive up as fast as possible; no clap is needed.', 'Land with soft elbows and reset.'] }],
 ]);
 family('Speed', 'Acceleration', 'First-step speed and rhythm', 'Faster court movement', [
   ['acceleration-sprint', '10 m Acceleration', 'Glutes|Quads|Calves', 'Open space', { difficulty: 'Intermediate', recommendedReps: '3 sec', substitutions: ['sled-push', 'a-skip'], cues: ['Push the ground away.', 'Recover fully between fast efforts.'] }],
@@ -275,6 +276,7 @@ family('Mobility', 'Preparation', 'Prepare the next movement', 'Build range and 
 ], { mode: 'bodyweight', recommendedSets: 2, rest: 30, cues: ['Start light and build gradually.', 'Keep the warm-up easy.'] });
 family('Sport', 'Volleyball', 'Sport-specific skill and performance', 'Practice movement, timing and court decisions', [
   ['volleyball', 'Volleyball practice', 'Legs|Shoulders|Core', 'Court|Volleyball', { legacyKeys: ['volleyball'], mode: 'timed', recommendedSets: 1, recommendedReps: '120 min', rest: 0, cues: ['Arrive warmed up and fuelled.', 'Adjust extra jump work to the practice load.'], mistakes: ['Adding hard leg work when already fatigued.', 'Ignoring a drop in landing control.'] }],
+  ['volleyball-match', 'Volleyball match', 'Legs|Shoulders|Core', 'Court|Volleyball', { mode: 'timed', recommendedSets: 1, recommendedReps: 'Log actual min', rest: 0, cues: ['Competition takes priority; prepare and follow your team coach.', 'Record the actual duration once after playing.'], mistakes: ['Adding a heavy lower session or extra jumps after the match.', 'Counting the same match again as a separate activity.'] }],
 ]);
 
 family('Strength', 'Horizontal pull', 'Back thickness and scapular control', 'Stable pulling for upper-body development', [
@@ -291,7 +293,7 @@ family('Strength', 'Hip extension', 'Hip-extension force and glute strength', 'S
   ['hip-thrust-machine', 'Hip Thrust Machine', 'Glutes|Hamstrings', 'Machine', { substitutions: ['hip-thrust', 'glute-bridge'], cues: ['Brace with ribs down.', 'Extend the hips without arching the low back.'], mistakes: ['Finishing with the lumbar spine.', 'Bouncing through the bottom.'] }],
 ]);
 family('Plyometric', 'Reactive jump', 'Quick ground contact and vertical rebound', 'Reactive takeoff for volleyball', [
-  ['drop-jump', 'Drop Jump', 'Calves|Quads|Glutes', 'Low box', { difficulty: 'Intermediate', substitutions: ['pogo-jump', 'low-hurdle-hop'], cues: ['Start around 20–30 cm and step off.', 'Rebound vertically with a quick, controlled contact.'], mistakes: ['Jumping off the box.', 'Using a box so high that contact becomes slow.'] }],
+  ['drop-jump', 'Drop Jump', 'Calves|Quads|Glutes', 'Low box', { aliases: ['Low-box Drop Jump'], difficulty: 'Intermediate', recommendedSets: 2, rest: 120, primaryBenefit: 'Reactive strength and rapid rebound', substitutions: ['step-down-landing', 'pogo-jump', 'low-hurdle-hop'], cues: ['Begin around 15–20 cm; learn a step-down landing first if unfamiliar.', 'Step off, rebound vertically and stop if contact or landing control worsens.'], mistakes: ['Jumping up off the box.', 'Increasing box height automatically or chasing fatigue.'] }],
 ], { mode: 'bodyweight', recommendedSets: 3, recommendedReps: '2 reps', rest: 150 });
 family('Core', 'Anti-extension', 'Trunk control without low-back sag', 'Force transfer with controlled ribs and pelvis', [
   ['body-saw', 'Body Saw', 'Core|Shoulders', 'Sliders|Mat', { substitutions: ['ab-wheel', 'plank'], cues: ['Start in a forearm plank.', 'Move only as far as the ribs and pelvis stay controlled.'], mistakes: ['Letting the low back sag.', 'Moving farther than you can brace.'] }],
@@ -311,12 +313,44 @@ family('Mobility', 'Lunge mobility', 'Hip mobility with trunk control', 'Prepare
 family('Strength', 'Hip adduction', 'Adductor strength and control', 'Supporting lateral court movement', [
   ['adductor-machine', 'Adductor Machine', 'Adductors', 'Machine', { cues: ['Keep the pelvis supported.', 'Close and reopen the legs slowly through a comfortable range.'], mistakes: ['Bouncing at end range.', 'Forcing a painful stretch.'], substitutions: ['copenhagen-plank'] }],
 ], { recommendedSets: 2, recommendedReps: '10–15 reps', rest: 60 });
+
+// V8.1 movements are separate identities when their loading or intent differs.
+family('Strength', 'Vertical push', 'Shoulder strength and unilateral stability', 'Controlled overhead force production', [
+  ['single-arm-neutral-db-press', 'Single-arm Neutral-grip Dumbbell Shoulder Press', 'Shoulders|Triceps|Core', 'Dumbbell|Bench', { aliases: ['Single-Arm Neutral-Grip Dumbbell Shoulder Press'], perSide: true, recommendedSets: 2, recommendedReps: '6–8 reps', rest: 90, substitutions: ['dumbbell-shoulder-press', 'machine-shoulder-press', 'landmine-press'], cues: ['Hold one dumbbell with palm facing inward and ribs over the pelvis.', 'Press through a comfortable range; keep the other side quiet.'], mistakes: ['Leaning or rotating to finish the press.', 'Pushing through shoulder pain.'] }],
+]);
+family('Power', 'Vertical jump', 'Explosive upward force with a light load', 'Takeoff and landing quality', [
+  ['light-dumbbell-squat-jump', 'Light Dumbbell Squat Jump', 'Quads|Glutes|Calves', 'Dumbbell', { difficulty: 'Intermediate', recommendedSets: 2, recommendedReps: '3 reps', rest: 120, substitutions: ['countermovement-jump', 'squat-jump'], cues: ['Use bodyweight first; 2–4 kg per hand only with consistent landings.', 'Jump upward fast, land softly and reset; log both dumbbells combined in kg.'], mistakes: ['Adding load when height or coordination falls.', 'Treating power work as a continuous fatigue circuit.'] }],
+], { goals: ['Power', 'Jump', 'Volleyball'] });
+family('Core', 'Anti-rotation', 'Anti-rotation trunk stability', 'Steady force transfer without twisting', [
+  ['pallof-isometric-hold', 'Pallof Press Isometric Hold', 'Core', 'Cable|Band', { perSide: true, recommendedSets: 2, recommendedReps: '20 sec', rest: 60, mode: 'timed', substitutions: ['pallof-press', 'side-plank', 'bird-dog'], cues: ['Stand side-on, brace and hold the handle in front of the chest.', 'Breathe throughout the hold; keep hips and shoulders facing forward.'], mistakes: ['Twisting toward the anchor.', 'Holding your breath or arching the lower back.'] }],
+]);
+family('Plyometric', 'Single-leg jump', 'Single-leg takeoff and landing control', 'Low-volume unilateral explosive work', [
+  ['split-squat-jump', 'Split-squat Jump', 'Quads|Glutes|Calves', 'Bodyweight', { mode: 'bodyweight', perSide: true, difficulty: 'Intermediate', recommendedSets: 2, recommendedReps: '2 reps', rest: 120, substitutions: ['split-squat', 'countermovement-jump'], cues: ['Start in a balanced split stance at bodyweight.', 'Jump up, land in the same stance under control and reset before each rep.'], mistakes: ['Adding load or repetitions before landing control is consistent.', 'Continuing after coordination or jump height falls.'] }],
+], { goals: ['Jump', 'Power', 'Volleyball'] });
+family('Stability', 'Scapular control', 'Serratus and scapular control', 'Controlled shoulder-blade movement', [
+  ['push-up-plus', 'Push-up Plus', 'Shoulders|Chest|Core', 'Bodyweight', { mode: 'bodyweight', recommendedSets: 2, recommendedReps: '10–12 reps', rest: 60, substitutions: ['scapular-push-up', 'wall-slide'], cues: ['Keep a straight trunk and comfortable hand position.', 'At the top, push the floor away so shoulder blades move around the ribs.'], mistakes: ['Shrugging the shoulders toward the ears.', 'Sagging through the lower back.'] }],
+]);
+family('Stability', 'Landing', 'Controlled landing preparation', 'Stable hips, knees and ankles before jumping', [
+  ['snap-down-landing', 'Snap-down Landing', 'Quads|Glutes|Calves', 'Bodyweight', { mode: 'bodyweight', recommendedSets: 1, recommendedReps: '3 reps', rest: 60, substitutions: ['step-down-landing', 'bodyweight-squat'], cues: ['Stand tall, then quickly lower into a shallow athletic stance.', 'Keep feet planted and knees tracking over toes; settle quietly.'], mistakes: ['Jumping into the drill before landing mechanics are consistent.', 'Letting knees collapse inward.'] }],
+  ['step-down-landing', 'Step-down Landing', 'Quads|Glutes|Calves', 'Low box', { mode: 'bodyweight', recommendedSets: 2, recommendedReps: '2 reps', rest: 90, substitutions: ['snap-down-landing', 'bodyweight-squat'], cues: ['Use a low stable 15–20 cm step with a clear landing area.', 'Step off without jumping up, land softly and hold; do not rebound.'], mistakes: ['Using a high box before control is established.', 'Bouncing immediately instead of owning the landing.'] }],
+]);
+family('Mobility', 'Dynamic preparation', 'Comfortable full-body movement', 'Easy preparation without meaningful fatigue', [
+  ['light-dynamic-mobility', 'Light Dynamic Mobility', 'Shoulders|Hips|Ankles', 'Bodyweight', { mode: 'timed', recommendedSets: 1, recommendedReps: '2–3 min', rest: 0, substitutions: ['walking-lunge-reach', 'wall-slide', 'ankle-knee-to-wall'], cues: ['Move shoulders, hips and ankles through a comfortable range.', 'Keep the effort easy and breathe normally.'], mistakes: ['Forcing end ranges or bouncing into discomfort.', 'Turning a short primer into a fatiguing workout.'] }],
+]);
 const masterAliases: Record<string, string[]> = {
   'pull-up': ['Pull-Up / Assisted Pull-Up'], 'arm-swing-jump': ['CMJ with Arm Swing'],
   'landmine-press': ['Half-Kneeling Landmine Press'], 'low-hurdle-hop': ['Hurdle Hops'],
   'ab-wheel': ['Ab Wheel'], 'lateral-band-walk': ['Mini-Band Lateral Walk'],
+  'incline-machine-press': ['Incline Machine Chest Press', 'Low-incline Chest Press'],
+  'biceps-curl': ['Dumbbell Biceps Curl'], 'slow-approach-rhythm': ['Slow L-R-L Approach Rhythm'],
+  'short-foot': ['Short-Foot Hold'], 'pogo-jump': ['Light Pogos'],
+  'spike-slam': ['Light Medicine Ball Spike Slam'],
 };
 for (const item of catalogue) if (masterAliases[item.id]) item.aliases = [...(item.aliases ?? []), ...masterAliases[item.id]];
+for (const item of catalogue) {
+  if (['approach-jump', 'countermovement-jump', 'arm-swing-jump', 'block-jump', 'squat-jump', 'box-jump', 'drop-jump', 'light-dumbbell-squat-jump', 'low-hurdle-hop'].includes(item.id)) item.jumpContactsPerRep = 1;
+  if (item.id === 'split-squat-jump') item.jumpContactsPerRep = 2;
+}
 catalogue.find(item => item.id === 'ab-wheel')!.substitutions.unshift('body-saw');
 catalogue.find(item => item.id === 'copenhagen-plank')!.substitutions.unshift('adductor-machine');
 
@@ -364,6 +398,8 @@ export function searchExercises(query = '', filters: LibraryFilters = {}): Libra
 
 export interface ExerciseAlternative { exercise: LibraryExercise; score: number; tradeoff: string }
 function alternativeNote(source: LibraryExercise, candidate: LibraryExercise): string {
+  if (source.id === 'leg-press' && candidate.id === 'trap-bar-deadlift') return 'More technique and trunk demand. Learn the 20 kg empty bar first; replace Leg Press rather than adding another lift.';
+  if (source.id === 'drop-jump' && candidate.id === 'step-down-landing') return 'Landing preparation without a rebound; useful before unfamiliar drop jumps.';
   if (candidate.id === 'barbell-row') return 'Similar back work; more lower-back fatigue and trunk demand.';
   if (candidate.id === 'one-arm-dumbbell-row') return 'More unilateral demand; support the free hand for stability.';
   if (candidate.id === 'seal-row' && source.movement === 'Horizontal pull') return 'Very similar back stimulus with full chest support.';
@@ -403,5 +439,6 @@ export function toPlanExercise(item: LibraryExercise) {
     key: `library-${crypto.randomUUID()}`, exerciseId: item.id, name: item.name, group: item.muscles[0],
     sets: item.recommendedSets, target: item.recommendedReps, mode: item.mode, rest: item.rest, perSide: item.perSide,
     cue: item.cues.join(' '), ...(item.measurement ? { measurement: item.measurement } : {}), ...(item.quantityUnit ? { quantityUnit: item.quantityUnit } : {}),
+    ...(item.jumpContactsPerRep ? { jumpContactsPerRep: item.jumpContactsPerRep } : {}),
   };
 }

@@ -10,6 +10,7 @@ import { getSessionPurpose } from './training-purpose';
 import { addPlanExercise, movePlanExercise, removePlanExercise, replacePlanExercise, type PlanDay, type PlanExercise } from './workout-customization';
 import type { StretchStep } from './stretch-routine';
 import { getQuickWarmupPresentation } from './session-preparation';
+import { masterJumpContacts } from './volleyball-master-plan';
 import './workout-plan-preview.css';
 
 export interface WorkoutPlanPreviewProps {
@@ -41,7 +42,11 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
   const replacement = plan.exercises.find(exercise => exercise.key === replaceKey);
   const purpose = getSessionPurpose(plan);
   const preparation = getQuickWarmupPresentation(plan);
-  const workingSets = plan.exercises.reduce((count, exercise) => count + exercise.sets, 0);
+  const workingExercises = plan.exercises.filter(exercise => exercise.optionalWork !== true);
+  const optionalExercises = plan.exercises.filter(exercise => exercise.optionalWork === true);
+  const workingSets = workingExercises.reduce((count, exercise) => count + exercise.sets, 0);
+  const contacts = masterJumpContacts(plan);
+  const trapBar = plan.programRevision === '8.1' && /heavy lower b/i.test(plan.name) ? findLibraryExercise('Trap Bar Deadlift') : undefined;
   const locked = disabled || busy;
 
   useEffect(() => {
@@ -74,8 +79,10 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
   }
   async function move(offset: -1 | 1) {
     if (!menuExercise) return;
-    const index = plan.exercises.findIndex(exercise => exercise.key === menuExercise.key);
-    await commit(movePlanExercise(plan, menuExercise.key, index + offset));
+    const index = workingExercises.findIndex(exercise => exercise.key === menuExercise.key);
+    const destination = workingExercises[index + offset];
+    if (!destination) return;
+    await commit(movePlanExercise(plan, menuExercise.key, plan.exercises.findIndex(exercise => exercise.key === destination.key)));
   }
   async function savePrescription() {
     if (!editor || !weightValid) { setEditError('Check the planned weight before saving.'); return; }
@@ -98,28 +105,32 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
           <DialogTitle className="">{plan.name}</DialogTitle>
           <DialogDescription className="">{purpose.subtitle}</DialogDescription>
         </DialogHeader>
-        <div className="plan-preview__metadata"><div className="plan-preview__summary"><span><Clock3 size={15} aria-hidden="true" />About {plan.minutes} min</span><span>{plan.exercises.length} exercises · {workingSets} sets</span></div>
+        <div className="plan-preview__metadata"><div className="plan-preview__summary"><span><Clock3 size={15} aria-hidden="true" />{plan.durationRange ?? `About ${plan.minutes} min`}</span><span>{workingExercises.length} exercises · {workingSets} sets</span></div>
         <p className="plan-preview__scope">For {dayLabel} only. Weekly plan unchanged.</p></div>
         <details className="plan-preview__warmup">
           <summary><span><strong>Warm-up</strong><span>{preparation.duration} · {warmup.length} movements</span></span><ChevronRight size={19} aria-hidden="true" /></summary>
           <ol aria-label="Preview warm-up exercises">{warmup.map(step => <li key={step.key}><strong>{step.name}</strong><span>{step.target}</span><p>{step.cue}</p></li>)}</ol>
+          <p className="plan-preview__ramp">{preparation.rampUp}</p>
         </details>
         <section className="plan-preview__main" aria-label="Main workout">
           <h3>Main workout</h3>
-          {plan.exercises.length > 0 ? <ol className="plan-preview__list" aria-label="Scheduled exercises">
-            {plan.exercises.map((exercise, index) => <li key={exercise.key} className="plan-preview__exercise">
+          {workingExercises.length > 0 ? <ol className="plan-preview__list" aria-label="Scheduled exercises">
+            {workingExercises.map((exercise, index) => <li key={exercise.key} className="plan-preview__exercise">
               <button type="button" className="plan-preview__exercise-main" aria-label={`Exercise details for ${exercise.name}`} aria-haspopup="dialog" onClick={event => { rowTrigger.current = event.currentTarget; setGuide(exercise); }}>
                 <span className="plan-preview__number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-                <span className="plan-preview__exercise-copy"><strong>{exercise.name}</strong><span>{findLibraryExercise(exercise)?.primaryBenefit ?? exercise.group}</span><span className="plan-preview__dose">{exercise.sets} × {exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.defaultKg != null ? ` · ${exercise.defaultKg} kg` : ''}<span>{exercise.rest > 0 ? `${exercise.rest} sec rest` : 'No timed rest'}</span></span></span>
+                <span className="plan-preview__exercise-copy"><strong>{exercise.name}</strong><span>{exercise.benefit ?? findLibraryExercise(exercise)?.primaryBenefit ?? exercise.group}</span><span className="plan-preview__dose">{exercise.sets} × {exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.defaultKg != null ? ` · ${exercise.defaultKg} kg` : ''}<span>{/^A[12].*complex pair/i.test(exercise.group) ? `${exercise.group} · ` : ''}{exercise.rest > 0 ? `${exercise.rest} sec rest` : 'No timed rest'}</span></span></span>
               </button>
               <button type="button" className="icon-button plan-preview__options" aria-label={`Options for ${exercise.name}`} aria-haspopup="dialog" disabled={locked} onClick={() => openOptions(exercise)}><MoreHorizontal size={22} aria-hidden="true" /></button>
             </li>)}
           </ol> : <p className="plan-preview__empty">{plan.kind === 'recovery' ? 'An easy day. View your preparation above, then start your mobility routine.' : 'Add a movement to prepare your session.'}</p>}
+          {plan.programRevision === '8.1' && contacts.planned > 0 && <p className="plan-preview__contacts">{contacts.planned} planned main jump contacts. A ceiling, not a target; stop sooner if quality drops.</p>}
+          {optionalExercises.length > 0 && <details className="plan-preview__optional"><summary>Optional work<span>{optionalExercises.length}</span><ChevronRight size={17} aria-hidden="true" /></summary><p>Only include what fits your time and readiness.</p><ul aria-label="Optional exercises">{optionalExercises.map(exercise => <li key={exercise.key}><button type="button" className="plan-preview__optional-detail" aria-label={`Exercise details for ${exercise.name}`} onClick={event => { rowTrigger.current = event.currentTarget; setGuide(exercise); }}><strong>{exercise.name}</strong><span>{exercise.benefit ?? findLibraryExercise(exercise)?.primaryBenefit ?? exercise.group}</span><span>{exercise.sets} × {exercise.target}{exercise.perSide ? ' / side' : ''} · {exercise.rest} sec rest</span></button><button type="button" className="icon-button" aria-label={`Include ${exercise.name}`} disabled={locked} onClick={() => void commit({ ...plan, exercises: plan.exercises.map(item => item.key === exercise.key ? { ...item, optionalWork: false } : item) })}><Plus size={20} aria-hidden="true" /></button></li>)}</ul></details>}
+          {trapBar && <details className="plan-preview__optional plan-preview__trap-bar"><summary>Trap-bar alternative<ChevronRight size={17} aria-hidden="true" /></summary><p>New to the trap bar? Start with your 20 kg empty bar and easy technique practice. Once movement is consistent, Trap Bar Deadlift 3 × 4–6 can replace Leg Press. Use Leg Press’s replacement menu; do not add both. No trap-bar jumps.</p><button type="button" className="text-button" onClick={() => setGuide({ ...toPlanExercise(trapBar), sets: 3, target: '4–6 reps', defaultKg: 20, rest: 180, targetRpe: 8, cue: 'Practice with the 20 kg empty bar first. Progress gradually after consistent technique. Replace Leg Press, never add both.' })}>View technique<ChevronRight size={16} aria-hidden="true" /></button></details>}
           <button type="button" className="text-button plan-preview__add" disabled={locked || plan.exercises.length >= 40} onClick={() => { setReplaceKey(null); setLibraryOpen(true); }}><Plus size={19} aria-hidden="true" />Add exercise</button>
         </section>
         <div className="plan-preview__start">
           {error && <p className="plan-preview__error" role="alert">{error}</p>}
-          <button type="button" className="btn full" disabled={locked || (!plan.exercises.length && plan.kind !== 'recovery')} onClick={() => { onOpenChange(false); onStart(); }}>Start workout</button>
+          <button type="button" className="btn full" disabled={locked || (!workingExercises.length && plan.kind !== 'recovery')} onClick={() => { onOpenChange(false); onStart(); }}>Start workout</button>
           <span>Warm up first. Your workout starts when you’re ready.</span>
         </div>
       </DialogContent>
@@ -144,7 +155,7 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
           <button type="button" disabled={locked} onClick={() => { setGuide(menuExercise); setMenuKey(null); }}><span>Technique & alternatives</span><ChevronRight size={18} aria-hidden="true" /></button>
           <button type="button" disabled={locked} onClick={() => { setEditor(structuredClone(menuExercise)); setWeightValid(true); setEditError(''); }}><span>Sets, reps & rest</span><ChevronRight size={18} aria-hidden="true" /></button>
           <button type="button" disabled={locked} onClick={() => { setReplaceKey(menuExercise.key); setMenuKey(null); setLibraryOpen(true); }}><span>Replace exercise</span><RefreshCw size={18} aria-hidden="true" /></button>
-          <div className="plan-preview__reorder"><span>Move exercise</span><button type="button" className="icon-button" aria-label={`Move ${menuExercise.name} up`} disabled={locked || plan.exercises[0]?.key === menuExercise.key} onClick={() => void move(-1)}><ArrowUp size={20} aria-hidden="true" /></button><button type="button" className="icon-button" aria-label={`Move ${menuExercise.name} down`} disabled={locked || plan.exercises.at(-1)?.key === menuExercise.key} onClick={() => void move(1)}><ArrowDown size={20} aria-hidden="true" /></button></div>
+          <div className="plan-preview__reorder"><span>Move exercise</span><button type="button" className="icon-button" aria-label={`Move ${menuExercise.name} up`} disabled={locked || workingExercises[0]?.key === menuExercise.key} onClick={() => void move(-1)}><ArrowUp size={20} aria-hidden="true" /></button><button type="button" className="icon-button" aria-label={`Move ${menuExercise.name} down`} disabled={locked || workingExercises.at(-1)?.key === menuExercise.key} onClick={() => void move(1)}><ArrowDown size={20} aria-hidden="true" /></button></div>
           <button type="button" className="plan-preview__remove" disabled={locked} onClick={async () => { if (await commit(removePlanExercise(plan, menuExercise.key))) setMenuKey(null); }}><span>Remove exercise</span><Trash2 size={18} aria-hidden="true" /></button>
           {editError && <p className="plan-preview__error" role="alert">{editError}</p>}
         </div>)}

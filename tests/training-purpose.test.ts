@@ -26,3 +26,15 @@ test('exercise intent distinguishes spring contacts, power, strength and control
   assert.match(getExerciseIntent({ name: 'Cable Lateral Raise' }), /controlled reps/i);
   assert.match(getExerciseIntent({ name: 'Side Plank' }), /steady breathing/i);
 });
+
+test('V8.1 purposes describe the new upper/lower roles and retest without fixed contact claims', () => {
+  assert.equal(getSessionPurpose({ name: 'Upper A', kind: 'strength', goal: 'power', programRevision: '8.1' }).subtitle, 'Spike Power + Strength + Physique');
+  assert.equal(getSessionPurpose({ name: 'Upper B', kind: 'strength', goal: 'power', programRevision: '8.1' }).subtitle, 'Rotational Power + Shoulder + Physique');
+  assert.equal(getSessionPurpose({ name: 'Heavy Lower B', kind: 'strength', goal: 'strength', programRevision: '8.1' }).subtitle, 'Strength + Single-leg Stability');
+  const normal = getSessionPurpose({ name: 'Main Jump + Heavy Lower A', programRevision: '8.1', exercises: [{ group: 'A1 · Complex pair' }] });
+  assert.match(normal.fatigue, /4 min.*CMJ.*2–3 min/);
+  const retest = getSessionPurpose({ name: 'Main Jump + Heavy Lower A', programRevision: '8.1', exercises: [{ group: 'Standing vertical retest' }] });
+  assert.match(retest.subtitle, /Fresh Jump Tests/);
+  assert.doesNotMatch(retest.fatigue, /complex|4 min/);
+  assert.doesNotMatch(retest.focus, /24/);
+});

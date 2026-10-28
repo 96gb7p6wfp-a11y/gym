@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import { SessionSchema, PlanDaySchema, NutritionPayloadSchema, completedSets, estimatedCalories as loggedWeightVolume, getCalories, sessionDuration } from './domain.js';
 import { estimateActivity, type ActivityRecord } from './activities.ts';
+import { isGymTraining } from './training-classification.ts';
 
 export type ReportSession = z.infer<typeof SessionSchema>;
 export type ReportPlanDay = z.infer<typeof PlanDaySchema>;
@@ -99,7 +100,7 @@ function collectWeek(dates: readonly string[], sessions: readonly ReportSession[
   const activities = records.filter(({ activity }) => activity.deletedAt === null && dateSet.has(activity.date)).map(({ activity }) => activity);
   const totals: ReportTotals = {
     workouts: workouts.length,
-    gymDays: new Set(workouts.filter(session => session.kind === 'strength').map(session => session.date)).size,
+    gymDays: new Set(workouts.filter(isGymTraining).map(session => session.date)).size,
     extraActivities: activities.length,
     activeDays: new Set([...workouts.map(session => session.date), ...activities.map(activity => activity.date)]).size,
     minutes: Math.round((workouts.reduce((total, session) => total + sessionDuration(session), 0) / 60_000
@@ -193,8 +194,8 @@ export function getWeeklyReport(input: WeeklyReportInput): WeeklyReportData {
   const previousWeekStart = shiftReportDate(weekStart, -7);
   const current = collectWeek(dates, input.sessions, input.activities);
   const previous = collectWeek(weekDates(previousWeekStart), input.sessions, input.activities);
-  const plannedGymDates = dates.filter((_, index) => input.plan[index]?.kind === 'strength');
-  const completedGymDates = new Set(current.workouts.filter(session => session.kind === 'strength').map(session => session.date));
+  const plannedGymDates = dates.filter((_, index) => isGymTraining(input.plan[index]));
+  const completedGymDates = new Set(current.workouts.filter(isGymTraining).map(session => session.date));
   const completedPlannedGymDays = plannedGymDates.filter(date => completedGymDates.has(date)).length;
   const hasData = current.totals.workouts + current.totals.extraActivities > 0;
   const limitedData = current.totals.workouts + current.totals.extraActivities < 2 || previous.totals.workouts + previous.totals.extraActivities < 2;

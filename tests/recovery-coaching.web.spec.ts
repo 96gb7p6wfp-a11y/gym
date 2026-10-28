@@ -22,7 +22,7 @@ async function seed(page: Page, options: {
     plan: createVolleyballMasterPlan(),
     preMasterPlan: structuredClone(DEFAULT_PROFILE.plan),
     masterMatchWeekend: createVolleyballMasterPlan(true).slice(5),
-    masterProgram: MasterProgramSettingsSchema.parse({ version: 1, startDate: '2026-10-19', matchWeeks: [] }),
+    masterProgram: MasterProgramSettingsSchema.parse({ version: 1, revision: '8.1', startDate: '2026-10-19', matchWeeks: [] }),
   });
   await page.evaluate(({ key, profile, jumps, sessions }) => localStorage.setItem(key, JSON.stringify({
     schemaVersion: 1, profile, profileVersion: 1, sessions, nutrition: [], activities: [],
@@ -93,6 +93,7 @@ test('one calf gain does not become an overall improvement verdict', async ({ pa
 
 test('an empty recovery day starts real stretches and persists them without creating gym sets', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
+  await page.clock.setSystemTime(new Date('2026-10-24T10:00:00Z'));
   await seed(page, { appearance: 'dark' });
   const before = await state(page);
   const cover = page.getByRole('region', { name: 'Your day', exact: true });
@@ -122,7 +123,7 @@ test('an empty recovery day starts real stretches and persists them without crea
     return saved.sessions[0]?.session.cooldown?.some((item: any) => item.name === 'Hip Flexor Stretch' && item.done);
   }).toBe(true);
   const saved = (await state(page)).sessions[0].session;
-  expect(saved).toMatchObject({ date: SUNDAY, kind: 'recovery', status: 'active', exercises: [] });
+  expect(saved).toMatchObject({ date: '2026-10-24', kind: 'recovery', status: 'active', exercises: [] });
   expect((await state(page)).profile.plan).toEqual(before.profile.plan);
   await page.reload();
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
@@ -187,7 +188,7 @@ test('finishing a workout offers real stretches and saves checks onto that compl
 });
 
 test('a restored walk-only recovery keeps its old check while making real stretches usable', async ({ page }) => {
-  const session = SessionSchema.parse(createSession({ ...createVolleyballMasterPlan()[6], cooldown: [
+  const session = SessionSchema.parse(createSession({ name: 'Recovery', kind: 'recovery', minutes: 20, note: 'Legacy recovery prescription.', exercises: [], cooldown: [
     { key: 'old-walk', name: 'Easy Walk + Breathing', target: '3–5 min', cue: 'Easy movement.', done: false },
   ] }, 6, SUNDAY, DEFAULT_PROFILE, []));
   session.runningSince = null;
@@ -271,7 +272,7 @@ test('set encouragement acknowledges a logged set without interrupting the next 
   await current.getByRole('textbox', { name: 'Medicine Ball Spike Slam set 1 weight in kilograms', exact: true }).fill('3');
   await current.getByRole('spinbutton', { name: 'Medicine Ball Spike Slam set 1 reps', exact: true }).fill('3');
   await current.getByRole('button', { name: 'Complete Medicine Ball Spike Slam set 1', exact: true }).tap();
-  await expect(cue).toContainText('Set 1 of 4 logged. One step at a time.');
+  await expect(cue).toContainText('Set 1 of 3 logged. One step at a time.');
   await expect(current.getByRole('button', { name: 'Complete Medicine Ball Spike Slam set 2', exact: true })).toBeEnabled();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.locator('.rest-floating')).toBeVisible();

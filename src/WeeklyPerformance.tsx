@@ -63,8 +63,8 @@ export function WeeklyPerformance({ plan, sessions, activities = [], weekStart, 
           }
           secondary.push(...savedActivities.filter(record => record.activity.date === date).map(activityLabel));
           const otherWork = [...new Set(secondary)].join(' · ');
-          const isVolleyball = day && (day.kind === 'sport' || day.goal === 'sport') && /volleyball/i.test(day.name);
-          const time = isVolleyball && volleyballSchedule ? `${clock(volleyballSchedule.startTime)}–${clock(volleyballSchedule.endTime)}` : null;
+          const isVolleyball = day && (day.kind === 'sport' || day.goal === 'sport') && /volleyball/i.test(day.name) && !/match/i.test(day.name);
+          const time = day?.startTime ? clock(day.startTime) : isVolleyball && volleyballSchedule ? `${clock(volleyballSchedule.startTime)}–${clock(volleyballSchedule.endTime)}` : null;
           return <li key={date} className="weekly-performance__day">
             <div className="weekly-performance__date"><span>{weekdays[dayIndex]}</span><time dateTime={date}>{Number(date.slice(-2))}</time></div>
             <div className="weekly-performance__training"><strong>{purpose?.title ?? 'Unscheduled'}</strong>{otherWork && <span className="weekly-performance__extra" title={otherWork}>{otherWork}</span>}</div>

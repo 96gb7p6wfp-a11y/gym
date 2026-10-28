@@ -10,6 +10,7 @@ export interface PreparationExercise {
   group?: string;
   mode?: string;
   defaultKg?: number | null;
+  optionalWork?: boolean;
   logs?: readonly { done: boolean }[];
 }
 export interface SessionPreparationOptions {
@@ -20,6 +21,7 @@ export interface SessionPreparationOptions {
   name?: string;
   goal?: string;
   minutes?: number;
+  programRevision?: '8.1';
   /** Finished sessions must not imply that unlogged exercises were performed. */
   completedOnly?: boolean;
 }
@@ -72,6 +74,8 @@ for (const [name, concept] of [
   ['Band / Cable External Rotation', 'cuff'], ['Light Face Pull', 'scapular'],
   ['Leg Swings', 'hips'], ['Walking Lunge + Rotation', 'hips'], ['Walking Lunge + Reach', 'hips'],
   ['Mini-Band Lateral Walk', 'glute'],
+  ['Light Bike', 'easy'], ['Dynamic Hip Mobility', 'hips'], ['Reverse Lunge', 'lunge'],
+  ['Low-intensity Pogos', 'pogo'], ['Progressive Practice Jumps', 'jump'],
   ['Easy March in Place', 'easy'], ['Small Shoulder Rolls', 'arms'], ['Standing Scapular Circles', 'wall'],
   ['Standing Upper-Back Rotation', 'thoracic'], ['Supported Ankle Rock', 'ankle'], ['Supported Hip Circles', 'hips'],
   ['Sit-to-Stand Rehearsal', 'squat'], ['Hip Hinge to Wall', 'hinge'], ['Standing Glute Squeeze', 'glute'],
@@ -86,6 +90,7 @@ for (const [name, concept] of [
 const signature = (item: Omit<StretchStep, 'done'>) => JSON.stringify([item.key, item.name, item.target, item.cue]);
 const automatic = new Map<string, string>();
 const conceptByKey = new Map<string, string>();
+const prescribedPreparation = new Map<string, readonly StretchStep[]>();
 const register = (items: readonly Omit<StretchStep, 'done'>[]) => {
   for (const item of items) {
     const concept = conceptByName.get(normalize(item.name));
@@ -98,11 +103,14 @@ for (const day of [...DEFAULT_PROFILE.plan, ...createVolleyballMasterPlan(), ...
   register(day.warmup ?? []);
   register(day.cooldown ?? []);
   if (day.extraSession) { register(day.extraSession.warmup ?? []); register(day.extraSession.cooldown ?? []); }
+  if (day.programRevision === '8.1' && day.warmup?.length) prescribedPreparation.set(normalize(day.name), day.warmup);
+  if (day.extraSession?.programRevision === '8.1' && day.extraSession.warmup?.length) prescribedPreparation.set(normalize(day.extraSession.name), day.extraSession.warmup);
 }
 
 function focusFor(exercises: readonly PreparationExercise[]): Set<Focus> {
   const focus = new Set<Focus>();
   for (const exercise of exercises) {
+    if (exercise.optionalWork === true && !exercise.logs?.some(log => log.done)) continue;
     const library = findLibraryExercise(exercise);
     const labels = library?.muscles ?? [exercise.name ?? '', exercise.group ?? ''];
     const text = normalize(labels.join(' '));
@@ -129,7 +137,7 @@ function focusFor(exercises: readonly PreparationExercise[]): Set<Focus> {
 function isUpperPower(exercises: readonly PreparationExercise[], goal: string | undefined, upper: boolean): boolean {
   // Throws involve the glutes too, but do not turn an upper-power day into a
   // lower-strength warm-up. Actual lower-body loading/jumps still take priority.
-  const lowerDemand = exercises.some(item => /squat|deadlift|leg press|hip thrust|leg curl|calf raise|jump|hurdle|pogo/i.test(item.name ?? ''));
+  const lowerDemand = exercises.some(item => item.optionalWork !== true && /squat|deadlift|leg press|hip thrust|leg curl|calf raise|jump|hurdle|pogo/i.test(item.name ?? ''));
   return upper && !lowerDemand && (goal === 'power' || exercises.some(item => /throw|slam/i.test(item.name ?? '')));
 }
 
@@ -195,6 +203,12 @@ function suggestions({ phase, kind, exercises, completedOnly, name = '', goal }:
 
 /** Pure view/new-session preparation. Custom instructions and completed checks are never discarded. */
 export function getSessionPreparation(options: SessionPreparationOptions): StretchStep[] {
+  if (options.phase === 'warmup' && options.programRevision === '8.1') {
+    // The revised program prescribes one concise preparation sequence. Keep
+    // its dose and saved substitutions instead of appending a generic routine.
+    const prescribed = options.items ?? prescribedPreparation.get(normalize(options.name));
+    if (prescribed?.length) return prescribed.slice(0, 20).map(item => ({ ...item }));
+  }
   const desired = suggestions(options);
   const wanted = new Set(desired.map(item => item.concept));
   // Keep a prescribed low-dose pogo activation on actual jump days, without adding contacts.
@@ -244,11 +258,12 @@ export function getSessionPreparation(options: SessionPreparationOptions): Stret
   return limited;
 }
 
-export type WarmupPlan = Pick<SessionPreparationOptions, 'kind' | 'exercises' | 'name' | 'goal' | 'minutes'>;
+export type WarmupPlan = Pick<SessionPreparationOptions, 'kind' | 'exercises' | 'name' | 'goal' | 'minutes' | 'programRevision'> & { warmup?: readonly StretchStep[] };
 
 /** Stable, short view of preparation. The full saved routine is never changed. */
 export function getQuickWarmup(plan: WarmupPlan, items: readonly StretchStep[] = []): StretchStep[] {
-  const available = items.length ? items : getSessionPreparation({ ...plan, phase: 'warmup' });
+  const available = items.length ? items : getSessionPreparation({ ...plan, items: plan.warmup, phase: 'warmup' });
+  if (plan.programRevision === '8.1' && prescribedPreparation.has(normalize(plan.name))) return available.map(item => ({ ...item }));
   const focus = focusFor(plan.exercises);
   const upper = ['shoulders', 'chest', 'back', 'biceps', 'triceps'].some(value => focus.has(value as Focus));
   const lower = ['quads', 'glutes', 'hamstrings', 'hips', 'adductors', 'calves'].some(value => focus.has(value as Focus));
@@ -291,14 +306,20 @@ export function getQuickWarmupPresentation(plan: WarmupPlan): { title: string; d
   const focus = focusFor(plan.exercises);
   const jumping = focus.has('jump');
   const upperPower = isUpperPower(plan.exercises, plan.goal, ['shoulders', 'chest', 'back', 'biceps', 'triceps'].some(value => focus.has(value as Focus)));
-  const rampUp = plan.kind === 'recovery' ? 'Stay easy. Add more mobility only where it feels useful.'
+  const rampUp = plan.programRevision === '8.1' && /main jump.*heavy lower a/i.test(plan.name ?? '')
+    ? 'Build jump intensity gradually. At Hack Squat, take 2–4 progressively loaded practice sets; reduce reps as load rises and stay fresh. Rehearse the RDL lightly before its working sets.'
+    : plan.programRevision === '8.1' && /heavy lower b/i.test(plan.name ?? '')
+      ? 'Build up with 2–4 lighter sets of Leg Press before working sets. If replacing it with Trap Bar Deadlift, start with empty-bar technique; do not add it on top.'
+    : plan.kind === 'recovery' ? 'Stay easy. Add more mobility only where it feels useful.'
     : plan.kind === 'sport' ? 'Build court movement and hitting speed gradually before full play.'
       : primer ? 'Use your planned progressive jumps. Do not add extra contacts.'
         : jumping ? 'Build jump intensity gradually. Take light ramp-up sets before heavy lifts.'
           : upperPower ? 'Build throwing speed gradually. Use light ramp-up sets at the first lift.'
           : firstLift ? `Then build up with lighter sets of ${firstLift.name}.`
             : 'Build the first movement gradually before working sets.';
-  return { ...detailed, duration: plan.kind === 'recovery' ? '2–3 min' : plan.kind === 'sport' || jumping ? '4–5 min' : '3–4 min', rampUp };
+  return { ...detailed, duration: plan.programRevision === '8.1' && /main jump.*heavy lower a/i.test(plan.name ?? '') ? '6–9 min'
+    : plan.programRevision === '8.1' && /heavy lower b/i.test(plan.name ?? '') ? '5–7 min'
+    : plan.kind === 'recovery' ? '2–3 min' : plan.kind === 'sport' || jumping ? '4–5 min' : '3–4 min', rampUp };
 }
 
 /** One glanceable instruction; saved technique remains available in details. */
@@ -340,6 +361,7 @@ const benefits: Record<string, string> = {
   easy: 'Build warmth without fatigue.', arms: 'Open a comfortable shoulder range.', wall: 'Prepare shoulder-blade control.',
   thoracic: 'Free up upper-back rotation.', ankle: 'Prepare ankle range for takeoff and squatting.', hips: 'Prepare hip rotation and control.',
   squat: 'Rehearse knee and hip coordination.', hinge: 'Prepare the hamstrings and hip-hinge pattern.', foot: 'Find a stable foot tripod.',
+  lunge: 'Rehearse controlled single-leg loading.',
   jump: 'Build jump speed gradually.', rehearsal: 'Practice the strength pattern before loading it.', breathing: 'Settle ribs and breathing.',
   cuff: 'Prepare shoulder rotation with a light load.', scapular: 'Activate the upper back gently.', glute: 'Prepare hip extension and pelvic control.',
   trunk: 'Prepare trunk control for loading.', landing: 'Rehearse a quiet, controlled landing.', 'upper-power': 'Build throwing speed without fatigue.',
@@ -357,6 +379,7 @@ export function getWarmupStepInfo(item: StretchStep, plan: WarmupPlan): WarmupSt
     ankle: [alternative('Supported Ankle Rock', '6–8 / side', 'Hold a support and move the knee gently over the toes with heel planted. Keep it pain-free.')],
     hips: [alternative('Supported Hip Circles', '5 each direction / side', 'Hold a support and circle one knee gently. Use a comfortable range without twisting the back.')],
     squat: [alternative('Sit-to-Stand Rehearsal', '6 easy reps', 'Use a stable bench or chair. Sit and stand slowly with feet planted; use support if needed.')],
+    lunge: [alternative('Supported Split-Squat Rehearsal', '5 / side', 'Hold a stable support and use a shallow, pain-free split squat. Keep the front foot grounded and the knee aligned.')],
     hinge: [alternative('Hip Hinge to Wall', '6 easy reps', 'Stand a short step from a wall and reach the hips back to touch it. Keep a comfortable neutral back.')],
     glute: [alternative('Standing Glute Squeeze', '6 × 3 sec', 'Stand tall and gently squeeze both glutes. Keep the ribs down; do not arch the back.')],
     trunk: [alternative('Standing Brace + Breath', '4 easy breaths', 'Stand tall. Exhale gently, then keep light abdominal tension while breathing normally.')],

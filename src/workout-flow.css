@@ -4,6 +4,7 @@
 .day-cover__preview { display:flex; align-items:center; gap:3px; flex-shrink:0; min-height:44px; padding:8px 0 8px 5px; border:0; background:transparent; color:var(--accent); font-size:12px; font-weight:550; }
 .day-cover .day-cover__plan-row+.day-cover__start { margin-top:10px; }
 .train-plan-actions { display:grid; grid-template-columns:1fr 1.2fr; gap:10px; width:100%; }
+.master-contact-status { margin:6px 4px 16px; color:var(--sub); font-size:12px; line-height:1.5; font-variant-numeric:tabular-nums; }
 .app-shell .train-plan-actions .btn { min-height:50px; min-width:0; padding:12px 10px; font-size:14px; white-space:nowrap; }
 .app-shell .train-plan-actions .train-plan-preview { background:var(--surface-soft); color:var(--ink); box-shadow:none; }
 .app-shell .rest-floating { gap:5px; padding-inline:12px; }
@@ -20,6 +21,11 @@ html[data-keyboard-open='true'] .rest-finished { visibility:hidden; pointer-even
 .preparation-record { margin:12px 0 2px; color:var(--sub); font-size:12px; }
 @media(prefers-reduced-motion:no-preference) { .rest-finished { animation:rest-arrive 220ms ease-out; } @keyframes rest-arrive { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } } }
 @media(max-width:350px) {
+ .day-cover__phase { display:none; }
+ .journal-today .day-cover .day-cover__title { margin-top:6px; font-size:26px; }
+ .journal-today .day-cover__purpose { margin-top:6px; font-size:13px; line-height:1.35; }
+ .native-session:not(.session-card--active) .native-session-prescription { margin-top:6px; }
+ .native-session:not(.session-card--active) .native-session-actionbar { margin-top:6px; }
  .day-cover__plan-row { margin-top:4px; gap:4px; }
  .day-cover__plan-row { position:relative; display:block; padding-right:84px; min-height:31px; }
  .day-cover__plan-row .day-cover__preview { position:absolute; right:0; top:50%; transform:translateY(-50%); }

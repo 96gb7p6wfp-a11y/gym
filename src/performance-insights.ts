@@ -1,4 +1,5 @@
 import { NutritionPayloadSchema } from './domain.js';
+import { isGymTraining } from './training-classification.ts';
 import type { ActivityRecord } from './activities.ts';
 import type { JumpEntry, PerformanceData } from './performance-data.ts';
 import { findLibraryExercise } from './exercise-library.ts';
@@ -104,6 +105,11 @@ export function getProgressionRecommendation(exercise: ProgressionExercise, sess
   if (powerExercise(exercise) || exercise.measurement) return {
     ...base, kind: 'quality', title: 'Quality first', cue: 'Keep reps fast. Finish before jump height or landing control drops.',
     reason: 'Explosive work progresses through crisp, repeatable output, not automatic load increases.',
+  };
+  if (/trap.?bar.*deadlift/i.test(exercise.name) && history.length < 2) return {
+    ...base, kind: 'quality', title: 'Technique first',
+    cue: 'Practice the unloaded hinge, then the 20 kg empty bar. Build consistent, pain-free reps before adding load.',
+    reason: 'This is an unfamiliar lift. Replace the leg press rather than adding another heavy movement.',
   };
   if (exercise.mode === 'timed') return { ...base, kind: 'quality', title: 'Own the full interval', cue: 'Keep the planned time with a steady position.', reason: 'Add time only when every interval stays controlled.' };
   const range = repRange(exercise.target);
@@ -261,11 +267,11 @@ export function getPerformanceSummary({ sessions, activities = [], plan = [], nu
     records.push({ key: `manual-jump:${jump.type}:${jump.measurement}`, exerciseKey: `jump:${jump.type}`, name: `${jump.type[0].toUpperCase()}${jump.type.slice(1)} jump`, kind: jump.measurement, value: jump.best, unit: 'cm', date: best.date, context: jump.measurement === 'height' ? 'Jump height' : 'Highest touch', isNew: jump.points.some(point => point.date < best.date && point.cm < best.cm) });
   }
   records.sort((a, b) => b.date.localeCompare(a.date) || a.name.localeCompare(b.name));
-  const gymSessions = month.filter(s => s.kind === 'strength').length;
+  const gymSessions = month.filter(isGymTraining).length;
   let dueDays = 0, completedDays = 0;
   for (let i = 29; i >= 0; i--) {
     const date = shiftReportDate(today, -i), day = (new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7;
-    if (plan[day]?.kind === 'strength') { dueDays++; if (month.some(s => s.kind === 'strength' && s.date === date)) completedDays++; }
+    if (isGymTraining(plan[day])) { dueDays++; if (month.some(s => isGymTraining(s) && s.date === date)) completedDays++; }
   }
   const volume = (items: readonly ReportSession[]) => items.reduce((total, s) => total + s.exercises.filter(e => e.mode === 'weight' && !e.measurement && !e.quantityUnit && !/assisted.*pull.?up|pull.?up.*assisted/i.test(e.name)).reduce((sum, e) => sum + strengthSets(e).reduce((n, log) => n + log.kg! * log.reps!, 0), 0), 0);
   const setCount = (items: readonly ReportSession[]) => items.reduce((total, s) => total + s.exercises.reduce((n, e) => n + e.logs.filter(l => l.done).length, 0), 0);

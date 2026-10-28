@@ -41,6 +41,7 @@ export interface FocusedExercise {
   exerciseId?: string;
   targetRpe?: number;
   quantityUnit?: 'm';
+  benefit?: string;
 }
 
 export interface FocusedWorkoutProps {
@@ -222,7 +223,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
           </div>
         </div>
         <div className="focused-exercise-title"><h2 className="focused-exercise__name">{exercise.name}</h2></div>
-        {libraryExercise && <p className="focused-exercise-benefit">{libraryExercise.primaryBenefit}</p>}
+        {(exercise.benefit || libraryExercise) && <p className="focused-exercise-benefit">{exercise.benefit ?? libraryExercise?.primaryBenefit}</p>}
         {pair && <div className="focused-pair" role="group" aria-label={`Complex pair ${pair.label}`}>
           <div className="focused-pair__heading">
             <span>Complex {pair.label}</span><strong>Round {setIndex + 1} <span>of {rounds}</span></strong>

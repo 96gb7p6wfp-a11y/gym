@@ -1,4 +1,5 @@
 import type { ActivityRecord } from './activities.ts';
+import { isGymTraining } from './training-classification.ts';
 import { reportWeekStart, shiftReportDate, type ReportPlanDay, type ReportSession } from './weekly-report.ts';
 
 export interface TrainingCadenceDay {
@@ -26,10 +27,10 @@ export function getTrainingCadence({ sessions, activities = [], plan, today, wee
   const weekDates = new Set(dates);
   const saved = sessions.filter(session => session.status === 'completed' && session.deletedAt == null && session.date <= today && weekDates.has(session.date));
   const recorded = activities.filter(({ activity }) => activity.deletedAt === null && activity.date <= today && weekDates.has(activity.date));
-  const mainGymNames = new Set(plan.filter(day => day.kind === 'strength').map(day => normalizedName(day.name)));
+  const mainGymNames = new Set(plan.filter(isGymTraining).map(day => normalizedName(day.name)));
   const optionalPrimerNames = new Set(plan.flatMap(day => day.extraSession && /primer|technique/i.test(day.extraSession.name)
     && !mainGymNames.has(normalizedName(day.extraSession.name)) ? [normalizedName(day.extraSession.name)] : []));
-  const completedGymDates = [...new Set(saved.filter(session => session.kind === 'strength'
+  const completedGymDates = [...new Set(saved.filter(session => isGymTraining(session)
     && !optionalPrimerNames.has(normalizedName(session.name))).map(session => session.date))].sort();
   const volleyballDates = new Set([
     ...saved.filter(session => /volleyball/i.test(session.name)).map(session => session.date),
@@ -39,7 +40,7 @@ export function getTrainingCadence({ sessions, activities = [], plan, today, wee
   const days: TrainingCadenceDay[] = dates.map((date, index) => {
     const scheduled = plan[index];
     // Optional primers and extra sessions are not additional weekly obligations.
-    const kind = scheduled?.kind === 'strength' ? 'gym' : scheduled?.kind === 'sport' ? 'sport' : 'recovery';
+    const kind = isGymTraining(scheduled) ? 'gym' : scheduled?.kind === 'sport' ? 'sport' : 'recovery';
     const hasGym = completedGymDates.includes(date);
     const hasActivity = activeDates.has(date);
     return {

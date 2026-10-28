@@ -143,28 +143,28 @@ test('a safe quick-prep substitution and individual check persist without starti
   await expect(start(page)).toBeEnabled();
 });
 
-test('a saved day draft still respects later Saturday readiness changes', async ({ page }) => {
+test('a saved day draft still respects later Sunday readiness changes', async ({ page }) => {
   await seed(page);
   const state = await read(page);
   const plan = createVolleyballMasterPlan();
   state.profile.plan = plan;
-  state.profile.masterProgram = MasterProgramSettingsSchema.parse({ version: 1, startDate: '2026-10-19', matchWeeks: [], readiness: [{ date: '2026-10-24', status: 'green' }] });
-  state.profile.sessionDrafts = [{ date: '2026-10-24', slot: 'main', plan: structuredClone(plan[5]), readiness: 'green' }];
+  state.profile.masterProgram = MasterProgramSettingsSchema.parse({ version: 1, revision: '8.1', startDate: '2026-10-19', matchWeeks: [], readiness: [{ date: '2026-10-25', status: 'green' }] });
+  state.profile.sessionDrafts = [{ date: '2026-10-25', slot: 'main', plan: structuredClone(plan[6]), readiness: 'green' }];
   await page.evaluate(({ key, state }) => localStorage.setItem(key, JSON.stringify(state)), { key: KEY, state });
   await page.reload();
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
-  await page.getByRole('button', { name: /^Sat / }).click();
-  await expect(page.locator('.session-card h2')).toHaveText('Reactive + Hard Lower B');
+  await page.getByRole('button', { name: /^Sun / }).click();
+  await expect(page.locator('.session-card h2')).toHaveText('Heavy Lower B');
   await page.locator('.master-readiness > summary').click();
   const readiness = page.getByRole('group', { name: 'Program readiness', exact: true });
   await readiness.getByRole('button', { name: 'Yellow', exact: true }).click();
   await page.getByRole('button', { name: 'View workout', exact: true }).click();
   const preview = page.getByRole('dialog', { name: 'Workout preview', exact: true });
-  await expect(preview).not.toContainText('Hurdle Hops');
-  await expect(preview.getByRole('listitem').filter({ hasText: 'Approach Jump' })).toContainText('2 ×');
+  await expect(preview.getByRole('list', { name: 'Scheduled exercises', exact: true })).not.toContainText('Split-squat Jump');
+  await expect(preview.getByRole('list', { name: 'Scheduled exercises', exact: true })).toContainText('Leg Press');
   await preview.getByRole('button', { name: 'Close', exact: true }).click();
   await readiness.getByRole('button', { name: 'Red', exact: true }).click();
-  await expect(page.locator('.session-card h2')).toHaveText('Recovery');
+  await expect(page.locator('.session-card h2')).toContainText('Recovery');
   expect((await read(page)).sessions).toEqual([]);
 });
 

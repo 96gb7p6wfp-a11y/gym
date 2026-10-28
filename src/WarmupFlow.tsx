@@ -44,7 +44,7 @@ export function WarmupFlow({ open, onOpenChange, plan, items, override, disabled
   return <Dialog open={open} onOpenChange={(next: boolean) => { if (!disabled) onOpenChange(next); }}>
     <DialogContent className="app-dialog warmup-flow-sheet">
       <DialogHeader className="warmup-flow__header"><DialogTitle className="">Warm-up</DialogTitle><DialogDescription className="">{presentation.title.replace('Preparation', 'quick prep')} · {presentation.duration}</DialogDescription></DialogHeader>
-      <p className="warmup-flow__intro">{plan.kind === 'recovery' ? 'Ease into movement at your own pace.' : '30–60 sec easy movement, then these drills.'}</p>
+      <p className="warmup-flow__intro">{plan.kind === 'recovery' ? 'Ease into movement at your own pace.' : plan.programRevision === '8.1' && quick.some(item => /bike|dynamic mobility/i.test(item.name) && /min/.test(item.target)) ? 'One easy preparation sequence. Finish ready, not tired.' : '30–60 sec easy movement, then these drills.'}</p>
       <ol className="warmup-flow__steps" aria-label="Quick warm-up exercises">{quick.map((item, index) => renderStep(item, index))}</ol>
       <p className="warmup-flow__ramp">{presentation.rampUp}</p>
       <div className="warmup-flow__progress" role="status" aria-label="Warm-up progress">{override ? 'Warmed up elsewhere' : ready ? 'Quick prep complete' : `${completed} of ${quick.length} completed`}</div>

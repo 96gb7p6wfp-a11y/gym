@@ -85,12 +85,12 @@ test('custom instructions, edited default text and checked movement IDs stay int
 
 test('master-plan jump warm-up retains prescribed ramp, pogo and mobility targets/cues', () => {
   const plan = createVolleyballMasterPlan()[2];
-  const result = guide('warmup', plan.exercises, { items: plan.warmup });
+  const result = guide('warmup', plan.exercises, { items: plan.warmup, name: plan.name, programRevision: plan.programRevision });
   for (const source of plan.warmup ?? []) {
     assert.deepEqual(result.find(item => item.key === source.key), source, source.name);
   }
-  assert.equal(result.filter(item => item.name === 'Jump Ramp-Up').length, 1);
-  assert.equal(result.filter(item => item.name === 'Pogo Jump').length, 1);
+  assert.equal(result.filter(item => item.name === 'Progressive Practice Jumps').length, 1);
+  assert.equal(result.filter(item => item.name === 'Low-intensity Pogos').length, 1);
 });
 
 test('adding, replacing and removing exercises updates the automatic guide', () => {

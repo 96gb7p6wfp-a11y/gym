@@ -40,8 +40,8 @@ function register(names: string[], steps: string[], feel: string, mistakes: stri
   for (const name of names) techniques.set(normalizedName(name), technique);
 }
 
-register(['Medicine Ball Spike Slam'], [
-  'Stand balanced with a light slam ball; brace your trunk and lift the ball overhead.',
+register(['Medicine Ball Spike Slam', 'Light Medicine Ball Spike Slam'], [
+  'Use a 2–3 kg slam ball in an approved clear area; stand balanced, brace and lift it overhead with both hands.',
   'Drive the ball down in front of you with your trunk and arms, letting hips and knees bend.',
   'Let the ball settle, reset your stance and make the next rep fast.'
 ], 'A coordinated drive through the trunk, shoulders and arms; speed rather than a slow grind.', [
@@ -112,7 +112,7 @@ register(['Reverse Pec Deck'], [
   'Pulling with a large elbow bend like a row.', 'Shrugging or leaning away from the pad.'
 ], 'Choose the grip and opening range that feel comfortable; do not force the arms behind the body.');
 
-register(['Biceps Curl'], [
+register(['Biceps Curl', 'Dumbbell Biceps Curl'], [
   'Stand or sit tall with wrists straight and elbows close to your sides.',
   'Bend the elbows to lift the weight without moving your upper arms far forward.',
   'Lower slowly through a comfortable elbow range.'
@@ -256,7 +256,7 @@ register(['Approach Jump'], [
   'Landing stiff-legged or with knees collapsing inward.', 'Continuing maximal jumps after height or coordination drops.'
 ], 'Warm up first, allow full recovery and clear the landing area. Stop for pain or repeated unstable landings.');
 
-register(['Pogo Jump', 'Easy Pogo'], [
+register(['Pogo Jump', 'Easy Pogo', 'Light Pogos'], [
   'Stand tall with feet under your hips, knees soft and a clear, level landing surface.',
   'Make small vertical bounces mainly through the ankles, using a light knee bend.',
   'Keep contacts brief and controlled; warm-up pogos stay low and easy.'
@@ -544,13 +544,109 @@ register(['90/90 Breathing'], [
   'Forcing a maximal inhale or a long breath hold.', 'Arching the back or tensing the neck to move more air.'
 ], 'Adjust the leg support for comfort. Return to normal breathing and sit up slowly if you feel light-headed.');
 
-register(['Short-Foot'], [
+register(['Short-Foot', 'Short-Foot Hold'], [
   'Stand or sit with the heel, big-toe base and little-toe base resting on the floor.',
   'Gently draw the ball of the foot toward the heel to lift the arch slightly.',
   'Keep the toes long and relaxed, hold briefly and release.'
 ], 'Light work through the arch, with all three contact points still grounded.', [
   'Curling the toes or gripping the floor.', 'Rolling onto the outer foot to make the arch look higher.'
 ], 'Start seated if balance is difficult. Keep the effort gentle and relax if the foot cramps or hurts.');
+
+register(['Single-arm Neutral-grip Dumbbell Shoulder Press'], [
+  'Sit supported or stand balanced; hold one dumbbell beside the shoulder with the palm facing inward.',
+  'Keep ribs over pelvis and press through a comfortable overhead range without leaning or twisting.',
+  'Lower smoothly, then repeat the same load and reps on the other side.'
+], 'Shoulder and triceps working, with the trunk resisting a sideways lean.', [
+  'Arching or rotating to finish the press.', 'Forcing the shoulder through a painful range.'
+], 'Use a load you can position safely and leave 2–3 clean reps in reserve. Reduce pressing if the shoulder remains sore after volleyball.');
+
+register(['Light Dumbbell Squat Jump'], [
+  'Rehearse at bodyweight first. When landings are consistent, hold light dumbbells at your sides in a clear space.',
+  'Use a comfortable shallow countermovement and drive upward as fast as possible.',
+  'Land softly under control, settle completely and reset before the next jump.'
+], 'A quick coordinated upward drive; light resistance should preserve a crisp takeoff.', [
+  'Adding weight when jump height, speed or coordination falls.', 'Rushing repeated jumps before controlling each landing.'
+], 'Start around 2–4 kg per hand only when technically appropriate. Record the combined dumbbell load, so 2 kg in each hand is 4 kg total. Omit this work after unusually demanding volleyball or if landings deteriorate.');
+
+register(['Pallof Press Isometric Hold'], [
+  'Stand side-on to a secure chest-height cable or band, with feet planted and knees soft.',
+  'Brace gently, press the handle straight in front of the chest and hold without rotating.',
+  'Keep breathing through the planned hold, return the handle and repeat on the other side.'
+], 'Abdominals and sides of the trunk resisting rotation, with easy breathing.', [
+  'Twisting toward the anchor or leaning away from it.', 'Holding the breath or arching the lower back.'
+], 'Use light tension that allows the full 20-second hold with steady posture. Secure a band anchor and stop if control is lost.');
+
+register(['Split-squat Jump'], [
+  'Start at bodyweight in a balanced split stance with a clear landing area.',
+  'Drive upward, then land in the same stance with a soft knee and steady pelvis.',
+  'Settle and reset before each rep; complete the same low-volume target on both legs.'
+], 'A coordinated front-leg push with the hips and trunk controlling the landing.', [
+  'Adding load before landings are controlled.', 'Chasing more contacts when height or balance falls.'
+], 'This is optional work, not a fatigue test. Keep it to the planned two reps per leg and stop for pain, unstable landings or lost coordination.');
+
+register(['Plyometric Push-up', 'Explosive Push-up'], [
+  'Use a stable push-up setup with hands under or slightly wider than the shoulders and trunk braced.',
+  'Lower under control, then push upward fast enough to release the hands if appropriate; no clap is needed.',
+  'Land with soft elbows, re-establish a steady trunk and reset before the next rep.'
+], 'A quick coordinated push through chest, triceps and shoulders without a shoulder pinch.', [
+  'Clapping or lifting higher at the expense of landing control.', 'Continuing when pressing speed or shoulder comfort declines.'
+], 'Use a simpler push-up or medicine-ball chest pass if unfamiliar. Omit ballistic pressing when shoulders are sore or fatigued.');
+
+register(['Push-up Plus'], [
+  'Choose a comfortable push-up position, using an incline if needed to keep a straight trunk.',
+  'Perform a controlled push-up, then gently push the floor farther away at the top so the shoulder blades move around the ribs.',
+  'Return the shoulder blades smoothly without shrugging or letting the lower back sag.'
+], 'Serratus activity along the sides of the ribs and smooth shoulder-blade movement.', [
+  'Shrugging toward the ears rather than moving the shoulder blades around the ribs.', 'Sagging through the lower back or forcing excessive rounding.'
+], 'Keep the range pain-free and use an incline to reduce effort if needed. This is controlled shoulder work rather than a maximal push-up test.');
+
+register(['Snap-down Landing'], [
+  'Stand tall with feet in a comfortable athletic stance and arms raised if comfortable.',
+  'Quickly lower into a shallow ready position without leaving the floor.',
+  'Keep knees tracking with toes, settle quietly and stand up before repeating.'
+], 'A brief coordinated brace through hips, legs and trunk while settling into a stable stance.', [
+  'Adding a jump before basic landing control is consistent.', 'Letting the knees collapse inward or dropping too deep.'
+], 'Use a comfortable depth and stop for joint pain or unstable mechanics. The purpose is preparation, not impact or fatigue.');
+
+register(['Low-box Drop Jump', 'Drop Jump'], [
+  'Use a stable box around 15–20 cm with a clear landing area; step-down landing practice comes first if unfamiliar.',
+  'Step off without jumping upward, meet the floor under control and rebound vertically with a quick contact.',
+  'Land softly, settle and rest fully before the next attempt.'
+], 'A quick elastic rebound through the ankles and legs with a controlled final landing.', [
+  'Jumping up from the box or chasing a taller box.', 'Continuing when contact slows or landing mechanics deteriorate.'
+], 'Box height never increases automatically. Use step-down landings without a rebound until control is reliable; omit reactive jumping for painful or unstable landings.');
+
+register(['Step-down Landing'], [
+  'Use a stable low step around 15–20 cm and a clear landing area.',
+  'Step off without jumping upward, then land softly on both feet with knees tracking over the toes.',
+  'Hold the landing until balanced, stand up and reset; do not rebound.'
+], 'Hips and legs absorbing the landing while the trunk stays steady.', [
+  'Starting from a high box before basic control is reliable.', 'Bouncing immediately instead of holding a stable landing.'
+], 'Choose a lower step or a floor-based snap-down if needed. Stop if the knees, Achilles or back hurt or the landing is unstable.');
+
+register(['Light Dynamic Mobility'], [
+  'Start with easy walking or gentle movement in a clear space.',
+  'Move shoulders, hips and ankles through a comfortable range, keeping breathing relaxed.',
+  'Gradually include the shapes needed for today, then finish feeling ready rather than tired.'
+], 'Easy movement through the shoulders, hips and ankles without strain or heavy breathing.', [
+  'Forcing a range or bouncing into discomfort.', 'Making the short preparation so demanding that it creates fatigue.'
+], 'Stay within a pain-free range. This is low-intensity preparation, not stretching into pain or a conditioning test.');
+
+register(['Slow L-R-L Rhythm', 'Slow L-R-L Approach Rhythm'], [
+  'Use your normal approach pattern; mirror the left-right-left example if your takeoff pattern differs.',
+  'Rehearse slowly, then build speed into a slightly longer penultimate and quick final plant.',
+  'Reset between short repetitions, keeping the drill coordinated and low fatigue.'
+], 'A smooth acceleration and controlled lowering into a quick, balanced plant.', [
+  'Forcing a foot pattern that does not match your approach.', 'Rushing the drill before rhythm and balance are controlled.'
+], 'This is optional technique practice. Skip it when volleyball already provides substantial jumping; do not add maximal contacts to chase fatigue.');
+
+register(['Trap Bar Deadlift'], [
+  'Rehearse a controlled hinge first, then stand centered in the 20 kg empty trap bar with feet planted and handles balanced.',
+  'Brace, keep arms long and push the floor away so hips and shoulders rise together.',
+  'Stand tall without leaning back, then lower the bar under control and reset.'
+], 'Glutes, thighs and trunk sharing the work, with a steady back position.', [
+  'Increasing load before setup and movement are consistently controlled.', 'Adding this lift on top of Leg Press instead of replacing it.'
+], 'Ask a qualified coach to check technique if unfamiliar. Practice with the empty 20 kg bar first; only after consistent movement quality should 3 × 4–6 replace Leg Press. No trap-bar jumps are required.');
 
 type LoadingAdvice = Omit<ExerciseLoadingGuidance, 'target'>;
 const loadingAdvice = new Map<string, LoadingAdvice>();
@@ -586,9 +682,9 @@ registerLoading(['Cable External Rotation'], {
   progression: controlledProgression,
 });
 
-registerLoading(['Medicine Ball Spike Slam', 'Medicine Ball Rotational Throw', 'Medicine Ball Overhead Throw / Slam'], {
+registerLoading(['Medicine Ball Spike Slam', 'Light Medicine Ball Spike Slam', 'Medicine Ball Rotational Throw', 'Medicine Ball Overhead Throw / Slam'], {
   category: 'power', label: 'Light and fast',
-  advice: 'Use a light ball that lets each rep stay fast. Reset and recover between efforts; stop the set when speed or coordination drops.',
+  advice: 'Start around 2–3 kg using an approved clear area and a ball designed for the task. Keep each rep fast; reset and recover, and stop when speed or coordination drops. Omit ballistic shoulder work when sore or fatigued.',
 });
 
 registerLoading(['Approach Jump', 'Pogo Jump', 'Arm-Swing Jump', 'Countermovement Jump', 'Broad Jump'], {
@@ -638,6 +734,42 @@ registerLoading(['90/90 Breathing'], {
 registerLoading(['Volleyball practice'], {
   category: 'power', label: 'Practice quality',
   advice: 'Follow your team coach’s session. Take water breaks and reduce effort when approach timing, coordination or landing quality drops.',
+});
+
+registerLoading(['Single-arm Neutral-grip Dumbbell Shoulder Press'], {
+  category: 'control', label: 'Controlled single-arm strength',
+  advice: 'Use a comfortable neutral grip and leave 2–3 reps in reserve. Match load and reps across sides; log the weight of the working dumbbell.',
+  progression: 'Build clean sets before considering the smallest load increase. Reduce pressing after a demanding match or if the shoulder remains sore.',
+});
+registerLoading(['Light Dumbbell Squat Jump'], {
+  category: 'power', label: 'Speed before load',
+  advice: 'Bodyweight first. If technically appropriate, begin around 2–4 kg per hand and log both dumbbells combined. Keep the prescribed low contact count and stop if takeoff or landing quality drops.',
+});
+registerLoading(['Split-squat Jump', 'Plyometric Push-up', 'Explosive Push-up', 'Low-box Drop Jump', 'Drop Jump'], {
+  category: 'power', label: 'Quality before more contacts',
+  advice: 'Follow the prescribed low-volume work and recover fully. Do not automatically add reps, load or box height; stop when movement speed or landing control deteriorates.',
+});
+registerLoading(['Pallof Press Isometric Hold', 'Push-up Plus'], {
+  category: 'core', label: 'Steady control and breathing',
+  advice: 'Keep the planned time or reps comfortable and controlled. Breathe normally and finish before posture changes; extra load is unnecessary when control is inconsistent.',
+});
+registerLoading(['Snap-down Landing', 'Step-down Landing'], {
+  category: 'preparation', label: 'Own the landing first',
+  advice: 'Use low effort and a controllable range or low step. Settle completely between reps; do not add rebounds or contacts to chase fatigue.',
+});
+registerLoading(['Light Dynamic Mobility', 'Short-Foot Hold', 'Slow L-R-L Rhythm', 'Slow L-R-L Approach Rhythm', 'Light Pogos'], {
+  category: 'preparation', label: 'Prepare without fatigue',
+  advice: 'Stay low effort and follow the short prescribed dose. Skip optional contacts when fatigued or uncomfortable; finish ready for volleyball rather than tired.',
+});
+registerLoading(['Dumbbell Biceps Curl'], {
+  category: 'control', label: 'Controlled arm work',
+  advice: 'Keep the upper arm steady and use controlled reps with 1–2 reps in reserve. Avoid swinging or shortening the range to finish.',
+  progression: controlledProgression,
+});
+registerLoading(['Trap Bar Deadlift'], {
+  category: 'control', label: 'Technique before load',
+  advice: 'Practice the unloaded hinge, then the 20 kg empty trap bar. A coach can check your setup and brace. Add load gradually only after movement quality is consistent.',
+  progression: 'Once proficient, use 3 × 4–6 in place of Leg Press, never in addition to it. Do not automatically increase weight or prescribe trap-bar jumps.',
 });
 
 /** Use the current name and target, never a retained key or a blanket heavy/low-rep rule. */

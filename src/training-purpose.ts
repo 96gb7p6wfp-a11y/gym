@@ -7,13 +7,23 @@ export type SessionPurpose = {
   fatigue: string;
 };
 
-type PurposePlan = { name?: string; kind?: string; goal?: string; exercises?: { name?: string; group?: string }[] };
+type PurposePlan = { name?: string; kind?: string; goal?: string; programRevision?: '8.1'; exercises?: { name?: string; group?: string }[] };
 type IntentExercise = { name?: string; group?: string; category?: string; goal?: string; mode?: string };
 
 export function getSessionPurpose(plan: PurposePlan, _dayIndex?: number): SessionPurpose {
   const name = plan.name ?? 'Workout';
   const normalized = name.toLowerCase();
   const goal = plan.goal;
+  if (plan.programRevision === '8.1') {
+    if (/^upper a$/i.test(name)) return { title: name, subtitle: 'Spike Power + Strength + Physique', focus: 'Fast slams · clean pulling and pressing', intensity: 'Power + strength', fatigue: 'After a demanding match, omit slams and reduce hard pressing' };
+    if (/^upper b$/i.test(name)) return { title: name, subtitle: 'Rotational Power + Shoulder + Physique', focus: 'Rotational power · controlled shoulder work', intensity: 'Power + physique', fatigue: 'Keep enough energy for Friday volleyball' };
+    if (/main jump.*heavy lower a/i.test(name)) {
+      const retest = plan.exercises?.some(exercise => /retest/i.test(exercise.group ?? ''));
+      return { title: name, subtitle: retest ? 'Fresh Jump Tests + Reduced Strength' : 'Vertical Jump + Maximum Force Production', focus: retest ? 'Standing and approach tests before strength' : 'Maximum takeoff · quality before quantity', intensity: 'Maximum intent · full recovery', fatigue: retest ? 'No additional full-volume jump session' : 'Hack Squat → 4 min → CMJ → 2–3 min → repeat' };
+    }
+    if (/heavy lower b/i.test(name)) return { title: name, subtitle: 'Strength + Single-leg Stability', focus: 'Strong reps · stable single-leg work', intensity: 'Controlled strength', fatigue: 'Reduce work if Friday’s load is still affecting readiness' };
+    if (/pre-match primer/i.test(name)) return { title: name, subtitle: 'Easy readiness for tomorrow', focus: 'Three progressive approaches · finish fresh', intensity: 'Low fatigue', fatigue: 'Full rest is a valid choice when tired or travelling' };
+  }
   if (name === 'Match') return { title: 'Match', subtitle: 'Your highest priority today', focus: 'Compete fresh · fuel well', intensity: 'Match effort', fatigue: 'No extra plyometrics or evening legs' };
   if (goal && /main jump.*heavy lower/i.test(name)) return { title: name, subtitle: 'Approach height + maximal force', focus: 'Eight maximal approaches · six CMJs in the build weeks', intensity: 'Quality first · full recovery', fatigue: '2–3 min after each complex movement' };
   if (goal && /reactive.*hard lower/i.test(name)) return { title: name, subtitle: 'Reactive takeoff + supporting strength', focus: 'Fast contacts · controlled lifting', intensity: 'Readiness first', fatigue: 'Protect jump quality after Friday' };
