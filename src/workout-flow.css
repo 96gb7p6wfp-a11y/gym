@@ -5,6 +5,8 @@
 .day-cover .day-cover__plan-row+.day-cover__start { margin-top:10px; }
 .train-plan-actions { display:grid; grid-template-columns:1fr 1.2fr; gap:10px; width:100%; }
 .master-contact-status { margin:6px 4px 16px; color:var(--sub); font-size:12px; line-height:1.5; font-variant-numeric:tabular-nums; }
+.program-review-row { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:48px; margin:8px 0 12px; padding:8px 4px; border:0; border-radius:0; background:transparent; color:var(--sub); text-align:left; font-size:13px; }
+.program-review-row strong { display:flex; align-items:center; gap:3px; color:var(--accent); font-size:13px; font-weight:600; }
 .app-shell .train-plan-actions .btn { min-height:50px; min-width:0; padding:12px 10px; font-size:14px; white-space:nowrap; }
 .app-shell .train-plan-actions .train-plan-preview { background:var(--surface-soft); color:var(--ink); box-shadow:none; }
 .app-shell .rest-floating { gap:5px; padding-inline:12px; }

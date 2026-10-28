@@ -89,6 +89,52 @@ test('the V8.1 schedule can be inspected and dismissed without changing a legacy
   expect(await read(page)).toEqual(before);
 });
 
+test('Today exposes V8.1 directly and applying it shows the new Sunday workout without nested menus', async ({ page }) => {
+  await seedLegacy(page);
+  const before = await read(page);
+  const action = page.getByRole('button', { name: /^V8.1 is ready Review plan/ });
+  await expect(action).toBeVisible();
+  await action.click();
+  const review = page.getByRole('dialog', { name: 'Upgrade to V8.1', exact: true });
+  await expect(review).toBeVisible();
+  expect(await read(page)).toEqual(before);
+  await review.getByRole('button', { name: 'Apply V8.1', exact: true }).click();
+  await expect(review).not.toBeVisible();
+  await page.getByRole('tab', { name: 'Train', exact: true }).click();
+  await expect(page.getByRole('button', { name: /^V8.1 is ready/ })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Next week', exact: true }).click();
+  await page.getByRole('button', { name: /^Sun / }).click();
+  await expect(page.locator('.session-card h2')).toHaveText('Heavy Lower B');
+  expect((await read(page)).sessions).toEqual(before.sessions);
+});
+
+test('an older active workout clearly explains why it keeps its saved prescription after applying V8.1', async ({ page }) => {
+  await seedLegacy(page, true);
+  await applyUpgrade(page);
+  await page.getByRole('tab', { name: 'Train', exact: true }).click();
+  await expect(page.getByText('V8.1 applies to your next workout. This session keeps its original plan.', { exact: true })).toBeVisible();
+  await expect(page.locator('.session-card h2')).toHaveText('My custom upper');
+});
+
+test('an athlete without an active program can start V8.1 this week from the visible Today action', async ({ page }) => {
+  await seedLegacy(page);
+  await page.evaluate(key => {
+    const data = JSON.parse(localStorage.getItem(key)!);
+    delete data.profile.masterProgram;
+    localStorage.setItem(key, JSON.stringify(data));
+  }, STORE);
+  await page.reload();
+  const before = await read(page);
+  await page.getByRole('button', { name: /^V8.1 is ready Review plan/ }).click();
+  await expect(program(page).getByLabel('Start Monday', { exact: true })).toHaveValue('2026-10-26');
+  await program(page).getByRole('button', { name: 'Use this plan', exact: true }).click();
+  await expect.poll(async () => (await read(page)).profile.masterProgram.revision).toBe('8.1');
+  await page.getByRole('tab', { name: 'Today', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Your day', exact: true })).toContainText('Main Jump + Heavy Lower A');
+  expect((await read(page)).profile.preMasterPlan).toEqual(before.profile.plan);
+  expect((await read(page)).sessions).toEqual(before.sessions);
+});
+
 test('an explicit upgrade keeps cycle, match weeks, date edits and every historical and active record intact', async ({ page }) => {
   await seedLegacy(page, true);
   const before = await read(page);

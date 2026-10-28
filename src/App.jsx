@@ -6,6 +6,7 @@ import { findSessionDraft, getPreparationStatus, putSessionDraft, resetDraftPrep
 import { useRestAudio } from "./useRestAudio";
 import { DEFAULT_REST_VOLUME } from "./rest-audio";
 import { TimerSoundSettings } from "./TimerSoundSettings";
+import { PwaUpdateControl } from "./PwaUpdateControl";
 import './workout-flow.css';
 import { Search, History } from "lucide-react";
 import { exercisePerformanceIdentity, areComparableExercises } from "./performance-insights";
@@ -160,6 +161,7 @@ function GymApp({
   const [exerciseActionKey, setExerciseActionKey] = React.useState(null);
   const [customBuilder, setCustomBuilder] = React.useState(null);
   const [resetPlanOpen, setResetPlanOpen] = React.useState(false);
+  const [programUpgradeOpen, setProgramUpgradeOpen] = React.useState(false);
   const [workoutChooserOpen, setWorkoutChooserOpen] = React.useState(false);
   const [performanceAction, setPerformanceAction] = React.useState(undefined);
   const [completedCelebrationId, setCompletedCelebrationId] = React.useState(null);
@@ -376,6 +378,9 @@ function GymApp({
   const { plan: selectedPlan, slot: selectedSlot } = selectedContext;
   const todayContext = workoutForDate(today);
   const todayMasterWeek = todayContext.masterWeek;
+  const programOffer = loaded && !loadError && (!profile.masterProgram || profile.masterProgram.revision !== '8.1')
+    ? 'V8.1 is ready' : loaded && profile.masterProgram?.revision === '8.1' && today < profile.masterProgram.startDate
+      ? `V8.1 starts ${formatDate(profile.masterProgram.startDate, true)}` : null;
   const masterBlockComplete = !!profile.masterProgram && !todayMasterWeek && today >= profile.masterProgram.startDate;
   const previewWorkout = previewContext ? workoutForDate(previewContext.date, previewContext.slot) : selectedContext;
   const preparationDraft = warmupContext && findSessionDraft(profile.sessionDrafts, warmupContext.date, warmupContext.slot);
@@ -1057,6 +1062,10 @@ function GymApp({
       if (options) { options.open = true; options.scrollIntoView({ block: 'start' }); }
     });
   }
+  function reviewProgram() {
+    openProgramConfiguration();
+    if (profile.masterProgram && profile.masterProgram.revision !== '8.1') setProgramUpgradeOpen(true);
+  }
   function openSettings() {
     setSettingsDraft({ bodyWeight: profile.bodyWeight, restSeconds: profile.restSeconds });
     setSettingsOpen(true);
@@ -1204,7 +1213,7 @@ function GymApp({
           <TodayView date={today} plan={todayContext.plan} session={activeSession?.date === today ? activeSession : undefined} otherSession={activeSession?.date !== today ? activeSession : undefined} completed={todayCompletedSession} now={now}
             activities={activityRecords} nutrition={reportNutrition} volleyballSchedule={volleyballSchedule}
             sessions={sessions} weeklyPlan={currentWeekPlan} performance={performance.data} bodyWeight={profile.bodyWeight} today={today}
-            blockComplete={masterBlockComplete} programLabel={todayMasterWeek ? `Week ${todayMasterWeek} · ${getMasterProgramPhase(todayMasterWeek)}` : masterBlockComplete ? 'Block complete' : undefined} scheduledEvents={masterScheduledEvents(profile.masterProgram, today)}
+            programOffer={programOffer} onReviewProgram={reviewProgram} blockComplete={masterBlockComplete} programLabel={todayMasterWeek ? `Week ${todayMasterWeek} · ${getMasterProgramPhase(todayMasterWeek)}` : masterBlockComplete ? 'Block complete' : undefined} scheduledEvents={masterScheduledEvents(profile.masterProgram, today)}
             onProgress={() => { setProgressView('overview'); setTab('progress'); }}
             disabled={!loaded || saving || profileSaving || !!loadError} onPreview={() => openPreview(todayContext)} onStart={() => startWorkout(todayContext)} onTrain={() => { setEditingHistoryId(null); if (!activeSession) selectTrainingDate(today); setTab(`train`); }} onBrowseTrain={() => setTab(`train`)}
             onViewLog={setSelectedHistory} onNutrition={() => setTab(`nutrition`)} onPlan={() => masterBlockComplete ? openProgramConfiguration() : openPlan()}
@@ -1321,6 +1330,8 @@ function GymApp({
                   <details className="session-note"><summary>Session focus</summary><p>{getSessionPurpose(selectedPlan, selectedDay).focus}</p><p>Intensity · {getSessionPurpose(selectedPlan, selectedDay).intensity}</p><p>{getSessionPurpose(selectedPlan, selectedDay).fatigue}</p><p>{selectedPlan.note}</p></details>
                 )}
               </section>
+              {!currentSession && programOffer && <button type="button" className="program-review-row" onClick={reviewProgram}><span>{programOffer}</span><strong>Review plan<ChevronRight size={17} aria-hidden="true" /></strong></button>}
+              {activeSession && currentSession?.id === activeSession.id && profile.masterProgram?.revision === '8.1' && activeSession.programRevision !== '8.1' && <p className="master-contact-status">V8.1 applies to your next workout. This session keeps its original plan.</p>}
               {!currentSession && masterWeek && <>
                 <div className="master-day-note"><p><strong>{`Week ${masterWeek} · ${getMasterProgramPhase(masterWeek)}`}</strong><span>{selectedMasterMatch ? 'Sunday match week' : 'No Sunday match'}</span></p>{dayEvents.map(event => <p key={event.name}><strong>{event.name}</strong><span>{event.detail}</span></p>)}</div>
                 {(selectedPlan.kind === 'strength' || isMasterReadinessRequired(profile.masterProgram, selectedDate, selectedPlan)) && <MasterProgramReadiness settings={profile.masterProgram} date={selectedDate} disabled={profileSaving || !loaded} onSave={saveMasterProgram} />}
@@ -1924,13 +1935,14 @@ function GymApp({
             nutritionProfile={profile.nutrition}
             onNutritionProfileChange={saveNutritionProfile} volleyballSchedule={volleyballSchedule} initialAction={nutritionAction} onActionHandled={() => setNutritionAction(null)} onOpenRoutine={(date) => { setRoutineDate(date); setMoreView(`routine`); }} />}
           {moreView === `plan` && <>
+          {programOffer && <button type="button" className="program-review-row" onClick={reviewProgram}><span>{programOffer}</span><strong>Review plan<ChevronRight size={17} aria-hidden="true" /></strong></button>}
 
           <section className="native-week" aria-label="Weekly training schedule"><p className="eyebrow">This week</p><div className="plan-timeline">{(profile.masterProgram && !masterWeek ? editableWeekPlan : scheduledPlan).map((e, t) => {
             const date = dateKey(addDays(weekStart, t)); const recorded = completedSessions.some(session => session.date === date);
             return <article className={`plan-day${date === today ? ' is-today' : ''}`} key={t}><div className="plan-day__date"><span>{WEEKDAYS[t].slice(0, 3)}</span><strong>{addDays(weekStart, t).getDate()}</strong></div><details className="plan-day-details"><summary><strong>{getSessionPurpose(e, t).title}</strong><span>{e.kind === 'sport' && e.name === 'Volleyball' ? `${volleyballSchedule.startTime}–${volleyballSchedule.endTime}` : /match/i.test(e.name) ? `Match · ${e.startTime ?? 'time not set'}` : `${e.durationRange ?? `${e.minutes} min`} · ${getSessionPurpose(e, t).subtitle}`}{recorded ? ' · Recorded' : date === today ? ' · Today' : ''}</span><ChevronRight size={16} /></summary><PlanDayDetails plan={e} /></details><button type="button" className="icon-button" aria-label={`Edit ${WEEKDAYS[t]}`} disabled={!loaded} onClick={() => editPlanDay(t)}>{recorded ? <Check size={17} /> : <Ellipsis size={20} />}</button>{e.extraSession && <div className="plan-day__extra"><details className="plan-day-details"><summary><strong>{shortSessionName(e.extraSession.name)}</strong><span>{e.extraSession.minutes} min</span><ChevronRight size={15} /></summary><PlanDayDetails plan={e.extraSession} /></details><button className="text-button" disabled={!loaded} onClick={() => editPlanDay(t, true)}><Pencil size={14} />Edit primer</button></div>}</article>;
           })}</div></section>
           <details className="plan-schedule"><summary>Volleyball schedule <span>{volleyballSchedule.startTime}–{volleyballSchedule.endTime}</span></summary><TrainingSchedule schedule={volleyballSchedule} onSave={saveVolleyballSchedule} /></details>
-          <details className="native-program-options"><summary>Programme & customization</summary>          <VolleyballMasterProgram settings={profile.masterProgram} defaultStartDate={dateKey(addDays(new Date(`${masterWeekStart(today)}T12:00:00`), 7))} selectedDate={selectedDate} today={today} basePlan={profile.plan} matchWeekend={profile.masterMatchWeekend} onSave={saveMasterProgram} onUpgrade={upgradeProgram} onRestorePrevious={restorePreviousProgram} hasPreviousPlan={!!profile.masterProgramBackup} disabled={profileSaving || !loaded} />
+          <details className="native-program-options"><summary>Programme & customization</summary>          <VolleyballMasterProgram settings={profile.masterProgram} defaultStartDate={profile.masterProgram ? dateKey(addDays(new Date(`${masterWeekStart(today)}T12:00:00`), 7)) : masterWeekStart(today)} selectedDate={selectedDate} today={today} basePlan={profile.plan} matchWeekend={profile.masterMatchWeekend} onSave={saveMasterProgram} onUpgrade={upgradeProgram} onRestorePrevious={restorePreviousProgram} hasPreviousPlan={!!profile.masterProgramBackup} upgradeOpen={programUpgradeOpen} onUpgradeOpenChange={setProgramUpgradeOpen} disabled={profileSaving || !loaded} />
           {!profile.masterProgram && <details className="plan-program"><summary>Jump training block</summary>
           <section className={`panel program-overview`}>
             <div className={`panel-heading`}>
@@ -2126,6 +2138,12 @@ function GymApp({
               rel={`noreferrer`}
             >{`2024 Compendium of Physical Activities`}</a>
           </details>
+          <PwaUpdateControl onBeforeReload={async () => {
+            if (settingsDraft.bodyWeight !== profile.bodyWeight || settingsDraft.restSeconds !== profile.restSeconds) {
+              throw new Error('Save your preference changes before updating.');
+            }
+            return flushPendingWrites();
+          }} activeWorkout={!!activeSession} disabled={!loaded || profileSaving || saving} />
           <button
             className={`btn full`}
             disabled={!loaded || profileSaving}

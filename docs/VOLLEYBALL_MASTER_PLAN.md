@@ -10,6 +10,16 @@ injury prevention.
 
 Open **You → Training plan → Programme & customization**.
 
+The **V8.1 is ready → Review plan** action also appears on Today, Train and at
+the top of Training plan until you apply it. A new block without an existing
+program defaults to the current Monday, so it can begin this week. Existing
+cycles keep their start date. A future start date is shown explicitly.
+
+For an installed app, **Settings → App updates → Check for updates** can download
+a newer build from that same website. Applying a ready update is explicit and
+waits until an active workout is finished. This does not move data between
+different website addresses or update the original separately hosted site.
+
 - A profile without a master program can review **Program preview**, choose a
   Monday and Sunday match weeks, then **Use this plan**.
 - An existing block continues unchanged until **Upgrade to V8.1 → Apply V8.1**.

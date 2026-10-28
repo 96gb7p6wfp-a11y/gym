@@ -11,7 +11,7 @@ import './today.css';
 export function TodayView({ date, plan, session, otherSession, completed, activities, nutrition, now = Date.now(),
   sessions = [], weeklyPlan = [], performance, bodyWeight, today = currentReportDate(),
   volleyballSchedule, onStart, onPreview, onTrain, onBrowseTrain, onViewLog, onNutrition, onPlan, onActivity,
-  onProgress, disabled, programLabel, blockComplete = false, scheduledEvents = [] }) {
+  onProgress, disabled, programLabel, blockComplete = false, programOffer, onReviewProgram, scheduledEvents = [] }) {
   const day = new Date(`${date}T12:00:00`);
   const active = session?.status === 'active';
   const unscheduled = !active && !completed && plan.exercises.filter(exercise => !exercise.optionalWork).length === 0 && plan.kind !== 'recovery';
@@ -71,6 +71,7 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
       </button>
     </section>
 
+    {programOffer && <button type="button" className="program-review-row" onClick={onReviewProgram}><span>{programOffer}</span><strong>Review plan<ChevronRight size={17} aria-hidden="true" /></strong></button>}
     <div className="day-agenda">
       {nextVolleyball && <section className="day-next" aria-label="Next training event">
         <p className="day-caption">Next on court</p>

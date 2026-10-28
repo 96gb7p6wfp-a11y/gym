@@ -26,17 +26,20 @@ function ProgramPreview({ settings, date, basePlan, matchWeekend }: { settings: 
   </div>;
 }
 
-export function VolleyballMasterProgram({ settings, defaultStartDate, selectedDate, today = berlinDate(), basePlan, matchWeekend, onSave, onUpgrade, onRestorePrevious, hasPreviousPlan = false, disabled = false }: {
+export function VolleyballMasterProgram({ settings, defaultStartDate, selectedDate, today = berlinDate(), basePlan, matchWeekend, onSave, onUpgrade, onRestorePrevious, hasPreviousPlan = false, disabled = false, upgradeOpen, onUpgradeOpenChange }: {
   settings?: MasterProgramSettings; defaultStartDate: string; selectedDate: string; today?: string;
   basePlan?: PlanDay[]; matchWeekend?: PlanDay[];
   onSave: (settings: MasterProgramSettings | undefined) => Promise<boolean>;
   onUpgrade?: () => Promise<boolean | void>; onRestorePrevious?: () => Promise<boolean | void>;
   hasPreviousPlan?: boolean; disabled?: boolean;
+  upgradeOpen?: boolean; onUpgradeOpenChange?: (open: boolean) => void;
 }) {
   const [draft, setDraft] = useState<MasterProgramSettings>(settings ?? newSettings(defaultStartDate));
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const [restore, setRestore] = useState(false), [restorePrevious, setRestorePrevious] = useState(false);
-  const [upgrade, setUpgrade] = useState(false), [nextBlock, setNextBlock] = useState(false);
+  const [internalUpgrade, setInternalUpgrade] = useState(false), [nextBlock, setNextBlock] = useState(false);
+  const upgrade = upgradeOpen ?? internalUpgrade;
+  function setUpgrade(open: boolean) { setInternalUpgrade(open); onUpgradeOpenChange?.(open); }
   const [nextStart, setNextStart] = useState(defaultStartDate);
   const [changedStart, setChangedStart] = useState<MasterProgramSettings | null>(null);
   useEffect(() => { setDraft(settings ?? newSettings(defaultStartDate)); }, [settings, defaultStartDate]);

@@ -1,0 +1,4 @@
+.pwa-update-settings { margin-top:24px; padding-top:20px; border-top:1px solid var(--line); }
+.pwa-update-settings h3 { margin:0 0 10px; font-size:16px; font-weight:600; color:var(--ink); }
+.pwa-update-settings p { margin:0 0 14px; color:var(--sub); font-size:13px; line-height:1.55; }
+.pwa-update-settings>.btn+p { margin-top:12px; }

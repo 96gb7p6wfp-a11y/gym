@@ -56,6 +56,21 @@ self.addEventListener('install', (event) => {
   })());
 });
 
+self.addEventListener('message', (event) => {
+  if (event.data?.type !== 'SETLINE_ACTIVATE_UPDATE') return;
+  event.waitUntil((async () => {
+    // Another open window could contain a workout using the older cached
+    // assets. Do not remove that cache while it still needs the old version.
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    if (windows.length > 1) {
+      event.ports?.[0]?.postMessage({ accepted: false, reason: 'Close other Setline windows before updating.' });
+      return;
+    }
+    event.ports?.[0]?.postMessage({ accepted: true });
+    await self.skipWaiting();
+  })());
+});
+
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const names = await caches.keys();
