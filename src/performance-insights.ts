@@ -51,7 +51,7 @@ export interface PerformanceSummary {
   jumps: JumpSummary[];
   records: PersonalRecord[];
   strengthChanges: { name: string; previous: number; current: number; reps: number; percent: number }[];
-  gymSessions: number; volleyballSessions: number; consistencyPercent: number | null;
+  gymSessions: number; gymDays: number; volleyballSessions: number; consistencyPercent: number | null;
   weeklyVolumeKg: number; weeklySets: number;
   load: { level: 'unknown' | 'limited' | 'steady' | 'higher'; label: string; cue: string };
   insights: string[];
@@ -61,10 +61,10 @@ const round = (n: number, places = 1) => Math.round(n * 10 ** places) / 10 ** pl
 const number = (n: number) => n.toLocaleString('en-GB', { maximumFractionDigits: 1 });
 const positive = (n: number | null | undefined): n is number => typeof n === 'number' && Number.isFinite(n) && n > 0;
 const validDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(new Date(`${value}T12:00:00Z`).getTime()) && new Date(`${value}T12:00:00Z`).toISOString().slice(0, 10) === value;
-export interface PerformanceExerciseReference { key: string; name: string; mode: string; measurement?: string; exerciseId?: string }
+export interface PerformanceExerciseReference { key: string; name: string; mode: string; measurement?: string; exerciseId?: string; perSide?: boolean; quantityUnit?: string }
 /** Reused by charts and comparisons so a renamed or remeasured movement cannot inherit unrelated results. */
 export function exercisePerformanceIdentity(exercise: PerformanceExerciseReference): string {
-  return JSON.stringify([exercise.exerciseId ?? exercise.key, exercise.name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-GB'), exercise.mode, exercise.measurement ?? null]);
+  return JSON.stringify([exercise.exerciseId ?? exercise.key, exercise.name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-GB'), exercise.mode, exercise.measurement ?? null, Boolean(exercise.perSide), exercise.quantityUnit ?? null]);
 }
 export function areComparableExercises(a: PerformanceExerciseReference, b: PerformanceExerciseReference): boolean {
   return exercisePerformanceIdentity(a) === exercisePerformanceIdentity(b);
@@ -340,13 +340,10 @@ export function getPerformanceSummary({ sessions, activities = [], plan = [], nu
   }
   records.sort((a, b) => b.date.localeCompare(a.date) || a.name.localeCompare(b.name));
   const gymSessions = month.filter(isGymTraining).length;
-  let dueDays = 0, completedDays = 0;
-  for (let i = 29; i >= 0; i--) {
-    const date = shiftReportDate(today, -i), day = (new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7;
-    if (isGymTraining(plan[day])) { dueDays++; if (month.some(s => isGymTraining(s) && s.date === date)) completedDays++; }
-  }
-  const volume = (items: readonly ReportSession[]) => items.reduce((total, s) => total + s.exercises.filter(e => e.mode === 'weight' && !e.measurement && !e.quantityUnit && !/assisted.*pull.?up|pull.?up.*assisted/i.test(e.name)).reduce((sum, e) => sum + strengthSets(e).reduce((n, log) => n + log.kg! * log.reps!, 0), 0), 0);
-  const setCount = (items: readonly ReportSession[]) => items.reduce((total, s) => total + s.exercises.reduce((n, e) => n + e.logs.filter(l => l.done).length, 0), 0);
+  const gymDays = new Set(month.filter(isGymTraining).map(session => session.date)).size;
+  // Current plan weekdays do not establish what was prescribed on historical dates.
+  const volume = (items: readonly ReportSession[]) => items.reduce((total, s) => total + s.exercises.filter(e => !e.preparationOnly && e.mode === 'weight' && !e.measurement && !e.quantityUnit && !/assisted.*pull.?up|pull.?up.*assisted/i.test(e.name)).reduce((sum, e) => sum + strengthSets(e).reduce((n, log) => n + log.kg! * log.reps!, 0), 0), 0);
+  const setCount = (items: readonly ReportSession[]) => items.reduce((total, s) => total + s.exercises.filter(e => !e.preparationOnly).reduce((n, e) => n + e.logs.filter(l => l.done).length, 0), 0);
   const last7 = saved.filter(s => s.date >= shiftReportDate(today, -6));
   const before7 = saved.filter(s => s.date >= shiftReportDate(today, -13) && s.date < shiftReportDate(today, -6));
   const recentActivities = liveActivities.filter(r => r.activity.date >= shiftReportDate(today, -6));
@@ -370,15 +367,22 @@ export function getPerformanceSummary({ sessions, activities = [], plan = [], nu
   for (const items of exerciseGroups.values()) {
     const first = items[0], last = items.at(-1)!;
     if (first.date === last.date) continue;
-    const matches = strengthSets(last.exercise).flatMap(log => {
-      const before = strengthSets(first.exercise).filter(old => old.reps === log.reps);
+    const counts = new Set(strengthSets(last.exercise).map(log => log.reps!));
+    const matches = [...counts].flatMap(reps => {
+      const before = strengthSets(first.exercise).filter(log => log.reps === reps);
+      const after = strengthSets(last.exercise).filter(log => log.reps === reps);
       if (!before.length) return [];
-      const old = Math.max(...before.map(l => l.kg!));
-      return [{ name: last.exercise.name, previous: old, current: log.kg!, reps: log.reps!, percent: round((log.kg! - old) / old * 100) }];
+      const previous = Math.max(...before.map(log => log.kg!));
+      const current = Math.max(...after.map(log => log.kg!));
+      return [{ name: last.exercise.name, previous, current, reps,
+        percent: round((current - previous) / previous * 100), observations: before.length + after.length }];
     });
-    if (matches.length) strengthChanges.push(matches.sort((a, b) => b.percent - a.percent)[0]);
+    // Prefer the most observed fixed-rep comparison, including declines. Never
+    // choose a rep cohort or movement because its percentage gain is larger.
+    const chosen = matches.sort((a,b) => b.observations-a.observations || a.reps-b.reps)[0];
+    if (chosen) { const { observations: _count, ...change } = chosen; strengthChanges.push(change); }
   }
-  strengthChanges.sort((a, b) => b.percent - a.percent);
+  strengthChanges.sort((a,b) => a.name.localeCompare(b.name) || a.reps-b.reps);
   const jumpImprovement = jumps.find(j => j.measurement === 'height' && (j.change30Days ?? 0) > 0);
   const bestStrength = strengthChanges.find(item => item.percent > 0);
   const approachAdvantage = getApproachAdvantage(performance?.jumps ?? [], today).latest;
@@ -390,5 +394,5 @@ export function getPerformanceSummary({ sessions, activities = [], plan = [], nu
     bestStrength ? `${bestStrength.name}: +${number(bestStrength.current - bestStrength.previous)} kg at ${bestStrength.reps} reps.` : null,
     load.level === 'higher' ? load.cue : null,
   ].filter((item): item is string => item !== null).slice(0, 3);
-  return { weight, jumps, records, strengthChanges, gymSessions, volleyballSessions, consistencyPercent: dueDays ? Math.round(completedDays / dueDays * 100) : null, weeklyVolumeKg: round(volume(week)), weeklySets: setCount(week), load, insights };
+  return { weight, jumps, records, strengthChanges, gymSessions, gymDays, volleyballSessions, consistencyPercent: null, weeklyVolumeKg: round(volume(week)), weeklySets: setCount(week), load, insights };
 }

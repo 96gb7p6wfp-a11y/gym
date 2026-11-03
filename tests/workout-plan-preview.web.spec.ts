@@ -79,6 +79,7 @@ test('Today previews the entire scheduled session and technique without starting
   await expect(sheet).toContainText('About 55 min');
   await expect(sheet).toContainText('3 exercises · 9 sets');
   await expect(sheet).toContainText('Weekly plan unchanged.');
+  await expect(sheet).toContainText('Previous · 50 kg × 6 · 2026-10-12');
   for (const name of EXERCISES) await expect(sheet.getByRole('button', { name: `Exercise details for ${name}`, exact: true })).toBeVisible();
   await expect(sheet).toContainText('3 × 4–6 reps · 50 kg');
   await expect(sheet).toContainText('120 sec rest');

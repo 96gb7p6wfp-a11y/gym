@@ -6,9 +6,12 @@ import { WarmupFlow } from "./WarmupFlow";
 import { findSessionDraft, getPreparationStatus, putSessionDraft, resetDraftPreparation, resolveSessionDraft } from "./workout-drafts";
 import { useRestAudio } from "./useRestAudio";
 import { useRestDeadline } from "./useRestDeadline";
+import { recordedExerciseChartValue } from "./exercise-chart";
+import { previousSetReuse } from "./workout-reuse";
 import { DEFAULT_REST_VOLUME } from "./rest-audio";
 import { TimerSoundSettings } from "./TimerSoundSettings";
 import { PwaUpdateControl } from "./PwaUpdateControl";
+import { AppUpdateNotice } from "./AppUpdateNotice";
 import { restAfterCompletedSet } from "./training-flow";
 import { TrainingExposureFields } from "./TrainingExposureFields";
 import './workout-flow.css';
@@ -149,6 +152,7 @@ const PerformanceDetails = deferredScreen(() => import('./PerformanceDetails').t
 const WeeklyReport = deferredScreen(() => import('./WeeklyReport').then(module => ({ default: module.WeeklyReport })), 'Loading report…');
 const ActivityImport = deferredScreen(() => import('./ActivityImport').then(module => ({ default: module.ActivityImport })), 'Loading import…');
 const NutritionView = deferredScreen(() => import('./NutritionView').then(module => ({ default: module.NutritionView })), 'Loading nutrition…');
+const TrainingJourney = deferredScreen(() => import('./TrainingJourney'), 'Loading your journey…');
 const StrengthChart = deferredScreen(() => import('./StrengthChart'), 'Loading chart…');
 
 async function requestTracker(payload) {
@@ -1092,19 +1096,9 @@ function GymApp({
       let t = e.exercises.find((e) => areComparableExercises(e, progressExercise));
       return {
         date: formatDate(e.date, !0),
-        value: progressExercise.measurement
-          ? bestMeasurement(t)
-          : progressExercise.mode === `weight`
-            ? (topSet(t)?.kg ?? 0)
-            : progressExercise.mode === `timed`
-              ? t.logs
-                  .filter((e) => e.done)
-                  .reduce((e, t) => e + (t.seconds ?? 0), 0)
-              : t.logs
-                  .filter((e) => e.done)
-                  .reduce((e, t) => e + (t.reps ?? 0), 0),
+        value: recordedExerciseChartValue(t),
       };
-    });
+    }).filter(point => point.value !== null);
   let chartMetricLabel = progressExercise?.measurement
     ? measurementLabel(progressExercise)
     : progressExercise?.mode === `weight`
@@ -1264,7 +1258,7 @@ function GymApp({
           { value: `more`, label: `You`, icon: <UserRound /> },
         ]} />
       <main className={`workspace workspace--${tab === 'more' ? moreView : tab} ${tab === 'train' && currentSession ? 'workspace--training' : ''}`}>
-        <PageHeader title={tab === `today` ? `Today` : tab === `train` ? `Train` : tab === `progress` ? progressView === 'history' ? 'History' : progressView === 'strength' ? 'Strength' : progressView === 'week' ? 'Your week' : progressView === 'details' ? 'Performance' : 'Progress' : moreView === `nutrition` ? `Nutrition` : moreView === `plan` ? `Training plan` : moreView === `routine` ? `Routine` : moreView === `workouts` ? `My workouts` : `You`}
+        <PageHeader title={tab === `today` ? `Today` : tab === `train` ? `Train` : tab === `progress` ? progressView === 'journey' ? 'Training journey' : progressView === 'history' ? 'History' : progressView === 'strength' ? 'Strength' : progressView === 'week' ? 'Your week' : progressView === 'details' ? 'Performance' : 'Progress' : moreView === `nutrition` ? `Nutrition` : moreView === `plan` ? `Training plan` : moreView === `routine` ? `Routine` : moreView === `workouts` ? `My workouts` : `You`}
           action={tab === `train` && !currentSession ? <button type="button" className="icon-button" aria-label="Weekly plan" onClick={openPlan}><ListChecks size={21} /></button> : undefined}
           back={tab === `more` && moreView !== `menu` ? <button className="text-button" onClick={() => setMoreView(`menu`)}><ArrowLeft size={17} />You</button> : tab === `progress` && progressView !== `overview` ? <button className="text-button" onClick={() => { setProgressView(`overview`); setPerformanceAction(undefined); }}><ArrowLeft size={17} />Progress</button> : undefined}
           subtitle={tab === `today` ? new Date(`${today}T12:00:00`).toLocaleDateString(`en-GB`, { weekday: `long`, day: `numeric`, month: `long` }) : undefined} />
@@ -1723,7 +1717,9 @@ function GymApp({
               performance={performance.data} bodyWeight={profile.bodyWeight} today={today} initialAction={performanceAction}
               onSaveJump={performance.saveJump} onSaveJumps={performance.saveJumps} onDeleteJump={performance.deleteJump}
               onLogWeight={() => { setNutritionAction('weight'); setTab('nutrition'); }} /></>}
+          {progressView === 'journey' && <TrainingJourney sessions={sessions} nutritionRecords={reportNutrition} performance={performance.data} today={today} onViewSession={id => setSelectedHistory(sessions.find(session => session.id === id) ?? null)} />}
           {progressView === `overview` && <ProgressOverview sessions={sessions} activities={activityRecords} plan={currentWeekPlan} bodyWeight={profile.bodyWeight} nutritionRecords={reportNutrition} performance={performance.data} today={today}
+            onViewJourney={() => setProgressView('journey')}
             onViewPerformance={() => { setPerformanceAction(undefined); setProgressView('details'); }}
             onLogJump={() => { setPerformanceAction('log-jump'); setProgressView('details'); }}
             onViewStrength={() => setProgressView(`strength`)} onViewHistory={() => setProgressView(`history`)} onViewWeek={() => setProgressView(`week`)} onLogWeight={() => { setNutritionAction(`weight`); setTab(`nutrition`); }} />}
@@ -1767,7 +1763,7 @@ function GymApp({
             )}
             <div
               className={`progress-caption`}
-            >{`Only completed sets count. Jump charts use your best recorded measurement per session. Weight comparisons are most useful with the same machine, setup, and rep range.`}</div>
+            >{`Raw session records, not a strength score. Only completed sets count; missing values are omitted. Compare the same machine, setup, reps and distance. Use Training journey for fixed-rep comparisons.`}</div>
           </section>
           {exerciseSessions.length > 0 && (
             <section className={`panel movement-history`}>
@@ -2002,6 +1998,7 @@ function GymApp({
           </section>}
           {moreView === `routine` && <RemindersPanel showHeading={false} date={routineDate} onDateChange={setRoutineDate} />}
           {moreView === `menu` && <div className="more-menu">
+            <AppUpdateNotice activeWorkout={!!activeSession} onOpenSettings={openSettings} />
             <section className="native-menu-section"><h2>Daily</h2><div className="menu-group"><MenuRow title="Nutrition" subtitle="Meals & daily targets" onClick={() => setTab('nutrition')} /><MenuRow title="Routine" subtitle="Supplements & medication" onClick={() => setMoreView('routine')} /></div></section>
             <section className="native-menu-section"><h2>Training</h2><div className="menu-group"><MenuRow title="Training plan" icon={<ListChecks />} onClick={openPlan} /><MenuRow title="My workouts" icon={<Dumbbell />} onClick={() => setMoreView('workouts')} /><MenuRow title="Exercise library" icon={<Search />} onClick={() => setLibraryOpen(true)} /></div></section>
             <section className="native-menu-section"><h2>Your records</h2><div className="menu-group"><MenuRow title="History" icon={<History />} onClick={() => { setProgressView('history'); setTab('progress'); }} /><MenuRow title="Body weight" icon={<Activity />} onClick={() => { setNutritionAction('weight'); setTab('nutrition'); }} /><MenuRow title="Jump tests" icon={<ChartColumn />} onClick={() => { setPerformanceAction('log-jump'); setProgressView('details'); setTab('progress'); }} /></div></section>
@@ -2027,6 +2024,10 @@ function GymApp({
         <button type="button" className="icon-button" aria-label="Dismiss rest complete" onClick={() => setRestFinished(null)}><X size={18} /></button>
       </section>}
       <WorkoutPlanPreview open={previewContext !== null} onOpenChange={open => { if (!open) setPreviewContext(null); }} plan={previewWorkout.plan}
+        previous={exercise => {
+          const prior = previousSetReuse(exercise, 0, completedSessions, previewWorkout.date, '');
+          return prior && prior.patch.kg != null ? `${formatNumber(prior.patch.kg)} kg × ${prior.patch.reps} · ${prior.date}` : undefined;
+        }}
         dayLabel={formatDate(previewWorkout.date, true)} warmup={getQuickWarmup(previewWorkout.plan, preparationFor(previewWorkout.plan, 'warmup'))}
         disabled={!loaded || profileSaving || !!loadError || !!activeSession}
         onChange={plan => saveDayDraft({ ...plan, warmup: preparationFor({ ...plan, warmup: plan.warmup?.map(step => ({ ...step, done: false })) }, 'warmup') }, { date: previewWorkout.date, slot: previewWorkout.slot, customized: true })}

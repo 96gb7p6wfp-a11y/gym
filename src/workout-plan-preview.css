@@ -74,3 +74,5 @@
 @media(max-width:350px) { .plan-preview__exercise-main { gap:8px; } .plan-preview__number { min-width:18px; } .plan-preview__exercise-copy>strong { font-size:16px; } .plan-preview__fields { gap:12px; } }
 
 @media(max-height:640px) { .workout-plan-preview-sheet .dialog-scroll { gap:14px; } .plan-preview__start>span { display:none; } .plan-preview__start { position:static; padding-top:10px; } }
+
+.plan-preview__previous { display:block; color:var(--accent); font-size:11px; line-height:1.6; margin-top:6px; overflow-wrap:anywhere; }
