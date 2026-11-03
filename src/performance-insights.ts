@@ -7,7 +7,7 @@ import { reportWeekStart, shiftReportDate, type ReportNutritionRecord, type Repo
 
 type LoggedExercise = ReportSession['exercises'][number];
 type LoggedSet = LoggedExercise['logs'][number];
-export type ProgressionExercise = Pick<LoggedExercise, 'key' | 'name' | 'group' | 'target' | 'mode'> & Partial<Pick<LoggedExercise, 'measurement' | 'quantityUnit' | 'targetRpe'>> & { exerciseId?: string };
+export type ProgressionExercise = Pick<LoggedExercise, 'key' | 'name' | 'group' | 'target' | 'mode'> & Partial<Pick<LoggedExercise, 'measurement' | 'quantityUnit' | 'targetRpe'>> & { exerciseId?: string; preparationOnly?: boolean; sets?: number };
 export interface ProgressionRecommendation {
   kind: 'load' | 'reps' | 'hold' | 'reduce' | 'quality' | 'baseline';
   title: string;
@@ -29,6 +29,7 @@ export interface WeightSummary {
   weeklyDays: number;
   change30Days: number | null;
   stableThreeWeeks: boolean;
+  stableTwoWeeks: boolean;
   insight: string | null;
 }
 export interface JumpSummary {
@@ -88,7 +89,7 @@ function repRange(target: string): [number, number] | null {
   return low > 0 && high >= low && high <= 50 ? [low, high] : null;
 }
 function previousPerformance(exercise: ProgressionExercise, sessions: readonly ReportSession[], date: string) {
-  return savedSessions(sessions, date).flatMap(session => session.exercises.filter(item => identity(item) === identity(exercise)).map(item => ({ exercise: item, date: session.date })));
+  return savedSessions(sessions, date).flatMap(session => session.exercises.filter(item => !item.preparationOnly && identity(item) === identity(exercise)).map(item => ({ exercise: item, date: session.date })));
 }
 
 /** Suggestions are advisory. No saved load, set, rep or nutrition target is changed. */
@@ -98,9 +99,13 @@ export function getProgressionRecommendation(exercise: ProgressionExercise, sess
   const previous = history.at(-2)?.exercise;
   const intent = exerciseIntent(exercise);
   const base = { intent };
+  if (exercise.preparationOnly) return { ...base, kind: 'quality', title: 'Easy preparation only', cue: 'Follow your individual clearance guidance. Use comfortable unloaded or light rehearsal; do not chase load or jump height.', reason: 'This preparation alternative is not a heavy-lifting or maximal-impact recommendation.' };
   if (context.lowFatigueSession || (exercise.targetRpe != null && exercise.targetRpe <= 6)) return { ...base, kind: 'quality', title: 'Keep this easy', cue: 'Follow the planned effort. Keep plenty in reserve; do not add load or sets today.', reason: 'Primer or reduced-readiness work prioritizes freshness over overload.' };
   if (exercise.quantityUnit) return { ...base, kind: 'quality', title: 'Distance + posture', cue: 'Use the planned metres per side. Stay tall; do not chase reps or extra load.', reason: 'Carry distance is not a repetition or a 1RM test.' };
-  if (/assisted.*pull.?up|pull.?up.*assisted/i.test(exercise.name)) return { ...base, kind: 'quality', title: 'Clean pulling first', cue: 'Build to clean 8/8/8, then gradually reduce assistance. Kg records added load only.', reason: 'More assistance is not more strength; keep the assistance setup in workout notes.' };
+  if (/assisted.*pull.?up|pull.?up.*assisted/i.test(exercise.name)) {
+    const upper = repRange(exercise.target)?.[1] ?? 8;
+    return { ...base, kind: 'quality', title: 'Clean pulling first', cue: `Build every planned set to ${upper} clean reps with the prescribed reps in reserve, then consider less assistance. Kg records added load only.`, reason: 'More assistance is not more strength; keep the assistance setup in workout notes.' };
+  }
   if (context.readiness?.energy === 'low' || (context.readiness?.soreness === 'high' && lowerBody(exercise))) return { ...base, kind: powerExercise(exercise) ? 'quality' : 'hold', title: 'Keep it easy today', cue: powerExercise(exercise) ? 'Use fewer crisp contacts. Stop if jump height or landing control falls.' : 'Keep a comfortable load. Reduce a set if your warm-up feels heavy.', reason: 'Your energy or leg soreness check-in suggests moderating this movement.' };
   if (powerExercise(exercise) || exercise.measurement) return {
     ...base, kind: 'quality', title: 'Quality first', cue: 'Keep reps fast. Finish before jump height or landing control drops.',
@@ -132,7 +137,7 @@ export function getProgressionRecommendation(exercise: ProgressionExercise, sess
     kg: best.kg ?? undefined, reps: Math.max(range[0], Math.min(range[1], best.reps!)), reason: 'Volleyball is within 24 hours; avoid chasing lower-body fatigue.',
   };
   const recent = history.slice(-2);
-  const fullUpperRange = recent.length === 2 && recent.every(item => item.exercise.logs.length > 0 && item.exercise.logs.every(log => log.done && log.kg === best.kg && positive(log.reps) && log.reps >= range[1] && log.rir !== null && log.rir >= 2));
+  const fullUpperRange = recent.length === 2 && recent.every(item => item.exercise.logs.length >= (exercise.sets ?? 1) && item.exercise.logs.every(log => log.done && log.kg === best.kg && positive(log.reps) && log.reps >= range[1] && log.rir !== null && log.rir >= 2));
   if (fullUpperRange && exercise.mode === 'weight' && positive(best.kg)) {
     const increment = context.loadIncrementKg ?? 0.5;
     if (positive(increment)) {
@@ -167,13 +172,27 @@ export function getWeightSummary(records: readonly ReportNutritionRecord[], toda
   const completeWeeks = [3, 2, 1].map(n => weeks.find(item => item.date === shiftReportDate(reportWeekStart(today), -7 * n)));
   const adequatelySampled = completeWeeks.every(item => item?.adequate);
   const stableThreeWeeks = adequatelySampled && Math.max(...completeWeeks.map(item => item!.kg)) - Math.min(...completeWeeks.map(item => item!.kg)) <= 0.200001;
+  // Two non-overlapping seven-day windows, not two isolated weigh-ins.
+  const last14 = points.filter(point => point.date >= shiftReportDate(today, -13));
+  const rollingWeeks = [
+    last14.filter(point => point.date < shiftReportDate(today, -6)),
+    last14.filter(point => point.date >= shiftReportDate(today, -6)),
+  ];
+  const adequateWindow = (checks: WeightPoint[]) => checks.length >= 3
+    && checks.at(-1)!.date >= shiftReportDate(checks[0].date, 3);
+  const averages = rollingWeeks.map(checks => checks.reduce((sum, check) => sum + check.kg, 0) / checks.length);
+  const stableTwoWeeks = rollingWeeks.every(adequateWindow)
+    && last14[0].date <= shiftReportDate(today, -11)
+    && last14.at(-1)!.date >= shiftReportDate(today, -3)
+    && Math.abs(averages[1] - averages[0]) <= 0.100001;
   const recent = weeks.filter(item => item.adequate && item.date >= shiftReportDate(today, -30));
   return {
     points, weeks, current: points.at(-1)?.kg ?? (positive(profileWeight) ? profileWeight : null),
     weeklyAverage: week?.kg ?? null, weeklyDays: week?.days ?? 0,
     change30Days: recent.length >= 2 ? round(recent.at(-1)!.kg - recent[0].kg, 2) : null,
-    stableThreeWeeks,
-    insight: stableThreeWeeks ? 'Weight has been stable for 3 weeks. Consider +100–150 kcal/day, then review your weekly average.' : null,
+    stableThreeWeeks, stableTwoWeeks,
+    insight: stableTwoWeeks ? 'Seven-day average weight has been stable for about 2 weeks. Consider +150–200 kcal/day, then review the trend.'
+      : stableThreeWeeks ? 'Weight has been stable across 3 recorded weeks. Review current check-ins before changing intake.' : null,
   };
 }
 
@@ -196,7 +215,7 @@ export function getJumpSummaries(sessions: readonly ReportSession[], jumps: read
   // PRs, trends or improvements alongside directly measured tests.
   for (const jump of jumps) if (jump.source !== 'video-estimate' && validDate(jump.date) && jump.date <= today && positive(jump.cm)) add(jump.type, jump.measurement, { date: jump.date, cm: jump.cm, id: jump.id });
   for (const session of savedSessions(sessions, today)) for (const exercise of session.exercises) {
-    if (exercise.quantityUnit || /assisted.*pull.?up|pull.?up.*assisted/i.test(exercise.name)) continue;
+    if (exercise.preparationOnly || exercise.quantityUnit || /assisted.*pull.?up|pull.?up.*assisted/i.test(exercise.name)) continue;
     const type = inferredJumpType(exercise.name);
     if (!type || !exercise.measurement || exercise.measurement === 'distance') continue;
     const values = measuredSets(exercise).map(log => log.measurementCm!);
@@ -224,7 +243,7 @@ export function getPersonalRecords(sessions: readonly ReportSession[], today: st
     if (!old || value > old.value) records.set(key, { key, exerciseKey: exercise.exerciseId ?? exercise.key, name: exercise.name, kind, value: round(value), unit, date: session.date, sessionId: session.id, context, isNew: !!old && (old.sessionId !== session.id || old.isNew) });
   }
   for (const session of savedSessions(sessions, today)) for (const exercise of session.exercises) {
-    if (exercise.quantityUnit || /assisted.*pull.?up|pull.?up.*assisted/i.test(exercise.name)) continue;
+    if (exercise.preparationOnly || exercise.quantityUnit || /assisted.*pull.?up|pull.?up.*assisted/i.test(exercise.name)) continue;
     if (exercise.measurement) {
       for (const log of measuredSets(exercise)) consider(exercise, session, exercise.measurement, log.measurementCm!, 'cm', `${exercise.measurement === 'touch' ? 'Highest touch' : exercise.measurement === 'distance' ? 'Jump distance' : 'Jump height'} · ${log.reps ?? 1} reps`);
       continue;
@@ -294,7 +313,7 @@ export function getPerformanceSummary({ sessions, activities = [], plan = [], nu
           : { level: 'unknown', label: 'No load baseline', cue: 'Log training and how you feel to build context. Recovery cannot be inferred from missing logs.' };
   const strengthChanges: PerformanceSummary['strengthChanges'] = [];
   const exerciseGroups = new Map<string, { date: string; exercise: LoggedExercise }[]>();
-  for (const session of month) for (const exercise of session.exercises) if (exercise.mode === 'weight' && !exercise.measurement && !exercise.quantityUnit && !/assisted.*pull.?up|pull.?up.*assisted/i.test(exercise.name) && strengthSets(exercise).length) exerciseGroups.set(identity(exercise), [...(exerciseGroups.get(identity(exercise)) ?? []), { date: session.date, exercise }]);
+  for (const session of month) for (const exercise of session.exercises) if (!exercise.preparationOnly && exercise.mode === 'weight' && !exercise.measurement && !exercise.quantityUnit && !/assisted.*pull.?up|pull.?up.*assisted/i.test(exercise.name) && strengthSets(exercise).length) exerciseGroups.set(identity(exercise), [...(exerciseGroups.get(identity(exercise)) ?? []), { date: session.date, exercise }]);
   for (const items of exerciseGroups.values()) {
     const first = items[0], last = items.at(-1)!;
     if (first.date === last.date) continue;

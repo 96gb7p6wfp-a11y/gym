@@ -33,6 +33,10 @@
 .plan-preview__optional-detail span { color:var(--sub); font-size:12px; line-height:1.4; }
 .plan-preview__trap-bar>summary>svg { margin-left:auto; }
 .plan-preview__trap-bar>.text-button { margin-top:8px; }
+.plan-preview__supersets>summary>svg { margin-left:auto; }
+.plan-preview__supersets li>div { display:grid; gap:6px; min-width:0; }
+.plan-preview__supersets li strong { color:var(--ink); font-size:13px; font-weight:600; }
+.plan-preview__supersets li p { margin:0; color:var(--sub); font-size:12px; line-height:1.6; }
 .plan-preview__main { min-width:0; }
 .plan-preview__main>h3 { margin:0 0 8px; color:var(--sub); font-size:12px; font-weight:550; }
 .plan-preview__list { display:grid; margin:0; padding:0; list-style:none; }

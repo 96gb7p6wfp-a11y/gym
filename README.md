@@ -60,6 +60,12 @@ PWA identity are unchanged. No migration or reset is needed.
   weights/reps/time/RIR, jump measurements, session and movement timers, automatic
   rest timer, notes, intensity and calorie estimates/watch calories.
   Complex pairs alternate by round in one view while keeping prescribed rest.
+  **[Volleyball Performance Master Plan V13.1](docs/VOLLEYBALL_MASTER_PLAN.md)**
+  is the current opt-in recommendation: review and apply it from Today, Train or
+  Training plan. It preserves the running cycle, V8.1 restore version and records.
+  Thursday supersets retain unequal set counts; Saturday Lower B can explicitly
+  move to Sunday once, while Sunday matches take priority. Clearance and readiness
+  adapt future preparation without rewriting active or historical workouts.
   Today → View workout opens the complete date-specific plan without starting a
   timer or writing history. Its exercise options edit that date only; the weekly
   plan remains separate. Start workout opens compact, session-specific quick prep
@@ -80,6 +86,9 @@ PWA identity are unchanged. No migration or reset is needed.
   personal bests, History with editing/deletion/restoration, and weekly reports remain available.
 - **Nutrition:** calories and protein remaining, quick multi-food meals, recent
   meals, saved foods, daily weight entries and targets.
+  Daily targets offers a separate, confirmed V13.1 starting estimate of 3,050 kcal,
+  130 g protein, 420 g carbs and 95 g fat. Existing targets and food logs stay until
+  explicitly changed. Optional meal reminders reuse Routine; supplement doses stay.
 - **Daily nutrition estimate:** editable age, height, body weight, activity and
   surplus calculate a gradual weight-gain starting target. Calculation details
   and daily targets save separately; existing meals, weight logs and chosen

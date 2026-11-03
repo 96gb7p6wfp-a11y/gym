@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession, stopSessionTimers } from '../src/domain.js';
 import { upgradeMasterProgram, restorePreviousMasterProgram } from '../src/master-program-upgrade.ts';
-import { createVolleyballMasterPlan, getMasterProgramWeek } from '../src/volleyball-master-plan.ts';
+import { createVolleyballMasterPlan, createV81VolleyballMasterPlan, getMasterProgramWeek } from '../src/volleyball-master-plan.ts';
 import { createLocalClient, STORAGE_KEY } from '../src/storage.ts';
 import { defaultReminderState } from '../src/reminders.ts';
 
@@ -39,7 +39,7 @@ test('upgrade is explicit, retains the running cycle and saves the exact persona
   const untouched = structuredClone(before);
   const next = upgradeMasterProgram(before, 1000);
   assert.deepEqual(before, untouched, 'reviewing or constructing an upgrade cannot mutate the current profile');
-  assert.equal(next.masterProgram!.revision, '8.1');
+  assert.equal(next.masterProgram!.revision, '13.1');
   assert.equal(next.masterProgram!.startDate, before.masterProgram!.startDate);
   assert.deepEqual(next.masterProgram!.matchWeeks, before.masterProgram!.matchWeeks);
   assert.deepEqual(next.masterProgram!.readiness, before.masterProgram!.readiness);
@@ -58,6 +58,45 @@ test('upgrade is explicit, retains the running cycle and saves the exact persona
   }
   assert.deepEqual(upgradeMasterProgram(next, 2000), next, 'repeated upgrade cannot erase the original backup');
   assert.throws(() => upgradeMasterProgram(ProfileSchema.parse(DEFAULT_PROFILE)), /Activate/);
+});
+
+test('V8.1 upgrades to V13.1 without losing its cycle, old backup or deliberate day edits', async () => {
+  const personal = personalProgram();
+  const v81 = ProfileSchema.parse({ ...personal,
+    plan: createV81VolleyballMasterPlan(),
+    masterMatchWeekend: createV81VolleyballMasterPlan(true).slice(5),
+    masterProgram: { ...personal.masterProgram, revision: '8.1', matchTimes: [{ week: 3, startTime: '14:30' }] },
+    masterProgramBackup: { savedAt: 900, plan: personal.plan, masterProgram: personal.masterProgram,
+      preMasterPlan: personal.preMasterPlan, sessionDrafts: personal.sessionDrafts },
+  });
+  const before = structuredClone(v81);
+  const next = upgradeMasterProgram(v81, 2000);
+  assert.deepEqual(v81, before, 'the V8.1 profile remains unmodified until explicitly saved');
+  assert.equal(next.masterProgram?.revision, '13.1');
+  assert.deepEqual(next.masterProgram, { ...before.masterProgram, revision: '13.1' });
+  assert.equal(next.plan[5].name, 'Lower Strength B');
+  assert.equal(next.plan[6].kind, 'recovery');
+  assert.deepEqual(next.masterProgramBackup?.plan, before.plan);
+  assert.equal(next.masterProgramBackup?.masterProgram?.revision, '8.1');
+  assert.deepEqual(next.masterProgramArchive, [before.masterProgramBackup]);
+  assert.deepEqual(next.sessionDrafts, before.sessionDrafts?.filter(draft => draft.customized !== false));
+  assert.deepEqual(next.nutrition, before.nutrition, 'program upgrade never applies nutrition targets');
+  const restoredV81 = restorePreviousMasterProgram(next);
+  assert.deepEqual(restoredV81.plan, before.plan);
+  assert.deepEqual(restoredV81.masterProgram, before.masterProgram);
+  assert.deepEqual(restoredV81.masterProgramBackup, before.masterProgramBackup);
+  const restoredPersonal = restorePreviousMasterProgram(restoredV81);
+  assert.deepEqual(restoredPersonal.plan, personal.plan);
+  assert.deepEqual(restoredPersonal.masterProgram, personal.masterProgram);
+  assert.equal(restoredPersonal.masterProgramBackup, undefined);
+  const client = createLocalClient(new MemoryStorage());
+  await client.request('/api/tracker', { action: 'profile', profile: next, expectedVersion: 0 });
+  const imported = createLocalClient(new MemoryStorage());
+  imported.importBackup(client.exportBackup());
+  const importedProfile = ProfileSchema.parse((await imported.request('/api/tracker')).profile);
+  assert.deepEqual(importedProfile.masterProgramBackup, next.masterProgramBackup);
+  assert.deepEqual(importedProfile.masterProgramArchive, next.masterProgramArchive);
+  assert.deepEqual(restorePreviousMasterProgram(restorePreviousMasterProgram(importedProfile)).plan, personal.plan);
 });
 
 test('restoring the previous program keeps newer user edits and unrelated preferences', () => {

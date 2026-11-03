@@ -15,8 +15,11 @@ async function activate(page: Page, matches: number[] = []) {
   const program = page.getByRole('region', { name: '8-week volleyball-first program', exact: true });
   await program.getByLabel('Start Monday', { exact: true }).fill('2026-10-19');
   for (const week of matches) await program.getByRole('checkbox', { name: `Week ${week}`, exact: true }).check();
+  await program.getByText('Impact & lifting guidance', { exact: true }).click();
+  await program.getByLabel('Impact clearance', { exact: true }).selectOption('cleared');
+  await program.getByLabel('Heavy lifting clearance', { exact: true }).selectOption('cleared');
   await program.getByRole('button', { name: 'Use this plan', exact: true }).click();
-  await expect.poll(async () => (await read(page)).profile.masterProgram?.revision).toBe('8.1');
+  await expect.poll(async () => (await read(page)).profile.masterProgram?.revision).toBe('13.1');
   return program;
 }
 async function day(page: Page, name: string) {
@@ -47,7 +50,7 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Start workout', exact: true })).toBeEnabled();
 });
 
-test('activates V8.1, saves the old week and keeps PE planned while the easy run stays optional', async ({ page }) => {
+test('activates V13.1, saves the old week and keeps PE planned while the easy run stays optional', async ({ page }) => {
   const before = await read(page);
   await activate(page);
   const saved = await read(page);
@@ -61,24 +64,24 @@ test('activates V8.1, saves the old week and keeps PE planned while the easy run
   await day(page, 'Fri'); await expect(page.locator('.master-day-note')).toContainText('School PE');
   expect((await read(page)).activities).toEqual([]);
   await page.reload(); await day(page, 'Wed');
-  await expect(page.locator('.session-card h2')).toHaveText('Main Jump + Heavy Lower A');
+  await expect(page.locator('.session-card h2')).toHaveText('Lower Strength + Reactive Power');
 });
 
-test('non-match Saturday is recovery without a heavy gate and Sunday is Heavy Lower B', async ({ page }) => {
+test('non-match Saturday is Lower B and Sunday is recovery without a heavy gate', async ({ page }) => {
   await activate(page);
   await day(page, 'Sat');
-  await expect(page.locator('.session-card h2')).toContainText('Recovery');
-  await expect(page.locator('.master-readiness')).toHaveCount(0);
+  await expect(page.locator('.session-card h2')).toHaveText('Lower Strength B');
+  await expect(page.locator('.master-readiness')).toHaveCount(1);
   const saturday = await preview(page);
-  await expect(saturday.getByRole('list', { name: 'Scheduled exercises', exact: true })).toHaveCount(0);
+  await expect(saturday).toContainText('45–55 min');
+  await expect(saturday.getByRole('list', { name: 'Scheduled exercises', exact: true })).toContainText('Hip Thrust');
   await expect(saturday).not.toContainText('Leg Press');
   await saturday.getByRole('button', { name: 'Close', exact: true }).click();
   await day(page, 'Sun');
-  await expect(page.locator('.session-card h2')).toHaveText('Heavy Lower B');
+  await expect(page.locator('.session-card h2')).toContainText('Recovery');
+  await expect(page.locator('.master-readiness')).toHaveCount(0);
   const sunday = await preview(page);
-  await expect(sunday).toContainText('75–90 min');
-  await expect(sunday.getByRole('list', { name: 'Scheduled exercises', exact: true })).toContainText('Leg Press');
-  await expect(sunday.getByRole('list', { name: 'Scheduled exercises', exact: true })).not.toContainText('Trap Bar Jump');
+  await expect(sunday.getByRole('list', { name: 'Scheduled exercises', exact: true })).toHaveCount(0);
   expect((await read(page)).sessions).toEqual([]);
 });
 
@@ -87,7 +90,7 @@ test('match week uses a short Saturday primer and keeps Sunday match time separa
   await day(page, 'Sun');
   await expect(page.locator('.session-card h2')).toContainText('Match');
   const matchPreview = await preview(page);
-  await expect(matchPreview).not.toContainText('Heavy Lower B');
+  await expect(matchPreview).not.toContainText('Lower Strength B');
   await expect(matchPreview).not.toContainText('20:00');
   await matchPreview.getByRole('button', { name: 'Close', exact: true }).click();
   await page.getByRole('tab', { name: 'Today', exact: true }).click();
@@ -96,81 +99,85 @@ test('match week uses a short Saturday primer and keeps Sunday match time separa
   await day(page, 'Sat');
   await expect(page.locator('.session-card h2')).toHaveText(/Pre-match Primer/i);
   const primer = await preview(page);
-  await expect(primer).toContainText('12–18 min');
+  await expect(primer).toContainText('10–15 min');
   await primer.getByRole('button', { name: 'Close', exact: true }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
   await finishWarmup(page);
   const active = (await read(page)).sessions[0].session;
   expect(active.name).toMatch(/Pre-match Primer/i);
   expect(active.exercises.some((exercise: { name: string }) => /Hack Squat|Leg Press/.test(exercise.name))).toBe(false);
-  expect(active.exercises.find((exercise: { name: string }) => /Approach Jump/.test(exercise.name)).logs).toHaveLength(3);
+  expect(active.exercises.find((exercise: { name: string }) => exercise.name === 'Controlled Approach Footwork').logs).toHaveLength(2);
+  expect(active.exercises.some((exercise: { jumpContactsPerRep?: number }) => exercise.jumpContactsPerRep)).toBe(false);
 });
 
-test('Sunday yellow and red affect future work and green restores the base strength session', async ({ page }) => {
-  await activate(page); await day(page, 'Sun');
+test('Saturday yellow and red affect future work and green restores the base strength session', async ({ page }) => {
+  await activate(page); await day(page, 'Sat');
   await readiness(page, 'Yellow');
   const reduced = await preview(page);
-  await expect(reduced.getByRole('list', { name: 'Scheduled exercises', exact: true })).toContainText('Leg Press');
+  await expect(reduced.getByRole('list', { name: 'Scheduled exercises', exact: true })).toContainText('Hip Thrust');
   await expect(reduced.getByRole('list', { name: 'Scheduled exercises', exact: true })).not.toContainText('Split-squat Jump');
   await reduced.getByRole('button', { name: 'Close', exact: true }).click();
   await readiness(page, 'Red');
   await expect(page.locator('.session-card h2')).toContainText('Recovery');
   await readiness(page, 'Green');
-  await expect(page.locator('.session-card h2')).toHaveText('Heavy Lower B');
+  await expect(page.locator('.session-card h2')).toHaveText('Lower Strength B');
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
   await finishWarmup(page);
   const active = (await read(page)).sessions[0].session;
-  expect(active.exercises[0].name).toBe('Leg Press');
+  expect(active.exercises[0].name).toBe('Hip Thrust');
   expect(active.exercises[0].logs).toHaveLength(3);
   expect(active.exercises.some((exercise: { optionalWork?: boolean }) => exercise.optionalWork)).toBe(false);
 });
 
-test('Wednesday complex alternates Hack Squat and CMJ with their own 4-minute and 2.5-minute rests', async ({ page }) => {
+test('Wednesday completes the separate CMJ block before strength without the old complex', async ({ page }) => {
   await activate(page); await day(page, 'Wed'); await readiness(page, 'Green');
   const before = await read(page);
   const sheet = await preview(page);
-  await expect(sheet).toContainText('240 sec rest');
+  await expect(sheet).toContainText('210 sec rest');
   await expect(sheet).toContainText('150 sec rest');
+  await expect(sheet).not.toContainText('A1 · Complex pair');
   await sheet.getByRole('button', { name: 'Close', exact: true }).click();
   expect((await read(page)).sessions).toEqual(before.sessions);
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
   await finishWarmup(page);
-  await page.locator('.focused-movements > summary').click();
-  await page.getByRole('button', { name: 'Train Hack Squat', exact: true }).click();
   await page.clock.pauseAt(new Date('2026-10-19T10:05:00Z'));
   const current = page.getByRole('region', { name: 'Current exercise', exact: true });
+  for (let set = 1; set <= 3; set++) {
+    await expect(current.getByRole('heading', { level: 2 })).toHaveText('Countermovement Jump');
+    await current.getByRole('spinbutton', { name: `Countermovement Jump set ${set} reps`, exact: true }).fill('2');
+    await current.getByRole('button', { name: `Complete Countermovement Jump set ${set}`, exact: true }).click();
+    await expect(page.locator('.rest-floating')).toContainText('02:30');
+    await page.getByRole('button', { name: 'Skip rest', exact: true }).click();
+  }
+  await expect(current.getByRole('heading', { level: 2 })).toHaveText('Hack Squat');
   await current.getByRole('textbox', { name: 'Hack Squat set 1 weight in kilograms', exact: true }).fill('70');
   await current.getByRole('spinbutton', { name: 'Hack Squat set 1 reps', exact: true }).fill('6');
   await current.getByRole('button', { name: 'Complete Hack Squat set 1', exact: true }).click();
-  await expect(current.getByRole('heading', { level: 2 })).toHaveText(/CMJ|Countermovement/);
-  await expect(page.locator('.rest-floating')).toContainText('04:00');
-  await page.getByRole('button', { name: 'Skip rest', exact: true }).click();
-  await current.getByRole('spinbutton', { name: 'CMJ with Arm Swing set 1 reps', exact: true }).fill('2');
-  await current.getByRole('button', { name: /Complete .* set 1/ }).click();
   await expect(current.getByRole('heading', { level: 2 })).toHaveText('Hack Squat');
-  await expect(page.locator('.rest-floating')).toContainText('02:30');
+  await expect(page.locator('.rest-floating')).toContainText('03:30');
   const active = (await read(page)).sessions[0].session;
-  expect(active.exercises.find((exercise: { name: string }) => exercise.name === 'Hack Squat').logs).toHaveLength(3);
-  expect(active.exercises.some((exercise: { optionalWork?: boolean }) => exercise.optionalWork)).toBe(false);
+  expect(active.exercises.find((exercise: { name: string }) => exercise.name === 'Hack Squat').logs).toHaveLength(4);
+  expect(active.exercises.some((exercise: { group: string }) => /complex pair/i.test(exercise.group))).toBe(false);
 });
 
-test('week four snapshots reduced Wednesday and Sunday work and program edits cannot rewrite active records', async ({ page }) => {
+test('week four snapshots reduced Wednesday and Saturday work and program edits cannot rewrite active records', async ({ page }) => {
   await activate(page); await page.getByRole('tab', { name: 'Train', exact: true }).click();
   for (let week = 0; week < 3; week++) await page.getByRole('button', { name: 'Next week', exact: true }).click();
-  await day(page, 'Sun');
-  const sunday = await preview(page);
-  const legPress = sunday.getByRole('listitem').filter({ hasText: 'Leg Press' });
-  await expect(legPress).toContainText('2 ×');
-  await sunday.getByRole('button', { name: 'Close', exact: true }).click();
+  await day(page, 'Sat');
+  const saturday = await preview(page);
+  const hipThrust = saturday.getByRole('listitem').filter({ hasText: 'Hip Thrust' });
+  await expect(hipThrust).toContainText('2 ×');
+  await saturday.getByRole('button', { name: 'Close', exact: true }).click();
   await day(page, 'Wed'); await expect(page.locator('.master-day-note')).toContainText('Week 4 · Deload');
   await readiness(page, 'Green');
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
   await finishWarmup(page);
   const active = (await read(page)).sessions[0].session;
-  expect(active.exercises.find((exercise: { name: string }) => /Approach Jump/.test(exercise.name)).logs.length).toBeLessThan(4);
+  expect(active.exercises.some((exercise: { name: string }) => /Approach Jump/.test(exercise.name))).toBe(false);
   const hack = active.exercises.find((exercise: { name: string }) => exercise.name === 'Hack Squat');
   const cmj = active.exercises.find((exercise: { name: string }) => /CMJ|Countermovement/.test(exercise.name));
-  expect(hack.logs).toHaveLength(2); expect(cmj.logs).toHaveLength(2);
+  expect(hack.logs).toHaveLength(3); expect(cmj.logs).toHaveLength(3);
+  expect(cmj.target).toBe('1 rep');
   await openPlan(page); const program = page.getByRole('region', { name: '8-week volleyball-first program', exact: true });
   await program.getByText('Schedule & options', { exact: true }).click();
   await program.getByRole('checkbox', { name: 'Week 4', exact: true }).check();
@@ -205,7 +212,7 @@ test('a carry deliberately added from the library still logs decimal kilograms a
 
 test('returning to the saved plan restores it exactly without deleting program workout history', async ({ page }) => {
   const before = await read(page); await activate(page);
-  await day(page, 'Mon'); await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await day(page, 'Mon'); await readiness(page, 'Green'); await page.getByRole('button', { name: 'Start workout', exact: true }).click();
   await finishWarmup(page);
   const active = (await read(page)).sessions[0];
   await openPlan(page); await page.getByRole('button', { name: 'Return to saved plan', exact: true }).click();
@@ -222,32 +229,32 @@ test('editing a deload base retains the normal prescription instead of permanent
   await day(page, 'Wed'); await openPlan(page);
   await page.getByRole('button', { name: 'Edit Wednesday', exact: true }).click();
   const builder = page.getByRole('dialog', { name: 'Edit Wednesday', exact: true });
-  await builder.getByRole('button', { name: /Edit .*Approach Jump/ }).click();
+  await builder.getByRole('button', { name: 'Edit Hack Squat', exact: true }).click();
   await expect(builder.getByLabel('Sets', { exact: true })).toHaveValue('4');
   await builder.getByRole('button', { name: 'Save day', exact: true }).click();
   await expect(builder).not.toBeVisible();
-  expect((await read(page)).profile.plan[2].exercises[0].sets).toBe(4);
+  expect((await read(page)).profile.plan[2].exercises.find((exercise: { name: string }) => exercise.name === 'Hack Squat').sets).toBe(4);
   await day(page, 'Wed');
   const sheet = await preview(page);
-  await expect(sheet.getByRole('list', { name: 'Scheduled exercises', exact: true }).getByRole('listitem').filter({ hasText: 'Approach Jump' })).toContainText('2 ×');
+  await expect(sheet.getByRole('list', { name: 'Scheduled exercises', exact: true }).getByRole('listitem').filter({ hasText: 'Hack Squat' })).toContainText('3 ×');
 });
 
-test('a custom match-primer edit does not replace the non-match Sunday lower session', async ({ page }) => {
+test('a custom match-primer edit does not replace the non-match Saturday lower session', async ({ page }) => {
   await activate(page, [1]); await day(page, 'Sat');
   await openPlan(page);
   await page.getByRole('button', { name: 'Edit Saturday', exact: true }).click();
   const builder = page.getByRole('dialog', { name: 'Edit Saturday', exact: true });
-  await builder.getByRole('button', { name: /Edit .*Approach Jump/ }).click();
-  await builder.getByLabel('Sets', { exact: true }).fill('2');
+  await builder.getByRole('button', { name: 'Edit Controlled Approach Footwork', exact: true }).click();
+  await builder.getByLabel('Sets', { exact: true }).fill('3');
   await builder.getByRole('button', { name: 'Save day', exact: true }).click();
   await expect(builder).not.toBeVisible();
-  expect((await read(page)).profile.masterMatchWeekend[0].exercises.find((exercise: { name: string }) => /Approach Jump/.test(exercise.name)).sets).toBe(2);
-  expect((await read(page)).profile.plan[6].name).toBe('Heavy Lower B');
+  expect((await read(page)).profile.masterMatchWeekend[0].exercises.find((exercise: { name: string }) => exercise.name === 'Controlled Approach Footwork').sets).toBe(3);
+  expect((await read(page)).profile.plan[5].name).toBe('Lower Strength B');
   await openPlan(page); const program = page.getByRole('region', { name: '8-week volleyball-first program', exact: true });
   await program.getByText('Schedule & options', { exact: true }).click();
   await program.getByRole('checkbox', { name: 'Week 1', exact: true }).uncheck();
   await program.getByRole('button', { name: 'Save program', exact: true }).click();
   await expect.poll(async () => (await read(page)).profile.masterProgram.matchWeeks).toEqual([]);
-  await day(page, 'Sat'); await expect(page.locator('.session-card h2')).toContainText('Recovery');
-  await day(page, 'Sun'); await expect(page.locator('.session-card h2')).toHaveText('Heavy Lower B');
+  await day(page, 'Sat'); await expect(page.locator('.session-card h2')).toHaveText('Lower Strength B');
+  await day(page, 'Sun'); await expect(page.locator('.session-card h2')).toContainText('Recovery');
 });

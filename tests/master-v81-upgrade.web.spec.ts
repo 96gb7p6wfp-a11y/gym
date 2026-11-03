@@ -31,7 +31,7 @@ async function seedLegacy(page: Page, active = false) {
   ];
   const profile = ProfileSchema.parse({ ...structuredClone(DEFAULT_PROFILE), plan, appearance: 'dark',
     masterProgram: { version: 1, startDate: '2026-10-05', matchWeeks: [2, 4, 7],
-      readiness: [{ date: '2026-10-28', status: 'green' }] },
+      readiness: [{ date: '2026-10-28', status: 'green' }], clearance: { impact: 'cleared', heavyLifting: 'cleared' } },
     preMasterPlan: structuredClone(DEFAULT_PROFILE.plan), masterMatchWeekend: matchWeekend,
     timerSoundEnabled: true, timerSoundVolume: 0.35,
     customWorkouts: [{ ...plan[0], id: '83b5449d-466b-409d-909d-bb2603f41d24', name: 'My saved travel workout' }],
@@ -60,16 +60,16 @@ async function seedLegacy(page: Page, active = false) {
 
 async function reviewUpgrade(page: Page) {
   await openPlan(page);
-  await program(page).getByRole('button', { name: 'Upgrade to V8.1', exact: true }).click();
-  const review = page.getByRole('dialog', { name: 'Upgrade to V8.1', exact: true });
+  await program(page).getByRole('button', { name: 'Upgrade to V13.1', exact: true }).click();
+  const review = page.getByRole('dialog', { name: 'Upgrade to V13.1', exact: true });
   await expect(review).toBeVisible();
   return review;
 }
 async function applyUpgrade(page: Page) {
   const review = await reviewUpgrade(page);
-  await review.getByRole('button', { name: 'Apply V8.1', exact: true }).click();
+  await review.getByRole('button', { name: 'Apply V13.1', exact: true }).click();
   await expect(review).not.toBeVisible();
-  await expect.poll(async () => (await read(page)).profile.masterProgram.revision).toBe('8.1');
+  await expect.poll(async () => (await read(page)).profile.masterProgram.revision).toBe('13.1');
 }
 
 test.beforeEach(async ({ page }) => {
@@ -77,46 +77,46 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-test('the V8.1 schedule can be inspected and dismissed without changing a legacy personal program', async ({ page }) => {
+test('the V13.1 schedule can be inspected and dismissed without changing a legacy personal program', async ({ page }) => {
   await seedLegacy(page);
   const before = await read(page);
   const review = await reviewUpgrade(page);
-  await expect(review).toContainText('Heavy Lower B');
+  await expect(review).toContainText('Lower Strength B');
   await expect(review).toContainText('Sunday');
-  await expect(review).toContainText('Recovery');
+  await expect(review).toContainText(/recovery/i);
   await expect(review).toContainText('Pre-Match Primer');
   await review.getByRole('button', { name: 'Close', exact: true }).click();
   expect(await read(page)).toEqual(before);
 });
 
-test('Today exposes V8.1 directly and applying it shows the new Sunday workout without nested menus', async ({ page }) => {
+test('Today exposes V13.1 directly and applying it shows the new Saturday workout without nested menus', async ({ page }) => {
   await seedLegacy(page);
   const before = await read(page);
-  const action = page.getByRole('button', { name: /^V8.1 is ready Review plan/ });
+  const action = page.getByRole('button', { name: /^V13.1 is ready Review plan/ });
   await expect(action).toBeVisible();
   await action.click();
-  const review = page.getByRole('dialog', { name: 'Upgrade to V8.1', exact: true });
+  const review = page.getByRole('dialog', { name: 'Upgrade to V13.1', exact: true });
   await expect(review).toBeVisible();
   expect(await read(page)).toEqual(before);
-  await review.getByRole('button', { name: 'Apply V8.1', exact: true }).click();
+  await review.getByRole('button', { name: 'Apply V13.1', exact: true }).click();
   await expect(review).not.toBeVisible();
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
-  await expect(page.getByRole('button', { name: /^V8.1 is ready/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^V13.1 is ready/ })).toHaveCount(0);
   await page.getByRole('button', { name: 'Next week', exact: true }).click();
-  await page.getByRole('button', { name: /^Sun / }).click();
-  await expect(page.locator('.session-card h2')).toHaveText('Heavy Lower B');
+  await page.getByRole('button', { name: /^Sat / }).click();
+  await expect(page.locator('.session-card h2')).toHaveText('Lower Strength B');
   expect((await read(page)).sessions).toEqual(before.sessions);
 });
 
-test('an older active workout clearly explains why it keeps its saved prescription after applying V8.1', async ({ page }) => {
+test('an older active workout clearly explains why it keeps its saved prescription after applying V13.1', async ({ page }) => {
   await seedLegacy(page, true);
   await applyUpgrade(page);
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
-  await expect(page.getByText('V8.1 applies to your next workout. This session keeps its original plan.', { exact: true })).toBeVisible();
+  await expect(page.getByText('V13.1 applies to your next workout. This session keeps its original plan.', { exact: true })).toBeVisible();
   await expect(page.locator('.session-card h2')).toHaveText('My custom upper');
 });
 
-test('an athlete without an active program can start V8.1 this week from the visible Today action', async ({ page }) => {
+test('an athlete without an active program can start V13.1 this week from the visible Today action', async ({ page }) => {
   await seedLegacy(page);
   await page.evaluate(key => {
     const data = JSON.parse(localStorage.getItem(key)!);
@@ -125,12 +125,12 @@ test('an athlete without an active program can start V8.1 this week from the vis
   }, STORE);
   await page.reload();
   const before = await read(page);
-  await page.getByRole('button', { name: /^V8.1 is ready Review plan/ }).click();
+  await page.getByRole('button', { name: /^V13.1 is ready Review plan/ }).click();
   await expect(program(page).getByLabel('Start Monday', { exact: true })).toHaveValue('2026-10-26');
   await program(page).getByRole('button', { name: 'Use this plan', exact: true }).click();
-  await expect.poll(async () => (await read(page)).profile.masterProgram.revision).toBe('8.1');
+  await expect.poll(async () => (await read(page)).profile.masterProgram.revision).toBe('13.1');
   await page.getByRole('tab', { name: 'Today', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'Your day', exact: true })).toContainText('Main Jump + Heavy Lower A');
+  await expect(page.getByRole('region', { name: 'Your day', exact: true })).toContainText('Lower Strength + Reactive Power');
   expect((await read(page)).profile.preMasterPlan).toEqual(before.profile.plan);
   expect((await read(page)).sessions).toEqual(before.sessions);
 });
@@ -140,7 +140,7 @@ test('an explicit upgrade keeps cycle, match weeks, date edits and every histori
   const before = await read(page);
   await applyUpgrade(page);
   const after = await read(page);
-  expect(after.profile.masterProgram).toEqual({ ...before.profile.masterProgram, revision: '8.1' });
+  expect(after.profile.masterProgram).toEqual({ ...before.profile.masterProgram, revision: '13.1' });
   expect(after.profile.masterProgramBackup.plan).toEqual(before.profile.plan);
   expect(after.profile.masterProgramBackup.masterMatchWeekend).toEqual(before.profile.masterMatchWeekend);
   expect(after.profile.preMasterPlan).toEqual(before.profile.preMasterPlan);
@@ -148,8 +148,8 @@ test('an explicit upgrade keeps cycle, match weeks, date edits and every histori
   expect(after.profile.customWorkouts).toEqual(before.profile.customWorkouts);
   expect(after.profile.timerSoundVolume).toBe(0.35);
   expect(after.profile.appearance).toBe('dark');
-  expect(after.profile.plan[5].kind).toBe('recovery');
-  expect(after.profile.plan[6].name).toBe('Heavy Lower B');
+  expect(after.profile.plan[5].name).toBe('Lower Strength B');
+  expect(after.profile.plan[6].kind).toBe('recovery');
   expect(after.sessions).toEqual(before.sessions);
   expect(after.nutrition).toEqual(before.nutrition);
   expect(after.activities).toEqual(before.activities);
@@ -190,18 +190,18 @@ test('future Train preview uses the right match branch while Today remains the a
   await page.getByRole('button', { name: 'View workout', exact: true }).click();
   const preview = page.getByRole('dialog', { name: 'Workout preview', exact: true });
   await expect(preview).toContainText('1 Nov');
-  await expect(preview).not.toContainText('Heavy Lower B');
+  await expect(preview).not.toContainText('Lower Strength B');
   await preview.getByRole('button', { name: 'Close', exact: true }).click();
   await page.getByRole('tab', { name: 'Today', exact: true }).click();
   await expect(page.locator('.page-header')).toContainText(/Wednesday,? 28 October/);
-  await expect(page.getByRole('region', { name: 'Your day', exact: true })).toContainText('Main Jump + Heavy Lower A');
+  await expect(page.getByRole('region', { name: 'Your day', exact: true })).toContainText('Lower Strength + Reactive Power');
   expect(await read(page)).toEqual(before);
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: 'Next week', exact: true }).click();
-  await expect(page.locator('.session-card h2')).toHaveText('Heavy Lower B');
+  await expect(page.locator('.session-card h2')).toContainText('Recovery');
 });
 
-test('optional Thursday work stays collapsed and adds no sets unless deliberately enabled', async ({ page }) => {
+test('Thursday keeps all ten prescribed exercises including the hypertrophy and paired arm work', async ({ page }) => {
   await seedLegacy(page); await applyUpgrade(page);
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: 'Next week', exact: true }).click();
@@ -209,21 +209,20 @@ test('optional Thursday work stays collapsed and adds no sets unless deliberatel
   await page.getByRole('button', { name: 'View workout', exact: true }).click();
   const preview = page.getByRole('dialog', { name: 'Workout preview', exact: true });
   const required = preview.getByRole('list', { name: 'Scheduled exercises', exact: true });
+  await expect(required.getByRole('listitem')).toHaveCount(10);
+  await expect(required).toContainText('Incline Dumbbell Curl');
+  await expect(required).toContainText('Rope Triceps Extension');
+  await expect(required).toContainText('Cable Chest Fly');
   await expect(required).not.toContainText('Plyometric Push-up');
-  await expect(required).not.toContainText('Hammer Curl');
-  await expect(preview.getByRole('button', { name: 'Include Plyometric Push-up', exact: true })).not.toBeVisible();
-  await preview.locator('summary').filter({ hasText: 'Optional work' }).click();
-  await preview.getByRole('button', { name: 'Include Plyometric Push-up', exact: true }).click();
-  await expect(required).toContainText('Plyometric Push-up');
   const before = await read(page);
   await preview.getByRole('button', { name: 'Start workout', exact: true }).click();
   await finishWarmup(page);
   const active = (await read(page)).sessions.find((row: any) => row.session.status === 'active').session;
-  expect(active.exercises.find((exercise: any) => exercise.name === 'Plyometric Push-up').logs).toHaveLength(2);
-  expect(active.exercises.some((exercise: any) => /Hammer Curl|Triceps Pushdown/.test(exercise.name))).toBe(false);
+  expect(active.exercises).toHaveLength(10);
+  expect(active.exercises.find((exercise: any) => exercise.name === 'Incline Dumbbell Curl').logs).toHaveLength(3);
+  expect(active.exercises.find((exercise: any) => exercise.name === 'Rope Triceps Extension').logs).toHaveLength(3);
   expect((await read(page)).sessions.filter((row: any) => row.session.status === 'completed')).toEqual(before.sessions);
 });
-
 
 test('a completed eight-week block waits for an explicit next-block action', async ({ page }) => {
   await page.clock.setSystemTime(new Date('2026-12-01T11:00:00Z'));

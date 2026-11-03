@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Check, ChevronRight, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui';
 import { requestLocal } from './storage.ts';
-import { isTrackable, mealReminders, reminderEntryId, ReminderSchema, reminderStatus, timeReminders, timingLabel, type Reminder, type ReminderEntry, type ReminderRecord, type ReminderState } from './reminders.ts';
+import { isTrackable, mealReminders, optionalMealReminderTemplates, reminderEntryId, ReminderSchema, reminderScheduledOn, reminderStatus, timeReminders, timingLabel, type Reminder, type ReminderEntry, type ReminderRecord, type ReminderState } from './reminders.ts';
 import './reminders.css';
 
 export interface RemindersPanelProps {
@@ -65,6 +65,36 @@ export function MealRoutineCue({ date, mealSavedToken, onOpenRoutine }: MealRout
 }
 export const MealReminderCue = MealRoutineCue;
 
+/** Adds only the chosen meal cue, using the same routine store and no push permission. */
+export function MealTimingReminders({ schedule, onOpenRoutine }: {
+  schedule?: { days: number[]; startTime: string; endTime: string };
+  onOpenRoutine?: () => void;
+}) {
+  const { state, setState, error, setError } = useRoutine();
+  const [saving, setSaving] = React.useState<string | null>(null);
+  const templates = optionalMealReminderTemplates(schedule);
+  async function add(reminder: Reminder) {
+    if (!state || saving || state.items.some(item => item.reminder.id === reminder.id)) return;
+    setSaving(reminder.id); setError('');
+    try {
+      const result = await requestLocal('/api/reminders', { action: 'reminder', reminder, expectedVersion: 0 });
+      setState(current => current && ({ ...current, items: [...current.items, { reminder, version: result.version as number }] }));
+      window.dispatchEvent(new Event(ROUTINE_CHANGED));
+    } catch (cause) { setError(errorText(cause)); }
+    finally { setSaving(null); }
+  }
+  return <details className="meal-timing-options">
+    <summary className="nutrition-tool-row"><span><strong>Meal reminders</strong><small>Optional · in-app schedule</small></span><ChevronRight size={18} aria-hidden="true" /></summary>
+    <p className="small-note">Choose the reminders you want. Edit times and days in Routine. These cues do not send notifications while Setline is closed.</p>
+    <ul>{templates.map(reminder => {
+      const existing = state?.items.some(item => item.reminder.id === reminder.id);
+      return <li key={reminder.id}><span><strong>{reminder.name}</strong><small>{reminder.time}{reminder.days ? ` · ${reminder.id.includes('volleyball') ? 'volleyball days' : 'weekdays'}` : ''}</small></span><button type="button" className="text-button" aria-label={`Add ${reminder.name} reminder`} disabled={!state || !!saving || existing} onClick={() => void add(reminder)}>{existing ? 'Added' : saving === reminder.id ? 'Saving…' : 'Add'}</button></li>;
+    })}</ul>
+    {onOpenRoutine && <button type="button" className="text-button" onClick={onOpenRoutine}>Edit routine</button>}
+    {error && <p role="alert" className="reminder-panel__error">{error}</p>}
+  </details>;
+}
+
 export default function RemindersPanel({ date, onDateChange, mealSavedToken, showHeading = true }: RemindersPanelProps) {
   const { state, setState, error, setError, load } = useRoutine();
   const [saving, setSaving] = React.useState(false);
@@ -105,7 +135,7 @@ export default function RemindersPanel({ date, onDateChange, mealSavedToken, sho
     event.preventDefault();
     if (!draft || !state || saving) return;
     const parsed = ReminderSchema.safeParse(draft);
-    if (!parsed.success) { setDraftError('Add a name and label instructions. Check the time and confirm only a once-daily schedule.'); return; }
+    if (!parsed.success) { setDraftError(draft.kind === 'meal' ? 'Add a name and meal cue. Check the time, choose at least one day and confirm the reminder.' : 'Add a name and label instructions. Check the time and confirm only a once-daily schedule.'); return; }
     setSaving(true);
     setDraftError('');
     try {
@@ -119,26 +149,27 @@ export default function RemindersPanel({ date, onDateChange, mealSavedToken, sho
   const mealDue = state && mealSavedToken?.date === date && mealSavedToken.sequence > 0 ? mealReminders(state, date) : [];
   const timeDue = state ? timeReminders(state, date, now) : [];
   const dayLabel = new Date(`${date}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-  const ready = state?.items.filter(({ reminder }) => isTrackable(reminder)) ?? [];
-  const needsReview = state?.items.filter(({ reminder }) => !isTrackable(reminder)) ?? [];
+  const ready = state?.items.filter(({ reminder }) => isTrackable(reminder) && reminderScheduledOn(reminder, date)) ?? [];
+  const needsReview = state?.items.filter(({ reminder }) => !isTrackable(reminder) || !reminderScheduledOn(reminder, date)) ?? [];
 
   function reminderRow(record: ReminderRecord) {
     if (!state) return null;
     const { reminder } = record;
     const status = reminderStatus(state, reminder.id, date);
-    const trackable = isTrackable(reminder);
+    const scheduled = reminderScheduledOn(reminder, date);
+    const trackable = isTrackable(reminder) && scheduled;
     return <li key={reminder.id} className={`reminder-panel__item${status === 'taken' ? ' reminder-panel__item--taken' : ''}`}>
       <div className="reminder-panel__row">
         <button type="button" className="reminder-panel__name" aria-label={`Edit ${reminder.name} reminder`} disabled={saving} onClick={() => edit(record)}>
           <strong>{displayName(reminder)}</strong>
-          <span>{!reminder.enabled ? 'Paused' : !trackable ? 'Confirm label instructions' : timingLabel(reminder)}</span>
+          <span>{!reminder.enabled ? 'Paused' : !isTrackable(reminder) ? reminder.kind === 'meal' ? 'Confirm meal reminder' : 'Confirm label instructions' : !scheduled ? 'Not scheduled today' : timingLabel(reminder)}</span>
           {reminder.dosageText && <span className="reminder-panel__dose">{reminder.dosageText}</span>}
         </button>
-        {(trackable || status === 'taken') ? <button type="button" className="reminder-panel__check-button" disabled={saving} aria-pressed={status === 'taken'} aria-label={`${status === 'taken' ? 'Undo' : 'Mark'} ${reminder.name} taken`} onClick={() => void recordStatus(reminder, status === 'taken' ? 'pending' : 'taken')}>
+        {(trackable || status === 'taken') ? <button type="button" className="reminder-panel__check-button" disabled={saving} aria-pressed={status === 'taken'} aria-label={`${status === 'taken' ? 'Undo' : 'Mark'} ${reminder.name} ${reminder.kind === 'meal' ? 'done' : 'taken'}`} onClick={() => void recordStatus(reminder, status === 'taken' ? 'pending' : 'taken')}>
           <span className="reminder-panel__check-circle">{status === 'taken' && <Check size={18} strokeWidth={2.5} aria-hidden="true" />}</span>
         </button> : <button type="button" className="reminder-panel__edit-button" aria-label={`Review ${reminder.name} instructions`} disabled={saving} onClick={() => edit(record)}><ChevronRight size={19} aria-hidden="true" /></button>}
       </div>
-      {status !== 'pending' && <p className="reminder-panel__status" role="status">{status === 'taken' ? 'Taken' : 'Later'}</p>}
+      {status !== 'pending' && <p className="reminder-panel__status" role="status">{status === 'taken' ? reminder.kind === 'meal' ? 'Done' : 'Taken' : 'Later'}</p>}
       <details className="reminder-panel__instructions">
         <summary>Instructions</summary>
         <p>{reminder.instructions}</p>{trackable && <p>Once daily · confirmed instructions</p>}
@@ -166,22 +197,23 @@ export default function RemindersPanel({ date, onDateChange, mealSavedToken, sho
       <DialogContent className="app-dialog reminder-sheet">
         <DialogHeader className="">
           <DialogTitle className="">{draftVersion > 0 || state?.items.some((item) => item.reminder.id === draft?.id) ? 'Edit reminder' : 'New reminder'}</DialogTitle>
-          <DialogDescription className="">Use your label or prescription instructions.</DialogDescription>
+          <DialogDescription className="">{draft?.kind === 'meal' ? 'Choose a useful meal time. These are in-app cues.' : 'Use your label or prescription instructions.'}</DialogDescription>
         </DialogHeader>
         {draft && <form className="reminder-panel__form" aria-label="Reminder form" onSubmit={(event) => void save(event)}>
           <label>Name<input value={draft.name} maxLength={120} required onChange={(event) => changeDraft({ name: event.target.value })} /></label>
-          <label>Dosage text<input value={draft.dosageText ?? ''} maxLength={160} placeholder="As written on your label" onChange={(event) => changeDraft({ dosageText: event.target.value })} /></label>
+          {draft.kind !== 'meal' && <label>Dosage text<input value={draft.dosageText ?? ''} maxLength={160} placeholder="As written on your label" onChange={(event) => changeDraft({ dosageText: event.target.value })} /></label>}
           <div className="reminder-panel__form-pair">
-            <label>Type<select aria-label="Type" value={draft.kind} onChange={(event) => changeDraft({ kind: event.target.value as Reminder['kind'] })}><option value="medicine">Medicine</option><option value="supplement">Supplement</option></select></label>
+            <label>Type<select aria-label="Type" value={draft.kind} onChange={(event) => changeDraft({ kind: event.target.value as Reminder['kind'], ...(event.target.value === 'meal' ? { foodRelation: undefined, dosageText: undefined } : { days: undefined }) })}><option value="medicine">Medicine</option><option value="supplement">Supplement</option><option value="meal">Meal</option></select></label>
             <label>Frequency<select aria-label="Frequency" value={draft.schedule} onChange={(event) => changeDraft({ schedule: event.target.value as Reminder['schedule'] })}><option value="instructions-only">Instructions only</option><option value="once-daily">Once daily</option></select></label>
           </div>
-          <label>Label or prescribed instructions<textarea aria-label="Label or prescribed instructions" value={draft.instructions} maxLength={1000} rows={3} required onChange={(event) => changeDraft({ instructions: event.target.value })} /></label>
+          <label>{draft.kind === 'meal' ? 'Meal cue' : 'Label or prescribed instructions'}<textarea aria-label={draft.kind === 'meal' ? 'Meal cue' : 'Label or prescribed instructions'} value={draft.instructions} maxLength={1000} rows={3} required onChange={(event) => changeDraft({ instructions: event.target.value })} /></label>
           <label>Reminder timing<select aria-label="Reminder timing" value={draft.timing} onChange={(event) => changeDraft({ timing: event.target.value as Reminder['timing'], time: null })}><option value="instructions">Follow instructions</option><option value="meal">At a meal</option><option value="evening">Evening meal</option><option value="time">Choose a time</option></select></label>
           {draft.timing === 'time' && <label>Reminder time · Berlin<input type="time" value={draft.time ?? ''} required onChange={(event) => changeDraft({ time: event.target.value || null })} /></label>}
-          <label>Food timing<select aria-label="Food timing" value={draft.foodRelation ?? ''} onChange={(event) => changeDraft({ foodRelation: (event.target.value || undefined) as Reminder['foodRelation'] })}><option value="">Follow recorded instructions</option><option value="before">Before food</option><option value="with">With food</option><option value="after">After food</option></select></label>
-          <label className="reminder-panel__check"><input type="checkbox" checked={draft.confirmed} disabled={draft.schedule !== 'once-daily'} onChange={(event) => setDraft({ ...draft, confirmed: event.target.checked })} />I verified these instructions and once-daily frequency from my label or prescription.</label>
+          {draft.kind !== 'meal' && <label>Food timing<select aria-label="Food timing" value={draft.foodRelation ?? ''} onChange={(event) => changeDraft({ foodRelation: (event.target.value || undefined) as Reminder['foodRelation'] })}><option value="">Follow recorded instructions</option><option value="before">Before food</option><option value="with">With food</option><option value="after">After food</option></select></label>}
+          {draft.kind === 'meal' && <fieldset className="reminder-panel__days"><legend>Days</legend>{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((name, index) => <label key={name}><input type="checkbox" checked={!draft.days || draft.days.includes(index)} onChange={event => changeDraft({ days: event.target.checked ? [...(draft.days ?? [0, 1, 2, 3, 4, 5, 6]), index].filter((day, i, all) => all.indexOf(day) === i).sort() : (draft.days ?? [0, 1, 2, 3, 4, 5, 6]).filter(day => day !== index) })} />{name}</label>)}</fieldset>}
+          <label className="reminder-panel__check"><input type="checkbox" checked={draft.confirmed} disabled={draft.schedule !== 'once-daily'} onChange={(event) => setDraft({ ...draft, confirmed: event.target.checked })} />{draft.kind === 'meal' ? 'Use this once-daily meal reminder on the selected days.' : 'I verified these instructions and once-daily frequency from my label or prescription.'}</label>
           <label className="reminder-panel__check"><input type="checkbox" checked={draft.enabled} onChange={(event) => setDraft({ ...draft, enabled: event.target.checked })} />Active reminder</label>
-          <details className="reminder-panel__form-note"><summary>About doses and medicines</summary><p>Other frequencies stay as instructions only. Check doses and medicine interactions with your pharmacist. Pausing keeps your history.</p></details>
+          {draft.kind !== 'meal' && <details className="reminder-panel__form-note"><summary>About doses and medicines</summary><p>Other frequencies stay as instructions only. Check doses and medicine interactions with your pharmacist. Pausing keeps your history.</p></details>}
           {draftError && <p role="alert" className="reminder-panel__error">{draftError}</p>}
           <div className="reminder-panel__form-actions"><button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save reminder'}</button><button type="button" disabled={saving} onClick={() => setDraft(null)}>Cancel</button></div>
         </form>}

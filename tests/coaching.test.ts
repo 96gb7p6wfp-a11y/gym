@@ -165,7 +165,7 @@ test('recovery reminders stay simple and switch when actual hard activity is add
     plannedKind: 'recovery', plannedName: 'Recovery', plannedTrainingMinutes: 120,
     extraActivities: [], completedTrainingMinutes: 0 };
   assert.match(getShortRoutine(input).before, /No special workout snack/);
-  assert.match(getShortRoutine(input).after, /Optional easy walking.*7–9 hours/);
+  assert.match(getShortRoutine(input).after, /Optional easy walking.*8–10 hours/);
   assert.match(getShortRoutine({ ...input, extraActivities: [activity({ type: 'cycle', intensity: 'hard', durationMinutes: 90 })] }).before, /30–60 g carbs\/hour/);
   assert.doesNotMatch(getShortRoutine({ ...input, extraActivities: [activity({ deletedAt: 2, intensity: 'hard' }), activity({ date: '2026-10-08', intensity: 'hard' })] }).before, /30–60/);
 });

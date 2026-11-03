@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createLocalClient, STORAGE_KEY } from '../src/storage.ts';
-import { defaultReminderState, reminderEntryId, type Reminder, type ReminderState } from '../src/reminders.ts';
+import { defaultReminderState, optionalMealReminderTemplates, reminderEntryId, type Reminder, type ReminderState } from '../src/reminders.ts';
 
 class MemoryStorage {
   values = new Map<string, string>();
@@ -25,6 +25,21 @@ test('old version-1 backups migrate absent reminders without losing workouts or 
   assert.deepEqual(await state(restored.client), defaultReminderState());
   assert.deepEqual(await restored.client.request('/api/tracker'), await client.request('/api/tracker'));
   assert.deepEqual(await restored.client.request('/api/nutrition'), await client.request('/api/nutrition'));
+});
+
+test('optional meal schedules and their actual completion survive backup without changing supplement instructions', async () => {
+  const { client } = fixture();
+  const before = await state(client);
+  const meal = optionalMealReminderTemplates().find(reminder => reminder.id === 'meal-pre-volleyball')!;
+  await client.request('/api/reminders', { action: 'reminder', reminder: meal, expectedVersion: 0 });
+  await client.request('/api/reminders', { action: 'entry', entry: entry('2026-11-03', 'taken', meal.id), expectedVersion: 0 });
+  const restored = fixture();
+  restored.client.importBackup(client.exportBackup());
+  const saved = await state(restored.client);
+  assert.deepEqual(saved.items.find(item => item.reminder.id === meal.id)?.reminder, meal);
+  assert.deepEqual(saved.items.filter(item => item.reminder.kind !== 'meal'), before.items);
+  assert.equal(saved.entries.length, 1);
+  assert.equal(saved.entries[0].entry.reminderId, meal.id);
 });
 
 test('saving a meal never marks supplements taken; daily taken history persists and separates dates', async () => {

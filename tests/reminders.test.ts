@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { defaultReminderState, isTrackable, mealReminders, ReminderEntrySchema, ReminderSchema, reminderEntryId, reminderStatus, timeReminders, timingLabel } from '../src/reminders.ts';
+import { defaultReminderState, isTrackable, mealReminders, optionalMealReminderTemplates, ReminderEntrySchema, ReminderSchema, reminderEntryId, reminderScheduledOn, reminderStatus, timeReminders, timingLabel } from '../src/reminders.ts';
 
 test('only the user-confirmed zinc dose is trackable; unverified product strengths are not daily prescriptions', () => {
   const state = defaultReminderState();
@@ -16,6 +16,38 @@ test('only the user-confirmed zinc dose is trackable; unverified product strengt
   assert.equal(magnesium.time, null);
   assert.match(magnesium.instructions, /Confirm elemental magnesium/);
   assert.match(magnesium.instructions, /bedtime is not proven better/);
+});
+
+test('optional meal templates never alter supplements and use the actual volleyball schedule', () => {
+  const state = defaultReminderState();
+  const before = JSON.stringify(state);
+  const meals = optionalMealReminderTemplates();
+  assert.equal(meals.length, 6);
+  assert.equal(new Set(meals.map(meal => meal.id)).size, 6);
+  for (const meal of meals) assert.equal(ReminderSchema.safeParse(meal).success, true);
+  assert.equal(meals.find(meal => meal.id === 'meal-pre-volleyball')!.time, '17:30');
+  assert.equal(meals.find(meal => meal.id === 'meal-post-volleyball')!.time, '22:15');
+  const custom = optionalMealReminderTemplates({ days: [2], startTime: '18:30', endTime: '20:30' });
+  assert.equal(custom.find(meal => meal.id === 'meal-pre-volleyball')!.time, '16:00');
+  assert.equal(custom.find(meal => meal.id === 'meal-post-volleyball')!.time, '20:45');
+  assert.deepEqual(custom.find(meal => meal.id === 'meal-pre-volleyball')!.days, [2]);
+  const late = optionalMealReminderTemplates({ days: [1, 6], startTime: '21:00', endTime: '23:50' });
+  assert.equal(late.find(meal => meal.id === 'meal-post-volleyball')!.time, '00:05');
+  assert.deepEqual(late.find(meal => meal.id === 'meal-post-volleyball')!.days, [0, 2]);
+  assert.equal(JSON.stringify(state), before);
+});
+
+test('meal reminders are opt-in foreground cues on their chosen Berlin days and never a dose suggestion', () => {
+  const state = defaultReminderState();
+  const reminder = optionalMealReminderTemplates().find(meal => meal.id === 'meal-pre-volleyball')!;
+  state.items.push({ reminder, version: 1 });
+  assert.equal(reminderScheduledOn(reminder, '2026-11-03'), true);
+  assert.equal(reminderScheduledOn(reminder, '2026-11-04'), false);
+  assert.equal(reminderScheduledOn(reminder, '2026-02-30'), false);
+  assert.deepEqual(timeReminders(state, '2026-11-03', new Date('2026-11-03T17:00:00Z')).map(reminder => reminder.id), [reminder.id]);
+  assert.deepEqual(timeReminders(state, '2026-11-04', new Date('2026-11-04T17:00:00Z')), []);
+  assert.deepEqual(mealReminders(state, '2026-11-03').map(reminder => reminder.id), ['zinc']);
+  assert.deepEqual(state.entries, []);
 });
 
 test('meal cues do not mutate taken history and skip paused, unconfirmed, deferred and already-taken reminders', () => {

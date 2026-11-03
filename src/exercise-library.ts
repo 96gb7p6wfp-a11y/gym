@@ -25,6 +25,7 @@ export interface LibraryExercise {
   jumpContactsPerRep?: number;
   aliases?: string[];
   legacyKeys?: string[];
+  precautions?: string[];
 }
 export interface ExerciseReference { exerciseId?: string; key?: string; name?: string }
 export interface LibraryFilters { muscle?: string; goal?: string; equipment?: string; movement?: string; type?: string }
@@ -59,7 +60,7 @@ family('Strength', 'Single-leg squat', 'Single-leg strength and stability', 'Jum
   ['split-squat', 'Split Squat', 'Quads|Glutes', 'Dumbbell', { substitutions: ['bulgarian-split-squat', 'reverse-lunge', 'step-up'] }],
   ['reverse-lunge', 'Reverse Lunge', 'Quads|Glutes', 'Dumbbell', { substitutions: ['split-squat', 'step-up', 'bulgarian-split-squat'] }],
   ['walking-lunge', 'Walking Lunge', 'Quads|Glutes', 'Dumbbell', { substitutions: ['reverse-lunge', 'split-squat'] }],
-  ['step-up', 'Step-up', 'Quads|Glutes', 'Dumbbell|Box', { substitutions: ['reverse-lunge', 'split-squat'], cues: ['Choose a controllable step height.', 'Drive through the top leg.'] }],
+  ['step-up', 'Step-up', 'Quads|Glutes', 'Dumbbell|Box', { aliases: ['Step-Up'], substitutions: ['reverse-lunge', 'split-squat'], cues: ['Choose a controllable step height and begin with the weaker side.', 'Drive through the top leg; match controlled repetitions on both sides.'], mistakes: ['Pushing off the lower foot.', 'Using a box height that makes the pelvis tip.'] }],
   ['lateral-lunge', 'Lateral Lunge', 'Quads|Glutes|Adductors', 'Dumbbell', { substitutions: ['cossack-squat', 'reverse-lunge'], primaryBenefit: 'Lateral leg strength', secondaryBenefit: 'Court movement and hip control' }],
 ], { perSide: true, recommendedReps: '6–10 reps', rest: 120 });
 
@@ -103,7 +104,7 @@ family('Strength', 'Hip flexion', 'Hip-flexor strength', 'Knee drive and approac
 
 family('Strength', 'Horizontal push', 'Upper-body pushing strength', 'Chest and triceps development', [
   ['bench-press', 'Barbell Bench Press', 'Chest|Triceps|Shoulders', 'Barbell|Bench|Rack', { aliases: ['Bench Press'], substitutions: ['machine-chest-press', 'dumbbell-bench-press', 'push-up'], difficulty: 'Intermediate', cues: ['Set feet and upper back before unracking.', 'Use a spotter or rack safeties.'] }],
-  ['machine-chest-press', 'Machine Chest Press', 'Chest|Triceps|Shoulders', 'Machine', { aliases: ['Machine Chest Press / Bench Press'], legacyKeys: ['chest-press'], substitutions: ['dumbbell-bench-press', 'bench-press', 'push-up'] }],
+  ['machine-chest-press', 'Machine Chest Press', 'Chest|Triceps|Shoulders', 'Machine', { aliases: ['Machine Chest Press / Bench Press', 'Flat Machine Chest Press'], legacyKeys: ['chest-press'], substitutions: ['dumbbell-bench-press', 'bench-press', 'push-up'], cues: ['Keep the upper back supported and handles near chest height.', 'Lower under control, then press strongly with 1–2 clean reps in reserve.'], mistakes: ['Arching or shrugging to finish the press.', 'Forcing a painful shoulder range.'] }],
   ['dumbbell-bench-press', 'Dumbbell Bench Press', 'Chest|Triceps|Shoulders', 'Dumbbell|Bench', { substitutions: ['machine-chest-press', 'bench-press', 'push-up'] }],
   ['incline-dumbbell-press', 'Incline Dumbbell Press', 'Chest|Shoulders|Triceps', 'Dumbbell|Bench', { legacyKeys: ['incline-db'], substitutions: ['incline-bench-press', 'machine-chest-press'], primaryBenefit: 'Upper-chest strength and muscle' }],
   ['incline-bench-press', 'Incline Barbell Bench Press', 'Chest|Shoulders|Triceps', 'Barbell|Bench', { substitutions: ['incline-dumbbell-press', 'machine-chest-press'], primaryBenefit: 'Upper-chest strength and muscle' }],
@@ -111,13 +112,13 @@ family('Strength', 'Horizontal push', 'Upper-body pushing strength', 'Chest and 
   ['incline-push-up', 'Incline Push-up', 'Chest|Triceps|Core', 'Bench', { mode: 'bodyweight', substitutions: ['push-up', 'machine-chest-press'] }],
 ], { rest: 120, recommendedReps: '6–10 reps', cues: ['Keep wrists aligned over forearms.', 'Lower with control; press strongly.'], mistakes: ['Bouncing out of the bottom.', 'Pressing through shoulder pain.'] });
 family('Hypertrophy', 'Chest fly', 'Chest muscle development', 'Controlled horizontal arm strength', [
-  ['cable-fly', 'Cable Chest Fly', 'Chest', 'Cable', { substitutions: ['pec-deck', 'dumbbell-fly'] }],
+  ['cable-fly', 'Cable Chest Fly', 'Chest', 'Cable', { substitutions: ['pec-deck', 'dumbbell-fly'], cues: ['Keep a slight elbow bend and stable trunk.', 'Bring the arms together through a comfortable shoulder range; return slowly.'], mistakes: ['Changing elbow angle to turn the fly into a press.', 'Forcing an excessive shoulder stretch.'], precautions: ['Use a comfortable shoulder range; reduce load or stop if pain increases.'] }],
   ['pec-deck', 'Pec Deck', 'Chest', 'Machine', { substitutions: ['cable-fly', 'dumbbell-fly'] }],
   ['dumbbell-fly', 'Dumbbell Fly', 'Chest', 'Dumbbell|Bench', { substitutions: ['cable-fly', 'pec-deck'], cues: ['Keep a soft elbow bend.', 'Use a light load and comfortable stretch.'] }],
 ], { recommendedReps: '10–15 reps', cues: ['Keep a soft elbow bend.', 'Stop at a comfortable chest stretch.'] });
 family('Strength', 'Vertical pull', 'Back strength and shoulder control', 'Upper-body development for hitting mechanics', [
   ['neutral-lat-pulldown', 'Neutral-Grip Lat Pulldown', 'Back|Biceps', 'Cable', { aliases: ['Neutral-Grip Lat Pulldown / Pull-up'], legacyKeys: ['lat-pulldown'], substitutions: ['lat-pulldown', 'assisted-pull-up', 'pull-up'] }],
-  ['lat-pulldown', 'Lat Pulldown', 'Back|Biceps', 'Cable', { substitutions: ['neutral-lat-pulldown', 'assisted-pull-up', 'pull-up'] }],
+  ['lat-pulldown', 'Lat Pulldown', 'Back|Biceps', 'Cable', { substitutions: ['neutral-lat-pulldown', 'assisted-pull-up', 'pull-up'], cues: ['Pull toward the upper chest with elbows moving down.', 'Keep the trunk steady; avoid excessive backward leaning.'], mistakes: ['Jerking or swinging the torso to move the weight.', 'Pulling behind the neck or forcing a painful shoulder range.'] }],
   ['pull-up', 'Pull-up', 'Back|Biceps', 'Pull-up bar', { mode: 'bodyweight', difficulty: 'Intermediate', substitutions: ['assisted-pull-up', 'neutral-lat-pulldown'] }],
   ['assisted-pull-up', 'Assisted Pull-up', 'Back|Biceps', 'Machine|Band', { mode: 'bodyweight', substitutions: ['neutral-lat-pulldown', 'pull-up'], cues: ['Use enough assistance for clean reps.', 'Record the same assistance setup for comparisons.'] }],
   ['chin-up', 'Chin-up', 'Back|Biceps', 'Pull-up bar', { mode: 'bodyweight', difficulty: 'Intermediate', substitutions: ['pull-up', 'assisted-pull-up', 'neutral-lat-pulldown'] }],
@@ -131,7 +132,7 @@ family('Strength', 'Horizontal pull', 'Back strength and shoulder stability', 'S
   ['inverted-row', 'Inverted Row', 'Back|Shoulders|Biceps', 'Bar|Suspension trainer', { mode: 'bodyweight', substitutions: ['cable-row', 'chest-supported-row'] }],
 ], { rest: 120, cues: ['Pull without shrugging.', 'Keep the trunk steady.'], mistakes: ['Jerking the weight with the lower back.', 'Lifting the chest off a support pad.'] });
 family('Strength', 'Vertical push', 'Shoulder and triceps strength', 'Upper-body force and overhead control', [
-  ['landmine-press', 'Landmine Press', 'Shoulders|Triceps|Core', 'Barbell|Landmine', { aliases: ['Landmine Press / Machine Shoulder Press'], legacyKeys: ['landmine-press'], perSide: true, substitutions: ['machine-shoulder-press', 'dumbbell-shoulder-press'], primaryBenefit: 'Shoulder strength with an angled press' }],
+  ['landmine-press', 'Landmine Press', 'Shoulders|Triceps|Core', 'Barbell|Landmine', { aliases: ['Landmine Press / Machine Shoulder Press', 'Single-Arm Landmine Press'], legacyKeys: ['landmine-press'], perSide: true, substitutions: ['machine-shoulder-press', 'dumbbell-shoulder-press'], primaryBenefit: 'Shoulder strength and unilateral pressing control', cues: ['Press diagonally upward from a stable stance.', 'Keep ribs controlled and avoid leaning or rotating to finish.'], mistakes: ['Flaring the ribs as the weight rises.', 'Swinging the torso or forcing a painful range.'] }],
   ['machine-shoulder-press', 'Machine Shoulder Press', 'Shoulders|Triceps', 'Machine', { substitutions: ['dumbbell-shoulder-press', 'landmine-press'] }],
   ['dumbbell-shoulder-press', 'Dumbbell Shoulder Press', 'Shoulders|Triceps', 'Dumbbell|Bench', { substitutions: ['machine-shoulder-press', 'landmine-press'] }],
   ['overhead-press', 'Barbell Overhead Press', 'Shoulders|Triceps|Core', 'Barbell|Rack', { difficulty: 'Intermediate', substitutions: ['dumbbell-shoulder-press', 'landmine-press'] }],
@@ -142,7 +143,7 @@ family('Hypertrophy', 'Shoulder abduction', 'Side-delt development', 'Upper-body
   ['machine-lateral-raise', 'Machine Lateral Raise', 'Shoulders', 'Machine', { substitutions: ['cable-lateral-raise', 'dumbbell-lateral-raise'] }],
 ], { recommendedReps: '12–20 reps', rest: 60, cues: ['Use a soft elbow bend.', 'Lift without shrugging or swinging.'] });
 family('Hypertrophy', 'Rear-delt pull', 'Rear-shoulder and upper-back strength', 'Shoulder balance for hitting volume', [
-  ['reverse-pec-deck', 'Reverse Pec Deck', 'Shoulders|Back', 'Machine', { legacyKeys: ['reverse-pec'], substitutions: ['reverse-fly', 'face-pull'] }],
+  ['reverse-pec-deck', 'Reverse Pec Deck', 'Shoulders|Back', 'Machine', { legacyKeys: ['reverse-pec'], substitutions: ['reverse-fly', 'face-pull'], cues: ['Keep the chest supported and open the arms smoothly.', 'Let the shoulder blades move without shrugging.'], mistakes: ['Lifting shoulders toward the ears.', 'Using a load that pulls the chest off the pad.'] }],
   ['reverse-fly', 'Dumbbell Reverse Fly', 'Shoulders|Back', 'Dumbbell|Bench', { substitutions: ['reverse-pec-deck', 'face-pull'] }],
   ['face-pull', 'Face Pull', 'Shoulders|Back', 'Cable|Band', { legacyKeys: ['face-pull'], aliases: ['Light Face Pull'], substitutions: ['reverse-pec-deck', 'reverse-fly'] }],
 ], { recommendedReps: '12–20 reps', rest: 60, cues: ['Keep neck and ribs quiet.', 'Use light resistance and a smooth return.'] });
@@ -154,11 +155,11 @@ family('Hypertrophy', 'Elbow flexion', 'Biceps and arm development', 'Pulling st
   ['biceps-curl', 'Biceps Curl', 'Biceps', 'Dumbbell|Cable', { legacyKeys: ['biceps-curl'], substitutions: ['cable-curl', 'incline-curl', 'hammer-curl'] }],
   ['hammer-curl', 'Hammer Curl', 'Biceps|Forearms', 'Dumbbell', { legacyKeys: ['hammer-curl'], substitutions: ['biceps-curl', 'cable-curl'] }],
   ['cable-curl', 'Cable Curl', 'Biceps', 'Cable', { substitutions: ['biceps-curl', 'incline-curl'] }],
-  ['incline-curl', 'Incline Dumbbell Curl', 'Biceps', 'Dumbbell|Bench', { substitutions: ['biceps-curl', 'cable-curl'] }],
+  ['incline-curl', 'Incline Dumbbell Curl', 'Biceps', 'Dumbbell|Bench', { substitutions: ['biceps-curl', 'cable-curl'], cues: ['Keep the upper arm relatively still against a stable incline setup.', 'Curl smoothly and lower without swinging.'], mistakes: ['Letting elbows swing forward to lift more.', 'Forcing the shoulder into an uncomfortable stretch.'], precautions: ['Reduce the bench angle or choose a standing curl if the shoulder position is uncomfortable.'] }],
   ['preacher-curl', 'Preacher Curl', 'Biceps', 'Machine|Bench|Dumbbell', { substitutions: ['cable-curl', 'biceps-curl'] }],
 ], { recommendedSets: 2, recommendedReps: '10–15 reps', rest: 60, cues: ['Keep the upper arm steady.', 'Lower without swinging.'] });
 family('Hypertrophy', 'Elbow extension', 'Triceps and arm development', 'Pushing strength', [
-  ['triceps-pushdown', 'Triceps Pushdown', 'Triceps', 'Cable', { legacyKeys: ['triceps'], substitutions: ['overhead-triceps-extension', 'band-pushdown'] }],
+  ['triceps-pushdown', 'Triceps Pushdown', 'Triceps', 'Cable', { aliases: ['Rope Triceps Pushdown'], legacyKeys: ['triceps'], substitutions: ['overhead-triceps-extension', 'band-pushdown', 'rope-triceps-extension'] }],
   ['overhead-triceps-extension', 'Cable Overhead Triceps Extension', 'Triceps', 'Cable', { substitutions: ['triceps-pushdown', 'dumbbell-triceps-extension'] }],
   ['dumbbell-triceps-extension', 'Dumbbell Triceps Extension', 'Triceps', 'Dumbbell', { substitutions: ['overhead-triceps-extension', 'triceps-pushdown'] }],
   ['band-pushdown', 'Band Triceps Pushdown', 'Triceps', 'Band', { substitutions: ['triceps-pushdown', 'dumbbell-triceps-extension'] }],
@@ -190,7 +191,7 @@ family('Strength', 'Carry', 'Grip and whole-body strength', 'Trunk stability und
 family('Power', 'Throw', 'Explosive upper-body power', 'Fast force transfer for hitting', [
   ['spike-slam', 'Medicine Ball Spike Slam', 'Shoulders|Core|Back', 'Medicine ball', { legacyKeys: ['spike-slam'], recommendedReps: '3 reps', substitutions: ['overhead-throw', 'rotational-throw'], primaryBenefit: 'Explosive overhead force', cues: ['Start with a 2–3 kg slam ball in an approved clear area.', 'Use both hands overhead, drive down fast and reset fully.'], mistakes: ['Using a ball or surface not approved for slams.', 'Forcing ballistic shoulder work when sore or fatigued.'] }],
   ['overhead-throw', 'Medicine Ball Overhead Throw / Slam', 'Shoulders|Core|Glutes', 'Medicine ball', { legacyKeys: ['overhead-throw'], substitutions: ['spike-slam', 'chest-pass'] }],
-  ['rotational-throw', 'Medicine Ball Rotational Throw', 'Core|Shoulders|Glutes', 'Medicine ball', { legacyKeys: ['rotational-throw'], perSide: true, substitutions: ['scoop-toss', 'spike-slam'], primaryBenefit: 'Rotational power from hips to hands' }],
+  ['rotational-throw', 'Medicine Ball Rotational Throw', 'Core|Shoulders|Glutes', 'Medicine ball', { legacyKeys: ['rotational-throw'], perSide: true, substitutions: ['scoop-toss', 'spike-slam'], primaryBenefit: 'Rotational power from hips to hands', cues: ['Use a light medicine ball and an approved target with a clear throwing area.', 'Rotate through hips and trunk, throw explosively and reset each repetition.'], mistakes: ['Twisting only through the lower back.', 'Using a heavy ball that turns the throw into a slow push.'], precautions: ['Use an approved area and target. Omit ballistic work when pain or individualized restrictions make it unsuitable.'] }],
   ['chest-pass', 'Medicine Ball Chest Pass', 'Chest|Triceps|Core', 'Medicine ball', { substitutions: ['overhead-throw', 'explosive-push-up'] }],
   ['scoop-toss', 'Medicine Ball Scoop Toss', 'Core|Glutes|Shoulders', 'Medicine ball', { perSide: true, substitutions: ['rotational-throw', 'overhead-throw'] }],
 ], { recommendedSets: 3, recommendedReps: '3–5 reps', rest: 90, goals: ['Power', 'Volleyball'], cues: ['Use a light ball and an approved target.', 'Reset fully; make each rep fast.'], mistakes: ['Choosing a ball that slows the movement.', 'Turning power work into a fatigue circuit.'] });
@@ -264,7 +265,7 @@ family('Recovery', 'Stretch', 'Restore comfortable range', 'Easy recovery withou
   ['pec-stretch', 'Pec Stretch', 'Chest|Shoulders', 'Doorway', { legacyKeys: ['stretch-pec'], substitutions: ['open-book'] }],
 ], { mode: 'timed', perSide: true, recommendedSets: 1, recommendedReps: '20–40 sec', rest: 15, goals: ['Recovery', 'Mobility'], cues: ['Use gentle tension.', 'Breathe without forcing the stretch.'], mistakes: ['Bouncing into the stretch.', 'Forcing range through pain.'] });
 family('Recovery', 'Aerobic recovery', 'Easy movement for recovery', 'Maintain capacity with low fatigue', [
-  ['easy-walk', 'Easy walk', 'Legs', 'Open space', { legacyKeys: ['walk'], substitutions: ['easy-cycle'], recommendedReps: '20–30 min' }],
+  ['easy-walk', 'Easy walk', 'Legs', 'Open space', { aliases: ['Relaxed Walking', 'Easy Walk + Breathing'], legacyKeys: ['walk'], substitutions: ['easy-cycle'], recommendedReps: '20–30 min' }],
   ['easy-cycle', 'Easy Cycling', 'Quads|Glutes', 'Bicycle', { substitutions: ['easy-walk'], recommendedReps: '15–25 min' }],
   ['recovery-mobility', 'Ankle, hip & thoracic mobility', 'Ankles|Hips|Back', 'Mat', { legacyKeys: ['mobility'], substitutions: ['hip-switch', 'thoracic-rotation'], recommendedReps: '10–15 min' }],
 ], { mode: 'timed', recommendedSets: 1, rest: 0, cues: ['Keep the effort conversational.', 'Finish feeling better, not drained.'], mistakes: ['Turning recovery into a hard workout.', 'Pushing through worsening pain.'] });
@@ -322,7 +323,7 @@ family('Power', 'Vertical jump', 'Explosive upward force with a light load', 'Ta
   ['light-dumbbell-squat-jump', 'Light Dumbbell Squat Jump', 'Quads|Glutes|Calves', 'Dumbbell', { difficulty: 'Intermediate', recommendedSets: 2, recommendedReps: '3 reps', rest: 120, substitutions: ['countermovement-jump', 'squat-jump'], cues: ['Use bodyweight first; 2–4 kg per hand only with consistent landings.', 'Jump upward fast, land softly and reset; log both dumbbells combined in kg.'], mistakes: ['Adding load when height or coordination falls.', 'Treating power work as a continuous fatigue circuit.'] }],
 ], { goals: ['Power', 'Jump', 'Volleyball'] });
 family('Core', 'Anti-rotation', 'Anti-rotation trunk stability', 'Steady force transfer without twisting', [
-  ['pallof-isometric-hold', 'Pallof Press Isometric Hold', 'Core', 'Cable|Band', { perSide: true, recommendedSets: 2, recommendedReps: '20 sec', rest: 60, mode: 'timed', substitutions: ['pallof-press', 'side-plank', 'bird-dog'], cues: ['Stand side-on, brace and hold the handle in front of the chest.', 'Breathe throughout the hold; keep hips and shoulders facing forward.'], mistakes: ['Twisting toward the anchor.', 'Holding your breath or arching the lower back.'] }],
+  ['pallof-isometric-hold', 'Pallof Press Isometric Hold', 'Core', 'Cable|Band', { aliases: ['Pallof Press Isometric'], perSide: true, recommendedSets: 2, recommendedReps: '20 sec', rest: 60, mode: 'timed', substitutions: ['pallof-press', 'side-plank', 'bird-dog'], cues: ['Stand side-on, brace and hold the handle in front of the chest.', 'Breathe throughout the hold; keep hips and shoulders facing forward.'], mistakes: ['Twisting toward the anchor.', 'Holding your breath or arching the lower back.'] }],
 ]);
 family('Plyometric', 'Single-leg jump', 'Single-leg takeoff and landing control', 'Low-volume unilateral explosive work', [
   ['split-squat-jump', 'Split-squat Jump', 'Quads|Glutes|Calves', 'Bodyweight', { mode: 'bodyweight', perSide: true, difficulty: 'Intermediate', recommendedSets: 2, recommendedReps: '2 reps', rest: 120, substitutions: ['split-squat', 'countermovement-jump'], cues: ['Start in a balanced split stance at bodyweight.', 'Jump up, land in the same stance under control and reset before each rep.'], mistakes: ['Adding load or repetitions before landing control is consistent.', 'Continuing after coordination or jump height falls.'] }],
@@ -335,16 +336,45 @@ family('Stability', 'Landing', 'Controlled landing preparation', 'Stable hips, k
   ['step-down-landing', 'Step-down Landing', 'Quads|Glutes|Calves', 'Low box', { mode: 'bodyweight', recommendedSets: 2, recommendedReps: '2 reps', rest: 90, substitutions: ['snap-down-landing', 'bodyweight-squat'], cues: ['Use a low stable 15–20 cm step with a clear landing area.', 'Step off without jumping up, land softly and hold; do not rebound.'], mistakes: ['Using a high box before control is established.', 'Bouncing immediately instead of owning the landing.'] }],
 ]);
 family('Mobility', 'Dynamic preparation', 'Comfortable full-body movement', 'Easy preparation without meaningful fatigue', [
-  ['light-dynamic-mobility', 'Light Dynamic Mobility', 'Shoulders|Hips|Ankles', 'Bodyweight', { mode: 'timed', recommendedSets: 1, recommendedReps: '2–3 min', rest: 0, substitutions: ['walking-lunge-reach', 'wall-slide', 'ankle-knee-to-wall'], cues: ['Move shoulders, hips and ankles through a comfortable range.', 'Keep the effort easy and breathe normally.'], mistakes: ['Forcing end ranges or bouncing into discomfort.', 'Turning a short primer into a fatiguing workout.'] }],
+  ['light-dynamic-mobility', 'Light Dynamic Mobility', 'Shoulders|Hips|Ankles', 'Bodyweight', { aliases: ['Easy Dynamic Movement', 'Ankle and Hip Mobility'], mode: 'timed', recommendedSets: 1, recommendedReps: '2–3 min', rest: 0, substitutions: ['walking-lunge-reach', 'wall-slide', 'ankle-knee-to-wall'], cues: ['Move shoulders, hips and ankles through a comfortable range.', 'Keep the effort easy and breathe normally.'], mistakes: ['Forcing end ranges or bouncing into discomfort.', 'Turning a short primer into a fatiguing workout.'] }],
+]);
+
+family('Stability', 'Calf isometric', 'Calf capacity and controlled force production', 'Soleus loading with steady ankle control', [
+  ['bent-knee-calf-isometric', 'Bent-Knee Calf Isometric', 'Calves', 'Machine|Bench|Dumbbell', {
+    mode: 'timed', recommendedSets: 2, recommendedReps: '30–45 sec', rest: 60,
+    substitutions: ['seated-calf-raise', 'single-leg-calf-raise'],
+    cues: ['Sit with knees bent and raise the heels to a comfortable mid-range.', 'Hold steady, keep pressure through the forefoot and breathe throughout.'],
+    mistakes: ['Bouncing or letting the heel drift during the hold.', 'Holding the breath or continuing through increasing tendon pain.'],
+    precautions: ['Choose a comfortable effort and position; stop if calf or tendon pain worsens.'],
+  }],
+]);
+family('Stability', 'Single-leg isometric', 'Unilateral isometric force capacity', 'Controlled trunk and lower-body stability', [
+  ['split-squat-isometric', 'Split-Squat Isometric', 'Quads|Glutes|Core', 'Bodyweight|Support', {
+    mode: 'timed', perSide: true, recommendedSets: 2, recommendedReps: '25–35 sec', rest: 60,
+    substitutions: ['split-squat', 'reverse-lunge'],
+    cues: ['Take a stable split stance and lower to a comfortable position; use support if needed.', 'Start with the weaker side, keep the trunk steady and match time on both legs.'],
+    mistakes: ['Holding a depth that changes knee or trunk control.', 'Holding the breath or forcing painful knee positions.'],
+    precautions: ['Use a shallower supported position if needed. Keep breathing and stop for worsening pain.'],
+  }],
+]);
+family('Hypertrophy', 'Elbow extension', 'Triceps muscle development', 'Controlled elbow extension for upper-body physique', [
+  ['rope-triceps-extension', 'Rope Triceps Extension', 'Triceps', 'Cable|Rope', {
+    recommendedSets: 3, recommendedReps: '10–15 reps', rest: 60,
+    substitutions: ['triceps-pushdown', 'overhead-triceps-extension', 'band-pushdown'],
+    cues: ['Set the cable and rope in a comfortable elbow-extension position.', 'Keep upper arms stable and extend the elbows without swinging the torso.'],
+    mistakes: ['Using body momentum to move the cable.', 'Forcing a painful shoulder or elbow range.'],
+    precautions: ['Use a comfortable setup and reduce load if shoulder or elbow symptoms increase.'],
+  }],
 ]);
 const masterAliases: Record<string, string[]> = {
   'pull-up': ['Pull-Up / Assisted Pull-Up'], 'arm-swing-jump': ['CMJ with Arm Swing'],
-  'landmine-press': ['Half-Kneeling Landmine Press'], 'low-hurdle-hop': ['Hurdle Hops'],
+  'landmine-press': ['Half-Kneeling Landmine Press'], 'low-hurdle-hop': ['Hurdle Hops', 'Low Hurdle Hops'],
+  'approach-jump': ['Max Approach Jump', 'Maximal Approach Jump'],
   'ab-wheel': ['Ab Wheel'], 'lateral-band-walk': ['Mini-Band Lateral Walk'],
   'incline-machine-press': ['Incline Machine Chest Press', 'Low-incline Chest Press'],
-  'biceps-curl': ['Dumbbell Biceps Curl'], 'slow-approach-rhythm': ['Slow L-R-L Approach Rhythm'],
+  'biceps-curl': ['Dumbbell Biceps Curl'], 'slow-approach-rhythm': ['Slow L-R-L Approach Rhythm', 'Controlled Approach Footwork'],
   'short-foot': ['Short-Foot Hold'], 'pogo-jump': ['Light Pogos'],
-  'spike-slam': ['Light Medicine Ball Spike Slam'],
+  'spike-slam': ['Light Medicine Ball Spike Slam'], 'band-pull-apart': ['Light Shoulder Activation'],
 };
 for (const item of catalogue) if (masterAliases[item.id]) item.aliases = [...(item.aliases ?? []), ...masterAliases[item.id]];
 for (const item of catalogue) {

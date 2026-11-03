@@ -77,7 +77,7 @@ export function ExerciseGuideBody({ exercise }: { exercise: GuideExercise }) {
         <div className="exercise-guide__disclosure-body">
           <section className="exercise-guide__feel"><h3>Feel it</h3><p>{guide.isGeneric && movement ? movement.muscles.join(' · ') : guide.feel}</p></section>
           <section className="exercise-guide__mistakes"><h3>Avoid</h3><ul>{mistakes.map((mistake, index) => <li key={index}>{mistake}</li>)}</ul></section>
-          <section className="exercise-guide__safety"><h3>Safety</h3><p>{guide.isGeneric && movement ? 'Use a setup you can control. Stop for sharp pain, dizziness or loss of technique.' : guide.caution}</p></section>
+          <section className="exercise-guide__safety"><h3>Safety</h3><p>{movement?.precautions?.length ? movement.precautions.join(' ') : guide.isGeneric && movement ? 'Use a setup you can control. Stop for sharp pain, dizziness or loss of technique.' : guide.caution}</p></section>
         </div>
       </details>
       <button type="button" className="exercise-guide__load-toggle" aria-expanded={loadingOpen} onClick={() => setLoadingOpen(value => !value)}>Load &amp; reps<span aria-hidden="true">{loadingOpen ? '−' : '+'}</span></button>

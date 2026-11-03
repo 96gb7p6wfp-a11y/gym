@@ -6,6 +6,7 @@ async function openTargets(page: Page) {
   await openDisclosure(page, 'Nutrition options');
   await page.getByRole('button', { name: /^Targets/, exact: false }).click();
   await expect(page.getByRole('dialog', { name: 'Daily targets', exact: true })).toBeVisible();
+  await openDisclosure(page, 'Personal calorie calculator');
 }
 
 async function closeTargets(page: Page) {
@@ -83,7 +84,7 @@ test('food guidance follows the selected volleyball date and stays compact on sm
   const fuel = page.locator('.nutrition-simple-fuel');
   await fuel.locator(':scope > summary').click();
   await expect(fuel).toContainText('20:00–22:00');
-  await expect(fuel).toContainText('18:00–19:00');
+  await expect(fuel).toContainText('17:00–18:00');
   await expect(fuel).toContainText('After 22:00');
   await page.getByLabel('Nutrition date', { exact: true }).fill('2026-10-08');
   await expect(fuel).not.toContainText('Volleyball 20:00');

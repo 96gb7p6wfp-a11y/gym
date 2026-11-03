@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import type { ActivityRecord } from './activities';
 import { currentReportDate, getWeeklyReport, reportWeekStart, shiftReportDate, type PerformanceComparison, type ReportNutritionRecord, type ReportPlanDay, type ReportSession } from './weekly-report';
 import './weekly-report.css';
+import { isGymTraining } from './training-classification';
 
 export interface WeeklyReportProps {
   sessions: readonly ReportSession[];
@@ -38,8 +39,8 @@ export function WeeklyReport({ sessions, activities, plan, bodyWeight, initialWe
   const report = getWeeklyReport({ weekStart, sessions, activities, plan, bodyWeight, nutritionRecords });
   const weekDates = new Set(report.dates);
   const weekSessions = sessions.filter(session => session.status === 'completed' && session.deletedAt == null && weekDates.has(session.date));
-  const gymSessions = weekSessions.filter(session => session.kind === 'strength').length;
-  const volleyballSessions = weekSessions.filter(session => session.kind === 'sport' && /volley/i.test(session.name)).length;
+  const gymSessions = weekSessions.filter(isGymTraining).length;
+  const volleyballSessions = report.jumpExposure.volleyballSessions;
   const minutes = Math.round(report.totals.minutes);
   const trainingTime = minutes >= 60 ? `${Math.floor(minutes / 60)}h${minutes % 60 ? ` ${minutes % 60}m` : ''}` : `${minutes}m`;
   const bestComparison = report.performance.find(comparison => comparison.current > comparison.previous
@@ -77,6 +78,8 @@ export function WeeklyReport({ sessions, activities, plan, bodyWeight, initialWe
       <div className="weekly-report-expanded">
         <p className="weekly-report-details">{counted(report.totals.workouts, 'completed workout', 'completed workouts')} · {displayNumber(report.totals.minutes)} recorded minutes · {displayNumber(report.totals.activeCalories)} active kcal logged / est.</p>
         <p className="weekly-report-details">{counted(report.totals.completedSets, 'completed set', 'completed sets')} · {displayNumber(report.totals.volumeKg)} kg volume · {counted(report.totals.extraActivities, 'extra activity', 'extra activities')}</p>
+        <p className="weekly-report-details" aria-label="Weekly jump exposure">Gym jumps · {report.jumpExposure.plannedGymContacts} planned · {report.jumpExposure.completedGymContacts} completed<br />Sport contacts · {report.jumpExposure.recordedVolleyballContacts} volleyball · {report.jumpExposure.recordedPeContacts} PE recorded{report.jumpExposure.estimatedSportContacts > 0 && <><br />{report.jumpExposure.estimatedSportContacts} estimated sport contacts · kept separate</>}{report.jumpExposure.unmeasuredSportSessions > 0 && <><br />{report.jumpExposure.unmeasuredSportSessions} sport {report.jumpExposure.unmeasuredSportSessions === 1 ? 'session' : 'sessions'} without a contact count</>}</p>
+        <p className="weekly-report-details">{report.weightTrend.currentAverage === null ? 'Weight trend · check in on 3 mornings across at least 4 days to build a weekly average.' : <>Weekly-average weight · {displayNumber(report.weightTrend.currentAverage)} kg{report.weightTrend.changeKg !== null && ` · ${report.weightTrend.changeKg > 0 ? '+' : ''}${displayNumber(report.weightTrend.changeKg)} kg versus last week`}</>}</p>
         {(report.totals.runKm > 0 || report.totals.cycleKm > 0) && <p className="weekly-report-details">{displayNumber(report.totals.runKm)} km running · {displayNumber(report.totals.cycleKm)} km cycling <span>(known distances)</span></p>}
         <p className="weekly-report-details">{!report.nutrition.available
           ? 'Meal logs have not loaded; food intake is unknown.'

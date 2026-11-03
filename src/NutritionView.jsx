@@ -7,9 +7,11 @@ import { Camera } from "lucide-react";
 import { Plus } from "lucide-react";
 import * as ReactJSX from "react/jsx-runtime";
 import NutritionCalculator from "./NutritionCalculator";
-import { MealRoutineCue } from "./RemindersPanel";
+import { AthleticNutritionProposal } from "./AthleticNutritionProposal";
+import { MealRoutineCue, MealTimingReminders } from "./RemindersPanel";
 import "./nutrition-native.css";
 import { simpleFoodGuidance } from "./nutrition-goals";
+import { getWeightSummary } from "./performance-insights";
 import {
   DEFAULT_NUTRITION_TARGETS,
   MealSchema,
@@ -159,6 +161,7 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
   }
   let currentWeekWeight = averageWeight(0, 6);
   let previousWeekWeight = averageWeight(7, 13);
+  const weightTrend = getWeightSummary(records, berlinDate(), bodyWeight);
   let recentMeals = React.useMemo(() => {
     const seen = new Set();
     return [...records].filter(record => record.payload.kind === `meal`)
@@ -307,7 +310,8 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
     } finally { setSaving(!1); }
   }
   async function applyEstimatedTargets(estimate) {
-    let result = NutritionTargetsSchema.safeParse({ ...targets, calories: estimate.calories, protein: estimate.protein, carbs: estimate.carbs, fat: estimate.fat });
+    let result = NutritionTargetsSchema.safeParse({ ...targets, calories: estimate.calories, protein: estimate.protein, carbs: estimate.carbs, fat: estimate.fat,
+      ...(Object.hasOwn(estimate, 'goalWeight') ? { goalWeight: estimate.goalWeight } : {}) });
     if (!result.success) throw new Error(`Check your target values.`);
     setSaving(!0);
     try {
@@ -386,11 +390,12 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
         <button type="button" className="nutrition-tool-row" onClick={() => { setWeightError(``); setWeightOpen(true); }}><span><strong>Weight check-in</strong><small>{latestWeightRecord?.payload.kind === 'weight' ? `${latestWeightRecord.payload.kg} kg · latest` : `${bodyWeight} kg · profile`}</small></span><ChevronRight size={18} aria-hidden="true" /></button>
         <details className="nutrition-simple-fuel">
           <summary><span><strong>Fuel for training</strong><small>Before & after your session</small></span><ChevronRight size={18} aria-hidden="true" /></summary>
-          <div className="nutrition-fuel-content"><p><strong>Before</strong>{foodGuidance.before}</p><p><strong>After</strong>{foodGuidance.after}</p>
+          <div className="nutrition-fuel-content"><p><strong>Before</strong>{foodGuidance.before}</p><p><strong>After</strong>{foodGuidance.after}</p><p><strong>Recovery</strong>{foodGuidance.recovery}</p>
             {dailyGuidance?.(selectedDate)}
             <a className="text-button" href="https://www.ausport.gov.au/ais/nutrition/performance-nutrition-hq-modules" target="_blank" rel="noreferrer">Nutrition guide</a>
           </div>
         </details>
+        <MealTimingReminders schedule={volleyballSchedule} onOpenRoutine={() => onOpenRoutine?.(selectedDate)} />
         {photoAnalysisReady && <button type="button" className="nutrition-tool-row" onClick={() => { setPhotoDialogOpen(true); setPhotoError(``); }}><span><strong>Meal photo</strong><small>Estimate, then review</small></span><Camera size={18} aria-hidden="true" /></button>}
         </div>
       </details>
@@ -398,7 +403,8 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
         <DialogContent className="app-dialog nutrition-dialog nutrition-native-sheet nutrition-targets-sheet">
           <DialogHeader><DialogTitle>Daily targets</DialogTitle><DialogDescription>Fuel muscle gain and volleyball.</DialogDescription></DialogHeader>
           <div className="nutrition-targets-summary"><div><span className="small-label">Your goals</span><p>{targets.calories === null ? 'No target set' : `${targets.calories} kcal · ${targets.protein ?? '–'} g protein`}</p><small className="muted">{targets.goalWeight === null ? 'Goal weight is optional' : `Goal weight: ${targets.goalWeight} kg`}</small></div><button type="button" className="text-button" onClick={() => { setTargetsDraft({ ...targets }); setDraftError(``); setProfileOpen(false); setTargetsOpen(true); }}>Edit targets</button></div>
-          <NutritionCalculator profile={nutritionProfile} bodyWeight={bodyWeight} disabled={!loaded || saving || !onNutritionProfileChange} onProfileSave={onNutritionProfileChange} onApplyTargets={applyEstimatedTargets} />
+          <AthleticNutritionProposal currentTargets={targets} disabled={!loaded || saving} onApplyTargets={applyEstimatedTargets} />
+          <details className="nutrition-calculator-disclosure"><summary>Personal calorie calculator</summary><NutritionCalculator profile={nutritionProfile} bodyWeight={bodyWeight} disabled={!loaded || saving || !onNutritionProfileChange} onProfileSave={onNutritionProfileChange} onApplyTargets={applyEstimatedTargets} /></details>
         </DialogContent>
       </Dialog>
       <Dialog open={weightOpen} onOpenChange={setWeightOpen}>
@@ -408,7 +414,8 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
           {weightError && <p className="nutrition-error" role="alert">{weightError}</p>}
           <button type="button" className="btn full" disabled={!loaded || saving || !weightInput} onClick={() => void saveWeight()}>{saving ? 'Saving…' : 'Save weight'}</button>
           {currentWeekWeight !== null && <div className="nutrition-weight-average"><strong>{roundNutrient(currentWeekWeight)} kg</strong><span>7-day average</span>{previousWeekWeight !== null && <small>{currentWeekWeight - previousWeekWeight >= 0 ? '+' : ''}{roundNutrient(currentWeekWeight - previousWeekWeight)} kg vs last week</small>}</div>}
-          <p className="small-note">Aim for 0.1–0.2 kg/week. If your average stays flat for 2–3 weeks, add 100–150 kcal/day.</p>
+          {weightTrend.insight && <p className="small-note">{weightTrend.insight}</p>}
+          <p className="small-note">Aim for 0.1–0.25 kg/week. If well-sampled seven-day averages stay flat for about two weeks, consider +150–200 kcal/day. Targets change only when you apply them.</p>
         </DialogContent>
       </Dialog>
       <Dialog

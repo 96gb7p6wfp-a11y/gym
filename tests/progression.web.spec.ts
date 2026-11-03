@@ -6,9 +6,9 @@ const STORE = 'setline.gym.v1';
 const DATE = '2026-10-15';
 const MACHINE = 'Machine Chest Press';
 
-function workout(date: string, options: { key: string; name?: string; canonical?: string; mode?: 'weight' | 'bodyweight'; measurement?: 'height' | 'touch'; kg?: number | null; reps?: number; cm?: number; active?: boolean }): ReportSession {
+function workout(date: string, options: { key: string; name?: string; canonical?: string; mode?: 'weight' | 'bodyweight'; measurement?: 'height' | 'touch'; kg?: number | null; reps?: number; cm?: number; active?: boolean; sets?: number }): ReportSession {
   const movement = DEFAULT_PROFILE.plan.flatMap(day => day.exercises).find(exercise => exercise.name === MACHINE)!;
-  const plan = { ...DEFAULT_PROFILE.plan[0], name: `Fixture ${date}`, warmup: [], cooldown: [], exercises: [{ ...movement, key: options.key, exerciseId: options.canonical ?? 'chest-press', name: options.name ?? MACHINE, mode: options.mode ?? 'weight', sets: 2, target: '8–12 reps', ...(options.measurement ? { measurement: options.measurement } : {}) }] };
+  const plan = { ...DEFAULT_PROFILE.plan[0], name: `Fixture ${date}`, warmup: [], cooldown: [], exercises: [{ ...movement, key: options.key, exerciseId: options.canonical ?? 'chest-press', name: options.name ?? MACHINE, mode: options.mode ?? 'weight', sets: options.sets ?? 2, target: '8–12 reps', ...(options.measurement ? { measurement: options.measurement } : {}) }] };
   const started = SessionSchema.parse(createSession(plan, 3, date, DEFAULT_PROFILE, []));
   started.startedAt = new Date(`${date}T10:00:00Z`).getTime();
   started.elapsedMs = 30 * 60_000;
@@ -38,8 +38,8 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('progression waits for an explicit tap, updates only the current unfinished set and survives refresh', async ({ page }) => {
-  const before = workout('2026-10-01', { key: 'chest-press' });
-  const recent = workout('2026-10-08', { key: 'copied-chest-prior' });
+  const before = workout('2026-10-01', { key: 'chest-press', sets: 3 });
+  const recent = workout('2026-10-08', { key: 'copied-chest-prior', sets: 3 });
   const active = workout(DATE, { key: 'unique-chest-today', active: true, reps: 10 });
   active.exercises[0].logs[0].done = true;
   active.exercises[0].logs.push({ ...active.exercises[0].logs[1], id: crypto.randomUUID(), kg: 42, reps: 8 });

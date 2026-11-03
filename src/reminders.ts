@@ -11,7 +11,7 @@ const timestamp = z.number().finite().int().nonnegative();
 export const ReminderSchema = z.object({
   id: identifier,
   name: z.string().trim().min(1).max(120),
-  kind: z.enum(['supplement', 'medicine']),
+  kind: z.enum(['supplement', 'medicine', 'meal']),
   instructions: z.string().trim().min(1).max(1000),
   // Optional fields keep older local records and backups unchanged.
   dosageText: z.string().trim().max(160).optional(),
@@ -19,6 +19,8 @@ export const ReminderSchema = z.object({
   schedule: z.enum(['once-daily', 'instructions-only']),
   timing: z.enum(['meal', 'evening', 'time', 'instructions']),
   time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable(),
+  days: z.array(z.number().int().min(0).max(6)).min(1).max(7)
+    .refine(values => new Set(values).size === values.length).optional(),
   confirmed: z.boolean(),
   enabled: z.boolean(),
 }).strict().superRefine((value, ctx) => {
@@ -64,12 +66,19 @@ export function defaultReminderState(): ReminderState {
 export function isTrackable(reminder: Reminder) {
   return reminder.enabled && reminder.confirmed && reminder.schedule === 'once-daily';
 }
+/** Absent days keep older once-daily instructions exactly as saved. */
+export function reminderScheduledOn(reminder: Reminder, date: string) {
+  if (!reminder.days) return true;
+  const parsed = new Date(`${date}T12:00:00Z`);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date
+    && reminder.days.includes((parsed.getUTCDay() + 6) % 7);
+}
 export function reminderStatus(state: ReminderState, reminderId: string, date: string): ReminderEntry['status'] {
   return state.entries.find(({ entry }) => entry.reminderId === reminderId && entry.date === date)?.entry.status ?? 'pending';
 }
 /** Saving a meal only suggests reminders; it never records supplement consumption. */
 export function mealReminders(state: ReminderState, date: string): Reminder[] {
-  return state.items.map(({ reminder }) => reminder).filter((reminder) => isTrackable(reminder) && reminder.timing === 'meal' && reminderStatus(state, reminder.id, date) === 'pending');
+  return state.items.map(({ reminder }) => reminder).filter((reminder) => reminder.kind !== 'meal' && isTrackable(reminder) && reminderScheduledOn(reminder, date) && reminder.timing === 'meal' && reminderStatus(state, reminder.id, date) === 'pending');
 }
 /** A foreground cue only: no timer schedules an alert when the app is closed. */
 export function timeReminders(state: ReminderState, date: string, now: Date): Reminder[] {
@@ -78,7 +87,33 @@ export function timeReminders(state: ReminderState, date: string, now: Date): Re
   const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? '';
   if (date !== `${get('year')}-${get('month')}-${get('day')}`) return [];
   const clock = `${get('hour')}:${get('minute')}`;
-  return state.items.map(({ reminder }) => reminder).filter((reminder) => isTrackable(reminder) && reminder.timing === 'time' && reminder.time !== null && reminder.time <= clock && reminderStatus(state, reminder.id, date) === 'pending');
+  return state.items.map(({ reminder }) => reminder).filter((reminder) => isTrackable(reminder) && reminderScheduledOn(reminder, date) && reminder.timing === 'time' && reminder.time !== null && reminder.time <= clock && reminderStatus(state, reminder.id, date) === 'pending');
+}
+
+/** Optional templates are returned only; nothing is stored or enabled on app load. */
+export function optionalMealReminderTemplates(schedule: { days: number[]; startTime: string; endTime: string } = { days: [1, 4], startTime: '20:00', endTime: '22:00' }): Reminder[] {
+  const offset = (clock: string, minutes: number) => {
+    const [hours, remainder] = clock.split(':').map(Number);
+    const total = ((hours * 60 + remainder + minutes) % 1440 + 1440) % 1440;
+    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+  };
+  const offsetDays = (days: number[], clock: string, minutes: number) => {
+    const [hours, remainder] = clock.split(':').map(Number);
+    const shift = Math.floor((hours * 60 + remainder + minutes) / 1440);
+    return days.map(day => ((day + shift) % 7 + 7) % 7).sort();
+  };
+  const meal = (id: string, name: string, time: string, instructions: string, days?: number[]): Reminder => ({
+    id: `meal-${id}`, kind: 'meal', name, instructions, schedule: 'once-daily', timing: 'time',
+    time, confirmed: true, enabled: true, ...(days ? { days: [...days] } : {}),
+  });
+  return [
+    meal('breakfast', 'Breakfast', '07:00', 'A simple breakfast with carbs and protein, such as oats and yogurt.'),
+    meal('school-snack', 'School snack', '10:00', 'Pack an easy snack, such as fruit and a sandwich or yogurt.', [0, 1, 2, 3, 4]),
+    meal('lunch', 'Lunch', '13:00', 'Include a carb source, protein and vegetables.'),
+    meal('afternoon', 'Afternoon food', '16:00', 'Have a convenient meal or snack to support the rest of your day.'),
+    meal('pre-volleyball', 'Pre-volleyball meal', offset(schedule.startTime, -150), 'Eat a familiar carb-rich meal with some protein about 2–3 hours before volleyball.', offsetDays(schedule.days, schedule.startTime, -150)),
+    meal('post-volleyball', 'Post-volleyball meal', offset(schedule.endTime, 15), 'Prepare a small meal with protein and carbs, rehydrate, then settle for sleep.', offsetDays(schedule.days, schedule.endTime, 15)),
+  ];
 }
 export function timingLabel(reminder: Reminder): string {
   if (reminder.foodRelation) {

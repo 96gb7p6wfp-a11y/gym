@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TrainingExposureSchema } from './training-exposure.ts';
 
 function isCalendarDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -30,6 +31,7 @@ export const ExtraActivitySchema = z.object({
   createdAt: z.number().finite().positive(),
   deletedAt: z.number().finite().positive().nullable(),
   importSource: ImportSourceSchema.optional(),
+  trainingExposure: TrainingExposureSchema.optional(),
 });
 
 export type ExtraActivity = z.infer<typeof ExtraActivitySchema>;

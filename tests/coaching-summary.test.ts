@@ -177,12 +177,22 @@ test('weekly weight and broad lifting progress are connected without reacting to
   assert.doesNotMatch(copy(sparse), /weight is up|1 kg/);
 });
 
-test('three adequately sampled stable weeks justify optional fueling advice without changing targets', () => {
+test('older stable weeks require fresh weights before changing targets', () => {
   const nutritionRecords = ['2026-09-21', '2026-09-23', '2026-09-25', '2026-09-28', '2026-09-30', '2026-10-02', '2026-10-05', '2026-10-07', '2026-10-09'].map(date => weight(date, 64));
   const before = JSON.stringify(nutritionRecords);
   const summary = getPerformanceSummary({ sessions: [], nutritionRecords, today: TODAY });
   assert.match(getProgressTakeaway(summary).observation, /weekly-average weight has been stable for 3 weeks/i);
-  assert.match(getProgressTakeaway(summary).nextStep, /^Consider \+100–150 kcal\/day/);
+  assert.match(getProgressTakeaway(summary).nextStep, /^Record fresh morning weights/);
+  assert.equal(JSON.stringify(nutritionRecords), before);
+});
+
+test('recent adequately sampled stable averages justify optional V13.1 fueling advice only', () => {
+  const nutritionRecords = weightWeeks(64, 64);
+  const before = JSON.stringify(nutritionRecords);
+  const summary = getPerformanceSummary({ sessions: [], nutritionRecords, today: TODAY });
+  assert.equal(summary.weight.stableTwoWeeks, true);
+  assert.match(getProgressTakeaway(summary).observation, /stable for about 2 weeks/);
+  assert.match(getProgressTakeaway(summary).nextStep, /^Consider \+150–200 kcal\/day.*apply only when you choose/);
   assert.equal(JSON.stringify(nutritionRecords), before);
 });
 

@@ -7,9 +7,11 @@ import {
   discriminatedUnion as zDiscriminatedUnion,
   literal as zLiteral,
   enum as zEnum,
+  union as zUnion,
 } from "zod";
 import { ZodIssueCode } from "zod";
 import { MasterProgramSettingsSchema } from './volleyball-master-plan.ts';
+import { TrainingExposureSchema } from './training-exposure.ts';
 
 var NutritionAmountSchema = zNumber().finite().min(0).max(2e4),
   FoodSchema = zObject({
@@ -839,6 +841,14 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     optionalWork: zBoolean().optional(),
     benefit: zString().max(150).optional(),
     jumpContactsPerRep: zNumber().int().min(1).max(2).optional(),
+    preparationOnly: zBoolean().optional(),
+    superset: zObject({
+      id: zString().min(1).max(80),
+      label: zString().min(1).max(80),
+      order: zUnion([zLiteral(1), zLiteral(2)]),
+      rounds: zNumber().int().min(1).max(20).optional(),
+      restAfterRound: zNumber().int().min(0).max(600),
+    }).optional(),
   }),
   PlanDaySchema = zObject({
     name: zString().trim().min(1).max(80),
@@ -849,7 +859,7 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     exercises: zArray(ExerciseSchema).max(40),
     warmup: PreparationSchema.optional(),
     cooldown: PreparationSchema.optional(),
-    programRevision: zLiteral('8.1').optional(),
+    programRevision: zEnum(['8.1', '13.1']).optional(),
     durationRange: zString().max(40).optional(),
     startTime: zString().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/).optional(),
   }),
@@ -897,6 +907,7 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     preMasterPlan: ProfileWeeklyPlanSchema.optional(),
     masterMatchWeekend: zArray(PlanDaySchema.refine(day => new Set(day.exercises.map(exercise => exercise.key)).size === day.exercises.length, 'Exercises need unique identifiers.')).length(2).optional(),
     masterProgramBackup: MasterProgramBackupSchema.optional(),
+    masterProgramArchive: zArray(MasterProgramBackupSchema).max(20).optional(),
     customWorkouts: zArray(CustomWorkoutSchema).max(100).refine(
       (workouts) => new Set(workouts.map((workout) => workout.id)).size === workouts.length,
       `Saved workouts need unique identifiers.`,
@@ -957,7 +968,7 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     kind: zEnum([`strength`, `sport`, `recovery`]),
     goal: TrainingGoalSchema.optional(),
     plannedMinutes: zNumber().int().min(1).max(600).optional(),
-    programRevision: zLiteral('8.1').optional(),
+    programRevision: zEnum(['8.1', '13.1']).optional(),
     durationRange: zString().max(40).optional(),
     startTime: zString().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/).optional(),
     status: zEnum([`active`, `completed`, `cancelled`, `deleted`]),
@@ -969,6 +980,7 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     met: zNumber().min(1).max(15),
     watchCalories: optionalAmount(2e4),
     notes: zString().max(2e3),
+    trainingExposure: TrainingExposureSchema.optional(),
     exercises: zArray(SessionExerciseSchema).max(40),
     warmup: PreparationSchema.optional(),
     cooldown: PreparationSchema.optional(),
@@ -1091,7 +1103,7 @@ function previousExercise(e, t, n, r) {
     .sort(
       (e, t) => t.date.localeCompare(e.date) || t.startedAt - e.startedAt,
     )) {
-    let e = i.exercises.find((e) => (e.key === t || e.exerciseId === t) && e.logs.some((e) => e.done));
+    let e = i.exercises.find((e) => !e.preparationOnly && (e.key === t || e.exerciseId === t) && e.logs.some((e) => e.done));
     if (e)
       return {
         session: i,
@@ -1155,7 +1167,7 @@ function createSession(e, t, n, r, i) {
       let t = previousExercise(i, e.exerciseId ?? e.key, n)?.exercise;
       // A renamed movement or a different measurement is a new baseline.
       const normalizedName = value => value.trim().replace(/\s+/g, ' ').toLowerCase();
-      if (t && (normalizedName(t.name) !== normalizedName(e.name) || t.mode !== e.mode || (t.measurement ?? null) !== (e.measurement ?? null))) t = undefined;
+      if (e.preparationOnly || (e.mode === 'bodyweight' && e.defaultKg === 0) || (t && (normalizedName(t.name) !== normalizedName(e.name) || t.mode !== e.mode || (t.measurement ?? null) !== (e.measurement ?? null)))) t = undefined;
       return {
         ...e,
         elapsedMs: 0,

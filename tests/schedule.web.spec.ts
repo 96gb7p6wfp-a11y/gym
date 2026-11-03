@@ -36,7 +36,7 @@ test('volleyball times validate, persist and update workout and meal guidance', 
   await page.getByLabel('Nutrition date', { exact: true }).fill('2026-10-06');
   await openDisclosure(page, 'Nutrition options');
   await page.locator('.nutrition-simple-fuel > summary').click();
-  await expect(page.locator('.nutrition-simple-fuel')).toContainText('19:00–20:00');
+  await expect(page.locator('.nutrition-simple-fuel')).toContainText('18:00–19:00');
   await expect(page.locator('.nutrition-simple-fuel')).toContainText('After 23:00');
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: /^Tue / }).click();
@@ -67,6 +67,7 @@ test('daily targets and explicit supplement tracking save and reload offline', a
   await expect.poll(() => page.evaluate(() => navigator.serviceWorker.controller?.state), { timeout: 15_000 }).toBe('activated');
   await context.setOffline(true);
   await openTargets(page);
+  await openDisclosure(page, 'Personal calorie calculator');
   await page.locator('.nutrition-calculator').getByRole('button', { name: 'Use these daily targets', exact: true }).click();
   await expect(page.locator('.nutrition-totals')).toContainText('of 3000 kcal');
   await page.getByRole('dialog', { name: 'Daily targets', exact: true }).getByRole('button', { name: 'Close', exact: true }).click();

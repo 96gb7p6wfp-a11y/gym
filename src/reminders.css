@@ -52,4 +52,14 @@
 .meal-routine-cue strong { display: block; font-size: 14px; font-weight: 600; }
 .meal-routine-cue > span > span { display: block; margin-top: 3px; font-size: 13px; line-height: 1.5; color: var(--sub, #6e746b); overflow-wrap: anywhere; }
 .meal-routine-cue button { display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-height: 44px; padding: 8px; border: 0; background: transparent; color: var(--accent-ink, #254414); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.meal-timing-options > ul { padding: 0; margin: 8px 0; list-style: none; }
+.meal-timing-options > summary::-webkit-details-marker { display: none; }
+.meal-timing-options[open] > summary > svg { transform: rotate(90deg); }
+.meal-timing-options > ul > li { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+.meal-timing-options > ul > li > span { min-width: 0; flex: 1; }
+.meal-timing-options strong, .meal-timing-options small { display: block; }
+.meal-timing-options small { margin-top: 3px; color: var(--sub); font-size: 13px; }
+.meal-timing-options button { min-height: 44px; min-width: 44px; }
+.reminder-panel__days { display: flex; flex-wrap: wrap; gap: 8px 14px; border: 0; padding: 0; }
+.reminder-panel__days > label { display: flex; align-items: center; gap: 5px; min-height: 44px; }
 @media (max-width: 360px) { .reminder-panel { padding: 18px; } .reminder-panel__form-pair { gap: 8px; } .meal-routine-cue { padding: 13px; gap: 8px; } }

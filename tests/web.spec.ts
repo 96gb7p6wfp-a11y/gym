@@ -991,7 +991,7 @@ test('keeps daily food and recovery tips short and shows local exercise instruct
   const routine = page.getByRole('region', { name: 'Before and after training', exact: true });
   await page.getByRole('button', { name: /^Sat / }).click();
   await expect(routine).toContainText('No special workout snack is needed today.');
-  await expect(routine).toContainText('7–9 hours of sleep.');
+  await expect(routine).toContainText('8–10 hours of sleep.');
   await page.getByRole('button', { name: /^Mon / }).click();
   await expect(routine.getByRole('heading', { name: 'Before training', exact: true })).toBeVisible();
   await expect(routine.getByRole('heading', { name: 'After training', exact: true })).toBeVisible();

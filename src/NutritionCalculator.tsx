@@ -101,7 +101,7 @@ export default function NutritionCalculator({ profile, bodyWeight, disabled, onP
       <p>Activity already includes gym and volleyball. Logged workout calories are not added again.</p>
       {estimate && <p>Resting energy ≈ {estimate.bmr} kcal. × activity level {draft.activityFactor} ≈ {estimate.maintenanceKcal} kcal maintenance. + {draft.surplusKcal} kcal, rounded to 100 kcal.</p>}
       <p>Protein ≈ 2 g/kg; a useful range is 1.6–2.2 g/kg. Fat ≈ 24% of calories. Carbs = (calories − protein × 4 − fat × 9) ÷ 4.</p>
-      <p>Compare weekly average morning weights. Aim for roughly 0.1–0.2 kg/week. If there is no gradual gain after 2–3 weeks, add 100–150 kcal/day; if gain stays much faster, reduce slightly.</p>
+      <p>Compare weekly average morning weights. Aim for roughly 0.1–0.25 kg/week. If well-sampled seven-day averages stay stable for about two weeks, consider adding 150–200 kcal/day; apply changes only when you choose. If gain stays much faster, review your target.</p>
       <p className="small-note">These are adult estimates. Activity, appetite and recovery vary; adjust using trends rather than one day's weight.</p>
       <ul>{NUTRITION_GOAL_SOURCES.map(source => <li key={source.url}><a className="text-button" href={source.url} target="_blank" rel="noopener noreferrer">{source.label}</a></li>)}</ul>
     </details>

@@ -13,6 +13,7 @@ export const JumpEntrySchema = z.object({
   measurement: z.enum(['height', 'touch']),
   cm: z.number().finite().gt(0).max(1000),
   notes: z.string().max(500),
+  conditions: z.string().max(300).optional(),
   // Absent source means a directly measured legacy record. Never rewrite it.
   source: z.enum(['measured', 'video-estimate']).optional(),
   // Retain the original setup with each test, rather than recalculating old
@@ -64,6 +65,7 @@ const ReachJumpInputSchema = z.object({
   standingTouchCm: z.number().finite().gt(0).max(1000).optional(),
   approachTouchCm: z.number().finite().gt(0).max(1000).optional(),
   notes: z.string().max(500).optional(),
+  conditions: z.string().max(300).optional(),
   source: z.enum(['measured', 'video-estimate']).optional(),
 }).strict().superRefine((input, context) => {
   if (input.standingTouchCm === undefined && input.approachTouchCm === undefined) {
@@ -89,6 +91,7 @@ export function createReachJumpEntries(input: z.input<typeof ReachJumpInputSchem
       cm: Math.round((touchCm - data.standingReachCm) * 1_000_000) / 1_000_000,
       standingReachCm: data.standingReachCm, touchCm,
       notes: data.notes ?? '', source: data.source ?? 'measured',
+      ...(data.conditions !== undefined ? { conditions: data.conditions } : {}),
     })];
   });
 }

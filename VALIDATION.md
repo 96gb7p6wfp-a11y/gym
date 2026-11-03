@@ -1,5 +1,41 @@
 # Standalone app validation
 
+## Volleyball Performance Master Plan V13.1 — 3 November 2026
+
+| Check | Result |
+| --- | --- |
+| `npm run typecheck` | Passed |
+| `npm test` | 447 passed, no failures or skips |
+| `npm run build` | Passed TypeScript, Vite and production service-worker generation |
+| `npm run test:web` | 217 passed against the production build, no failures or skips |
+| Final scheduling safeguard | 15 upgrade, restore, clearance, match-priority, mobile and installed-update browser checks passed again against the final build |
+
+The existing eight-week engine now recommends V13.1 through an explicit review
+and apply flow. Compatibility checks retain V8.1/unversioned prescriptions,
+active and completed snapshots, deliberate date edits, custom workouts, the
+current cycle and match settings, earlier program backups, nutrition, routines,
+imports and measurements. New backup fields remain optional; no storage reset
+or automatic program/nutrition activation is performed.
+
+New checks cover the exact Monday/Wednesday/Thursday/Saturday prescriptions,
+separate Wednesday jumps and strength, unequal Thursday supersets and rest,
+match/prior-match doses, deload/retest contacts, readiness and independent impact
+and lifting clearance, explicit nonduplicating weekend moves, and competition
+priority over saved gym drafts/templates. Preparation-only logs cannot earn PRs,
+replace the previous working load or trigger aggressive progression. Sport/PE
+counts distinguish recorded, estimated, unmeasured and planned exposure.
+
+Visual checks reviewed light/dark phone screens, 320×568 iPhone-style 47/34 px
+safe areas, full workout previews, quick preparation and nutrition confirmation.
+The long Thursday purpose is separated from its title so Start/View actions
+remain above navigation. The complete suite also covers decimal weights,
+editing, history, nutrition, jump entry, imports, offline caching, backups,
+keyboard behavior, PWA update protection and existing timer-audio behavior.
+
+These are Chromium mobile/standalone emulation checks, not a physical iPhone
+or Safari run. Actual speaker/music audibility and locked/background iOS audio
+are not verified or guaranteed. The existing large-bundle build warning remains.
+
 ## Setline Soft reference redesign — 18 October 2026
 
 The user’s five supplied screenshots supersede the prior flat serif design.

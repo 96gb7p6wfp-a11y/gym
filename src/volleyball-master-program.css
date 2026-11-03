@@ -57,3 +57,10 @@
 .master-program__preview-day ul strong { font-size:13px; }
 .master-program__preview-day ul small { font-size:11px; }
 .master-program__match-times>.field-label { margin:12px 0; }
+.master-program__prior-match { display:flex; align-items:center; gap:12px; min-height:48px; margin:8px 0; font-size:13px; line-height:1.5; }
+.master-program__prior-match input { flex-shrink:0; }
+.master-program__clearance .field-label { display:grid; gap:8px; margin:12px 0; }
+.master-program__clearance select, .master-program__clearance textarea { box-sizing:border-box; width:100%; min-height:48px; padding:12px; border:1px solid var(--line); border-radius:12px; color:var(--ink); background:var(--surface-soft); font:inherit; font-size:16px; }
+.master-program__clearance textarea { resize:vertical; }
+.master-program__review-heading { font-size:16px; margin:18px 0 6px; }
+.master-readiness__move { min-height:44px; margin:0 0 10px; font-size:13px; }

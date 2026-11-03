@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DEFAULT_PROFILE, SessionSchema, createSession, stopSessionTimers } from '../src/domain.js';
-import { createVolleyballMasterPlan, resolveMasterProgramPlan, type MasterProgramSettings } from '../src/volleyball-master-plan.ts';
+import { createV81VolleyballMasterPlan as createVolleyballMasterPlan, resolveMasterProgramPlan, type MasterProgramSettings } from '../src/volleyball-master-plan.ts';
 import { getTrainingCadence } from '../src/training-cadence.ts';
 import { getWeeklyReport } from '../src/weekly-report.ts';
 import { getPerformanceSummary, getProgressionRecommendation } from '../src/performance-insights.ts';

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { COOLDOWN, DEFAULT_PROFILE, PreparationSchema, UPPER_WARMUP } from '../src/domain.js';
-import { createVolleyballMasterPlan } from '../src/volleyball-master-plan.ts';
+import { createV81VolleyballMasterPlan as createVolleyballMasterPlan } from '../src/volleyball-master-plan.ts';
 import { getSessionPreparation, type PreparationExercise } from '../src/session-preparation.ts';
 import { getStretchRoutine, type StretchStep } from '../src/stretch-routine.ts';
 

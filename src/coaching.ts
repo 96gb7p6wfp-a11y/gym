@@ -23,7 +23,7 @@ export function getShortRoutine(input: DailyGuidanceInput): { before: string; af
   const trainingToday = !recovery || input.completedTrainingMinutes > 0 || activities.some(activity => activity.durationMinutes >= 30 || activity.intensity === 'hard');
   if (!trainingToday) return {
     before: 'Keep regular balanced meals and drink to thirst. No special workout snack is needed today.',
-    after: 'Optional easy walking or gentle mobility. Keep meals regular and aim for 7–9 hours of sleep.',
+    after: 'Optional easy walking or gentle mobility. Keep meals regular and aim for 8–10 hours of sleep.',
   };
   const longEndurance = activities.some(activity => ['run', 'cycle', 'swim'].includes(activity.type) && activity.durationMinutes > 60 && activity.intensity === 'hard');
   return {

@@ -7,13 +7,20 @@ export type SessionPurpose = {
   fatigue: string;
 };
 
-type PurposePlan = { name?: string; kind?: string; goal?: string; programRevision?: '8.1'; exercises?: { name?: string; group?: string }[] };
+type PurposePlan = { name?: string; kind?: string; goal?: string; programRevision?: '8.1' | '13.1'; exercises?: { name?: string; group?: string }[] };
 type IntentExercise = { name?: string; group?: string; category?: string; goal?: string; mode?: string };
 
 export function getSessionPurpose(plan: PurposePlan, _dayIndex?: number): SessionPurpose {
   const name = plan.name ?? 'Workout';
   const normalized = name.toLowerCase();
   const goal = plan.goal;
+  if (plan.programRevision === '13.1') {
+    if (/approach power.*upper a/i.test(name)) return { title: name, subtitle: 'Approach Power + Upper-body Strength', focus: 'Quality takeoffs · strong pulling and pressing', intensity: 'Power + muscle', fatigue: 'Adjust jumping around matches and readiness' };
+    if (/lower strength.*reactive power/i.test(name)) return { title: name, subtitle: 'Maximum Force + Quality CMJs', focus: 'Fresh CMJs, then strength · no complex circuit', intensity: 'Controlled strength', fatigue: 'Full recovery · no extra plyometrics' };
+    if (/^upper b\s*[—–-]/i.test(name)) return { title: 'Upper B', subtitle: 'Athletic Physique + Spike Power', focus: 'Chest, back, shoulders and arms · controlled reps', intensity: 'Power + hypertrophy', fatigue: 'Protect shoulder quality before Friday' };
+    if (/lower strength b/i.test(name)) return { title: name, subtitle: 'Strength + Single-leg Control', focus: 'Hip strength · stable unilateral work', intensity: 'Controlled strength', fatigue: 'Reduce, rest or explicitly move if Friday fatigue remains' };
+    if (/primer|pre-match/i.test(name)) return { title: name, subtitle: 'Pre-match preparation · Optional', focus: 'Footwork · mobility · shoulder activation', intensity: 'Easy preparation', fatigue: 'Full rest is valid · no maximal jumps' };
+  }
   if (plan.programRevision === '8.1') {
     if (/^upper a$/i.test(name)) return { title: name, subtitle: 'Spike Power + Strength + Physique', focus: 'Fast slams · clean pulling and pressing', intensity: 'Power + strength', fatigue: 'After a demanding match, omit slams and reduce hard pressing' };
     if (/^upper b$/i.test(name)) return { title: name, subtitle: 'Rotational Power + Shoulder + Physique', focus: 'Rotational power · controlled shoulder work', intensity: 'Power + physique', fatigue: 'Keep enough energy for Friday volleyball' };

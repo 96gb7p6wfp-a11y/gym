@@ -9,6 +9,7 @@ import {
   type ExtraActivity,
 } from './activities';
 import './activities.css';
+import { TrainingExposureFields } from './TrainingExposureFields';
 
 export interface ExtraActivitiesProps {
   date: string;
@@ -33,6 +34,7 @@ type ActivityDraft = {
   watchCalories: string;
   notes: string;
   importSource?: ExtraActivity['importSource'];
+  trainingExposure?: ExtraActivity['trainingExposure'];
 };
 
 function activityName(type: ExtraActivity['type']): string {
@@ -69,6 +71,7 @@ function recordDraft(activity: ExtraActivity): ActivityDraft {
     watchCalories: activity.watchCalories === null ? '' : String(activity.watchCalories),
     notes: activity.notes,
     importSource: activity.importSource,
+    trainingExposure: activity.trainingExposure,
   };
 }
 
@@ -87,6 +90,7 @@ function parseDraft(draft: ActivityDraft) {
     notes: draft.notes,
     deletedAt: null,
     ...(draft.importSource ? { importSource: draft.importSource } : {}),
+    ...(draft.trainingExposure ? { trainingExposure: draft.trainingExposure } : {}),
   });
 }
 
@@ -296,6 +300,7 @@ export function ExtraActivities({
               <p className="extra-field-help">Use active calories, not total calories. A watch reading replaces the estimate.</p>
               <label className="field-label" htmlFor={`${fieldId}-notes`}>Activity notes · optional</label>
               <textarea id={`${fieldId}-notes`} rows={3} maxLength={1000} value={draft.notes} onChange={(event) => updateDraft('notes', event.target.value)} />
+              {(draft.type === 'other' || draft.trainingExposure) && <TrainingExposureFields value={draft.trainingExposure} defaultSport="other" disabled={saving} onChange={trainingExposure => { setDraft(current => ({ ...current, trainingExposure })); setFormError(''); }} />}
             </fieldset>
             <div className="extra-live-estimate" aria-live="polite">
               {estimate ? (

@@ -3,6 +3,7 @@ import {
   DEFAULT_PROFILE, ExerciseSchema, PlanDaySchema, CustomWorkoutSchema, SessionSchema,
   TrainingGoalSchema, elapsedTime,
 } from './domain.js';
+import type { SupersetLink } from './training-flow';
 
 export type TrainingGoal = z.infer<typeof TrainingGoalSchema>;
 export type PlanExercise = z.infer<typeof ExerciseSchema>;
@@ -15,8 +16,17 @@ const copy = <T,>(value: T): T => structuredClone(value);
 const pairLabel = (group: string) => /^([a-z])([12])\s*·\s*complex pair$/i.exec(group.trim());
 
 /** Moving, removing or replacing a partner cannot leave a misleading pair label. */
-export function clearOrphanedComplexPairs<T extends { group: string }>(exercises: readonly T[]): T[] {
+export function clearOrphanedComplexPairs<T extends { group: string; superset?: SupersetLink }>(exercises: readonly T[]): T[] {
   return exercises.map((exercise, index) => {
+    if (exercise.superset) {
+      const members = exercises.map((item, position) => ({ item, position }))
+        .filter(({ item }) => item.superset?.id === exercise.superset!.id);
+      const partner = members.find(({ item }) => item.superset?.order !== exercise.superset!.order)?.item.superset;
+      const valid = members.length === 2 && Math.abs(members[0].position - members[1].position) === 1
+        && partner?.label === exercise.superset.label && partner?.rounds === exercise.superset.rounds
+        && partner?.restAfterRound === exercise.superset.restAfterRound;
+      return valid ? exercise : { ...exercise, superset: undefined };
+    }
     const label = pairLabel(exercise.group);
     if (!label) return exercise;
     const partner = exercises[index + (label[2] === '1' ? 1 : -1)];
@@ -49,6 +59,8 @@ function findExercise(session: EditableSession, key: string): number {
   return index;
 }
 function unlinkPair(exercises: EditableSessionExercise[], exercise: EditableSessionExercise) {
+  if (exercise.superset) return exercises.map(item => item.superset?.id === exercise.superset!.id
+    ? { ...item, superset: undefined } : item);
   const label = pairLabel(exercise.group);
   if (!label) return exercises;
   return exercises.map((item) => {

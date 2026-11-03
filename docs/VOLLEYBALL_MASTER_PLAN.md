@@ -1,268 +1,263 @@
-# Volleyball Performance Master Plan V8.1
+# Volleyball Performance Master Plan V13.1
 
-Setline’s existing eight-week program now offers the V8.1 recommendation. It is
-not another training system. The aim is volleyball performance, fresh approach
-and standing jumps, force production and an athletic physique with manageable
-fatigue. The prescription is guidance, not a promise of a particular jump gain or
-injury prevention.
+V13.1 upgrades Setline's existing eight-week master program. It combines
+volleyball-first jump and strength work with meaningful upper-body hypertrophy.
+It is a training recommendation, not a measured recovery score, medical clearance,
+guaranteed jump gain, or promise of injury prevention.
 
-## Apply, review or restore
+## Review, apply, restore
 
-Open **You → Training plan → Programme & customization**.
+Today and Train expose **V13.1 is ready → Review plan**. The same program controls
+remain in **You → Training plan → Programme & customization**:
 
-The **V8.1 is ready → Review plan** action also appears on Today, Train and at
-the top of Training plan until you apply it. A new block without an existing
-program defaults to the current Monday, so it can begin this week. Existing
-cycles keep their start date. A future start date is shown explicitly.
+1. **Upgrade to V13.1** opens the review; inspecting or closing it changes nothing.
+2. **Review Changes** shows the weekly schedule and each actual prescription.
+3. **Apply V13.1** explicitly accepts the new recommendations.
 
-For an installed app, **Settings → App updates → Check for updates** can download
-a newer build from that same website. Applying a ready update is explicit and
-waits until an active workout is finished. This does not move data between
-different website addresses or update the original separately hosted site.
+Existing V8.1 and unversioned programs remain readable and keep their own reset
+prescriptions until upgraded. Applying V13.1 retains the current start Monday,
+eight-week phase, match weeks/times and deliberate date edits. It saves the prior
+personal program for **Restore previous program**; earlier restorable versions
+remain in the program archive so restoration can step back through them. Completed records, active
+session snapshots, custom templates, measurements, food, routines, imports and
+preferences are not rewritten. Recommendation-only temporary warm-up drafts may
+be regenerated for the new recommendation; intentional date edits stay.
 
-- A profile without a master program can review **Program preview**, choose a
-  Monday and Sunday match weeks, then **Use this plan**.
-- An existing block continues unchanged until **Upgrade to V8.1 → Apply V8.1**.
-  The review shows the new weekly schedule and expandable exercise prescriptions.
-  Applying keeps the current start Monday, match-week selections, readiness dates
-  and current phase; it does not restart the cycle.
-- The prior personalized weekly plan, match weekend, program settings, saved
-  earlier plan and date drafts are retained as a restorable program backup.
-  **Restore previous program** returns that prescription and its cycle settings.
-  Newer deliberate date edits remain available. **Return to saved plan** still
-  returns the week from before the original master block.
-- A date-specific customized workout stays customized. Recommendation-only warm-up
-  drafts may be cleared so stale preparation does not replace V8.1. History and
-  active session snapshots never change when applying, resetting or restoring.
-- After week 8, **Plan next block** asks for an explicit Monday and confirmation.
-  A new block keeps the current weekly prescription and starts with no match
-  weeks/times selected. The program never silently repeats.
-
-The full store remains `setline.gym.v1`, schema version 1. Optional revision and
-backup fields are backward-compatible. Legacy profiles and backups remain valid;
-merely loading the app never upgrades a program or creates measurements.
+New program setup defaults to the current Monday. After week eight, the athlete
+must explicitly plan a new block; the cycle never silently restarts. Resetting a
+recommended program respects its saved revision. Installed-app update checks
+remain explicit, protect active workouts/unsaved settings and never clear local
+data. They update the same website only; separate website origins have separate
+data and installations.
 
 ## Weekly structure
 
-| Day | No Sunday match | Sunday match week |
+| Day | Normal non-match week | Sunday match week |
 | --- | --- | --- |
-| Monday | Upper A · 80–95 min | Upper A; reduce shoulder work after a demanding match |
-| Tuesday | Optional 5–10 min technique + volleyball 20:00–22:00 | Same |
-| Wednesday | Main Jump + Heavy Lower A · 95–115 min | Same, readiness permitting |
-| Thursday | Upper B · 75–90 min | Same |
-| Friday | School PE ~2 h + volleyball 20:00–22:00 | Same |
-| Saturday | Recovery / Optional Mobility · 0–25 min | Pre-Match Primer · 12–18 min |
-| Sunday | Heavy Lower B · 75–90 min | Volleyball Match |
+| Monday | Approach Power + Upper A · 80–95 min | Same upper work; 0–6 approach contacts, no hurdles |
+| Tuesday | Volleyball · 20:00–22:00 Berlin | Volleyball · 20:00–22:00 Berlin |
+| Wednesday | Lower Strength + Reactive Power · 70–85 min | Same, subject to readiness |
+| Thursday | Upper B — Athletic Physique + Spike Power · 65–80 min | Same, subject to shoulder recovery |
+| Friday | School PE about 2 h + volleyball 20:00–22:00 | Same high-load day |
+| Saturday | Lower Strength B · 45–55 min when recovered | Pre-Match Primer or Rest · 10–15 min, optional |
+| Sunday | Recovery | Volleyball Match · actual duration/time |
 
-Club times and calendar dates use **Europe/Berlin**, including DST changes.
-Sunday match time is blank unless the athlete enters it in **Schedule & options
-→ Match times (optional)**. Match duration is an editable 90-minute placeholder,
-not a fixed start time or recorded training. Record actual duration afterward.
+A normal non-match week has four substantial gym days. A match week has three;
+the optional primer and approach footwork are not gym-day obligations. Planned
+sport sessions, school PE, optional walking or runs are never completed records.
+Unknown match start times remain unset.
 
-Non-match weeks plan four substantial gym days: Monday, Wednesday, Thursday and
-Sunday. Match weeks plan three; the short Saturday primer and Tuesday technique
-primer do not increase the substantial gym-day target. Volleyball is sport work.
+## Monday — Approach Power + Upper A
 
-## Monday — Upper A
-
-Purpose: **Spike Power + Strength + Physique**. Base working sets: **25**.
-
-| Exercise | Prescription | Rest | Effort / intent |
-| --- | --- | --- | --- |
-| Medicine Ball Spike Slam | 3 × 3 | 90 s | Two-handed overhead; about 2–3 kg; maximal speed |
-| Pull-ups / Assisted Pull-ups | 3 × 5–8 | 150 s | RIR 1–2; clean full-range reps |
-| Incline Machine Chest Press | 3 × 6–10 | 150 s | RIR 1–2 |
-| Chest-supported Row | 3 × 8–12 | 120 s | RIR 2 |
-| Single-arm Neutral-grip DB Shoulder Press | 2 × 6–8 / side | 90 s | RIR 2–3 |
-| Cable Lateral Raise | 3 × 12–20 | 60 s | RIR 1–2 |
-| Reverse Pec Deck | 2 × 12–20 | 60 s | RIR 2 |
-| Cable Crunch | 2 × 10–15 | 60 s | RIR 2 |
-| Dumbbell Biceps Curl | 2 × 8–12 | 60 s | RIR 1–2 |
-| Triceps Pushdown | 2 × 10–15 | 60 s | RIR 1–2 |
-
-Sore or fatigued shoulders after a demanding Sunday match are a reason to omit
-ballistic slams and reduce demanding pressing. Monday arms are part of V8.1,
-not the older program’s optional-arm insertion.
-
-## Tuesday — optional technique + volleyball
-
-The primer is optional, not another maximal jump or leg day. Skip it entirely if
-practice already supplies substantial jumping.
-
-| Exercise | Prescription | Rest / intent |
+| Exercise | Sets × target | Rest |
 | --- | --- | --- |
-| Slow L-R-L Approach Rhythm | 2 × 3 | Rhythm and acceleration into the plant; mirror if appropriate |
-| Penultimate-step Drill | 2 × 2 | Controlled lowering, quick final plant |
-| Approach Jump | 2–3 × 1; app defaults to 3 | About 75–85%; 75 s rest, adjustable |
+| Max Approach Jump | 4 × 2 | 150 s; adjustable within 2–3 min |
+| Low Hurdle Hops | 2 × 3 | 120 s |
+| Medicine-Ball Spike Slam | 4 × 3 | 90 s |
+| Pull-up / Assisted Pull-up | 4 × 4–6 | 150 s |
+| Incline Chest Press | 4 × 6–8 | 150 s |
+| Chest-supported Row | 4 × 8–10 | 120 s |
+| Cable Lateral Raise | 3 × 12–20 | 60 s |
+| Biceps Curl | 2 × 8–12 | 60 s |
+| Rope Triceps Pushdown | 2 × 10–15 | 60 s |
+| Cable Crunch | 2 × 10–15 | 60 s |
 
-**FAST → LONG PENULTIMATE → QUICK PLANT → ARMS → UP.**
-Log court practice once. Technique contacts are separate from the main Wednesday
-jump ceiling; do not relog the same court jumps as another activity.
+Lifting generally leaves 1–2 reps in reserve. Explosive repetitions use maximum
+quality with full recovery, never muscular failure. A normal approved non-match
+Monday has 14 extra contacts: eight approach and six low hurdles. An upcoming
+Sunday match reduces approach work to at most six contacts and removes hurdles.
+A match on the previous Sunday removes Monday maximal jumps; controlled upper
+work remains only when recovered. The previous block's Sunday can be entered as
+**Match on the Sunday before this block**; within a block it follows saved match
+weeks. High fatigue can remove jumping entirely; no dose rises automatically.
 
-## Wednesday — Main Jump + Heavy Lower A
+## Tuesday and Friday — sport load
 
-Purpose: **Vertical Jump + Maximum Force Production**. Base working sets: **24**,
-plus optional short-foot holds. This is the priority gym session.
+Tuesday and Friday club practice stay at 20:00–22:00 Europe/Berlin. Tuesday's
+optional short technique session contains controlled approach footwork only,
+without extra hard jumps. Friday also includes scheduled PE. These schedules
+provide context for fatigue and preparation; they do not create completed
+workouts, calories or jump records.
 
-### One-screen preparation
+Sport reflections and other-activity/PE logs accept optional actual duration,
+counted or estimated contacts, RPE 0–10, shoulder/knee/Achilles soreness and notes.
+Unknown contact counts stay blank. Estimated exposure is labelled separately
+from recorded counts. Import deduplication and existing activity calories remain
+unchanged. For late volleyball, prepare a recovery meal in advance and aim for
+roughly 8–10 hours' sleep when possible.
 
-About 6–9 minutes, with completion shortcuts and no mandatory multistep gate:
+## Wednesday — Lower Strength + Reactive Power
 
-1. Light bike, 2–3 min.
-2. Ankle Knee-to-Wall, 8 / side.
-3. Dynamic hip mobility, 6 / side.
-4. Bodyweight squats, 8.
-5. Reverse lunges, 5 / leg.
-6. Low-intensity pogos, 2 × 8; omit with calf/Achilles discomfort.
-7. Three progressively faster practice jumps, fully reset.
+| Exercise | Sets × target | Rest |
+| --- | --- | --- |
+| Countermovement Jump | 3 × 2 | 150 s |
+| Hack Squat | 4 × 4–6 | 210 s; adjustable within 3–4 min |
+| Romanian Deadlift | 3 × 5–7 | 180 s |
+| Bulgarian Split Squat | 3 × 6/leg; 2–3 sets appropriate | 120 s |
+| Seated Calf Raise | 3 × 8–12 | 90 s |
+| Bent-Knee Calf Isometric | 2 × 30–45 s | 60 s |
+| Pallof Press Isometric | 2 × 25 s/side | 45 s |
 
-Preparation is not maximal work. Before heavy lifting, use appropriate light,
-exercise-specific ramp-up sets; do not count these as working sets or main jump
-contacts. A brief interface is not a reason to rush heavy or explosive preparation.
+CMJs are completed before strength. There is **no automatic Hack Squat + CMJ
+complex**, drop/depth jump, additional hurdle block or loaded jump. Hack Squat
+uses about 2 RIR. Trunk position, comfortable controlled range and steady
+breathing matter more than an arbitrary load. Unilateral work starts with the
+weaker side and matches controlled repetitions.
 
-| Exercise | Prescription | Rest | Intent / effort |
+## Thursday — Upper B: Athletic Physique + Spike Power
+
+The preview preserves this exact ten-exercise order:
+
+| Order | Exercise | Sets × target | Rest |
 | --- | --- | --- | --- |
-| Maximal Approach Jump | 4 × 2 | 150 s; extend toward 2–3 min or longer if needed | Maximum height; log highest touch when measured |
-| Low-box Drop Jump | 2 × 2 | 120 s | About 15–20 cm; quick, controlled rebound |
-| Light Dumbbell Squat Jump | 2 × 3 | 120 s | About 2–4 kg / hand if appropriate; log combined load |
-| A1 Hack Squat | 3 × 4–6 | **240 s before CMJ** | RIR 2; controlled eccentric, explosive intent upward |
-| A2 CMJ with Arm Swing | 3 × 2 | **150 s before Hack Squat** | Maximal height, reset between jumps |
-| Romanian Deadlift | 3 × 5–7 | 150 s | RIR 2; stop at hamstring-limited range, avoid back rounding |
-| Bulgarian Split Squat | 2 × 6 / leg | 120 s | RIR 2 |
-| Seated Calf Raise | 3 × 8–12 | 90 s | RIR 1–2; soleus emphasis |
-| Pallof Press Isometric Hold | 2 × 20 s / side | 60 s | Resist rotation |
-| Short-foot Hold | Optional 2 × 20 s / side | 30 s | Heel and both toe bases planted; no toe curling |
+| 1 | Medicine-Ball Rotational Throw | 3 × 3/side | 90 s |
+| 2 | Single-Arm Landmine Press | 3 × 6–8/arm | 120 s |
+| 3 | Lat Pulldown | 3 × 6–10 | 120 s |
+| 4 | Flat Machine Chest Press | 3 × 8–12 | 120 s |
+| 5 | Cable Chest Fly | 3 × 12–15 | 75 s |
+| 6 | Reverse Pec Deck | 3 × 12–20 | 75 s |
+| 7 | Cable Lateral Raise | 2 × 12–20 | 60 s |
+| 8 | Incline Dumbbell Curl | 3 × 10–15 | 60 s |
+| 9 | Rope Triceps Extension | 3 × 10–15 | 60 s |
+| 10 | Cable External Rotation | 2 × 12–15/arm | 45 s |
 
-**Hack Squat → 4 min rest → CMJ → 2–3 min rest → repeat.** The existing linked
-complex automatically presents the other movement. It is not a rushed circuit.
-Rest can always be adjusted manually. If the athlete is unfamiliar with drop
-jumps, use step-down landing preparation before reactive jumping.
+Execution uses two genuine linked supersets, not a whole-session circuit:
 
-The base ceiling is **24 main jump contacts**: 8 approach + 4 drop + 6 loaded +
-6 CMJ. This is a ceiling, not a minimum. Warm-up pogos and preparation are not
-counted as maximal main contacts. Planned contacts and completed contacts remain
-separate; only actual completed jump logs contribute to the latter. A demanding
-Tuesday is a reason to remove loaded jumps first. Stop or reduce the block when
-height, coordination or landing quality deteriorates.
+- **A:** lateral raise → reverse pec deck, two rounds. The remaining third reverse
+  pec deck set is performed separately; mismatched counts never delete it.
+- **B:** incline curl → rope extension, three rounds.
 
-## Thursday — Upper B
+Start with about 75 seconds after a pair (60–90 seconds is a recommendation),
+with longer rest allowed when performance needs it. Set completion advances to
+the correct next partner. Timer adjustments, cancellation, foreground audio and
+saved audio settings remain available; locked/background iOS sound is not
+promised. Full chest/arm work is part of the main prescription, not hidden as an
+optional afterthought. Painful shoulder work should be modified or stopped.
 
-Purpose: **Rotational Power + Shoulder + Physique**. Base working sets: **23**.
+## Saturday — Lower Strength B or pre-match rest
 
-| Exercise | Prescription | Rest | Intent / effort |
-| --- | --- | --- | --- |
-| Medicine Ball Rotational Throw | 3 × 3 / side | 90 s | About 2–3 kg, accelerate through the throw |
-| Plyometric Push-up | Optional 2 × 3 | 90 s | Crisp, low-fatigue reps |
-| Lat Pulldown | 3 × 8–10 | 120 s | RIR 2 |
-| Low-incline Chest Press | 3 × 8–12 | 120 s | RIR 2 |
-| Seated Cable Row | 3 × 8–12 | 90 s | RIR 2 |
-| Cable Lateral Raise | 3 × 12–20 | 60 s | Controlled reps |
-| Reverse Pec Deck | 2 × 12–20 | 60 s | Controlled reps |
-| Cable External Rotation | 2 × 12–15 / side | 45 s | Light controlled load |
-| Push-up Plus | 2 × 10–12 | 60 s | Scapular control |
-| Ab Wheel | 2 × 8–12 | 60 s | Stop before the lower back sags |
-| Hammer Curl | Optional 2 × 10–15 | 60 s | RIR 1–2 |
-| Triceps Pushdown | Optional 2 × 10–15 | 60 s | RIR 1–2 |
+Non-match Lower B:
 
-Optional work is grouped and collapsed in the workout preview. Off items are not
-inserted as working sets when a session starts. A global optional choice may be
-enabled in configuration, or an exercise may be included just for one date.
+| Exercise | Sets × target | Rest |
+| --- | --- | --- |
+| Hip Thrust | 3 × 6–8 | 150 s |
+| Step-Up | 2 × 6/leg | 120 s |
+| Seated / Lying Leg Curl | 3 × 8–12 | 90 s |
+| Split-Squat Isometric | 2 × 25–35 s/leg | 60 s |
+| Standing Calf Raise | 3 × 8–12 | 90 s |
 
-The easy 5 km reminder is **off by default**. If needed, enable it separately and
-run at conversational RPE 3–4. It is not a race, interval session or completed
-activity. Avoid hard running before Friday practice.
+Friday fatigue matters. Yellow readiness reduces work. Poor recovery allows
+rest, omission, or an explicit **Move to Sunday** confirmation. The settings store
+the original Saturday date once; resolution removes Saturday work and transfers
+that single prescription to Sunday. It never duplicates the session or moves
+missed work to Monday. A Sunday match overrides a previous move.
 
-## Friday, Saturday and Sunday
+Match-week Saturday is optional easy movement (3–4 min), ankle/hip mobility
+(3 min), controlled approach footwork (2 × 3) and light shoulder activation
+(2 × 10). Relaxed walking is optional. No maximal jumps or heavy lifting. Choosing
+full rest is not a failed workout.
 
-Friday PE and volleyball contribute to actual training load when recorded.
-Planned activities never become completed sessions, calories or jump totals.
-Recorded PE time replaces the corresponding planned PE allowance in fueling
-guidance rather than adding that allowance a second time.
+## Clearance and readiness
 
-On a match weekend, Saturday’s short primer contains:
+Program options keep an editable, locally stored clearance status separately for
+**impact** and **heavy lifting**: unknown, cleared or restricted, plus an optional
+note. The default is unknown; a program upgrade never invents medical clearance.
+No diagnosis or private medical record is hard-coded in the repository.
 
-- Light dynamic mobility, 2–3 min.
-- Snap-down landing, 1 × 3.
-- Optional light pogos, 1 × 8.
-- Three approach jumps, 1 each around 70%, 80%, 90%, with 60–90 s rest.
-- Optional light medicine-ball spike slam, 2 × 2.
+The raw review shows the recommendation. Date-specific resolution applies the
+saved clearance before a new workout starts. Unknown/restricted impact replaces
+maximal jumps and ballistics with non-impact preparation. Unknown/restricted
+heavy lifting supplies easy rehearsal without inherited historical loads or
+aggressive overload recommendations. Impact clearance alone does not approve
+loaded jumps or throws: those remain omitted until lifting guidance is confirmed.
+Approved bodyweight jumps stay unloaded, and rehearsal logs never become PRs or
+replace the previous working load. These alternatives are not a claim that a
+particular movement is medically approved. Individual ophthalmology guidance is
+recommended before intensifying uncertain or restricted activities. Completed
+and active snapshots are not retroactively changed by a clearance edit.
 
-Full rest is valid when tired, sore or travelling. The primer does not turn into a
-heavy session, and Sunday competition replaces Heavy Lower B completely.
+Readiness is self-reported, not a measured physiological recovery score:
 
-On a non-match weekend, Saturday is full rest or optional easy walking/mobility.
-There is no heavy lifting or required jumping. Sunday contains **Heavy Lower B**:
+- **Green:** normal movement and recovery; perform the approved prescription.
+- **Yellow:** fatigue, poor sleep, soreness or reduced quality; omit extra
+  explosive work and reduce demanding sets. No aggressive overload.
+- **Red:** painful/unstable movement or concerning symptoms; stop relevant
+  high-impact/painful work and offer comfortable recovery. Persistent or
+  worsening symptoms warrant professional assessment.
 
-| Exercise | Prescription | Rest | Effort |
-| --- | --- | --- | --- |
-| Split-squat Jump | Optional 2 × 2 / leg; bodyweight | 120 s | Controlled landings |
-| Leg Press | 3 × 5–8 | 180 s | RIR 2 |
-| Smith Bulgarian Split Squat | 2 × 6–8 / leg | 120 s | RIR 2 |
-| Hip Thrust Machine | 3 × 6–8 | 120 s | RIR 2 |
-| Seated / Lying Leg Curl | 2 × 8–12 | 90 s | RIR 1–2 |
-| Standing Calf Raise | 3 × 6–10 | 90 s | RIR 1–2 |
-| Tibialis Raise | 2 × 15–20 | 60 s | Controlled reps |
-| Copenhagen Plank | 2 × 20–30 s / side | 60 s | Pain-free lever, steady trunk |
+Checks follow Monday, Wednesday and the actual Lower B date; a moved workout
+uses Sunday readiness. Recovery Saturday and optional match primers do not need
+an irrelevant heavy-workout gate. A jump-height drop may inform the athlete's
+judgment; no fixed percentage is an automatic diagnosis.
 
-Base working sets: **17**. If not recovered after Saturday, reduce work or choose
-recovery. Missed heavy work never automatically moves to Monday.
+## Eight-week progression and contacts
 
-Trap Bar Deadlift is a **replacement**, not extra work: first learn an unloaded
-hinge and the 20 kg empty bar on the platform. Once movement quality is reliable,
-replace Leg Press with 3 × 4–6; do not perform both. There are no default trap-bar
-jumps and no automatic load increase for a novice.
+| Week | Strength | Extra gym jumping |
+| --- | --- | --- |
+| 1–3 | Establish clean loads, earn reps, then small load increases | Maintain approved dose |
+| 4 | About 30–40% fewer working sets | Roughly half the normal contacts |
+| 5–7 | Resume and progress high-quality work | Maintain; never chase volume |
+| 8 | Reduce hard work and prepare fresh tests | Reduced measured attempts replace normal jump volume |
 
-## Phases, readiness and progression
+A normal approved non-match week has about 20 additional gym contacts; a match
+week has about 6–12, fewer after prior competition or when recovery requires.
+These are practical starting recommendations, not scientific universal maxima
+and not the athlete's total volleyball exposure. Warm-up movements and footwork
+are not counted as maximal main-workout contacts. Planned contacts, completed
+gym contacts, recorded volleyball contacts, PE contacts and unmeasured estimates
+remain separate.
 
-- **Weeks 1–3 — Build 1:** Base prescriptions; conservative performance-led
-  progression. Jump contacts stay stable.
-- **Week 4 — Deload:** Reduce demanding sets approximately 40–50%, allowing for
-  whole sets. Wednesday main jumps reduce to 13 contacts: 4 approach + 2 drop +
-  3 loaded + 4 CMJ. Sunday’s strength work reduces on Sunday, not Saturday. Match
-  primers remain easy and optional work stays optional.
-- **Weeks 5–7 — Build 2:** Return to the base prescriptions. Earn added load through
-  clean comparable performance at the prescribed rep target and RIR.
-- **Week 8 — Peak / Retest:** Reduce hard strength volume. Wednesday’s two fresh
-  standing and two approach attempts replace the usual maximal jump block and
-  precede reduced strength; supplementary drop/loaded jumps are removed. The usual
-  heavy–jump complex is not added on top of retesting. Supplementary split-squat
-  jumps are removed from Sunday. Do not add another full-volume maximal test day.
+Double progression is suggestion-based. For Hack Squat 4 × 4–6, keep the load
+until all four sets reach six clean repetitions with the prescribed reserve.
+Then consider the smallest practical increase, commonly about 2.5–5%. Nothing
+changes the logged/planned weight automatically. Explosive progress means
+quality, height, speed and consistency; never automatically raise boxes, sets or
+contacts.
 
-Readiness is self-reported and applies only to future prescriptions. Wednesday
-and non-match Sunday use the relevant lower-body check. Saturday recovery has no
-heavy-session gate. A match Saturday is a low-fatigue primer, not Heavy Lower B.
+## Preparation, progress and nutrition
 
-- **Green:** Normal prescribed work, with quality still governing completion.
-- **Yellow:** Remove supplementary loaded/reactive jumps, optional work and
-  ballistic shoulder work; reduce remaining jump sets and demanding strength
-  where appropriate. No aggressive overload suggestions.
-- **Red:** Stop high-impact, unstable or painful work. Offer pain-free recovery;
-  persistent or worsening knee, Achilles, shoulder or back problems need
-  professional assessment. Do not push through sharp pain.
+Quick warm-ups stay on one screen: Monday prepares approach movement and
+shoulders, Wednesday dynamic lower movement plus progressive loading, Thursday
+shoulder/scapular/trunk control, and Saturday concise lower preparation. Add
+exercise-specific ramp-up sets before demanding lifts. Preparation should not
+fatigue the athlete or sacrifice needed readiness to meet a fixed time limit.
 
-Readiness never rewrites a completed or active session. It is not a physiological
-fatigue measurement. Suggested strength progression remains a small explicit
-choice after repeated comparable top-range sessions with adequate RIR. Neither
-week number nor set completion automatically raises loads, box heights or jump
-volume. Technique comes first on unfamiliar movements.
+Progress uses actual standing/approach measurements, Hack Squat and pull-up
+progression, upper lifting, weekly body-weight averages and real consistency.
+Manual jump tests save reach, standing/approach touch, date, notes and optional
+test conditions; height is touch minus reach. Estimates never become confirmed
+PRs. Weekly summaries use completed gym/sport records, recorded contacts and
+weight trends, with short supported insights. No invented performance scores.
 
-## Tracking and daily use
+V13.1 offers an explicit nutrition starting recommendation: about **3,050 kcal**,
+**130 g protein**, **420 g carbohydrate**, **95 g fat** (macros total about 3,055
+kcal). It is an adjustable estimate. Saved targets change only after separate
+confirmation. Gradual gain aims for about **0.1–0.25 kg/week** toward an initial
+**66–67 kg** goal. If comparable seven-day averages remain stable for about two
+weeks, suggest—not automatically apply—roughly **150–200 kcal/day** more.
+Optional meal-timing reminders remain secondary. Supplement dosages and
+medication instructions are unchanged.
 
-Today always shows the actual Berlin calendar date. Train has its own selected
-date; previewing future sessions does not move Today or create workout history.
-Both use the same workout preview and date-scoped editing infrastructure.
+## Implementation and validation
 
-Prioritize approach and standing jump tests separately, Hack Squat and pull-up
-performance, lower-body strength, weekly average body weight, volleyball load and
-self-reported readiness. A jump test stores standing reach and touch alongside the
-calculated height. Video estimates remain labeled and outside measured PRs.
+Storage remains `setline.gym.v1`, schema version 1. New settings and per-exercise
+superset/preparation fields are optional and validated by the existing schemas.
+Old exports remain importable; current exports include program settings,
+restorable plan snapshots and optional measurements through the same backup
+infrastructure.
 
-Approximate reference values — reach 235 cm, standing touch ~310 cm, approach
-315–317 cm — imply roughly 75 cm standing and 80–82 cm approach verticals. They
-are explanatory references only. No fake dated measurements or percentage gains
-are created. Record new standardized tests under comparable conditions.
+Validation commands:
 
-Existing nutrition, supplements, reminders, imports, exercise guides, history,
-backup/restore, offline PWA installation and rest-audio preferences remain part of
-the same app. Automated browser audio checks cannot establish that a physical
-iPhone speaker or headphones were audible over another music app.
+```sh
+npm run typecheck
+npm test
+npm run build
+npm run test:web
+```
+
+Tests cover exact prescriptions, backward compatibility, explicit upgrades,
+restoration, no history/active changes, competition branching, rescheduling,
+readiness, clearance, deload/retest contacts, supersets and mismatched set counts,
+preview editing, opt-in nutrition, mobile layouts and PWA update behavior.
+Physical iPhone sound playback must still be verified on a real device; browser
+acceptance and automated tests do not establish that hardware result.

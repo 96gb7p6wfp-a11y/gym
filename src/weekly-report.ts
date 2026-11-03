@@ -2,6 +2,7 @@ import type { z } from 'zod';
 import { SessionSchema, PlanDaySchema, NutritionPayloadSchema, completedSets, estimatedCalories as loggedWeightVolume, getCalories, sessionDuration } from './domain.js';
 import { estimateActivity, type ActivityRecord } from './activities.ts';
 import { isGymTraining } from './training-classification.ts';
+import { getTrainingExposureSummary, type TrainingExposureSummary } from './training-exposure.ts';
 
 export type ReportSession = z.infer<typeof SessionSchema>;
 export type ReportPlanDay = z.infer<typeof PlanDaySchema>;
@@ -66,6 +67,8 @@ export interface WeeklyReportData {
   hasData: boolean;
   limitedData: boolean;
   nutrition: ReportNutritionSummary;
+  jumpExposure: TrainingExposureSummary & { plannedGymContacts: number };
+  weightTrend: { currentAverage: number | null; previousAverage: number | null; changeKg: number | null };
 }
 
 function calendarDate(value: string): Date {
@@ -120,6 +123,7 @@ type PerformanceValue = PerformanceComparison & { date: string; startedAt: numbe
 
 function completedPerformance(session: ReportSession): PerformanceValue[] {
   return session.exercises.flatMap<PerformanceValue>(exercise => {
+    if (exercise.preparationOnly) return [];
     const base = { key: exercise.key, name: exercise.name, date: session.date, startedAt: session.startedAt };
     // Measurements represent different things: touch, jump height and distance never mix.
     if (exercise.measurement) {
@@ -188,6 +192,18 @@ function collectNutrition(dates: readonly string[], records?: readonly ReportNut
   };
 }
 
+function sampledWeightAverage(dates: readonly string[], records?: readonly ReportNutritionRecord[]): number | null {
+  const days = new Map<string, number[]>();
+  for (const record of records ?? []) {
+    if (!dates.includes(record.date)) continue;
+    const parsed = NutritionPayloadSchema.safeParse(record.payload);
+    if (parsed.success && parsed.data.kind === 'weight') days.set(record.date, [...(days.get(record.date) ?? []), parsed.data.kg]);
+  }
+  const entries = [...days].sort(([a], [b]) => a.localeCompare(b));
+  if (entries.length < 3 || entries.at(-1)![0] < shiftReportDate(entries[0][0], 3)) return null;
+  return Math.round(entries.reduce((sum, [, values]) => sum + values.reduce((total, kg) => total + kg, 0) / values.length, 0) / entries.length * 100) / 100;
+}
+
 export function getWeeklyReport(input: WeeklyReportInput): WeeklyReportData {
   const weekStart = reportWeekStart(input.weekStart);
   const dates = weekDates(weekStart);
@@ -203,6 +219,15 @@ export function getWeeklyReport(input: WeeklyReportInput): WeeklyReportData {
     ? Math.round((current.totals.minutes - previous.totals.minutes) / previous.totals.minutes * 100) : null;
   const performance = comparePerformance(current.workouts, previous.workouts);
   const nutrition = collectNutrition(dates, input.nutritionRecords);
+  const jumpExposure = { ...getTrainingExposureSummary({ sessions: input.sessions, activities: input.activities, startDate: dates[0], endDate: dates[6] }),
+    plannedGymContacts: input.plan.reduce((sum, day) => sum + day.exercises.filter(exercise => !exercise.optionalWork && exercise.jumpContactsPerRep).reduce((contacts, exercise) => {
+      const dose = exercise.target.match(/(\d+)\s*(?:[–—-]\s*(\d+))?/);
+      return contacts + exercise.sets * Number(dose?.[2] ?? dose?.[1] ?? 0) * (exercise.jumpContactsPerRep ?? 0);
+    }, 0), 0) };
+  const currentAverage = sampledWeightAverage(dates, input.nutritionRecords);
+  const previousAverage = sampledWeightAverage(weekDates(previousWeekStart), input.nutritionRecords);
+  const weightTrend = { currentAverage, previousAverage,
+    changeKg: currentAverage !== null && previousAverage !== null ? Math.round((currentAverage - previousAverage) * 100) / 100 : null };
   const nutritionInsight = nutrition.mealLoggedDays
     ? `Meals logged on ${nutrition.mealLoggedDays}/7 days: ${nutrition.meanLoggedProteinGrams} g protein/day recorded; partial logs, other meals unknown.`
     : null;
@@ -236,7 +261,7 @@ export function getWeeklyReport(input: WeeklyReportInput): WeeklyReportData {
       : 'Repeat consistent sessions; add load only with controlled technique.');
     actions.push(recoveryEffort || hardLegDayCardio
       ? 'Move hard cardio away from jump work; keep a recovery day easy.'
-      : 'Keep an easy recovery day and aim for 7–9 hours of sleep.');
+      : 'Keep an easy recovery day and aim for 8–10 hours of sleep.');
   }
   const weight = input.bodyWeight;
   actions.push(weight !== undefined && Number.isFinite(weight) && weight >= 20 && weight <= 400
@@ -245,5 +270,5 @@ export function getWeeklyReport(input: WeeklyReportInput): WeeklyReportData {
 
   return { weekStart, weekEnd: dates[6], dates, previousWeekStart, totals: current.totals, previous: previous.totals,
     plannedGymDays: plannedGymDates.length, completedPlannedGymDays, minutesChangePercent, performance,
-    insights: insights.slice(0, 3), actions: actions.slice(0, 3), hasData, limitedData, nutrition };
+    insights: insights.slice(0, 3), actions: actions.slice(0, 3), hasData, limitedData, nutrition, jumpExposure, weightTrend };
 }

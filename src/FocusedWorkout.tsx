@@ -6,7 +6,7 @@ import { ExerciseGuide } from './ExerciseGuide';
 import { measurementLabel } from './domain';
 import { TimedSetControls } from './TimedSetControls';
 import type { TimedSetAction } from './timed-sets';
-import { findComplexPair, firstUnfinishedStep, nextStepAfterCompletion } from './training-flow';
+import { findTrainingPair, firstUnfinishedStep, nextStepAfterCompletion, restAfterCompletedSet, type SupersetLink } from './training-flow';
 import './focused-workout.css';
 import { findLibraryExercise } from './exercise-library';
 import { getProgressionRecommendation, type ProgressionContext } from './performance-insights';
@@ -42,6 +42,8 @@ export interface FocusedExercise {
   targetRpe?: number;
   quantityUnit?: 'm';
   benefit?: string;
+  superset?: SupersetLink;
+  preparationOnly?: boolean;
 }
 
 export interface FocusedWorkoutProps {
@@ -137,9 +139,9 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
     }
     const next = nextStepAfterCompletion(exercises, current.key, completed.id);
     const nextMovement = exercises.find(entry => entry.key === next?.exerciseKey);
-    const pair = findComplexPair(exercises, current.key);
+    const pair = findTrainingPair(exercises, current.key);
     const nextInPair = pair && nextMovement && nextMovement.key !== current.key
-      && findComplexPair(exercises, nextMovement.key)?.startIndex === pair.startIndex
+      && findTrainingPair(exercises, nextMovement.key)?.startIndex === pair.startIndex
       ? nextMovement.name : undefined;
     const previousMovement = previous(current)?.exercise;
     const previousLogs = previousMovement?.logs.filter(entry => entry.done) ?? [];
@@ -152,7 +154,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
         setNumber: completedIndex + 1, totalSets: current.logs.length,
         allDone: exercises.every(entry => entry.logs.every(entry => entry.done)),
         movementDone: current.logs.every(entry => entry.done), nextInPair,
-        hasRest: current.rest > 0,
+        hasRest: restAfterCompletedSet(exercises, current.key, completed.id) > 0,
         easeBack: context?.lowFatigueSession || context?.readiness?.energy === 'low'
           || context?.readiness?.soreness === 'high',
       }),
@@ -171,13 +173,15 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
   const setIndex = exercise.logs.findIndex((entry) => entry.id === log.id);
   const previousLogs = previous(exercise)?.exercise.logs.filter((entry) => entry.done) ?? [];
   const libraryExercise = findLibraryExercise(exercise);
-  const recommendation = getProgressionRecommendation(exercise, sessions, date, context);
+  const recommendation = getProgressionRecommendation(exercise, sessions, date,
+    exercise.preparationOnly ? { ...context, lowFatigueSession: true } : context);
   const qualityCue = setQualityCue({ ...exercise, category: libraryExercise?.category },
-    recommendation.kind === 'reduce' || context?.lowFatigueSession
+    exercise.preparationOnly || recommendation.kind === 'reduce' || context?.lowFatigueSession
       || context?.readiness?.energy === 'low' || context?.readiness?.soreness === 'high');
   const weightStep = (log.kg ?? 0) >= 40 ? 2.5 : .5;
-  const pair = findComplexPair(exercises, exercise.key);
-  const rounds = pair ? Math.max(pair.first.logs.length, pair.second.logs.length) : 0;
+  const pair = findTrainingPair(exercises, exercise.key);
+  const rounds = pair?.pairedRounds ?? 0;
+  const pairedSet = pair && (pair.kind === 'complex' || setIndex < pair.pairedRounds);
   const allDone = exercises.every((entry) => entry.logs.every((entry) => entry.done));
   const anticipated = nextStepAfterCompletion(exercises.map(entry => entry.key === exercise.key
     ? { ...entry, logs: entry.logs.map(set => set.id === log.id ? { ...set, done: true } : set) } : entry), exercise.key, log.id);
@@ -224,9 +228,9 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
         </div>
         <div className="focused-exercise-title"><h2 className="focused-exercise__name">{exercise.name}</h2></div>
         {(exercise.benefit || libraryExercise) && <p className="focused-exercise-benefit">{exercise.benefit ?? libraryExercise?.primaryBenefit}</p>}
-        {pair && <div className="focused-pair" role="group" aria-label={`Complex pair ${pair.label}`}>
+        {pair && pairedSet && <div className="focused-pair" role="group" aria-label={`${pair.kind === 'superset' ? 'Superset' : 'Complex pair'} ${pair.label}`}>
           <div className="focused-pair__heading">
-            <span>Complex {pair.label}</span><strong>Round {setIndex + 1} <span>of {rounds}</span></strong>
+            <span>{pair.kind === 'superset' ? 'Superset' : 'Complex'} {pair.label}</span><strong>Round {setIndex + 1} <span>of {rounds}</span></strong>
           </div>
           <div className="focused-pair__steps">{[pair.first, pair.second].map((entry, index) => {
             const roundLog = entry.logs[setIndex];
@@ -238,8 +242,9 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
               <span className="focused-pair__state">{entry.key === exercise.key ? 'Now' : roundLog?.done ? 'Done' : 'Next'}</span>
             </button>;
           })}</div>
-          <p>{exercise.rest > 0 ? `${exercise.rest % 60 === 0 ? `${exercise.rest / 60} min` : `${exercise.rest} sec`} rest between steps` : 'Follow your planned rest'}</p>
+          <p>{pair.kind === 'superset' ? `Move to the partner, then rest ${pair.restAfterRound} sec after the pair. Rest longer if needed.` : exercise.rest > 0 ? `${exercise.rest % 60 === 0 ? `${exercise.rest / 60} min` : `${exercise.rest} sec`} rest between steps` : 'Follow your planned rest'}</p>
         </div>}
+        {pair?.kind === 'superset' && !pairedSet && <p className="small-note">Extra standalone set · keep your normal rest.</p>}
         {allSetsOpen ? (
           <div className="focused-workout__all-sets">{renderAllSets(exercise, Math.max(0, exerciseIndex))}</div>
         ) : (
@@ -338,7 +343,8 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
           })}
         </div>
       </details>
-      {nextExercise && <p className="focused-workout__next">{pair && findComplexPair(exercises, nextExercise.key)?.startIndex === pair.startIndex ? `Next in pair · round ${anticipated?.round}` : 'Up next'}<span>{nextExercise.name}</span></p>}
+      {nextExercise && <p className="focused-workout__next">{pair && findTrainingPair(exercises, nextExercise.key)?.startIndex === pair.startIndex
+        ? pair.kind === 'superset' && (anticipated?.setIndex ?? 0) >= pair.pairedRounds ? 'Extra standalone set' : `Next in pair · round ${anticipated?.round}` : 'Up next'}<span>{nextExercise.name}</span></p>}
       {allDone && <p className="focused-workout__finished" role="status">All sets complete. Finish when you’re ready.</p>}
     </div>
   );

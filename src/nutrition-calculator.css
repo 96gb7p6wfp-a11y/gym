@@ -17,3 +17,9 @@
 .nutrition-calculator__shared { min-height: 44px; text-align: left; white-space: normal; }
 .nutrition-simple-fuel p { line-height: 1.55; }
 .nutrition-calculator .btn { white-space: normal; }
+.nutrition-program-proposal { margin: 0 0 20px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.nutrition-program-proposal > .nutrition-tool-row { padding-inline: 0; }
+.nutrition-program-proposal > h3 { margin: 0; font-size: 17px; }
+.nutrition-program-proposal > .text-button { width: 100%; min-height: 44px; margin-top: 4px; }
+.nutrition-calculator-disclosure > summary { display: flex; align-items: center; min-height: 48px; cursor: pointer; font-weight: 600; }
+.nutrition-calculator-disclosure[open] > summary { margin-bottom: 12px; }

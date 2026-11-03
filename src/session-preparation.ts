@@ -1,6 +1,6 @@
 import { DEFAULT_PROFILE } from './domain.js';
 import { findLibraryExercise } from './exercise-library.ts';
-import { createVolleyballMasterPlan } from './volleyball-master-plan.ts';
+import { createV81VolleyballMasterPlan, createVolleyballMasterPlan } from './volleyball-master-plan.ts';
 import { getStretchRoutine, type StretchStep } from './stretch-routine.ts';
 
 export interface PreparationExercise {
@@ -11,6 +11,7 @@ export interface PreparationExercise {
   mode?: string;
   defaultKg?: number | null;
   optionalWork?: boolean;
+  preparationOnly?: boolean;
   logs?: readonly { done: boolean }[];
 }
 export interface SessionPreparationOptions {
@@ -21,7 +22,7 @@ export interface SessionPreparationOptions {
   name?: string;
   goal?: string;
   minutes?: number;
-  programRevision?: '8.1';
+  programRevision?: '8.1' | '13.1';
   /** Finished sessions must not imply that unlogged exercises were performed. */
   completedOnly?: boolean;
 }
@@ -91,6 +92,7 @@ const signature = (item: Omit<StretchStep, 'done'>) => JSON.stringify([item.key,
 const automatic = new Map<string, string>();
 const conceptByKey = new Map<string, string>();
 const prescribedPreparation = new Map<string, readonly StretchStep[]>();
+const preparationKey = (revision: string, name?: string) => `${revision}:${normalize(name)}`;
 const register = (items: readonly Omit<StretchStep, 'done'>[]) => {
   for (const item of items) {
     const concept = conceptByName.get(normalize(item.name));
@@ -99,12 +101,12 @@ const register = (items: readonly Omit<StretchStep, 'done'>[]) => {
 };
 register(allTemplates);
 register(getStretchRoutine());
-for (const day of [...DEFAULT_PROFILE.plan, ...createVolleyballMasterPlan(), ...createVolleyballMasterPlan(true)]) {
+for (const day of [...DEFAULT_PROFILE.plan, ...createV81VolleyballMasterPlan(), ...createV81VolleyballMasterPlan(true), ...createVolleyballMasterPlan(), ...createVolleyballMasterPlan(true)]) {
   register(day.warmup ?? []);
   register(day.cooldown ?? []);
   if (day.extraSession) { register(day.extraSession.warmup ?? []); register(day.extraSession.cooldown ?? []); }
-  if (day.programRevision === '8.1' && day.warmup?.length) prescribedPreparation.set(normalize(day.name), day.warmup);
-  if (day.extraSession?.programRevision === '8.1' && day.extraSession.warmup?.length) prescribedPreparation.set(normalize(day.extraSession.name), day.extraSession.warmup);
+  if (day.programRevision && day.warmup && (day.warmup.length || day.programRevision === '13.1')) prescribedPreparation.set(preparationKey(day.programRevision, day.name), day.warmup);
+  if (day.extraSession?.programRevision && day.extraSession.warmup && (day.extraSession.warmup.length || day.extraSession.programRevision === '13.1')) prescribedPreparation.set(preparationKey(day.extraSession.programRevision, day.extraSession.name), day.extraSession.warmup);
 }
 
 function focusFor(exercises: readonly PreparationExercise[]): Set<Focus> {
@@ -203,11 +205,13 @@ function suggestions({ phase, kind, exercises, completedOnly, name = '', goal }:
 
 /** Pure view/new-session preparation. Custom instructions and completed checks are never discarded. */
 export function getSessionPreparation(options: SessionPreparationOptions): StretchStep[] {
-  if (options.phase === 'warmup' && options.programRevision === '8.1') {
+  if (options.phase === 'warmup' && options.programRevision) {
     // The revised program prescribes one concise preparation sequence. Keep
     // its dose and saved substitutions instead of appending a generic routine.
-    const prescribed = options.items ?? prescribedPreparation.get(normalize(options.name));
-    if (prescribed?.length) return prescribed.slice(0, 20).map(item => ({ ...item }));
+    const prescribed = options.items ?? prescribedPreparation.get(preparationKey(options.programRevision, options.name));
+    // An explicitly empty V13.1 sequence can be a clearance/readiness adjustment
+    // or a primer that already contains its preparation. Do not re-add impact.
+    if (prescribed && (prescribed.length || options.programRevision === '13.1')) return prescribed.slice(0, 20).map(item => ({ ...item }));
   }
   const desired = suggestions(options);
   const wanted = new Set(desired.map(item => item.concept));
@@ -263,13 +267,13 @@ export type WarmupPlan = Pick<SessionPreparationOptions, 'kind' | 'exercises' | 
 /** Stable, short view of preparation. The full saved routine is never changed. */
 export function getQuickWarmup(plan: WarmupPlan, items: readonly StretchStep[] = []): StretchStep[] {
   const available = items.length ? items : getSessionPreparation({ ...plan, items: plan.warmup, phase: 'warmup' });
-  if (plan.programRevision === '8.1' && prescribedPreparation.has(normalize(plan.name))) return available.map(item => ({ ...item }));
+  if (plan.programRevision && prescribedPreparation.has(preparationKey(plan.programRevision, plan.name))) return available.map(item => ({ ...item }));
   const focus = focusFor(plan.exercises);
   const upper = ['shoulders', 'chest', 'back', 'biceps', 'triceps'].some(value => focus.has(value as Focus));
   const lower = ['quads', 'glutes', 'hamstrings', 'hips', 'adductors', 'calves'].some(value => focus.has(value as Focus));
   const primer = /primer|technique/i.test(plan.name ?? '');
   const upperPower = isUpperPower(plan.exercises, plan.goal, upper);
-  const firstLift = plan.exercises.find(item => item.mode === 'weight' && !/throw|slam|jump/i.test(item.name ?? ''));
+  const firstLift = plan.exercises.find(item => !item.preparationOnly && item.mode === 'weight' && !/throw|slam|jump/i.test(item.name ?? ''));
   const pattern = /deadlift|romanian|hinge/i.test(firstLift?.name ?? '') ? 'hinge' : 'squat';
   const desired = plan.kind === 'recovery' ? ['hips', 'thoracic', 'wall']
     : plan.kind === 'sport' ? ['ankle', 'hips', 'arms', 'wall']
@@ -301,12 +305,26 @@ export function getQuickWarmup(plan: WarmupPlan, items: readonly StretchStep[] =
 
 export function getQuickWarmupPresentation(plan: WarmupPlan): { title: string; duration: string; purpose: string; rampUp: string } {
   const detailed = getWarmupPresentation(plan);
-  const firstLift = plan.exercises.find(item => item.mode === 'weight' && !/throw|slam|jump/i.test(item.name ?? ''));
+  const firstLift = plan.exercises.find(item => !item.preparationOnly && item.mode === 'weight' && !/throw|slam|jump/i.test(item.name ?? ''));
   const primer = /primer|technique/i.test(plan.name ?? '');
   const focus = focusFor(plan.exercises);
   const jumping = focus.has('jump');
   const upperPower = isUpperPower(plan.exercises, plan.goal, ['shoulders', 'chest', 'back', 'biceps', 'triceps'].some(value => focus.has(value as Focus)));
-  const rampUp = plan.programRevision === '8.1' && /main jump.*heavy lower a/i.test(plan.name ?? '')
+  const v131 = plan.programRevision === '13.1';
+  const preparationOnly = v131 && plan.exercises.length > 0 && plan.exercises.every(exercise => exercise.preparationOnly);
+  const rampUp = preparationOnly
+    ? 'Use only easy, comfortable rehearsal within your recorded guidance. Do not add heavy loading, maximal jumps or ballistic work while clearance remains uncertain.'
+    : v131 && /approach power.*upper a/i.test(plan.name ?? '')
+    ? 'If cleared for impact, build toward jump speed with full resets. Use lighter practice sets before pulling and pressing. Keep the preparation fresh; never jump through pain.'
+    : v131 && /lower strength.*reactive power/i.test(plan.name ?? '')
+      ? 'After progressive jump preparation when cleared, take 2–4 lighter Hack Squat sets. Reduce reps as load rises; rehearse the RDL lightly before working sets. CMJ and Hack Squat are separate exercises.'
+      : v131 && /lower strength b/i.test(plan.name ?? '')
+        ? 'Build up with lighter Hip Thrust sets, then rehearse Step-Ups without load. Start unilateral work on the less confident side and match controlled repetitions.'
+        : v131 && /upper b/i.test(plan.name ?? '')
+          ? 'Build throwing speed gradually only when cleared. Use lighter Landmine Press and Chest Press practice sets before working sets; keep ribs controlled and breathe normally.'
+          : v131 && primer
+            ? 'Keep every movement easy. No maximal jumps or heavy lifting; complete rest is also a good option.'
+            : plan.programRevision === '8.1' && /main jump.*heavy lower a/i.test(plan.name ?? '')
     ? 'Build jump intensity gradually. At Hack Squat, take 2–4 progressively loaded practice sets; reduce reps as load rises and stay fresh. Rehearse the RDL lightly before its working sets.'
     : plan.programRevision === '8.1' && /heavy lower b/i.test(plan.name ?? '')
       ? 'Build up with 2–4 lighter sets of Leg Press before working sets. If replacing it with Trap Bar Deadlift, start with empty-bar technique; do not add it on top.'
@@ -317,7 +335,11 @@ export function getQuickWarmupPresentation(plan: WarmupPlan): { title: string; d
           : upperPower ? 'Build throwing speed gradually. Use light ramp-up sets at the first lift.'
           : firstLift ? `Then build up with lighter sets of ${firstLift.name}.`
             : 'Build the first movement gradually before working sets.';
-  return { ...detailed, duration: plan.programRevision === '8.1' && /main jump.*heavy lower a/i.test(plan.name ?? '') ? '6–9 min'
+  return { ...detailed, duration: preparationOnly ? '3–5 min'
+    : v131 && primer ? 'Included in primer'
+    : v131 && /approach power.*upper a|lower strength.*reactive power/i.test(plan.name ?? '') ? '5–8 min + ramp-up'
+    : v131 && /lower strength b|upper b/i.test(plan.name ?? '') ? '3–5 min + ramp-up'
+    : plan.programRevision === '8.1' && /main jump.*heavy lower a/i.test(plan.name ?? '') ? '6–9 min'
     : plan.programRevision === '8.1' && /heavy lower b/i.test(plan.name ?? '') ? '5–7 min'
     : plan.kind === 'recovery' ? '2–3 min' : plan.kind === 'sport' || jumping ? '4–5 min' : '3–4 min', rampUp };
 }
@@ -345,6 +367,10 @@ export function getWarmupPresentation(plan: WarmupPlan): { title: string; durati
   const lower = ['quads', 'glutes', 'hamstrings', 'hips', 'adductors', 'calves'].some(item => focus.has(item as Focus));
   if (plan.kind === 'recovery') return { title: 'Easy Movement Preparation', duration: '5 min', purpose: 'Move gently, breathe easily and ease into mobility.' };
   if (plan.kind === 'sport') return { title: 'Court Preparation', duration: '6–8 min', purpose: 'Prepare ankles, hips and shoulders for court movement.' };
+  if (plan.programRevision === '13.1' && plan.exercises.length > 0 && plan.exercises.every(exercise => exercise.preparationOnly)) return { title: 'Easy Session Preparation', duration: '3–5 min', purpose: 'Rehearse comfortable movements gently, within your recorded clearance guidance.' };
+  if (plan.programRevision === '13.1' && /approach power.*upper a/i.test(plan.name ?? '')) return { title: 'Approach + Upper Preparation', duration: '5–8 min + ramp-up', purpose: 'Prepare takeoff rhythm and shoulders without adding fatigue.' };
+  if (plan.programRevision === '13.1' && /lower strength.*reactive power/i.test(plan.name ?? '')) return { title: 'Lower Strength Preparation', duration: '5–8 min + ramp-up', purpose: 'Prepare ankles, hips and controlled force production; build loading gradually.' };
+  if (plan.programRevision === '13.1' && /upper b/i.test(plan.name ?? '')) return { title: 'Shoulder + Trunk Preparation', duration: '3–5 min + ramp-up', purpose: 'Prepare shoulder blades, shoulder rotation and trunk control for pressing and throwing.' };
   if (/primer|technique/i.test(plan.name ?? '')) return { title: 'Technique Preparation', duration: '5–6 min', purpose: 'Find your rhythm without adding fatigue or extra jump contacts.' };
   if (focus.has('jump')) return { title: 'Jump + Lower Power Preparation', duration: '8–12 min', purpose: 'Prepare your ankles, hips and landing pattern for fast, high-quality jumps.' };
   if (isUpperPower(plan.exercises, plan.goal, upper)) return { title: 'Upper Power Preparation', duration: '6–10 min', purpose: 'Prepare shoulders, shoulder blades and trunk for fast, controlled throws.' };
@@ -393,8 +419,8 @@ export function getWarmupStepInfo(item: StretchStep, plan: WarmupPlan): WarmupSt
     rehearsal: [alternative('Unloaded Pattern Rehearsal', '4–6 easy reps', 'Practice the first lift’s movement without equipment. Still build load gradually at the lift before working sets.')],
     breathing: [alternative('Seated Easy Breathing', '4 breaths', 'Sit comfortably and breathe slowly. Let the ribs settle without forcing the breath.')],
   };
-  const firstStrength = plan.exercises.find(exercise => exercise.mode === 'weight' && !/throw|slam|jump/i.test(exercise.name ?? ''))
-    ?? plan.exercises.find(exercise => /squat|press|deadlift|row|pull.?up|pulldown/i.test(exercise.name ?? ''));
+  const firstStrength = plan.exercises.find(exercise => !exercise.preparationOnly && exercise.mode === 'weight' && !/throw|slam|jump/i.test(exercise.name ?? ''))
+    ?? plan.exercises.find(exercise => !exercise.preparationOnly && /squat|press|deadlift|row|pull.?up|pulldown/i.test(exercise.name ?? ''));
   const rehearsal = concept === 'rehearsal' || concept?.endsWith('-rehearsal');
   const followUp = rehearsal && firstStrength
     ? `At ${firstStrength.name}: build up with 2–4 easy practice sets before working sets. Start very light, reduce reps as load rises and stay well short of fatigue.${/pull.?up/i.test(firstStrength.name ?? '') ? ' Use more assistance for the easy sets.' : ''}`

@@ -17,7 +17,7 @@ function personalDrafts(drafts: Profile['sessionDrafts']): Draft[] {
 export function upgradeMasterProgram(profile: Profile, now = Date.now()): Profile {
   const current = ProfileSchema.parse(structuredClone(profile));
   if (!current.masterProgram) throw new Error('Activate the master program before upgrading it.');
-  if (current.masterProgram.revision === '8.1') return current;
+  if (current.masterProgram.revision === '13.1') return current;
 
   const backup: NonNullable<Profile['masterProgramBackup']> = {
     savedAt: now,
@@ -29,12 +29,15 @@ export function upgradeMasterProgram(profile: Profile, now = Date.now()): Profil
   };
   const { sessionDrafts: _drafts, ...remaining } = current;
   const preserved = personalDrafts(current.sessionDrafts);
+  const archive = [...(current.masterProgramArchive ?? []), ...(current.masterProgramBackup ? [current.masterProgramBackup] : [])];
+  if (archive.length > 20) throw new Error('Export a backup before adding another saved program version.');
   return ProfileSchema.parse({
     ...remaining,
     plan: createVolleyballMasterPlan(),
     masterMatchWeekend: createVolleyballMasterPlan(true).slice(5),
-    masterProgram: { ...current.masterProgram, revision: '8.1' },
+    masterProgram: { ...current.masterProgram, revision: '13.1' },
     masterProgramBackup: backup,
+    ...(archive.length ? { masterProgramArchive: archive } : {}),
     ...(current.sessionDrafts ? { sessionDrafts: preserved } : {}),
   });
 }
@@ -48,14 +51,18 @@ export function restorePreviousMasterProgram(profile: Profile): Profile {
   for (const draft of [...personalDrafts(backup.sessionDrafts), ...personalDrafts(current.sessionDrafts)]) {
     drafts.set(`${draft.date}:${draft.slot}`, draft);
   }
-  const { masterProgramBackup: _backup, plan: _plan, masterProgram: _program,
+  const { masterProgramBackup: _backup, masterProgramArchive: _archive, plan: _plan, masterProgram: _program,
     masterMatchWeekend: _weekend, preMasterPlan: _previous, sessionDrafts: _drafts, ...other } = current;
+  const archive = [...(current.masterProgramArchive ?? [])];
+  const previousBackup = archive.pop();
   return ProfileSchema.parse({
     ...other,
     plan: backup.plan,
     ...(backup.masterProgram ? { masterProgram: backup.masterProgram } : {}),
     ...(backup.masterMatchWeekend ? { masterMatchWeekend: backup.masterMatchWeekend } : {}),
     ...(backup.preMasterPlan ? { preMasterPlan: backup.preMasterPlan } : {}),
+    ...(previousBackup ? { masterProgramBackup: previousBackup } : {}),
+    ...(archive.length ? { masterProgramArchive: archive } : {}),
     ...(backup.sessionDrafts || current.sessionDrafts ? { sessionDrafts: [...drafts.values()] } : {}),
   });
 }

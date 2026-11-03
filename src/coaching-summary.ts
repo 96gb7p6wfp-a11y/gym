@@ -52,8 +52,9 @@ export function getProgressTakeaway(summary: PerformanceSummary): ProgressTakeaw
   const weight = summary.weight;
   const attendance = participation(summary);
   const weightChange = weight.change30Days;
-  const weightObserved = weight.stableThreeWeeks || weightChange !== null;
-  const weightStatement = weight.stableThreeWeeks ? 'weekly-average weight has been stable for 3 weeks'
+  const weightObserved = weight.stableTwoWeeks || weight.stableThreeWeeks || weightChange !== null;
+  const weightStatement = weight.stableTwoWeeks ? 'seven-day average weight has been stable for about 2 weeks'
+    : weight.stableThreeWeeks ? 'weekly-average weight has been stable for 3 weeks'
     : weightChange === 0 ? 'weekly-average weight is steady'
       : weightChange !== null ? `weekly-average weight is ${weightChange > 0 ? 'up' : 'down'} ${number(Math.abs(weightChange))} kg` : '';
   const jumpStatement = jump ? `${jumpLabel(jump)} is ${jump.change30Days === 0 ? 'steady' : `${jump.change30Days! > 0 ? 'up' : 'down'} ${number(Math.abs(jump.change30Days!))} cm`}` : '';
@@ -89,7 +90,7 @@ export function getProgressTakeaway(summary: PerformanceSummary): ProgressTakeaw
         : weightObserved ? `${jumpStatement}; ${weightStatement}.`
           : `${jumpStatement}; broader strength trends are still forming.`,
     nextStep: lift.pattern === 'down' || lift.pattern === 'mixed' ? 'Keep the next session controlled and compare your key lifts again.'
-      : weight.stableThreeWeeks || (weightChange !== null && weightChange < 0) ? 'Keep training consistent and review fueling for gradual muscle gain.'
+      : weight.stableTwoWeeks || (weightChange !== null && weightChange < 0) ? 'Keep training consistent and review fueling for gradual muscle gain.'
         : lift.pattern === 'up' ? 'Progress gradually while protecting fresh legs and high-quality jumps.'
           : 'Keep training consistent and compare your key lifts next.',
   };
@@ -101,7 +102,7 @@ export function getProgressTakeaway(summary: PerformanceSummary): ProgressTakeaw
     nextStep: lift.pattern === 'down' ? 'Keep the next session controlled and repeat comparisons after recovery.'
       : lift.pattern === 'mixed' ? 'Repeat comparable sets and let warm-up quality guide the load.'
         : lift.pattern === 'steady' ? 'Build clean reps before adding load; protect fresh legs for volleyball.'
-          : weight.stableThreeWeeks || (weightChange !== null && weightChange < 0) ? 'Review fueling and log an approach jump before adding training volume.'
+          : weight.stableTwoWeeks || (weightChange !== null && weightChange < 0) ? 'Review fueling and log an approach jump before adding training volume.'
             : jump ? 'Keep jumps crisp and progress strength without extra leg work.'
               : 'Log an approach jump next and keep training consistent.',
   };
@@ -109,8 +110,9 @@ export function getProgressTakeaway(summary: PerformanceSummary): ProgressTakeaw
   if (weightObserved) return {
     basis: 'weight',
     observation: `${weightStatement[0].toUpperCase()}${weightStatement.slice(1)}${jump ? `, while ${jumpLabel(jump).toLowerCase()} is steady` : '; overall performance trends are still limited'}.`,
-    nextStep: weight.stableThreeWeeks ? 'Consider +100–150 kcal/day and compare your next jump and lifting results.'
-      : 'Compare key lifts and a jump test before changing food targets.',
+    nextStep: weight.stableTwoWeeks ? 'Consider +150–200 kcal/day and compare your next jump and lifting results; apply only when you choose.'
+      : weight.stableThreeWeeks ? 'Record fresh morning weights before changing food targets.'
+        : 'Compare key lifts and a jump test before changing food targets.',
   };
   if (jump) return {
     basis: 'jump',

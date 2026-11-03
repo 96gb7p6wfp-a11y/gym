@@ -1,7 +1,7 @@
 import { finishWarmup } from './helpers/navigation';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, ProfileSchema } from '../src/domain.js';
-import { createVolleyballMasterPlan, MasterProgramSettingsSchema } from '../src/volleyball-master-plan';
+import { createV81VolleyballMasterPlan as createVolleyballMasterPlan, MasterProgramSettingsSchema } from '../src/volleyball-master-plan';
 
 const STORE = 'setline.gym.v1';
 const WEDNESDAY = '2026-10-21';

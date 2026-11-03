@@ -3,7 +3,7 @@ import test from 'node:test';
 import { ExerciseSchema } from '../src/domain.js';
 import { EXERCISE_CATALOGUE, findLibraryExercise, rankAlternatives, toPlanExercise } from '../src/exercise-library.ts';
 import { getExerciseGuide } from '../src/exercise-guides.ts';
-import { createVolleyballMasterPlan } from '../src/volleyball-master-plan.ts';
+import { createV81VolleyballMasterPlan as createVolleyballMasterPlan } from '../src/volleyball-master-plan.ts';
 
 test('V8.1 exercise names resolve to stable, reusable library identities', () => {
   const expected: Record<string, string> = {

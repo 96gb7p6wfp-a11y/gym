@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession } from '../src/domain.js';
-import { createVolleyballMasterPlan, createRecommendedMasterPlan, resolveMasterProgramPlan,
+import { createV81VolleyballMasterPlan as createVolleyballMasterPlan, createRecommendedMasterPlan, resolveMasterProgramPlan,
   applyMasterReadiness, getMasterOptionalExercises, isMasterReadinessRequired, masterJumpContacts,
   masterScheduledEvents, masterPlannedMinutes, MasterProgramSettingsSchema, type MasterProgramSettings } from '../src/volleyball-master-plan.ts';
 import { findComplexPair, nextStepAfterCompletion } from '../src/training-flow.ts';

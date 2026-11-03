@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getSessionPreparation, getWarmupPresentation, getWarmupStepInfo, getQuickWarmup, getQuickWarmupPresentation, getQuickWarmupCue, type WarmupPlan } from '../src/session-preparation.ts';
-import { createVolleyballMasterPlan } from '../src/volleyball-master-plan.ts';
+import { createV81VolleyballMasterPlan as createVolleyballMasterPlan } from '../src/volleyball-master-plan.ts';
 import { PreparationSchema } from '../src/domain.js';
 
 const lower: WarmupPlan = { kind: 'strength', goal: 'strength', name: 'Lower Strength', exercises: [

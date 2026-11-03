@@ -38,3 +38,10 @@ test('V8.1 purposes describe the new upper/lower roles and retest without fixed 
   assert.doesNotMatch(retest.fatigue, /complex|4 min/);
   assert.doesNotMatch(retest.focus, /24/);
 });
+
+test('V13.1 separates the Thursday title from its purpose without changing a custom workout name', () => {
+  const purpose = getSessionPurpose({ name: 'Upper B — Athletic Physique + Spike Power', programRevision: '13.1' });
+  assert.equal(purpose.title, 'Upper B');
+  assert.equal(purpose.subtitle, 'Athletic Physique + Spike Power');
+  assert.equal(getSessionPurpose({ name: 'My Upper B variation', programRevision: '13.1' }).title, 'My Upper B variation');
+});

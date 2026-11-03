@@ -80,7 +80,7 @@ test('three consecutive completed adequately sampled stable weeks suggest calori
   const records = ['2026-09-21', '2026-09-23', '2026-09-25', '2026-09-28', '2026-09-30', '2026-10-02', '2026-10-05', '2026-10-07', '2026-10-09'].map(date => weight(date, 64));
   const before = JSON.stringify(records);
   const result = getWeightSummary(records, '2026-10-15');
-  assert.equal(result.stableThreeWeeks, true); assert.match(result.insight!, /100–150 kcal/);
+  assert.equal(result.stableThreeWeeks, true); assert.equal(result.stableTwoWeeks, false); assert.match(result.insight!, /Review current check-ins/);
   assert.equal(JSON.stringify(records), before);
   assert.equal(getWeightSummary(records.filter((_, i) => i % 3 === 0), '2026-10-15').stableThreeWeeks, false);
   assert.equal(getWeightSummary(records.filter(record => !record.date.startsWith('2026-09-2')), '2026-10-15').stableThreeWeeks, false);

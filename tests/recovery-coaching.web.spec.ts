@@ -1,7 +1,7 @@
 import { finishWarmup } from './helpers/navigation';
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession, stopSessionTimers } from '../src/domain.js';
-import { createVolleyballMasterPlan, MasterProgramSettingsSchema } from '../src/volleyball-master-plan';
+import { createV81VolleyballMasterPlan as createVolleyballMasterPlan, MasterProgramSettingsSchema } from '../src/volleyball-master-plan';
 import { findLibraryExercise, toPlanExercise } from '../src/exercise-library';
 
 const STORE = 'setline.gym.v1';

@@ -26,6 +26,16 @@ export const PERSONAL_NUTRITION_START: NutritionGoalInput = {
   activityFactor: 1.65, surplusKcal: 200,
 };
 
+/** A reviewable programme starting point, never an automatic target migration. */
+export const V131_NUTRITION_START = Object.freeze({
+  calories: 3050, protein: 130, carbs: 420, fat: 95,
+  goalWeightMin: 66, goalWeightMax: 67,
+  weeklyGainMin: 0.1, weeklyGainMax: 0.25,
+});
+
+export const V131_NUTRITION_MACRO_KCAL = V131_NUTRITION_START.protein * 4
+  + V131_NUTRITION_START.carbs * 4 + V131_NUTRITION_START.fat * 9;
+
 export const NUTRITION_GOAL_SOURCES = [
   { label: 'Mifflin–St Jeor resting energy equation', url: 'https://pubmed.ncbi.nlm.nih.gov/2305711/' },
   { label: 'ISSN: protein and exercise', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC5477153/' },
@@ -87,10 +97,12 @@ export function simpleFoodGuidance(date: string, schedule: VolleyballMealSchedul
   const startMinute = Number(schedule.startTime.split(':')[1]);
   const timeBefore = (hours: number) => `${String((startHour - hours + 24) % 24).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
   return volleyball ? {
-    before: `Volleyball ${schedule.startTime}–${schedule.endTime}: eat rice or pasta + chicken or tofu around ${timeBefore(2)}–${timeBefore(1)}. A banana is an easy snack if needed.`,
+    before: `Volleyball ${schedule.startTime}–${schedule.endTime}: eat rice or pasta + chicken or tofu around ${timeBefore(3)}–${timeBefore(2)}. Add a small snack later if needed.`,
     after: `After ${schedule.endTime}: yogurt + fruit, or a small meal with 20–30 g protein and carbs. Rehydrate and keep bedtime comfortable.`,
+    recovery: 'Late volleyball tonight. Prepare your recovery meal in advance. Aim for 8–10 h of sleep when possible.',
   } : {
     before: 'For a gym day: 1–3 h before, oats or toast + yogurt or eggs. If starting soon, try a banana. On rest days, keep regular meals.',
     after: 'After training: rice or potatoes + chicken, beans or tofu. Aim for 20–30 g protein; spread your daily protein across 3–4 meals.',
+    recovery: 'Aim for 8–10 h of sleep. Keep recovery meals and a regular bedtime simple.',
   };
 }

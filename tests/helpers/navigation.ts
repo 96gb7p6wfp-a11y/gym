@@ -26,7 +26,8 @@ export async function openDisclosure(page: Page, name: string) {
 export async function finishWarmup(page: Page) {
   const warmup = page.getByRole('dialog', { name: 'Warm-up', exact: true });
   await expect(warmup).toBeVisible();
-  await warmup.getByRole('button', { name: 'Already warmed up', exact: true }).click();
+  const elsewhere = warmup.getByRole('button', { name: 'Already warmed up', exact: true });
+  if (await elsewhere.count()) await elsewhere.click();
   await warmup.getByRole('button', { name: 'Start workout', exact: true }).click();
   await expect(warmup).not.toBeVisible();
 }

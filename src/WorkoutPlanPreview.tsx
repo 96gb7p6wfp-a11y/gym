@@ -46,6 +46,9 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
   const optionalExercises = plan.exercises.filter(exercise => exercise.optionalWork === true);
   const workingSets = workingExercises.reduce((count, exercise) => count + exercise.sets, 0);
   const contacts = masterJumpContacts(plan);
+  const supersets = [...new Set(workingExercises.flatMap(exercise => exercise.superset ? [exercise.superset.id] : []))]
+    .map(id => workingExercises.filter(exercise => exercise.superset?.id === id).sort((a, b) => a.superset!.order - b.superset!.order))
+    .filter(pair => pair.length === 2 && pair[0].superset!.order === 1 && pair[1].superset!.order === 2);
   const trapBar = plan.programRevision === '8.1' && /heavy lower b/i.test(plan.name) ? findLibraryExercise('Trap Bar Deadlift') : undefined;
   const locked = disabled || busy;
 
@@ -89,11 +92,18 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
     const checked = ExerciseSchema.safeParse(editor);
     if (!checked.success) {
       const field = checked.error.issues[0]?.path.at(-1);
-      setEditError(field === 'sets' ? 'Use 1–20 working sets.' : field === 'target' ? 'Keep the rep target under 60 characters.' : field === 'rest' ? 'Use 0–600 seconds of rest.' : field === 'targetRpe' ? 'Use a target RPE between 1 and 10.' : 'Check the exercise details before saving.');
+      setEditError(field === 'sets' ? 'Use 1–20 working sets.' : field === 'target' ? 'Keep the rep target under 60 characters.' : field === 'rest' || field === 'restAfterRound' ? 'Use 0–600 seconds of rest.' : field === 'targetRpe' ? 'Use a target RPE between 1 and 10.' : 'Check the exercise details before saving.');
       return;
     }
     if (!editor.target.trim()) { setEditError('Enter a rep or time target.'); return; }
-    const exercises = plan.exercises.map(exercise => exercise.key === editor.key ? checked.data : exercise);
+    const edited = checked.data;
+    const exercises = plan.exercises.map(exercise => {
+      if (exercise.key === editor.key) return edited;
+      if (edited.superset && exercise.superset?.id === edited.superset.id) return {
+        ...exercise, superset: { ...exercise.superset, restAfterRound: edited.superset.restAfterRound },
+      };
+      return exercise;
+    });
     if (await commit({ ...plan, exercises })) { setEditor(null); setMenuKey(null); }
   }
 
@@ -118,12 +128,17 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
             {workingExercises.map((exercise, index) => <li key={exercise.key} className="plan-preview__exercise">
               <button type="button" className="plan-preview__exercise-main" aria-label={`Exercise details for ${exercise.name}`} aria-haspopup="dialog" onClick={event => { rowTrigger.current = event.currentTarget; setGuide(exercise); }}>
                 <span className="plan-preview__number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-                <span className="plan-preview__exercise-copy"><strong>{exercise.name}</strong><span>{exercise.benefit ?? findLibraryExercise(exercise)?.primaryBenefit ?? exercise.group}</span><span className="plan-preview__dose">{exercise.sets} × {exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.defaultKg != null ? ` · ${exercise.defaultKg} kg` : ''}<span>{/^A[12].*complex pair/i.test(exercise.group) ? `${exercise.group} · ` : ''}{exercise.rest > 0 ? `${exercise.rest} sec rest` : 'No timed rest'}</span></span></span>
+                <span className="plan-preview__exercise-copy"><strong>{exercise.name}</strong><span>{exercise.benefit ?? findLibraryExercise(exercise)?.primaryBenefit ?? exercise.group}</span><span className="plan-preview__dose">{exercise.sets} × {exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.defaultKg != null ? ` · ${exercise.defaultKg} kg` : ''}<span>{exercise.superset ? `Superset ${exercise.superset.label} · ${exercise.superset.restAfterRound} sec after pair` : `${/^A[12].*complex pair/i.test(exercise.group) ? `${exercise.group} · ` : ''}${exercise.rest > 0 ? `${exercise.rest} sec rest` : 'No timed rest'}`}</span></span></span>
               </button>
               <button type="button" className="icon-button plan-preview__options" aria-label={`Options for ${exercise.name}`} aria-haspopup="dialog" disabled={locked} onClick={() => openOptions(exercise)}><MoreHorizontal size={22} aria-hidden="true" /></button>
             </li>)}
           </ol> : <p className="plan-preview__empty">{plan.kind === 'recovery' ? 'An easy day. View your preparation above, then start your mobility routine.' : 'Add a movement to prepare your session.'}</p>}
           {plan.programRevision === '8.1' && contacts.planned > 0 && <p className="plan-preview__contacts">{contacts.planned} planned main jump contacts. A ceiling, not a target; stop sooner if quality drops.</p>}
+          {plan.programRevision === '13.1' && contacts.planned > 0 && <p className="plan-preview__contacts">{contacts.planned} planned gym jump contacts. A starting recommendation, not a quota. Excludes preparation, volleyball and PE; stop sooner if quality drops.</p>}
+          {supersets.length > 0 && <details className="plan-preview__optional plan-preview__supersets"><summary>Superset order<ChevronRight size={17} aria-hidden="true" /></summary><ul aria-label="Prescribed supersets">{supersets.map(pair => {
+            const rounds = Math.min(pair[0].superset!.rounds ?? Infinity, pair[1].superset!.rounds ?? Infinity, pair[0].sets, pair[1].sets);
+            return <li key={pair[0].superset!.id}><div><strong>Superset {pair[0].superset!.label}</strong><p>{pair[0].name} → {pair[1].name}<br />{rounds} paired rounds · {pair[0].superset!.restAfterRound} sec after each pair</p>{pair.filter(exercise => exercise.sets > rounds).map(exercise => <p key={exercise.key}>{exercise.name}: {exercise.sets - rounds} remaining {exercise.sets - rounds === 1 ? 'set' : 'sets'} separately · {exercise.rest} sec rest.</p>)}</div></li>;
+          })}</ul><p>Take longer rest if performance drops. This does not make the session a circuit.</p></details>}
           {optionalExercises.length > 0 && <details className="plan-preview__optional"><summary>Optional work<span>{optionalExercises.length}</span><ChevronRight size={17} aria-hidden="true" /></summary><p>Only include what fits your time and readiness.</p><ul aria-label="Optional exercises">{optionalExercises.map(exercise => <li key={exercise.key}><button type="button" className="plan-preview__optional-detail" aria-label={`Exercise details for ${exercise.name}`} onClick={event => { rowTrigger.current = event.currentTarget; setGuide(exercise); }}><strong>{exercise.name}</strong><span>{exercise.benefit ?? findLibraryExercise(exercise)?.primaryBenefit ?? exercise.group}</span><span>{exercise.sets} × {exercise.target}{exercise.perSide ? ' / side' : ''} · {exercise.rest} sec rest</span></button><button type="button" className="icon-button" aria-label={`Include ${exercise.name}`} disabled={locked} onClick={() => void commit({ ...plan, exercises: plan.exercises.map(item => item.key === exercise.key ? { ...item, optionalWork: false } : item) })}><Plus size={20} aria-hidden="true" /></button></li>)}</ul></details>}
           {trapBar && <details className="plan-preview__optional plan-preview__trap-bar"><summary>Trap-bar alternative<ChevronRight size={17} aria-hidden="true" /></summary><p>New to the trap bar? Start with your 20 kg empty bar and easy technique practice. Once movement is consistent, Trap Bar Deadlift 3 × 4–6 can replace Leg Press. Use Leg Press’s replacement menu; do not add both. No trap-bar jumps.</p><button type="button" className="text-button" onClick={() => setGuide({ ...toPlanExercise(trapBar), sets: 3, target: '4–6 reps', defaultKg: 20, rest: 180, targetRpe: 8, cue: 'Practice with the 20 kg empty bar first. Progress gradually after consistent technique. Replace Leg Press, never add both.' })}>View technique<ChevronRight size={16} aria-hidden="true" /></button></details>}
           <button type="button" className="text-button plan-preview__add" disabled={locked || plan.exercises.length >= 40} onClick={() => { setReplaceKey(null); setLibraryOpen(true); }}><Plus size={19} aria-hidden="true" />Add exercise</button>
@@ -144,7 +159,10 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
               <label className="field-label">Sets<input type="number" inputMode="numeric" min={1} max={20} value={Number.isFinite(editor.sets) ? editor.sets : ''} onChange={event => setEditor({ ...editor, sets: event.target.value === '' ? Number.NaN : Number(event.target.value) })} /></label>
               <label className="field-label">Reps / time<input maxLength={60} value={editor.target} autoComplete="off" onChange={event => setEditor({ ...editor, target: event.target.value })} /></label>
               {editor.mode !== 'timed' && !editor.measurement && <label className="field-label">Planned weight · kg<DecimalWeightInput value={editor.defaultKg ?? null} label={`${editor.name} planned weight in kilograms`} placeholder={editor.mode === 'bodyweight' ? 'BW' : 'Optional'} onValidityChange={setWeightValid} onChange={(value, valid) => { setEditor({ ...editor, defaultKg: value }); setWeightValid(valid); }} /></label>}
-              <label className="field-label">Rest · seconds<input type="number" inputMode="numeric" min={0} max={600} step={15} value={Number.isFinite(editor.rest) ? editor.rest : ''} onChange={event => setEditor({ ...editor, rest: event.target.value === '' ? Number.NaN : Number(event.target.value) })} /></label>
+              <label className="field-label">{editor.superset ? 'Rest after pair · seconds' : 'Rest · seconds'}<input type="number" inputMode="numeric" min={0} max={600} step={15} value={Number.isFinite(editor.superset?.restAfterRound ?? editor.rest) ? editor.superset?.restAfterRound ?? editor.rest : ''} onChange={event => {
+                const rest = event.target.value === '' ? Number.NaN : Number(event.target.value);
+                setEditor(editor.superset ? { ...editor, superset: { ...editor.superset, restAfterRound: rest } } : { ...editor, rest });
+              }} /></label>
             </div>
             <details className="plan-preview__more"><summary>More options</summary><label className="field-label">Target RPE<input type="number" inputMode="decimal" min={1} max={10} step={0.5} placeholder="Optional" value={editor.targetRpe ?? ''} onChange={event => setEditor({ ...editor, targetRpe: event.target.value === '' ? undefined : Number(event.target.value) })} /></label><label className="field-label">Notes<textarea rows={2} maxLength={500} value={editor.cue ?? ''} onChange={event => setEditor({ ...editor, cue: event.target.value })} /></label></details>
           </fieldset>
