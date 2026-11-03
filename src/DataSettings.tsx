@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Download, Upload } from 'lucide-react';
+import { Copy, Download, Share2, Upload } from 'lucide-react';
 import { exportBackup, exportRecovery, importBackup, resetLocalData } from './storage';
 
 function download(text: string, filename: string) {
@@ -20,6 +20,7 @@ export function DataSettings({ beforeExport, onReplace }: {
   const fileInput = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState('');
   const [failed, setFailed] = useState(false);
+  const [appAddress] = useState(() => window.location.origin);
   function reportError(error: unknown) {
     setFailed(true);
     setMessage(error instanceof Error ? error.message : 'Your data could not be updated.');
@@ -28,6 +29,14 @@ export function DataSettings({ beforeExport, onReplace }: {
     <section className="data-settings" aria-label="Your local data">
       <h3>Your data</h3>
       <p className="small-note">Workouts, your plan, and nutrition stay on this device. Export a backup before clearing browser data or moving to another phone.</p>
+      <p className="small-note">This copy of Setline runs at <code style={{ overflowWrap: 'anywhere' }}>{appAddress}</code>. Another website address has separate records, even if it looks like the same app.</p>
+      <button className="text-button" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 44 }} type="button" onClick={async () => {
+        try {
+          if (!navigator.clipboard?.writeText) throw new Error('Copy is unavailable here. Touch and hold the address above to select it.');
+          await navigator.clipboard.writeText(appAddress);
+          setFailed(false); setMessage('App address copied. Share it to identify which Setline installation you use.');
+        } catch (error) { reportError(error); }
+      }}><Copy size={16} /> Copy app address</button>
       <div className="backup-buttons">
         <button className="btn btn-secondary" type="button" onClick={async () => {
           try {
@@ -36,6 +45,20 @@ export function DataSettings({ beforeExport, onReplace }: {
             setFailed(false); setMessage('Backup downloaded. Keep it somewhere safe.');
           } catch (error) { reportError(error); }
         }}><Download size={16} /> Export backup</button>
+        {typeof navigator.share === 'function' && <button className="btn btn-secondary" type="button" onClick={async () => {
+          try {
+            if (beforeExport && !(await beforeExport())) throw new Error('Some workout changes could not be saved. Retry saving before sharing a backup.');
+            const filename = `setline-backup-${new Date().toISOString().slice(0, 10)}.json`;
+            const file = new File([exportBackup()], filename, { type: 'application/json' });
+            if (navigator.canShare && !navigator.canShare({ files: [file] })) throw new Error('File sharing is not available here. Use Export backup instead.');
+            await navigator.share({ files: [file], title: 'Setline backup' });
+            setFailed(false); setMessage('Sharing finished. Confirm the backup was saved in Files or another safe place.');
+          } catch (error) {
+            if (error instanceof Error && error.name === 'AbortError') {
+              setFailed(false); setMessage('Backup sharing was cancelled. No records were changed.');
+            } else reportError(error);
+          }
+        }}><Share2 size={16} /> Save to Files / share</button>}
         <button className="btn btn-secondary" type="button" onClick={() => fileInput.current?.click()}><Upload size={16} /> Import backup</button>
       </div>
       <input ref={fileInput} type="file" accept=".json,application/json" aria-label="Restore Setline backup" hidden onChange={async (event) => {
