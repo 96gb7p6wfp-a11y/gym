@@ -22,10 +22,11 @@ export interface WorkoutPlanPreviewProps {
   disabled?: boolean;
   onChange: (plan: PlanDay) => Promise<boolean | void> | boolean | void;
   onStart: () => void;
+  previous?: (exercise: PlanExercise) => string | undefined;
 }
 
 /** This editor only changes the selected day's plan. It never creates a session. */
-export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup, disabled = false, onChange, onStart }: WorkoutPlanPreviewProps) {
+export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup, disabled = false, onChange, onStart, previous }: WorkoutPlanPreviewProps) {
   const [menuKey, setMenuKey] = useState<string | null>(null);
   const [guide, setGuide] = useState<PlanExercise | null>(null);
   const [editor, setEditor] = useState<PlanExercise | null>(null);
@@ -128,7 +129,7 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
             {workingExercises.map((exercise, index) => <li key={exercise.key} className="plan-preview__exercise">
               <button type="button" className="plan-preview__exercise-main" aria-label={`Exercise details for ${exercise.name}`} aria-haspopup="dialog" onClick={event => { rowTrigger.current = event.currentTarget; setGuide(exercise); }}>
                 <span className="plan-preview__number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-                <span className="plan-preview__exercise-copy"><strong>{exercise.name}</strong><span>{exercise.benefit ?? findLibraryExercise(exercise)?.primaryBenefit ?? exercise.group}</span><span className="plan-preview__dose">{exercise.sets} × {exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.defaultKg != null ? ` · ${exercise.defaultKg} kg` : ''}<span>{exercise.superset ? `Superset ${exercise.superset.label} · ${exercise.superset.restAfterRound} sec after pair` : `${/^A[12].*complex pair/i.test(exercise.group) ? `${exercise.group} · ` : ''}${exercise.rest > 0 ? `${exercise.rest} sec rest` : 'No timed rest'}`}</span></span></span>
+                <span className="plan-preview__exercise-copy"><strong>{exercise.name}</strong><span>{exercise.benefit ?? findLibraryExercise(exercise)?.primaryBenefit ?? exercise.group}</span><span className="plan-preview__previous">{previous?.(exercise) ? `Previous · ${previous(exercise)}` : 'No comparable working-set load recorded'}</span><span className="plan-preview__dose">{exercise.sets} × {exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.defaultKg != null ? ` · ${exercise.defaultKg} kg` : ''}<span>{exercise.superset ? `Superset ${exercise.superset.label} · ${exercise.superset.restAfterRound} sec after pair` : `${/^A[12].*complex pair/i.test(exercise.group) ? `${exercise.group} · ` : ''}${exercise.rest > 0 ? `${exercise.rest} sec rest` : 'No timed rest'}`}</span></span></span>
               </button>
               <button type="button" className="icon-button plan-preview__options" aria-label={`Options for ${exercise.name}`} aria-haspopup="dialog" disabled={locked} onClick={() => openOptions(exercise)}><MoreHorizontal size={22} aria-hidden="true" /></button>
             </li>)}

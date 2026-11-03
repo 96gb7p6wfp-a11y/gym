@@ -11,7 +11,7 @@ test('V14 app status never implies an upgrade of the saved training prescription
   });
   const before = structuredClone(profile);
   const status = getTrainingPlanStatus(profile, '2026-11-02', '2026-10-26');
-  assert.equal(status.appVersion, 'Setline V14');
+  assert.equal(status.appVersion, 'Setline V15');
   assert.equal(status.planVersion, 'V8.1');
   assert.equal(status.cycle, 'Week 5 of 8 · Build 2');
   assert.equal(status.selected, '2026-10-26 preview · Week 4 of 8 · Deload');

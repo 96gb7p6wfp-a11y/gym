@@ -204,6 +204,19 @@ Your V13.1 training plan remains an opt-in prescription; installing V14 does not
 replace it. Close other Setline tabs before restoring and verify backup files in
 Files/Downloads. Physical iPhone background audio remains unverified.
 
+## V15 results and usability
+
+Progress → **Training journey** shows real dated results over 4 weeks, 12 weeks
+or all history, with movement/rep selection, recorded effort, weekly work and links
+to original workouts. It does not invent fitness scores or apply today's plan to
+historical adherence. Previous set context appears in workout previews; older
+jump entries remain reachable; available updates appear in You. The V13.1
+prescription and local data remain unchanged.
+
+Read the [product audit](docs/SETLINE_V15_AUDIT.md),
+[public user-feedback research](docs/SETLINE_V15_USER_FEEDBACK.md) and
+[V13.1 plan review](docs/V131_TRAINING_REVIEW.md).
+
 ## Run and build
 
 Use Node.js 24 LTS from the repository root:

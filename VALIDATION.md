@@ -1,5 +1,36 @@
 # Standalone app validation
 
+## Setline V15 results and product review — 3 November 2026
+
+Built on `eb92334`, the deployed V14 main merge. No storage/schema migration,
+training prescription, workout/meal/history rewrite, reset or dependency change.
+Public feedback research and the conditional V13.1 training review are in
+`docs/SETLINE_V15_USER_FEEDBACK.md` and `docs/V131_TRAINING_REVIEW.md`.
+
+| Check | Observed result |
+| --- | --- |
+| TypeScript | Passed (`npm run typecheck` and production build) |
+| `npm test` | 486 passed, no failures or skips |
+| `npm run build` | Passed; generated worker precaches the deferred journey view |
+| Focused browser checks | 14 journey / workout-preview checks passed; update and plan-status regressions also passed |
+| Full production browser suite | 242 passed in one clean run (4 workers, 11.2 minutes), no failures or skips |
+| Visual inspection | Light/dark 320px journey captures; no horizontal overflow; keyboard-native selects and source-log navigation |
+
+New checks exercise actual-date windows/all history, duplicate/active/deleted/
+future exclusion, negative and zero load changes, fixed-rep/movement/setup
+separation, adequate in-period weekly weight sampling, independent jump
+protocols/estimates, source-workout links, first-use offline chunks, old and future
+jump-entry access, update discovery without activation, and previous-load context
+without mutating a plan/session. Existing V14 backup, restore, timer, V13.1,
+nutrition, importing and premium UI checks remain in the full suite.
+
+Results are derived from actual logs, not invented demo records. Test fixtures and
+`/tmp/setline-v15-journey-*.png` screenshots use isolated sample data, not the
+athlete's private iPhone records. Browser checks emulate a touch phone in
+Chromium; they do not establish physical Safari speaker/battery behavior. The
+existing main-chunk size warning remains. The new view is deferred, with no new
+external chart library or remote data service.
+
 ## Setline V14 — 3 November 2026
 
 Fresh environment verified by shell, authenticated Git fetch, baseline build and

@@ -56,11 +56,13 @@ test('one calf-raise gain is limited evidence, not the overall progress headline
   assert.doesNotMatch(copy(summary), /Calf|8 kg|overall strength|strength is improving|performance is improving/i);
 });
 
-test('planned-day consistency provides real participation context without a fabricated fitness percentage', () => {
+test('current plan cannot invent historical adherence after changed or rescheduled workouts', () => {
   const sessions = strength([70], [72.5]);
   const summary = getPerformanceSummary({ sessions, plan: DEFAULT_PROFILE.plan, today: TODAY });
-  assert.notEqual(summary.consistencyPercent, null);
-  assert.match(getProgressTakeaway(summary).observation, new RegExp(`${summary.consistencyPercent}% of planned gym days`));
+  assert.equal(summary.consistencyPercent, null);
+  assert.equal(summary.gymDays, 2);
+  assert.match(getProgressTakeaway(summary).observation, /2 gym sessions/);
+  assert.doesNotMatch(copy(summary), /% of planned gym days/);
   assert.doesNotMatch(copy(summary), /fitness|recovery score|stronger by/i);
 });
 

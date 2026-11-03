@@ -2,3 +2,4 @@
 .pwa-update-settings h3 { margin:0 0 10px; font-size:16px; font-weight:600; color:var(--ink); }
 .pwa-update-settings p { margin:0 0 14px; color:var(--sub); font-size:13px; line-height:1.55; }
 .pwa-update-settings>.btn+p { margin-top:12px; }
+.app-update-notice{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;border:1px solid var(--line);border-radius:20px;padding:14px;background:var(--surface);color:var(--accent);text-align:left;margin-bottom:20px}.app-update-notice span{min-width:0}.app-update-notice strong{display:block;font-size:13px}.app-update-notice small{display:block;color:var(--sub);font-size:11px;margin-top:5px;line-height:1.5}

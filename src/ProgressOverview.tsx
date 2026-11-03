@@ -16,6 +16,7 @@ interface ProgressOverviewProps {
   nutritionRecords?: readonly ReportNutritionRecord[];
   performance?: PerformanceData;
   today?: string;
+  onViewJourney?: () => void;
   onViewStrength?: () => void;
   onViewPerformance?: () => void;
   onViewHistory?: () => void;
@@ -29,7 +30,7 @@ const signed = (value: number) => `${value > 0 ? '+' : ''}${number(value)}`;
 const shortDate = (date: string) => new Date(`${date}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 const capitalized = (value: string) => `${value[0].toUpperCase()}${value.slice(1)}`;
 
-export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutritionRecords, performance, today = currentReportDate(), onViewStrength, onViewPerformance, onViewHistory, onViewWeek, onLogWeight, onLogJump }: ProgressOverviewProps) {
+export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutritionRecords, performance, today = currentReportDate(), onViewJourney, onViewStrength, onViewPerformance, onViewHistory, onViewWeek, onLogWeight, onLogJump }: ProgressOverviewProps) {
   const summary = getPerformanceSummary({ sessions, activities, plan, bodyWeight, nutritionRecords, performance, today });
   const takeaway = getProgressTakeaway(summary);
   // Follow available records until the user explicitly chooses a metric.
@@ -72,7 +73,7 @@ export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutri
       note: jump?.change30Days != null ? `${signed(jump.change30Days)} cm across test days` : jump ? 'Latest jump height' : 'Add your first test' },
     { metric: 'weight', title: 'Body weight', value: primaryWeight === null ? '—' : `${number(primaryWeight)} kg`,
       note: weight.change30Days !== null ? `${signed(weight.change30Days)} kg in weekly averages` : weightSource },
-    { metric: 'strength', title: 'Strength', value: strength ? `${signed(strength.percent)}%` : '—',
+    { metric: 'strength', title: 'Matched-rep load', value: strength ? `${signed(strength.percent)}%` : '—',
       note: strength ? `${strength.name} · ${strength.reps} reps` : 'Log comparable sets on two days' },
   ];
 
@@ -141,11 +142,12 @@ export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutri
         <b>{item.value}</b><ChevronRight size={16} aria-hidden="true" />
       </button>)}
       <div className="progress-consistency" aria-label="Training consistency">
-        <span><strong>Gym consistency</strong><small>{summary.gymSessions} gym · {summary.volleyballSessions} volleyball logged</small></span>
-        <b>{summary.consistencyPercent === null || !summary.gymSessions ? '—' : `${number(summary.consistencyPercent)}%`}</b>
+        <span><strong>Gym days recorded</strong><small>{summary.gymSessions} gym · {summary.volleyballSessions} volleyball logged</small></span>
+        <b>{summary.gymDays ? `${summary.gymDays} days` : '—'}</b>
       </div>
     </div>
     <div className="progress-overview-links">
+      {onViewJourney && <button type="button" onClick={onViewJourney}><span>Training journey</span><ChevronRight size={18} aria-hidden="true" /></button>}
       {viewDetails && <button type="button" onClick={viewDetails}><span>Performance details</span><ChevronRight size={18} aria-hidden="true" /></button>}
       {onViewStrength && onViewStrength !== viewDetails && <button type="button" onClick={onViewStrength}><span>Strength history</span><ChevronRight size={18} aria-hidden="true" /></button>}
       {onViewHistory && <button type="button" onClick={onViewHistory}><span>View history</span><ChevronRight size={18} aria-hidden="true" /></button>}
