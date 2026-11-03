@@ -16,6 +16,8 @@ export const JumpEntrySchema = z.object({
   conditions: z.string().max(300).optional(),
   // Absent source means a directly measured legacy record. Never rewrite it.
   source: z.enum(['measured', 'video-estimate']).optional(),
+  // Optional pairing identity for a single reach-and-touch test. Legacy records stay unchanged.
+  testId: z.string().uuid().optional(),
   // Retain the original setup with each test, rather than recalculating old
   // results when an athlete measures a different standing reach later.
   standingReachCm: z.number().finite().gt(0).max(1000).optional(),
@@ -83,11 +85,12 @@ export function createReachJumpEntries(input: z.input<typeof ReachJumpInputSchem
   const parsed = ReachJumpInputSchema.safeParse(input);
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? 'Enter valid reach and touch heights.');
   const data = parsed.data;
+  const testId = crypto.randomUUID();
   return (['standing', 'approach'] as const).flatMap(type => {
     const touchCm = type === 'standing' ? data.standingTouchCm : data.approachTouchCm;
     if (touchCm === undefined) return [];
     return [JumpEntrySchema.parse({
-      id: crypto.randomUUID(), date: data.date, type, measurement: 'height',
+      id: crypto.randomUUID(), testId, date: data.date, type, measurement: 'height',
       cm: Math.round((touchCm - data.standingReachCm) * 1_000_000) / 1_000_000,
       standingReachCm: data.standingReachCm, touchCm,
       notes: data.notes ?? '', source: data.source ?? 'measured',

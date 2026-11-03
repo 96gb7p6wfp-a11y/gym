@@ -231,6 +231,59 @@ export function getJumpSummaries(sessions: readonly ReportSession[], jumps: read
   }).sort((a, b) => ['standing', 'approach', 'block'].indexOf(a.type) - ['standing', 'approach', 'block'].indexOf(b.type) || a.measurement.localeCompare(b.measurement));
 }
 
+export interface ApproachAdvantagePoint {
+  date: string;
+  standingCm: number;
+  approachCm: number;
+  advantageCm: number;
+  advantagePercent: number;
+  standingId: string;
+  approachId: string;
+  standingReachCm: number;
+  conditions: string;
+}
+export interface ApproachAdvantageSummary {
+  latest: ApproachAdvantagePoint | null;
+  points: ApproachAdvantagePoint[];
+  change30Days: number | null;
+}
+
+/** Compare matched measured heights, never unrelated lifetime bests.
+ * Unpaired legacy records qualify only when the same day/setup has exactly one
+ * standing and one approach result. Ambiguous tests and estimates stay in the log.
+ */
+export function getApproachAdvantage(jumps: readonly JumpEntry[], today: string): ApproachAdvantageSummary {
+  const groups = new Map<string, JumpEntry[]>();
+  for (const jump of jumps) {
+    if (jump.source === 'video-estimate' || jump.measurement !== 'height'
+      || !['standing', 'approach'].includes(jump.type) || !validDate(jump.date)
+      || jump.date > today || !positive(jump.cm) || !positive(jump.standingReachCm) || !positive(jump.touchCm)) continue;
+    const key = jump.testId ? `test:${jump.testId}` : JSON.stringify([jump.date, jump.standingReachCm, jump.conditions ?? '']);
+    groups.set(key, [...(groups.get(key) ?? []), jump]);
+  }
+  const points: ApproachAdvantagePoint[] = [];
+  for (const entries of groups.values()) {
+    const standing = entries.filter(entry => entry.type === 'standing');
+    const approach = entries.filter(entry => entry.type === 'approach');
+    if (standing.length !== 1 || approach.length !== 1) continue;
+    const a = standing[0], b = approach[0];
+    if (a.date !== b.date || a.standingReachCm !== b.standingReachCm || (a.conditions ?? '') !== (b.conditions ?? '')) continue;
+    const advantageCm = round(b.cm - a.cm, 3);
+    points.push({ date: a.date, standingCm: a.cm, approachCm: b.cm, advantageCm,
+      advantagePercent: round(advantageCm / a.cm * 100), standingId: a.id, approachId: b.id,
+      standingReachCm: a.standingReachCm!, conditions: a.conditions ?? '' });
+  }
+  // Date-only records cannot order multiple tests within a day. Do not choose a
+  // favorable pair: omit ambiguous days until the athlete records a new test.
+  const perDay = new Map<string, ApproachAdvantagePoint[]>();
+  for (const point of points) perDay.set(point.date, [...(perDay.get(point.date) ?? []), point]);
+  const ordered = [...perDay.values()].filter(day => day.length === 1).map(day => day[0]).sort((a, b) => a.date.localeCompare(b.date));
+  const latest = ordered.at(-1) ?? null;
+  const comparable = latest ? ordered.filter(point => point.date >= shiftReportDate(today, -29)
+    && point.standingReachCm === latest.standingReachCm && point.conditions === latest.conditions) : [];
+  return { latest, points: ordered, change30Days: comparable.length >= 2 ? round(latest!.advantageCm - comparable[0].advantageCm, 3) : null };
+}
+
 /** Estimated 1RM is intentionally limited to 2–10 completed weighted reps. */
 export function estimateOneRepMax(kg: number, reps: number): number | null {
   return positive(kg) && Number.isInteger(reps) && reps >= 2 && reps <= 10 ? round(kg * (1 + reps / 30)) : null;
@@ -328,9 +381,12 @@ export function getPerformanceSummary({ sessions, activities = [], plan = [], nu
   strengthChanges.sort((a, b) => b.percent - a.percent);
   const jumpImprovement = jumps.find(j => j.measurement === 'height' && (j.change30Days ?? 0) > 0);
   const bestStrength = strengthChanges.find(item => item.percent > 0);
+  const approachAdvantage = getApproachAdvantage(performance?.jumps ?? [], today).latest;
   const insights = [
     weight.insight,
     jumpImprovement ? `${jumpImprovement.type[0].toUpperCase()}${jumpImprovement.type.slice(1)} jump is up ${number(jumpImprovement.change30Days!)} cm across recorded tests.` : null,
+    approachAdvantage && approachAdvantage.date >= shiftReportDate(today, -29)
+      ? `Approach Advantage: ${approachAdvantage.advantageCm > 0 ? '+' : ''}${number(approachAdvantage.advantageCm)} cm from matched reach tests on ${approachAdvantage.date}. This describes that test, not a training effect.` : null,
     bestStrength ? `${bestStrength.name}: +${number(bestStrength.current - bestStrength.previous)} kg at ${bestStrength.reps} reps.` : null,
     load.level === 'higher' ? load.cue : null,
   ].filter((item): item is string => item !== null).slice(0, 3);

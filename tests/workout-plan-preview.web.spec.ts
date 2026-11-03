@@ -173,10 +173,12 @@ test('today-only drafts are included in a real backup and restore with existing 
   expect(backup.data.profile.sessionDrafts).toEqual(saved.profile.sessionDrafts);
   expect(backup.data.sessions).toEqual(saved.sessions);
   expect(backup.data.nutrition).toEqual(saved.nutrition);
+  await settings.getByLabel('Restore Setline backup', { exact: true }).setInputFiles({ name: 'setline-with-preview.json', mimeType: 'application/json', buffer: Buffer.from(text) });
+  await expect(settings.getByRole('region', { name: 'Backup restore preview' })).toContainText('Review backup');
   page.once('dialog', dialog => dialog.accept());
   await Promise.all([
     page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
-    settings.getByLabel('Restore Setline backup', { exact: true }).setInputFiles({ name: 'setline-with-preview.json', mimeType: 'application/json', buffer: Buffer.from(text) }),
+    settings.getByRole('button', { name: 'Restore backup', exact: true }).click(),
   ]);
   expect((await state(page)).profile.sessionDrafts).toEqual(saved.profile.sessionDrafts);
   expect((await state(page)).sessions).toEqual(saved.sessions);

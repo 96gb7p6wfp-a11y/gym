@@ -117,6 +117,59 @@ test('unmount clears pending sound and suppresses stale asynchronous completion'
   assert.equal(h.completed.length, 0);
 });
 
+test('a newly restored expired timer completes silently exactly once', async () => {
+  const h = harness();
+  h.timer.update(900, true);
+  await h.advance(0);
+  assert.equal(h.count(), 0);
+  assert.deepEqual(h.completed, [{ audible: false, resumed: true }]);
+  h.timer.visibilityChanged();
+  await h.advance(20_000);
+  assert.equal(h.completed.length, 1);
+});
+
+test('an unannounced long browser suspension resolves a stale deadline without a late alarm', async () => {
+  const h = harness();
+  h.timer.update(6_000, true);
+  await h.advance(80_000);
+  assert.equal(h.count(), 0);
+  assert.deepEqual(h.completed, [{ audible: false, resumed: true }]);
+});
+
+test('pagehide suspends even while Safari still reports visible, pageshow resumes remaining time', async () => {
+  const h = harness();
+  h.timer.update(21_000, true);
+  h.timer.suspend();
+  assert.equal(h.pending.size, 0);
+  await h.advance(15_000);
+  assert.equal(h.count(), 0);
+  h.timer.visibilityChanged();
+  await h.advance(5_000);
+  assert.equal(h.count(), 1);
+});
+
+test('hiding during pending audio recovery suppresses playback and reports silent recovery', async () => {
+  let visible = true;
+  let now = 1_000;
+  let due: (() => void) | undefined;
+  let resolvePlay!: (played: boolean) => void;
+  let shouldPlay!: () => boolean;
+  const completed: RestCompletion[] = [];
+  const timer = new RestAlertTimer({
+    now: () => now, visible: () => visible,
+    schedule: fn => { due = fn; return 1; }, cancel: () => {},
+    play: guard => { shouldPlay = guard!; return new Promise(resolve => { resolvePlay = resolve; }); },
+    onComplete: result => completed.push(result),
+  });
+  timer.update(2_000, true);
+  now = 2_000; due!();
+  visible = false; timer.visibilityChanged();
+  assert.equal(shouldPlay(), false);
+  resolvePlay(false);
+  await Promise.resolve(); await Promise.resolve();
+  assert.deepEqual(completed, [{ audible: false, resumed: true }]);
+});
+
 
 class AudioProbe {
   static contexts: AudioProbe[] = [];

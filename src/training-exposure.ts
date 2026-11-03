@@ -26,7 +26,9 @@ export interface TrainingExposureSummary {
   completedGymContacts: number;
   recordedVolleyballContacts: number;
   recordedPeContacts: number;
+  recordedOtherContacts: number;
   estimatedSportContacts: number;
+  unclassifiedSportContacts: number;
   volleyballSessions: number;
   peSessions: number;
   unmeasuredSportSessions: number;
@@ -42,25 +44,29 @@ export function getTrainingExposureSummary(input: {
   startDate: string; endDate: string;
 }): TrainingExposureSummary {
   const result: TrainingExposureSummary = { completedGymContacts: 0, recordedVolleyballContacts: 0,
-    recordedPeContacts: 0, estimatedSportContacts: 0, volleyballSessions: 0, peSessions: 0,
+    recordedPeContacts: 0, recordedOtherContacts: 0, estimatedSportContacts: 0, unclassifiedSportContacts: 0, volleyballSessions: 0, peSessions: 0,
     unmeasuredSportSessions: 0, observationCount: 0 };
   const within = (date: string) => date >= input.startDate && date <= input.endDate;
   const addSport = (name: string, exposure?: TrainingExposure) => {
     const type = sportType(name, exposure);
     if (type === 'volleyball') result.volleyballSessions++;
     if (type === 'pe') result.peSessions++;
-    if (type === 'other') return;
+    if (type === 'other' && exposure?.hardJumpContacts === undefined) return;
     const contacts = exposure?.hardJumpContacts;
     if (contacts === undefined) result.unmeasuredSportSessions++;
     else if (exposure?.contactSource === 'estimate') result.estimatedSportContacts += contacts;
+    else if (exposure?.contactSource !== 'recorded') result.unclassifiedSportContacts += contacts;
     else if (type === 'volleyball') result.recordedVolleyballContacts += contacts;
-    else result.recordedPeContacts += contacts;
+    else if (type === 'pe') result.recordedPeContacts += contacts;
+    else result.recordedOtherContacts += contacts;
     if (exposure && Object.keys(exposure).some(key => !['sport', 'hardJumpContacts', 'contactSource'].includes(key))) result.observationCount++;
   };
   // The same saved record can reach a report through multiple views; count its id once.
   const sessions = new Map(input.sessions.map(session => [session.id, session]));
+  const countedSessionIds = new Set<string>();
   for (const session of sessions.values()) {
     if (!within(session.date) || session.status !== 'completed' || session.deletedAt != null) continue;
+    countedSessionIds.add(session.id);
     if (session.kind === 'sport') addSport(session.name, session.trainingExposure);
     else if (session.kind === 'strength') result.completedGymContacts += session.exercises.reduce((sum, exercise) =>
       sum + (exercise.jumpContactsPerRep ?? 0) * exercise.logs.reduce((reps, log) =>
@@ -72,7 +78,8 @@ export function getTrainingExposureSummary(input: {
     if (!prior || record.version >= prior.version) activities.set(record.activity.id, record);
   }
   for (const { activity } of activities.values()) {
-    if (within(activity.date) && activity.deletedAt == null) addSport(activity.name, activity.trainingExposure);
+    // Shared identifiers represent the same imported/saved record, not another session.
+    if (!countedSessionIds.has(activity.id) && within(activity.date) && activity.deletedAt == null) addSport(activity.name, activity.trainingExposure);
   }
   return result;
 }

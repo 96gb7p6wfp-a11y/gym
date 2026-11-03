@@ -180,27 +180,34 @@ export class RestAlertTimer {
   private enabled = true;
   private completed = false;
   private generation = 0;
+  private suspended = false;
   constructor(options: TimerOptions) { this.options = options; }
   update(deadline: number | null, enabled: boolean): void {
     if (deadline === this.deadline && enabled === this.enabled) return;
+    const restoredOverdue = this.deadline === null && deadline !== null && deadline <= this.options.now();
     if (deadline !== this.deadline) { this.completed = false; this.generation += 1; }
-    this.deadline = deadline; this.enabled = enabled; this.arm(false);
+    this.deadline = deadline; this.enabled = enabled; this.arm(restoredOverdue);
   }
-  visibilityChanged(): void { this.arm(true); }
+  visibilityChanged(): void { this.suspended = !this.options.visible(); this.arm(true); }
+  /** pagehide may precede a visibility update when Safari freezes a page. */
+  suspend(): void { this.suspended = true; this.clear(); }
   private clear(): void { if (this.handle !== null) this.options.cancel(this.handle); this.handle = null; }
   private arm(resumed: boolean): void {
     this.clear();
-    if (this.deadline === null || this.completed || !this.options.visible()) return;
+    if (this.deadline === null || this.completed || this.suspended || !this.options.visible()) return;
     const remaining = this.deadline - this.options.now();
     if (remaining > 0) { this.handle = this.options.schedule(() => this.arm(false), Math.min(remaining, 2_147_483_647)); return; }
     this.completed = true;
+    // iOS can suspend JavaScript without delivering visibilitychange first.
+    // A callback minutes late should resolve elapsed rest, not sound a stale alarm.
+    resumed = resumed || remaining < -5_000;
     const generation = this.generation;
-    const current = () => generation === this.generation && this.deadline !== null && this.enabled && this.options.visible();
+    const current = () => generation === this.generation && this.deadline !== null && this.enabled && !this.suspended && this.options.visible();
     const sound = this.enabled && !resumed ? this.options.play(current) : Promise.resolve(false);
     void sound.then(played => {
-      if (generation === this.generation && this.deadline !== null) this.options.onComplete({ audible: played, resumed });
+      if (generation === this.generation && this.deadline !== null) this.options.onComplete({ audible: played, resumed: resumed || this.suspended || !this.options.visible() });
     }).catch(() => {
-      if (generation === this.generation && this.deadline !== null) this.options.onComplete({ audible: false, resumed });
+      if (generation === this.generation && this.deadline !== null) this.options.onComplete({ audible: false, resumed: resumed || this.suspended || !this.options.visible() });
     });
   }
   dispose(): void { this.clear(); this.deadline = null; this.generation += 1; }

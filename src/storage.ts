@@ -4,7 +4,41 @@ import { ExtraActivitySchema, type ActivityRecord } from './activities.ts';
 import { defaultReminderState, isTrackable, ReminderSchema, ReminderEntrySchema, type ReminderState, type ReminderRecord, type ReminderEntryRecord } from './reminders.ts';
 
 export const STORAGE_KEY = 'setline.gym.v1';
-const MAX_BACKUP_BYTES = 10 * 1024 * 1024;
+export const MAX_BACKUP_BYTES = 10 * 1024 * 1024;
+export const PRE_RESTORE_KEY = 'setline.gym.pre-restore.v1';
+
+export interface BackupPreview {
+  exportedAt: string | null;
+  workouts: number;
+  activeWorkouts: number;
+  mealsAndWeights: number;
+  activities: number;
+  reminders: number;
+  jumpMeasurements: number;
+  readinessCheckIns: number;
+}
+
+function parseBackup(text: string) {
+  if (new TextEncoder().encode(text).length > MAX_BACKUP_BYTES) throw new Error('Choose a backup smaller than 10 MB.');
+  let backup: unknown;
+  try { backup = JSON.parse(text); }
+  catch { throw new Error('This file is not valid JSON. Choose a Setline backup.'); }
+  if (!object(backup) || backup.app !== 'Setline' || backup.version !== 1) throw new Error('Choose a supported Setline backup.');
+  return {
+    data: parseState(backup.data),
+    exportedAt: typeof backup.exportedAt === 'string' && Number.isFinite(Date.parse(backup.exportedAt)) ? backup.exportedAt : null,
+  };
+}
+
+/** Validate every record before showing a restore action; this never writes. */
+export function previewBackup(text: string): BackupPreview {
+  const { data, exportedAt } = parseBackup(text);
+  return { exportedAt, workouts: data.sessions.length,
+    activeWorkouts: data.sessions.filter(({ session }) => session.status === 'active').length,
+    mealsAndWeights: data.nutrition.length, activities: data.activities.length,
+    reminders: data.reminders.items.length, jumpMeasurements: data.performance?.jumps.length ?? 0,
+    readinessCheckIns: data.performance?.readiness.length ?? 0 };
+}
 
 type StoragePort = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 type RecordValue = Record<string, unknown>;
@@ -12,6 +46,7 @@ type SessionRecord = { session: RecordValue; version: number };
 type NutritionRecord = { id: string; date: string; payload: unknown; version: number };
 interface LocalState {
   schemaVersion: 1;
+  restoreGeneration?: string;
   profile: unknown;
   profileVersion: number;
   sessions: SessionRecord[];
@@ -69,6 +104,9 @@ function parseReminders(value: unknown): ReminderState {
   return { items, entries };
 }
 function parseState(value: unknown): LocalState {
+  if (object(value) && Object.hasOwn(value, 'restoreGeneration') && (typeof value.restoreGeneration !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.restoreGeneration))) {
+    throw new Error('The saved restore identifier is invalid.');
+  }
   if (!object(value) || value.schemaVersion !== 1 || !version(value.profileVersion) || !Array.isArray(value.sessions) || !Array.isArray(value.nutrition)) {
     throw new Error('This is not a supported Setline backup.');
   }
@@ -105,7 +143,7 @@ function parseState(value: unknown): LocalState {
     performance = parsed.data;
   }
   return {
-    schemaVersion: 1, profile: profile.data, profileVersion: value.profileVersion,
+    schemaVersion: 1, ...(typeof value.restoreGeneration === 'string' ? { restoreGeneration: value.restoreGeneration } : {}), profile: profile.data, profileVersion: value.profileVersion,
     sessions, nutrition, activities, reminders,
     ...(performance ? { performance, performanceVersion: value.performanceVersion as number } : {}),
   };
@@ -113,12 +151,23 @@ function parseState(value: unknown): LocalState {
 
 /** The reference's request contract, implemented entirely in this device's storage. */
 export function createLocalClient(storage: StoragePort) {
+  // Each tab keeps the generation it first read. A restore replaces the marker
+  // atomically with the state, so an older tab cannot save same-version records
+  // over the restored data. Reloading creates a client for the new generation.
+  let observedGeneration: string | null | undefined;
   function read(defaultProfile: unknown = DEFAULT_PROFILE): LocalState {
     let raw: string | null;
     try { raw = storage.getItem(STORAGE_KEY); }
     catch { throw new Error('Device storage is unavailable. Allow site storage in your browser, then retry.'); }
-    if (raw === null) return { schemaVersion: 1, profile: clone(ProfileSchema.parse(defaultProfile)), profileVersion: 0, sessions: [], nutrition: [], activities: [], reminders: defaultReminderState() };
-    try { return parseState(JSON.parse(raw)); }
+    if (raw === null) {
+      observedGeneration ??= null;
+      return { schemaVersion: 1, profile: clone(ProfileSchema.parse(defaultProfile)), profileVersion: 0, sessions: [], nutrition: [], activities: [], reminders: defaultReminderState() };
+    }
+    try {
+      const state = parseState(JSON.parse(raw));
+      if (observedGeneration === undefined) observedGeneration = state.restoreGeneration ?? null;
+      return state;
+    }
     catch { throw new Error('Saved data could not be read. Restore a valid Setline backup in Settings, or export a recovery copy before resetting.'); }
   }
   function write(state: LocalState) {
@@ -140,6 +189,7 @@ export function createLocalClient(storage: StoragePort) {
         ? clone({ profile: state.profile, profileVersion: state.profileVersion, sessions: state.sessions, activities: state.activities })
         : clone({ records: state.nutrition, photoAnalysisReady: false });
     }
+    if ((state.restoreGeneration ?? null) !== observedGeneration) throw new Error('Local data was restored in another tab. Reload the app before saving changes.');
     if (!object(payload)) throw new Error('The data to save is invalid.');
     let nextVersion: number;
     if (path === '/api/performance' && payload.action === 'save') {
@@ -253,26 +303,55 @@ export function createLocalClient(storage: StoragePort) {
     return { version: nextVersion };
   }
   function exportBackup() {
-    return JSON.stringify({ app: 'Setline', version: 1, exportedAt: new Date().toISOString(), data: read() }, null, 2);
+    const { restoreGeneration: _localGeneration, ...data } = read();
+    return JSON.stringify({ app: 'Setline', version: 1, exportedAt: new Date().toISOString(), data }, null, 2);
   }
   function importBackup(text: string) {
-    if (new TextEncoder().encode(text).length > MAX_BACKUP_BYTES) throw new Error('Choose a backup smaller than 10 MB.');
-    let backup: unknown;
-    try { backup = JSON.parse(text); }
-    catch { throw new Error('This file is not valid JSON. Choose a Setline backup.'); }
-    if (!object(backup) || backup.app !== 'Setline' || backup.version !== 1) throw new Error('Choose a supported Setline backup.');
-    const restored = parseState(backup.data);
-    write(restored);
+    const { data: restored } = parseBackup(text);
+    restored.restoreGeneration = crypto.randomUUID();
+    // Save the exact prior bytes, including unreadable records, before replacing
+    // anything. A quota failure aborts the restore instead of losing its fallback.
+    const previous = storage.getItem(STORAGE_KEY);
+    const previousSafetyCopy = storage.getItem(PRE_RESTORE_KEY);
+    if (previous !== null) {
+      try {
+        storage.setItem(PRE_RESTORE_KEY, JSON.stringify({ savedAt: new Date().toISOString(), raw: previous }));
+      } catch { throw new Error('Your safety copy could not be saved. No records were replaced. Export a recovery copy and free device storage before retrying.'); }
+    }
+    try { write(restored); }
+    catch (error) {
+      // Roll back the safety-copy slot too when the main state was not replaced.
+      try {
+        if (previousSafetyCopy === null) storage.removeItem(PRE_RESTORE_KEY);
+        else storage.setItem(PRE_RESTORE_KEY, previousSafetyCopy);
+      } catch { /* The current state remains intact; the fallback holds its bytes. */ }
+      throw error;
+    }
+    observedGeneration = restored.restoreGeneration;
+  }
+  function previousRestoreCopy(): { text: string; recovery: boolean; savedAt: string } | null {
+    const text = storage.getItem(PRE_RESTORE_KEY);
+    if (text === null) return null;
+    let copy: unknown;
+    try { copy = JSON.parse(text); } catch { throw new Error('The safety copy could not be read.'); }
+    if (!object(copy) || typeof copy.raw !== 'string' || typeof copy.savedAt !== 'string') throw new Error('The safety copy could not be read.');
+    try {
+      const { restoreGeneration: _localGeneration, ...data } = parseState(JSON.parse(copy.raw));
+      return { text: JSON.stringify({ app: 'Setline', version: 1, exportedAt: copy.savedAt, data }, null, 2), recovery: false, savedAt: copy.savedAt };
+    } catch {
+      return { text: JSON.stringify({ app: 'Setline recovery', exportedAt: copy.savedAt, raw: copy.raw }, null, 2), recovery: true, savedAt: copy.savedAt };
+    }
   }
   function exportRecovery() {
     return JSON.stringify({ app: 'Setline recovery', exportedAt: new Date().toISOString(), raw: storage.getItem(STORAGE_KEY) }, null, 2);
   }
-  function reset() { storage.removeItem(STORAGE_KEY); }
-  return { request, exportBackup, importBackup, exportRecovery, reset };
+  function reset() { storage.removeItem(STORAGE_KEY); storage.removeItem(PRE_RESTORE_KEY); observedGeneration = null; }
+  return { request, exportBackup, importBackup, exportRecovery, previousRestoreCopy, hasPreviousRestoreCopy: () => storage.getItem(PRE_RESTORE_KEY) !== null, reset };
 }
 
+let localBrowserClient: ReturnType<typeof createLocalClient> | undefined;
 function browserClient() {
-  try { return createLocalClient(window.localStorage); }
+  try { return localBrowserClient ??= createLocalClient(window.localStorage); }
   catch { throw new Error('Device storage is unavailable. Allow site storage in your browser, then retry.'); }
 }
 export function requestLocal(path: string, payload?: unknown, defaultProfile?: unknown) {
@@ -281,4 +360,6 @@ export function requestLocal(path: string, payload?: unknown, defaultProfile?: u
 export function exportBackup() { return browserClient().exportBackup(); }
 export function importBackup(text: string) { return browserClient().importBackup(text); }
 export function exportRecovery() { return browserClient().exportRecovery(); }
+export function previousRestoreCopy() { return browserClient().previousRestoreCopy(); }
+export function hasPreviousRestoreCopy() { return browserClient().hasPreviousRestoreCopy(); }
 export function resetLocalData() { return browserClient().reset(); }

@@ -37,10 +37,10 @@ test('recorded gym, volleyball and PE contacts remain separate from estimates an
   const unknown = completed('Volleyball');
   const active = { ...completed('Volleyball'), status: 'active', trainingExposure: { hardJumpContacts: 100 } };
   const result = getTrainingExposureSummary({ sessions: [gym, volleyball, volleyball, estimated, unknown, active],
-    activities: [{ version: 1, activity: { id: 'pe', date, name: 'School PE', deletedAt: null, trainingExposure: { hardJumpContacts: 8 } } }],
+    activities: [{ version: 1, activity: { id: 'pe', date, name: 'School PE', deletedAt: null, trainingExposure: { hardJumpContacts: 8, contactSource: 'recorded' as const } } }],
     startDate: date, endDate: '2026-11-08' });
-  assert.deepEqual(result, { completedGymContacts: 2, recordedVolleyballContacts: 22, recordedPeContacts: 8,
-    estimatedSportContacts: 35, volleyballSessions: 3, peSessions: 1, unmeasuredSportSessions: 1, observationCount: 0 });
+  assert.deepEqual(result, { completedGymContacts: 2, recordedVolleyballContacts: 22, recordedPeContacts: 8, recordedOtherContacts: 0,
+    estimatedSportContacts: 35, unclassifiedSportContacts: 0, volleyballSessions: 3, peSessions: 1, unmeasuredSportSessions: 1, observationCount: 0 });
 });
 
 test('a newer deleted activity version cannot revive old recorded contacts', () => {

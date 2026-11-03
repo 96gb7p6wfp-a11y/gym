@@ -54,7 +54,7 @@ test('custom sports are not recorded as volleyball when entering jump load', asy
   await expect(fields.getByLabel('Training type', { exact: true })).toHaveValue('other');
   await fields.getByLabel('Hard jump contacts', { exact: true }).fill('12');
   await expect.poll(async () => (await read(page)).sessions[0].session.trainingExposure).toEqual({
-    sport: 'other', hardJumpContacts: 12, contactSource: 'recorded',
+    sport: 'other', hardJumpContacts: 12,
   });
 });
 
@@ -72,6 +72,7 @@ test('school PE can record counted contacts independently from gym and volleybal
   await entry.locator('.training-exposure-fields > summary').click();
   await entry.getByLabel('Training type', { exact: true }).selectOption('pe');
   await entry.getByLabel('Hard jump contacts', { exact: true }).fill('9');
+  await entry.getByLabel('Contact count', { exact: true }).selectOption('recorded');
   await entry.getByLabel('Session RPE · 0–10', { exact: true }).fill('6');
   await entry.getByRole('button', { name: 'Save activity', exact: true }).click();
   await expect(entry).not.toBeVisible();

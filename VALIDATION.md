@@ -1,5 +1,45 @@
 # Standalone app validation
 
+## Setline V14 — 3 November 2026
+
+Fresh environment verified by shell, authenticated Git fetch, baseline build and
+447 baseline unit tests. Branch started from latest `origin/main`,
+`c086944a6cdd4e9f4979887fb25fb451f9256d0b`; PR #1 reviewed without merge or edits.
+
+| Check | Result |
+| --- | --- |
+| `npm run typecheck` | Passed |
+| `npm test` | 478 passed, no failures or skips |
+| `npm run build` | Passed TypeScript, Vite and production service-worker generation |
+| `npm run test:web -- --workers=4` | 237 passed in one clean production run (10.4 minutes), no failures or skips |
+| Independent review | Reuse clearance restriction, failed-restore safety-slot rollback, legacy pairing wording and primary-action layout findings fixed |
+
+New checks cover preview/cancel/invalid/quota/rollback restore, full backup
+roundtrips, native sharing/cancellation and real two-tab restore protection;
+ordinal set reuse with decimal/zero weights, ambiguous and preparation-only
+history, RIR and persistence; measured Approach Advantage, incompatible tests,
+negative differences, source-unclassified contacts and duplicate/deleted/active
+exclusions; app-versus-plan status; timer refresh/adjust/cancel, silent expiry
+and Safari pagehide ordering; first-use deferred screens and charts offline.
+Existing V13.1 scheduling, preparation, supersets, nutrition, history, UI theme,
+phone geometry, imports, PWA and workout regressions remain in the complete suite.
+
+Compared fresh production builds of unchanged main and V14 with Node 24.
+JavaScript needed by the initial HTML and its transitive static imports falls
+from **1,489,955 to 1,005,034 bytes (32.5%)**; summed Node gzip falls from
+**432,812 to 292,655 bytes (32.4%)**. This measures eager bundle bytes, not a
+physical-device latency or battery benchmark. Deferred screen/chart chunks are
+precached by the service worker, so total offline install download is not reduced
+by the same amount. The remaining large-chunk warning is still reported.
+
+Tests use Chromium with mobile/touch emulation and the repository's simulated
+iPhone safe areas. Physical iPhone Safari/standalone sharing, speaker/music
+mixing, background/locked audio and device timing remain unverified. A restore
+protects currently running V14 clients, but an already-loaded older app cannot
+enforce its generation guard: close other app tabs first. Browser clearing still
+removes local data and its safety copy; keep a separately saved export.
+See [the V14 behavior and compatibility notes](docs/SETLINE_V14.md).
+
 ## Volleyball Performance Master Plan V13.1 — 3 November 2026
 
 | Check | Result |
