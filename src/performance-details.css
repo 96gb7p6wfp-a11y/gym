@@ -93,3 +93,14 @@
 .performance-source .performance-disclaimer { margin-top: 12px; }
 .performance-estimate-note { margin: -8px 0 0; color: var(--sub); font-size: 13px; line-height: 1.5; }
 .performance-next-test { margin-top: 18px; }
+
+.performance-advantage { display:grid; gap:12px; }
+.performance-advantage .performance-card-heading { align-items:baseline; flex-wrap:wrap; gap:6px 12px; }
+.performance-advantage .performance-three-values { margin-top:8px; }
+.performance-advantage .performance-next-test { margin-top:0; }
+.performance-contact-values { display:grid; gap:14px; margin:12px 0 18px; }
+.performance-contact-values > div { display:flex; align-items:baseline; justify-content:space-between; gap:16px; }
+.performance-contact-values dt { color:var(--sub); font-size:13px; line-height:1.5; }
+.performance-contact-values dd { margin:0; color:var(--ink); font-size:20px; font-weight:600; font-variant-numeric:tabular-nums; }
+.performance-volleyball-context > .performance-disclaimer + .performance-disclaimer { margin-top:8px; }
+.performance-advantage .performance-three-values dd { font-size:clamp(21px,6vw,29px); }

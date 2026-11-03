@@ -1,0 +1,8 @@
+.data-settings__origin, .data-settings__filename { overflow-wrap: anywhere; }
+.data-settings__copy { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
+.data-settings__preview, .data-settings__safety { margin-top: 16px; padding: 16px; border: 1px solid var(--border); border-radius: 16px; }
+.data-settings__preview h4 { margin: 0 0 8px; }
+.data-settings__preview dl { display: grid; gap: 8px; font-size: 13px; }
+.data-settings__preview dl > div { display: flex; justify-content: space-between; gap: 12px; }
+.data-settings__preview dd { margin: 0; font-variant-numeric: tabular-nums; }
+.data-settings__preview .backup-buttons { flex-wrap: wrap; }

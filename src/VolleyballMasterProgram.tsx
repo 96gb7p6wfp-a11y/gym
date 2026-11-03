@@ -2,6 +2,7 @@ import { useEffect, useState, type MouseEvent } from 'react';
 import { MasterProgramSettingsSchema, createRecommendedMasterPlan, createVolleyballMasterPlan, getMasterProgramPhase, getMasterProgramWeek, resolveMasterProgramPlan, type MasterProgramSettings, type MasterReadiness } from './volleyball-master-plan';
 import type { PlanDay } from './workout-customization';
 import { berlinDate } from './calendar-date';
+import { trainingPlanVersion } from './training-plan-status';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui';
 import './volleyball-master-program.css';
 
@@ -90,7 +91,7 @@ export function VolleyballMasterProgram({ settings, defaultStartDate, selectedDa
   ] as const;
   const savedPlanButton = <button className="text-button" type="button" disabled={locked} onClick={() => setRestore(true)}>Return to saved plan</button>;
   return <section className="master-program" aria-label="8-week volleyball-first program">
-    <div className="master-program__heading"><div><p className="eyebrow">8-WEEK PERFORMANCE PLAN</p><h2>Volleyball Performance Master Plan V13.1</h2></div><span>{week ? `${legacy ? `Current ${settings?.revision ? `V${settings.revision}` : 'block'} · ` : ''}Week ${week} · ${getMasterProgramPhase(week)}` : settings ? today < settings.startDate ? `Starts ${settings.startDate}` : 'Block complete' : 'Ready when you are'}</span></div>
+    <div className="master-program__heading"><div><p className="eyebrow">{settings ? 'SAVED TRAINING PROGRAM' : 'RECOMMENDED PERFORMANCE PLAN'}</p><h2>Volleyball Performance Master Plan{settings ? settings.revision ? ` ${trainingPlanVersion(settings)}` : ' · Original' : ' V13.1'}</h2></div><span>{week ? `Week ${week} · ${getMasterProgramPhase(week)}` : settings ? today < settings.startDate ? `Starts ${settings.startDate}` : 'Block complete' : 'Ready when you are'}</span></div>
     <p className="master-program__purpose">Jump Higher · Hit Harder · Build Muscle</p>
     {legacy && onUpgrade && <div className="master-program__upgrade"><p>Your current block continues unchanged. Review V13.1 before applying it.</p><button type="button" className="btn full" disabled={locked} onClick={() => { setError(''); setUpgrade(true); }}>Upgrade to V13.1</button></div>}
     <details className="master-program__preview-disclosure"><summary>{legacy ? 'Current program preview' : 'Program preview'}</summary>{previewValid ? <ProgramPreview settings={draft} date={selectedDate} basePlan={settings ? basePlan : undefined} matchWeekend={settings ? matchWeekend : undefined} baseline={!settings} /> : <p className="small-note">Choose a valid Monday to preview this block.</p>}</details>

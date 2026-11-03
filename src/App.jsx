@@ -1,9 +1,11 @@
 import { berlinDate, calendarDayIndex } from "./calendar-date";
 import { upgradeMasterProgram, restorePreviousMasterProgram } from "./master-program-upgrade";
 import { WorkoutPlanPreview } from "./WorkoutPlanPreview";
+import { TrainingPlanStatus } from "./TrainingPlanStatus";
 import { WarmupFlow } from "./WarmupFlow";
 import { findSessionDraft, getPreparationStatus, putSessionDraft, resetDraftPreparation, resolveSessionDraft } from "./workout-drafts";
 import { useRestAudio } from "./useRestAudio";
+import { useRestDeadline } from "./useRestDeadline";
 import { DEFAULT_REST_VOLUME } from "./rest-audio";
 import { TimerSoundSettings } from "./TimerSoundSettings";
 import { PwaUpdateControl } from "./PwaUpdateControl";
@@ -18,7 +20,6 @@ import './session-extras.css';
 import { WorkoutBuilder } from "./WorkoutBuilder";
 import { WeeklyPlanTools } from "./WeeklyPlanTools";
 import { WorkoutCustomizer } from "./WorkoutCustomizer";
-import { PerformanceDetails } from "./PerformanceDetails";
 import { AppearanceSettings } from "./ThemeSettings";
 import { useAppearance } from "./theme";
 import { usePerformanceData } from "./usePerformanceData";
@@ -41,11 +42,9 @@ import { ActivityHistory } from "./ActivityHistory";
 import { DailyGuidance } from "./DailyGuidance";
 import { ShortRoutine } from "./ShortRoutine";
 import { TrainingSchedule } from "./TrainingSchedule";
-import { ActivityImport } from "./ActivityImport";
 import { ExerciseGuide } from "./ExerciseGuide";
 import { ExerciseLibrarySheet } from "./ExerciseLibrarySheet";
 import { WeeklyPerformance } from "./WeeklyPerformance";
-import { WeeklyReport } from "./WeeklyReport";
 import { DecimalWeightInput } from "./DecimalWeightInput";
 import { isValidWorkoutWeight } from "./workout-weight";
 import { applyTimedSetAction, recordedTimedSetSeconds } from "./timed-sets";
@@ -71,13 +70,6 @@ import { Pause } from "lucide-react";
 import { Pencil } from "lucide-react";
 import { Zap } from "lucide-react";
 import { Flame } from "lucide-react";
-import { ResponsiveContainer } from "recharts";
-import { LineChart } from "recharts";
-import { CartesianGrid } from "recharts";
-import { XAxis } from "recharts";
-import { YAxis } from "recharts";
-import { Tooltip as ChartTooltip } from "recharts";
-import { Line } from "recharts";
 import { Plus } from "lucide-react";
 import { X } from "lucide-react";
 import { Activity } from "lucide-react";
@@ -144,7 +136,21 @@ import {
   TabsList,
   TabsTrigger,
 } from "./components/ui";
-import { NutritionView } from "./NutritionView";
+
+// Load infrequent screens and the chart engine when opened. The service worker
+// still precaches every generated chunk for first-use offline navigation.
+function deferredScreen(loader, label) {
+  const Screen = React.lazy(loader);
+  return function DeferredScreen(props) {
+    return <React.Suspense fallback={<p className="small-note" role="status">{label}</p>}><Screen {...props} /></React.Suspense>;
+  };
+}
+const PerformanceDetails = deferredScreen(() => import('./PerformanceDetails').then(module => ({ default: module.PerformanceDetails })), 'Loading performance…');
+const WeeklyReport = deferredScreen(() => import('./WeeklyReport').then(module => ({ default: module.WeeklyReport })), 'Loading report…');
+const ActivityImport = deferredScreen(() => import('./ActivityImport').then(module => ({ default: module.ActivityImport })), 'Loading import…');
+const NutritionView = deferredScreen(() => import('./NutritionView').then(module => ({ default: module.NutritionView })), 'Loading nutrition…');
+const StrengthChart = deferredScreen(() => import('./StrengthChart'), 'Loading chart…');
+
 async function requestTracker(payload) {
   return requestLocal("/api/tracker", payload, DEFAULT_PROFILE);
 }
@@ -196,7 +202,7 @@ function GymApp({
   );
   let [now, setNow] = React.useState(initialNow);
   const today = berlinDate(now);
-  let [restEndsAt, setRestDeadline] = React.useState(null);
+  let [restEndsAt, setRestDeadline] = useRestDeadline();
   const [restFinished, setRestFinished] = React.useState(null);
   function setRestEndsAt(deadline) { setRestFinished(null); setRestDeadline(deadline); }
   let [restSeconds, setRestSeconds] = React.useState(90);
@@ -315,13 +321,14 @@ function GymApp({
     );
   }
   async function replaceLocalData(replace) {
-    await flushPendingWrites();
+    if (!(await flushPendingWrites())) throw new Error('Your workout could not save. Retry saving before replacing local data.');
     // A confirmed restore/reset must not be overwritten by the unload flush.
     const queued = new Map(pendingWritesRef.current);
     pendingWritesRef.current.clear();
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     try {
       replace();
+      setRestEndsAt(null);
       window.location.reload();
     } catch (error) {
       for (const [id, session] of queued) pendingWritesRef.current.set(id, session);
@@ -986,7 +993,7 @@ function GymApp({
     mountedRef.current = !0;
     loadWorkouts();
     setNow(Date.now());
-    let t = setInterval(() => setNow(Date.now()), 1e3);
+
     let n = (e) => {
       (pendingWritesRef.current.size || activeWriteRef.current) &&
         (e.preventDefault(), (e.returnValue = ``));
@@ -1002,7 +1009,6 @@ function GymApp({
       window.addEventListener(`focus`, r),
       () => {
         mountedRef.current = !1;
-        clearInterval(t);
         window.removeEventListener(`beforeunload`, n);
         document.removeEventListener(`visibilitychange`, r);
         window.removeEventListener(`pageshow`, r);
@@ -1011,6 +1017,34 @@ function GymApp({
       }
     );
   }, []);
+  // Safari throttles suspended pages. Recalculate from real deadlines on return;
+  // avoid repainting the whole phone UI every second when no timer is running.
+  const clockRunning = restEndsAt !== null || !!activeSession && (
+    activeSession.runningSince !== null || activeSession.exercises.some(exercise => exercise.runningSince !== null)
+  );
+  React.useEffect(() => {
+    let timeout;
+    const tick = () => {
+      setNow(Date.now());
+      // Align idle updates to the next minute, including midnight. A fixed
+      // minute interval from mount could leave Today on yesterday for 59 sec.
+      timeout = window.setTimeout(tick, clockRunning ? 1000 : 60000 - Date.now() % 60000);
+    };
+    const refresh = () => {
+      if (timeout !== undefined) window.clearTimeout(timeout);
+      timeout = undefined;
+      if (document.visibilityState === 'hidden') return;
+      tick();
+    };
+    refresh();
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('pageshow', refresh);
+    return () => {
+      if (timeout !== undefined) window.clearTimeout(timeout);
+      document.removeEventListener('visibilitychange', refresh);
+      window.removeEventListener('pageshow', refresh);
+    };
+  }, [clockRunning]);
   async function loadReportNutrition() {
     try {
       const saved = await requestLocal(`/api/nutrition`);
@@ -1257,6 +1291,7 @@ function GymApp({
             disabled={!loaded || saving || profileSaving || !!loadError} onPreview={() => openPreview(todayContext)} onStart={() => startWorkout(todayContext)} onTrain={() => { setEditingHistoryId(null); if (!activeSession) selectTrainingDate(today); setTab(`train`); }} onBrowseTrain={() => setTab(`train`)}
             onViewLog={setSelectedHistory} onNutrition={() => setTab(`nutrition`)} onPlan={() => masterBlockComplete ? openProgramConfiguration() : openPlan()}
             onActivity={() => setTodayActivitiesOpen(true)} />
+          {loaded && <TrainingPlanStatus profile={profile} today={today} />}
         </TabsContent>
         <TabsContent value={`train`}>
           {!currentSession && weekSelector}
@@ -1390,7 +1425,7 @@ function GymApp({
                 </div>
               )}
               {!currentSession && <details className="workout-template-actions"><summary>Workout options</summary><div className="workout-template-options"><button type="button" className="text-button" disabled={!loaded} onClick={() => setWorkoutChooserOpen(true)}>Choose workout</button><button type="button" className="text-button" disabled={!loaded} onClick={() => openCustomWorkout()}>Create workout</button></div></details>}
-              {loggedJumpContacts && loggedJumpContacts.planned > 0 && <p className="master-contact-status" role="status" aria-label="Main jump contacts">{loggedJumpContacts.completed} / {loggedJumpContacts.planned} main contacts{loggedJumpContacts.completed >= loggedJumpContacts.planned ? ' · Ceiling reached; stop the jump block.' : ' · Ceiling, not a target to force.'}</p>}
+              {loggedJumpContacts && loggedJumpContacts.planned > 0 && <p className="master-contact-status" role="status" aria-label="Main jump contacts">{loggedJumpContacts.completed} / {loggedJumpContacts.planned} main contacts · from completed reps{loggedJumpContacts.completed >= loggedJumpContacts.planned ? ' · Ceiling reached; stop the jump block.' : ' · Ceiling, not a target to force.'}</p>}
               {currentSession ? (
                 <React.Fragment>
                   {currentSession.kind === 'recovery' && !currentSession.exercises.length ? <section className="recovery-session" aria-label="Recovery session"><PreparationChecklist items={cooldownItems} phase="cooldown" kind="recovery" defaultOpen onToggle={(key, done) => togglePreparation('cooldown', key, done)} /><WorkoutCustomizer session={currentSession} selectedKey={exerciseActionKey} onSelectedKeyChange={setExerciseActionKey}
@@ -1468,6 +1503,7 @@ function GymApp({
               )}
               {!(currentSession?.kind === 'recovery' && !currentSession.exercises.length) && <button type="button" className="stretch-shortcut" onClick={() => openStretches()}><span><strong>Cool-down & stretching</strong><small>Matched to this session</small></span><ChevronRight size={18} /></button>}
             </section>
+            {loaded && <TrainingPlanStatus profile={profile} today={today} selectedDate={workoutDate} session={currentSession} />}
             <details className="train-utilities"><summary>Session tools</summary><div className="train-utilities-content"><section className="workout-preparation">
               <details className="train-activities"><summary>Activities</summary>
               <ExtraActivities
@@ -1658,7 +1694,7 @@ function GymApp({
                     <ReactJSX.Fragment>
                       <button
                         className={`btn secondary`}
-                        onClick={() => setRestEndsAt(restEndsAt + 15e3)}
+                        onClick={() => { void restAudio.unlock(); setRestEndsAt(restEndsAt + 15e3); }}
                       >{`+15 sec`}</button>
                       <button
                         className={`btn`}
@@ -1726,59 +1762,7 @@ function GymApp({
               </div>
             ) : (
               <div className={`chart-wrap`}>
-                <ResponsiveContainer width={`100%`} height={280}>
-                  <LineChart
-                    data={chartData}
-                    margin={{
-                      top: 20,
-                      right: 16,
-                      left: 0,
-                      bottom: 10,
-                    }}
-                  >
-                    <CartesianGrid stroke={`var(--line)`} vertical={!1} />
-                    <XAxis
-                      dataKey={`date`}
-                      tick={{
-                        fill: `#627069`,
-                        fontSize: 12,
-                      }}
-                      axisLine={!1}
-                      tickLine={!1}
-                    />
-                    <YAxis
-                      tick={{
-                        fill: `#627069`,
-                        fontSize: 12,
-                      }}
-                      axisLine={!1}
-                      tickLine={!1}
-                      width={44}
-                    />
-                    <ChartTooltip
-                      contentStyle={{
-                        borderRadius: 12,
-                        borderColor: `#e2e8e3`,
-                      }}
-                      formatter={(e) => [e, chartMetricLabel]}
-                    />
-                    <Line
-                      type={`linear`}
-                      dataKey={`value`}
-                      stroke={`var(--accent)`}
-                      strokeWidth={3}
-                      dot={{
-                        r: 4,
-                        fill: `var(--accent)`,
-                        stroke: `var(--canvas)`,
-                        strokeWidth: 2,
-                      }}
-                      activeDot={{
-                        r: 6,
-                      }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <StrengthChart data={chartData} metricLabel={chartMetricLabel} />
               </div>
             )}
             <div
@@ -1974,6 +1958,7 @@ function GymApp({
             nutritionProfile={profile.nutrition}
             onNutritionProfileChange={saveNutritionProfile} volleyballSchedule={volleyballSchedule} initialAction={nutritionAction} onActionHandled={() => setNutritionAction(null)} onOpenRoutine={(date) => { setRoutineDate(date); setMoreView(`routine`); }} />}
           {moreView === `plan` && <>
+          {loaded && <TrainingPlanStatus profile={profile} today={today} selectedDate={selectedDate} />}
           {programOffer && <button type="button" className="program-review-row" onClick={reviewProgram}><span>{programOffer}</span><strong>Review plan<ChevronRight size={17} aria-hidden="true" /></strong></button>}
 
           <section className="native-week" aria-label="Weekly training schedule"><p className="eyebrow">This week</p><div className="plan-timeline">{(profile.masterProgram && !masterWeek ? editableWeekPlan : scheduledPlan).map((e, t) => {
@@ -2021,7 +2006,7 @@ function GymApp({
             <section className="native-menu-section"><h2>Training</h2><div className="menu-group"><MenuRow title="Training plan" icon={<ListChecks />} onClick={openPlan} /><MenuRow title="My workouts" icon={<Dumbbell />} onClick={() => setMoreView('workouts')} /><MenuRow title="Exercise library" icon={<Search />} onClick={() => setLibraryOpen(true)} /></div></section>
             <section className="native-menu-section"><h2>Your records</h2><div className="menu-group"><MenuRow title="History" icon={<History />} onClick={() => { setProgressView('history'); setTab('progress'); }} /><MenuRow title="Body weight" icon={<Activity />} onClick={() => { setNutritionAction('weight'); setTab('nutrition'); }} /><MenuRow title="Jump tests" icon={<ChartColumn />} onClick={() => { setPerformanceAction('log-jump'); setProgressView('details'); setTab('progress'); }} /></div></section>
             <section className="native-menu-section"><h2>App & data</h2><div className="menu-group"><MenuRow title="Settings" onClick={openSettings} /><MenuRow title="Import activities" subtitle="Strava, Adidas Running & watch exports" icon={<Upload />} onClick={() => setImportOpen(true)} /><MenuRow title="Backup & data" icon={<ShieldCheck />} onClick={openSettings} /><MenuRow title="Install Setline" icon={<House />} onClick={() => setInstallOpen(true)} /></div></section>
-            <ActivityImport bodyWeight={profile.bodyWeight} records={activityRecords} onImport={importExtraActivities} disabled={!loaded} open={importOpen} onOpenChange={setImportOpen} hideLauncher />
+            {importOpen && <ActivityImport bodyWeight={profile.bodyWeight} records={activityRecords} onImport={importExtraActivities} disabled={!loaded} open={importOpen} onOpenChange={setImportOpen} hideLauncher />}
           </div>}
           <ExerciseLibrarySheet open={libraryOpen} onOpenChange={setLibraryOpen} onSelect={() => {}} browseOnly />
         </TabsContent>
@@ -2031,8 +2016,8 @@ function GymApp({
           <Timer size={18} />
           <span>{`Rest`}</span>
           <strong>{formatElapsedTime(restRemaining)}</strong>
-          <button aria-label="Reduce rest by 15 seconds" onClick={() => { setNow(Date.now()); setRestEndsAt(Math.max(Date.now(), restEndsAt - 15000)); }}>−15</button>
-          <button aria-label="Add 15 seconds rest" onClick={() => setRestEndsAt(restEndsAt + 15000)}>+15</button>
+          <button aria-label="Reduce rest by 15 seconds" onClick={() => { void restAudio.unlock(); setNow(Date.now()); setRestEndsAt(Math.max(Date.now(), restEndsAt - 15000)); }}>−15</button>
+          <button aria-label="Add 15 seconds rest" onClick={() => { void restAudio.unlock(); setRestEndsAt(restEndsAt + 15000); }}>+15</button>
           <button onClick={() => setRestEndsAt(null)} aria-label="Skip rest">Skip</button>
         </div>
       )}

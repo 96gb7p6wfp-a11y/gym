@@ -149,12 +149,14 @@ test('readiness is explicit and jump records, appearance and active work survive
     preferences.getByRole('button', { name: 'Delete all local data', exact: true }).click(),
   ]);
   preferences = await settings(page);
+  await preferences.getByLabel('Restore Setline backup', { exact: true }).setInputFiles({
+    name: download.suggestedFilename(), mimeType: 'application/json', buffer: Buffer.from(backupText),
+  });
+  await expect(preferences.getByRole('region', { name: 'Backup restore preview' })).toContainText('Review backup');
   page.once('dialog', dialog => dialog.accept());
   await Promise.all([
     page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
-    preferences.getByLabel('Restore Setline backup', { exact: true }).setInputFiles({
-      name: download.suggestedFilename(), mimeType: 'application/json', buffer: Buffer.from(backupText),
-    }),
+    preferences.getByRole('button', { name: 'Restore backup', exact: true }).click(),
   ]);
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   const restored = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), STORE);

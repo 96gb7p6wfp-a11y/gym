@@ -172,3 +172,15 @@ html[data-keyboard-open='true'] .focused-exercise .focused-set-encouragement + .
  .focused-exercise__set-selector>button:active { transform:scale(.94); }
  @keyframes set-receipt-draw { from { stroke-dashoffset:32; } to { stroke-dashoffset:0; } }
 }
+
+.focused-reuse { display:flex; align-items:center; justify-content:center; width:100%; min-height:48px; gap:8px; margin:0 0 12px; padding:8px 10px; border:1px solid var(--line); border-radius:16px; background:var(--surface-soft); color:var(--accent); font-size:13px; font-weight:600; }
+.focused-reuse > span { display:grid; gap:3px; }
+.focused-reuse small { color:var(--sub); font-size:10px; font-weight:400; }
+.focused-rir { margin-top:12px; }
+.focused-rir > span { display:flex; align-items:baseline; justify-content:space-between; gap:8px; color:var(--sub); font-size:11px; }
+.focused-rir > div { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:2px; margin-top:4px; }
+.focused-rir button { min-width:0; min-height:44px; padding:4px 0; border:1px solid transparent; border-radius:12px; background:transparent; color:var(--ink); font-size:13px; }
+.focused-rir button[aria-pressed='true'] { border-color:var(--line); background:var(--accent-soft); color:var(--accent); }
+.focused-rir .focused-rir-clear { min-width:44px; color:var(--sub); font-size:11px; }
+.focused-rir .focused-rir-clear[aria-pressed='true'] { border-color:transparent; background:transparent; }
+@media (max-width:359px) { .focused-rir > div { grid-template-columns:repeat(3,minmax(44px,1fr)); } }

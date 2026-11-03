@@ -824,7 +824,6 @@ test('exports a portable backup, rejects invalid imports, and restores after a c
   expect(backup.data.profile.bodyWeight).toBe(70);
   expect(backup.data.sessions).toHaveLength(1);
 
-  page.once('dialog', (dialog) => dialog.accept());
   await preferences.getByLabel('Restore Setline backup', { exact: true }).setInputFiles({
     name: 'invalid-backup.json', mimeType: 'application/json', buffer: Buffer.from('{"wrong":"format"}'),
   });
@@ -844,12 +843,14 @@ test('exports a portable backup, rejects invalid imports, and restores after a c
   await expect(page.getByText('0 completed workouts', { exact: true })).toBeVisible();
   preferences = await openPreferences(page);
   await expect(preferences.getByLabel('Body weight · kg', { exact: true })).toHaveValue('64');
+  await preferences.getByLabel('Restore Setline backup', { exact: true }).setInputFiles({
+    name: download.suggestedFilename(), mimeType: 'application/json', buffer: Buffer.from(backupText),
+  });
+  await expect(preferences.getByRole('region', { name: 'Backup restore preview' })).toContainText('Review backup');
   page.once('dialog', (dialog) => dialog.accept());
   await Promise.all([
     page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
-    preferences.getByLabel('Restore Setline backup', { exact: true }).setInputFiles({
-      name: download.suggestedFilename(), mimeType: 'application/json', buffer: Buffer.from(backupText),
-    }),
+    preferences.getByRole('button', { name: 'Restore backup', exact: true }).click(),
   ]);
   preferences = await openPreferences(page);
   await expect(preferences.getByLabel('Body weight · kg', { exact: true })).toHaveValue('70');

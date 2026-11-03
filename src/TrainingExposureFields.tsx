@@ -15,7 +15,9 @@ export function TrainingExposureFields({ value, onChange, defaultSport = 'volley
   const update = (field: keyof TrainingExposure, next: unknown) => {
     const result = { ...value, sport: value?.sport ?? defaultSport, [field]: next };
     if (next === undefined) delete result[field];
-    if (field === 'hardJumpContacts' && next !== undefined && !result.contactSource) result.contactSource = 'recorded';
+    // A number alone does not establish that someone counted it. Keep its source
+    // unknown until the athlete explicitly chooses counted or estimated.
+    if (field === 'hardJumpContacts' && next === undefined) delete result.contactSource;
     onChange(result);
   };
   const numeric = (field: 'hardJumpContacts' | 'sessionRpe', raw: string) => {
@@ -31,8 +33,8 @@ export function TrainingExposureFields({ value, onChange, defaultSport = 'volley
         <label htmlFor={`${id}-contacts`}>Hard jump contacts<input id={`${id}-contacts`} type="number" inputMode="numeric" min={0} max={5000} step={1} placeholder="Not recorded" value={value?.hardJumpContacts ?? ''} onChange={event => numeric('hardJumpContacts', event.target.value)} /></label>
         <label htmlFor={`${id}-rpe`}>Session RPE · 0–10<input id={`${id}-rpe`} type="number" inputMode="decimal" min={0} max={10} step={0.5} placeholder="Not recorded" value={value?.sessionRpe ?? ''} onChange={event => numeric('sessionRpe', event.target.value)} /></label>
       </div>
-      {value?.hardJumpContacts !== undefined && <label htmlFor={`${id}-source`}>Contact count<select id={`${id}-source`} aria-label="Contact count" value={value?.contactSource ?? 'recorded'} onChange={event => update('contactSource', event.target.value)}><option value="recorded">Counted during training</option><option value="estimate">Estimate · not measured</option></select></label>}
-      <p>Leave contacts blank if unknown. Log each practice once; gym jumps are counted separately.</p>
+      {value?.hardJumpContacts !== undefined && <label htmlFor={`${id}-source`}>Contact count<select id={`${id}-source`} aria-label="Contact count" value={value?.contactSource ?? ''} onChange={event => update('contactSource', event.target.value || undefined)}><option value="">Choose counted or estimated</option><option value="recorded">Counted during training</option><option value="estimate">Estimate · not measured</option></select></label>}
+      <p>Leave contacts blank if unknown. Choose counted only if you tracked each contact. Log each practice once; gym totals come from completed reps.</p>
       <div className="training-exposure-fields__soreness">
         {(['shoulderSoreness', 'kneeSoreness', 'achillesSoreness'] as const).map(field => <label key={field} htmlFor={`${id}-${field}`}>{sorenessNames[field]} soreness<select id={`${id}-${field}`} aria-label={`${sorenessNames[field]} soreness`} value={value?.[field] ?? ''} onChange={event => update(field, event.target.value || undefined)}><option value="">Not recorded</option><option value="none">None</option><option value="mild">Mild</option><option value="moderate">Moderate</option><option value="high">High</option></select></label>)}
       </div>

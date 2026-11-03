@@ -194,6 +194,16 @@ Automatic meal-photo analysis is not configured: it requires a separate AI servi
 The optional photo workflow stays hidden until that service is available;
 all manual meal/weight/nutrient logging works offline.
 
+## V14 app improvements
+
+[V14](docs/SETLINE_V14.md) adds validated restore previews with a pre-restore
+safety copy, explicit previous-set reuse, quick RIR, compatible-test Approach
+Advantage, separate counted/estimated/unclassified jump contacts, saved-plan
+version status, deferred screen loading and rest-deadline recovery after refresh.
+Your V13.1 training plan remains an opt-in prescription; installing V14 does not
+replace it. Close other Setline tabs before restoring and verify backup files in
+Files/Downloads. Physical iPhone background audio remains unverified.
+
 ## Run and build
 
 Use Node.js 24 LTS from the repository root:

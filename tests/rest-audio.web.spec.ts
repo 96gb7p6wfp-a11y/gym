@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE } from '../src/domain.js';
+import { REST_DEADLINE_KEY } from '../src/rest-deadline';
 import { openDisclosure, openSection } from './helpers/navigation';
 
 const STORE = 'setline.gym.v1';
@@ -157,6 +158,53 @@ test('returning after background suspension reflects elapsed rest without a stal
     Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
     document.dispatchEvent(new Event('visibilitychange'));
   });
+  await page.clock.runFor(1200);
+  await expect(page.locator('.rest-floating')).toHaveCount(0);
+  await expect(page.getByRole('status', { name: 'Rest complete', exact: true })).toBeVisible();
+  expect(await plays(page)).toBe(0);
+});
+
+test('rest adjustments survive refresh and skipping clears the restored deadline', async ({ page }) => {
+  await setup(page);
+  await openTimer(page);
+  await page.getByRole('button', { name: 'Start rest', exact: true }).click();
+  await page.clock.runFor(30_000);
+  await page.locator('.rest-floating').getByRole('button', { name: 'Add 15 seconds rest', exact: true }).click();
+  await expect(page.locator('.rest-floating')).toContainText('01:15');
+  const deadline = await page.evaluate(key => sessionStorage.getItem(key), REST_DEADLINE_KEY);
+  expect(deadline).not.toBeNull();
+  await page.reload();
+  await expect(page.locator('.rest-floating')).toContainText('01:15');
+  expect(await page.evaluate(key => sessionStorage.getItem(key), REST_DEADLINE_KEY)).toBe(deadline);
+  await page.locator('.rest-floating').getByRole('button', { name: 'Skip rest', exact: true }).click();
+  expect(await page.evaluate(key => sessionStorage.getItem(key), REST_DEADLINE_KEY)).toBeNull();
+  await page.reload();
+  await expect(page.locator('.rest-floating')).toHaveCount(0);
+  await page.clock.fastForward(120_000);
+  expect(await plays(page)).toBe(0);
+});
+
+test('refreshing with an expired rest resolves once without a stale sound or sound-repair warning', async ({ page }) => {
+  await setup(page);
+  await page.evaluate(key => sessionStorage.setItem(key, JSON.stringify(Date.now() - 30_000)), REST_DEADLINE_KEY);
+  await page.reload();
+  await expect(page.locator('.rest-floating')).toHaveCount(0);
+  await expect(page.getByRole('status', { name: 'Rest complete', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Check sound', exact: true })).toHaveCount(0);
+  expect(await plays(page)).toBe(0);
+  expect(await page.evaluate(key => sessionStorage.getItem(key), REST_DEADLINE_KEY)).toBeNull();
+  await page.reload();
+  await expect(page.getByRole('status', { name: 'Rest complete', exact: true })).toHaveCount(0);
+});
+
+test('pagehide freezes rest until pageshow even if visibilitychange arrives late on iPhone', async ({ page }) => {
+  await setup(page);
+  await openTimer(page);
+  await page.getByRole('button', { name: 'Start rest', exact: true }).click();
+  await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+  await page.clock.fastForward(120_000);
+  expect(await plays(page)).toBe(0);
+  await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
   await page.clock.runFor(1200);
   await expect(page.locator('.rest-floating')).toHaveCount(0);
   await expect(page.getByRole('status', { name: 'Rest complete', exact: true })).toBeVisible();

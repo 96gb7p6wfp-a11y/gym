@@ -20,7 +20,7 @@ export function useRestAudio({ enabled, endsAt, volume = DEFAULT_REST_VOLUME, on
       schedule: (fn, delay) => window.setTimeout(fn, delay), cancel: handle => window.clearTimeout(handle as number),
       play: shouldPlay => chime.play({ shouldPlay }),
       onComplete: result => {
-        try { if (!result.resumed && typeof navigator.vibrate === 'function') navigator.vibrate([100, 60, 100]); }
+        try { if (!result.resumed && document.visibilityState === 'visible' && typeof navigator.vibrate === 'function') navigator.vibrate([100, 60, 100]); }
         catch { /* Optional haptics must never prevent timer completion. */ }
         callback.current(result);
       },
@@ -31,8 +31,9 @@ export function useRestAudio({ enabled, endsAt, volume = DEFAULT_REST_VOLUME, on
       const state = current.current;
       if (document.visibilityState === 'visible' && state.enabled && state.endsAt !== null && state.endsAt > Date.now()) void chime.recover();
     };
-    document.addEventListener('visibilitychange', resume); window.addEventListener('pageshow', resume);
-    return () => { instance.dispose(); timer.current = null; document.removeEventListener('visibilitychange', resume); window.removeEventListener('pageshow', resume); };
+    const suspend = () => instance.suspend();
+    document.addEventListener('visibilitychange', resume); window.addEventListener('pageshow', resume); window.addEventListener('pagehide', suspend);
+    return () => { instance.dispose(); timer.current = null; document.removeEventListener('visibilitychange', resume); window.removeEventListener('pageshow', resume); window.removeEventListener('pagehide', suspend); };
   }, []);
   React.useEffect(() => { timer.current?.update(endsAt, enabled); }, [endsAt, enabled]);
   const unlock = React.useCallback(() => chime.unlock(), []);
