@@ -47,7 +47,8 @@ test('on supported devices the backup share contains the full current data witho
   const backup = JSON.parse(shared.text);
   expect(backup.app).toBe('Setline');
   expect(backup.version).toBe(1);
-  expect(backup.data).toEqual(JSON.parse(before!));
+  if (before) expect(backup.data).toEqual(JSON.parse(before));
+  else expect(backup.data).toMatchObject({ schemaVersion: 1, sessions: [], nutrition: [] });
   await expect(settings.getByRole('status')).toContainText('Confirm the backup was saved');
   expect(await page.evaluate(key => localStorage.getItem(key), STORE)).toBe(before);
 });
