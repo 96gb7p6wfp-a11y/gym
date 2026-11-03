@@ -30,7 +30,7 @@ export function DataSettings({ beforeExport, onReplace }: {
       <h3>Your data</h3>
       <p className="small-note">Workouts, your plan, and nutrition stay on this device. Export a backup before clearing browser data or moving to another phone.</p>
       <p className="small-note">This copy of Setline runs at <code style={{ overflowWrap: 'anywhere' }}>{appAddress}</code>. Another website address has separate records, even if it looks like the same app.</p>
-      <button className="text-button" style={{ minHeight: 44 }} type="button" onClick={async () => {
+      <button className="text-button" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 44 }} type="button" onClick={async () => {
         try {
           if (!navigator.clipboard?.writeText) throw new Error('Copy is unavailable here. Touch and hold the address above to select it.');
           await navigator.clipboard.writeText(appAddress);
