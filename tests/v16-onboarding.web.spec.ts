@@ -63,7 +63,7 @@ test('fresh visitors remain neutral through refresh and can skip without receivi
   expect(saved.profile.nutrition).toBeUndefined();
   expect(saved.profile.volleyballSchedule).toBeUndefined();
   expect(saved.profile.masterProgram).toBeUndefined();
-  expect(saved.profile.onboarding).toEqual({ version: 16, status: 'skipped' });
+  expect(saved.profile.onboarding).toEqual({ version: 16, status: 'skipped', installation: 'new' });
   expect(saved.profile.presentationMode).toBe('simple');
   expect(saved.sessions).toEqual([]);
   expect(saved.nutrition).toEqual([]);
@@ -181,4 +181,63 @@ test('editing training preferences keeps an established weekly plan unless repla
   expect(saved.reminders).toEqual(initial.reminders);
   expect(saved.performance).toEqual(initial.performance);
   expect(saved.profile.trainingPreferences.goal).toBe('muscle');
+});
+
+
+test('new users can enable Athlete tools without inheriting personal V13.1 nutrition targets or measurements', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Skip setup · use a simple starting plan', exact: true }).click();
+  await expect(page.locator('.onboarding-dialog')).toHaveCount(0);
+  const preferences = await settings(page);
+  await preferences.getByRole('group', { name: 'Presentation mode', exact: true }).getByRole('button', { name: 'Athlete', exact: true }).click();
+  await expect.poll(async () => (await state(page)).profile.presentationMode).toBe('athlete');
+  await preferences.getByRole('button', { name: 'Close', exact: true }).click();
+  await openSection(page, 'Nutrition');
+  await page.getByRole('button', { name: 'Set daily targets', exact: true }).click();
+  const targets = page.getByRole('dialog', { name: 'Daily targets', exact: true });
+  await expect(targets.getByRole('region', { name: 'V13.1 nutrition recommendation', exact: true })).toHaveCount(0);
+  await expect(targets).not.toContainText('V13.1 starting targets');
+  await expect(targets).not.toContainText('66.5');
+  await targets.locator('summary', { hasText: 'Personal calorie calculator' }).click();
+  await targets.locator('summary', { hasText: 'Edit calculation details' }).click();
+  for (const label of ['Age', 'Height · cm', 'Weight for calculation · kg']) {
+    await expect(targets.getByLabel(label, { exact: true })).toHaveValue('');
+  }
+  const saved = await state(page);
+  expect(saved.profile.onboarding.installation).toBe('new');
+  expect(saved.profile.bodyWeight).toBeNull();
+  expect(saved.profile.nutrition).toBeUndefined();
+  expect(saved.profile.masterProgram).toBeUndefined();
+  expect(saved.profile.volleyballSchedule).toBeUndefined();
+  expect(saved.performance?.jumps ?? []).toEqual([]);
+  expect(saved.nutrition).toEqual([]);
+});
+
+
+test('a fresh welcome can restore a legacy backup without generating a starter plan or replacing source records', async ({ page }) => {
+  const original = legacyState();
+  const file = { name: 'my-existing-setline.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify({ app: 'Setline', version: 1, exportedAt: `${DATE}T09:00:00Z`, data: original })) };
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Restore a backup', exact: true }).click();
+  let preferences = page.getByRole('dialog', { name: 'Your preferences', exact: true });
+  await expect(preferences).toBeVisible();
+  expect(await page.evaluate(key => localStorage.getItem(key), STORE)).toBeNull();
+  // A cancelled visit to Settings resumes setup; it must not create a plan.
+  await preferences.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'What brings you here?', exact: true })).toBeVisible();
+  expect(await page.evaluate(key => localStorage.getItem(key), STORE)).toBeNull();
+  await page.getByRole('button', { name: 'Restore a backup', exact: true }).click();
+  preferences = page.getByRole('dialog', { name: 'Your preferences', exact: true });
+  const data = preferences.getByRole('region', { name: 'Your local data', exact: true });
+  await data.getByLabel('Restore Setline backup', { exact: true }).setInputFiles(file);
+  await expect(data.getByRole('region', { name: 'Backup restore preview', exact: true })).toContainText('Includes an active workout');
+  expect(await page.evaluate(key => localStorage.getItem(key), STORE)).toBeNull();
+  page.once('dialog', dialog => dialog.accept());
+  await data.getByRole('button', { name: 'Restore backup', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Your day', exact: true })).toBeVisible();
+  await expect(page.locator('.onboarding-dialog')).toHaveCount(0);
+  const { restoreGeneration, ...restored } = await state(page);
+  expect(restoreGeneration).toMatch(/^[0-9a-f-]{36}$/);
+  expect(restored).toEqual(original);
 });

@@ -8,3 +8,7 @@
 .training-terms summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
 .training-terms dt { font-weight: 650; margin-block-start: .8rem; }
 .training-terms dd { margin: .25rem 0; line-height: 1.5; color: var(--sub); }
+
+.done-cell .set-check[disabled][aria-checked="true"] { opacity: 1; }
+.set-undo { display:block; min-height:44px; min-width:44px; margin:2px auto 0; padding:4px; border:0; background:transparent; color:var(--accent); font-size:11px; }
+.set-undo:disabled { opacity:.35; }

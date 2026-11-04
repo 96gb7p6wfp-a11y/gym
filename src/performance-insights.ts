@@ -1,3 +1,5 @@
+import { areComparableExercises, exercisePerformanceIdentity, normalizeEquipmentLabel, type PerformanceExerciseReference } from './exercise-identity.ts';
+export { areComparableExercises, exercisePerformanceIdentity, normalizeEquipmentLabel, type PerformanceExerciseReference } from './exercise-identity.ts';
 import { NutritionPayloadSchema } from './domain.js';
 import { isGymTraining } from './training-classification.ts';
 import type { ActivityRecord } from './activities.ts';
@@ -76,18 +78,6 @@ const round = (n: number, places = 1) => Math.round(n * 10 ** places) / 10 ** pl
 const number = (n: number) => n.toLocaleString('en-GB', { maximumFractionDigits: 1 });
 const positive = (n: number | null | undefined): n is number => typeof n === 'number' && Number.isFinite(n) && n > 0;
 const validDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(new Date(`${value}T12:00:00Z`).getTime()) && new Date(`${value}T12:00:00Z`).toISOString().slice(0, 10) === value;
-export interface PerformanceExerciseReference { key: string; name: string; mode: string; measurement?: string; exerciseId?: string; perSide?: boolean; quantityUnit?: string; equipmentLabel?: string }
-/** Identity is optional. Older unlabeled sets stay unknown rather than inheriting a machine. */
-export function normalizeEquipmentLabel(label?: string): string | null {
-  return label?.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-GB') || null;
-}
-/** Reused by charts and comparisons so a renamed or remeasured movement cannot inherit unrelated results. */
-export function exercisePerformanceIdentity(exercise: PerformanceExerciseReference): string {
-  return JSON.stringify([exercise.exerciseId ?? exercise.key, exercise.name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-GB'), exercise.mode, exercise.measurement ?? null, Boolean(exercise.perSide), exercise.quantityUnit ?? null, normalizeEquipmentLabel(exercise.equipmentLabel)]);
-}
-export function areComparableExercises(a: PerformanceExerciseReference, b: PerformanceExerciseReference): boolean {
-  return exercisePerformanceIdentity(a) === exercisePerformanceIdentity(b);
-}
 const identity = exercisePerformanceIdentity;
 const savedSessions = (sessions: readonly ReportSession[], today: string) => sessions.filter(s => s.status === 'completed' && s.deletedAt == null && s.date <= today).sort((a, b) => a.date.localeCompare(b.date) || a.startedAt - b.startedAt);
 const strengthSets = (exercise: LoggedExercise) => exercise.logs.filter(log => log.done && positive(log.kg) && positive(log.reps));

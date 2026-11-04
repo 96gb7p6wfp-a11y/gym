@@ -86,7 +86,7 @@ async function resizeMealPhoto(e) {
     URL.revokeObjectURL(t);
   }
 }
-function NutritionView({ bodyWeight: bodyWeight, athleteMode = true, dailyGuidance, nutritionProfile, onNutritionProfileChange, volleyballSchedule, onOpenRoutine, initialAction, onActionHandled }) {
+function NutritionView({ bodyWeight: bodyWeight, athleteMode = true, personalProgramTargets = true, dailyGuidance, nutritionProfile, onNutritionProfileChange, volleyballSchedule, onOpenRoutine, initialAction, onActionHandled }) {
   let [selectedDate, setSelectedDate] = React.useState(() =>
     berlinDate(),
   );
@@ -457,7 +457,7 @@ function NutritionView({ bodyWeight: bodyWeight, athleteMode = true, dailyGuidan
         <DialogContent className="app-dialog nutrition-dialog nutrition-native-sheet nutrition-targets-sheet">
           <DialogHeader><DialogTitle>Daily targets</DialogTitle><DialogDescription>Choose targets that fit your training.</DialogDescription></DialogHeader>
           <div className="nutrition-targets-summary"><div><span className="small-label">Your goals</span><p>{targets.calories === null ? 'No target set' : `${targets.calories} kcal · ${targets.protein ?? '–'} g protein`}</p><small className="muted">{targets.goalWeight === null ? 'Goal weight is optional' : `Goal weight: ${targets.goalWeight} kg`}</small></div><button type="button" className="text-button" onClick={() => { setTargetsDraft({ ...targets }); setDraftError(``); setProfileOpen(false); setTargetsOpen(true); }}>Edit targets</button></div>
-          {athleteMode && <AthleticNutritionProposal currentTargets={targets} disabled={!loaded || saving} onApplyTargets={applyEstimatedTargets} />}
+          {athleteMode && personalProgramTargets && <AthleticNutritionProposal currentTargets={targets} disabled={!loaded || saving} onApplyTargets={applyEstimatedTargets} />}
           <details className="nutrition-calculator-disclosure"><summary>Personal calorie calculator</summary><NutritionCalculator profile={nutritionProfile} bodyWeight={bodyWeight} disabled={!loaded || saving || !onNutritionProfileChange} onProfileSave={onNutritionProfileChange} onApplyTargets={applyEstimatedTargets} /></details>
         </DialogContent>
       </Dialog>

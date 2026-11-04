@@ -19,12 +19,15 @@ test('a genuinely fresh profile contains no inherited athlete measurements, plan
   assert.equal(profile.volleyballSchedule, undefined);
   assert.equal(profile.masterProgram, undefined);
   assert.equal(profile.presentationMode, 'simple');
-  assert.deepEqual(profile.onboarding, { version: 16, status: 'pending' });
+  assert.deepEqual(profile.onboarding, { version: 16, status: 'pending', installation: 'new' });
   assert.equal(profile.plan.length, 7);
   assert.ok(profile.plan.every(day => day.exercises.length === 0));
   const next = createNewProfile(); next.plan[0].name = 'Changed';
   assert.equal(createNewProfile().plan[0].name, 'Choose your workout');
   assert.equal(DEFAULT_PROFILE.bodyWeight, 64);
+  // Legacy V16 drafts/backups predate the optional installation marker.
+  assert.deepEqual(ProfileSchema.parse({ ...profile, onboarding: { version: 16, status: 'completed' } }).onboarding, { version: 16, status: 'completed' });
+  assert.equal(ProfileSchema.safeParse({ ...profile, onboarding: { version: 16, status: 'completed', installation: 'unknown' } }).success, false);
 });
 
 test('beginner three-day starting plan is modest and uses only the selected setup', () => {

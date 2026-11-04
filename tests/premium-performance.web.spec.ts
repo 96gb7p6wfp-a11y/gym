@@ -148,7 +148,8 @@ test('readiness is explicit and jump records, appearance and active work survive
     page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
     preferences.getByRole('button', { name: 'Delete all local data', exact: true }).click(),
   ]);
-  preferences = await settings(page);
+  await page.getByRole('button', { name: 'Restore a backup', exact: true }).click();
+  preferences = page.getByRole('dialog', { name: 'Your preferences', exact: true });
   await preferences.getByLabel('Restore Setline backup', { exact: true }).setInputFiles({
     name: download.suggestedFilename(), mimeType: 'application/json', buffer: Buffer.from(backupText),
   });

@@ -13,6 +13,7 @@ import { ZodIssueCode } from "zod";
 import { MasterProgramSettingsSchema } from './volleyball-master-plan.ts';
 import { TrainingExposureSchema } from './training-exposure.ts';
 import { TrainingPreferencesSchema, OnboardingStateSchema } from './onboarding.ts';
+import { areComparableExercises } from './exercise-identity.ts';
 
 var NutritionAmountSchema = zNumber().finite().min(0).max(2e4),
   FoodSchema = zObject({
@@ -1140,6 +1141,20 @@ function formatDate(e, t = !1) {
     month: t ? `short` : `long`,
   });
 }
+/** Find one comparable movement in the newest completed source session.
+ * Keep raw set ordinals: an unfinished first set must never borrow the second.
+ * This imports only the dependency-free identity helper, not analytics/domain.
+ */
+function previousSessionSeed(sessions, exercise, date) {
+  if (exercise.preparationOnly || (exercise.mode === 'bodyweight' && exercise.defaultKg === 0)) return undefined;
+  for (const session of sessions.filter(entry => entry.status === 'completed' && entry.deletedAt == null && entry.date <= date)
+    .sort((a, b) => b.date.localeCompare(a.date) || b.startedAt - a.startedAt)) {
+    const candidates = session.exercises.filter(entry => !entry.preparationOnly && areComparableExercises(entry, exercise));
+    if (!candidates.length) continue;
+    return candidates.find(entry => entry.key === exercise.key) ?? (candidates.length === 1 ? candidates[0] : undefined);
+  }
+  return undefined;
+}
 function createSession(e, t, n, r, i) {
   let a = Date.now();
   return {
@@ -1171,10 +1186,7 @@ function createSession(e, t, n, r, i) {
       done: !1,
     })),
     exercises: e.exercises.filter((exercise) => exercise.optionalWork !== true).map((e) => {
-      let t = previousExercise(i, e.exerciseId ?? e.key, n)?.exercise;
-      // A renamed movement or a different measurement is a new baseline.
-      const normalizedName = value => value.trim().replace(/\s+/g, ' ').toLowerCase();
-      if (e.preparationOnly || (e.mode === 'bodyweight' && e.defaultKg === 0) || (t && (normalizedName(t.name) !== normalizedName(e.name) || t.mode !== e.mode || (t.measurement ?? null) !== (e.measurement ?? null)))) t = undefined;
+      const t = previousSessionSeed(i, e, n);
       return {
         ...e,
         elapsedMs: 0,
@@ -1184,7 +1196,8 @@ function createSession(e, t, n, r, i) {
             length: e.sets,
           },
           (_, n) => {
-            let r = t?.logs.filter((e) => e.done)[n];
+            const previous = t?.logs[n];
+            const r = previous?.done ? previous : undefined;
             return {
               id: crypto.randomUUID(),
               kg: r ? r.kg : (e.defaultKg ?? null),

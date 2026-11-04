@@ -173,6 +173,7 @@ function GymApp({
 } = {}) {
   let [profile, setProfile] = React.useState(createNewProfile);
   const athleteMode = presentationMode(profile) === `athlete`;
+  const establishedProfile = !profile.onboarding || profile.onboarding.installation === `existing`;
   const [preferencesOpen, setPreferencesOpen] = React.useState(false);
   const [supportOpen, setSupportOpen] = React.useState(false);
   let [sessions, setSessions] = React.useState([]);
@@ -897,7 +898,7 @@ function GymApp({
       ...(profile.masterProgramBackup ? { masterProgramArchive: [...(profile.masterProgramArchive ?? []), profile.masterProgramBackup] } : {}) } : {};
     const next = { ...profile, ...archivedPlan, trainingPreferences: preferences,
       presentationMode: profile.presentationMode ?? (isNew ? `simple` : `athlete`),
-      onboarding: { version: 16, status },
+      onboarding: { version: 16, status, installation: profile.onboarding?.installation ?? (isNew ? `new` : `existing`) },
       ...(applyPlan ? { plan: createStarterPlan(preferences), masterProgram: undefined,
         preMasterPlan: undefined, masterMatchWeekend: undefined, sessionDrafts: undefined } : {}) };
     if (!(await saveProfile(next, { notify: false }))) return false;
@@ -998,7 +999,7 @@ function GymApp({
     }
     return true;
   }
-  const volleyballSchedule = profile.volleyballSchedule ?? (profile.onboarding ? { days: [], startTime: '', endTime: '', timeZone: 'Europe/Berlin' } : DEFAULT_PROFILE.volleyballSchedule);
+  const volleyballSchedule = profile.volleyballSchedule ?? (establishedProfile ? DEFAULT_PROFILE.volleyballSchedule : { days: [], startTime: ``, endTime: ``, timeZone: `Europe/Berlin` });
   async function saveVolleyballSchedule(schedule) {
     const plan = profile.plan.map((day, index) => schedule.days.includes(index)
       ? { ...day, note: day.note.replace(/\b\d{2}:\d{2}[–-]\d{2}:\d{2}/g,
@@ -1781,7 +1782,7 @@ function GymApp({
               <SelectContent>
                 {allExercises.map((e) => (
                   <SelectItem value={exercisePerformanceIdentity(e)} key={exercisePerformanceIdentity(e)}>
-                    {e.name}
+                    {e.name}{e.equipmentLabel ? ` · ${e.equipmentLabel}` : ``}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -1994,7 +1995,7 @@ function GymApp({
 </details></>}
         </TabsContent>
         <TabsContent value="more">
-          {moreView === `nutrition` && <NutritionView athleteMode={athleteMode} bodyWeight={profile.bodyWeight} dailyGuidance={guidanceForDate}
+          {moreView === `nutrition` && <NutritionView personalProgramTargets={establishedProfile} athleteMode={athleteMode} bodyWeight={profile.bodyWeight} dailyGuidance={guidanceForDate}
             nutritionProfile={profile.nutrition}
             onNutritionProfileChange={saveNutritionProfile} volleyballSchedule={volleyballSchedule} initialAction={nutritionAction} onActionHandled={() => setNutritionAction(null)} onOpenRoutine={(date) => { setRoutineDate(date); setMoreView(`routine`); }} />}
           {moreView === `plan` && <>
@@ -2162,10 +2163,10 @@ function GymApp({
           </button>
         </DialogContent>
       </Dialog>
-      <Onboarding open={loaded && !loadError && (profile.onboarding?.status === `pending` || preferencesOpen)}
+      <Onboarding open={!settingsOpen && loaded && !loadError && (profile.onboarding?.status === `pending` || preferencesOpen)}
         editing={profile.onboarding?.status !== `pending`} initialPreferences={profile.trainingPreferences}
         disabled={profileSaving} onOpenChange={setPreferencesOpen}
-        onComplete={finishOnboarding} onSkip={() => finishOnboarding(DEFAULT_TRAINING_PREFERENCES, { applyPlan: true }, `skipped`)} />
+        onRestoreBackup={openSettings} onComplete={finishOnboarding} onSkip={() => finishOnboarding(DEFAULT_TRAINING_PREFERENCES, { applyPlan: true }, `skipped`)} />
       <Dialog open={supportOpen} onOpenChange={setSupportOpen}><DialogContent className="app-dialog"><DialogHeader><DialogTitle>Help & privacy</DialogTitle><DialogDescription>Your data and local problem reports.</DialogDescription></DialogHeader><SupportPrivacy reportInitiallyOpen /></DialogContent></Dialog>
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DialogContent className={`app-dialog`}>
@@ -2829,15 +2830,18 @@ function ExerciseTracker({
                       <Checkbox
                         className={`set-check`}
                         checked={t.done}
+                        disabled={t.done}
                         aria-label={`Complete ${exercise.name} set ${n + 1}`}
                         onCheckedChange={(e) => {
                           if (e === !0 && invalidWeightInputs.current.has(t.id)) {
                             toast.error(`Enter a weight between 0 and 2,000 kg using . or ,`);
                             return;
                           }
-                          onDone(t.id, e === !0);
+                          if (e === true) onDone(t.id, true);
                         }}
                       />
+                      <button type="button" className="set-undo" disabled={!t.done}
+                        aria-label={`Undo ${exercise.name} set ${n + 1}`} onClick={() => onDone(t.id, false)}>Undo</button>
                     </TableCell>
                   </TableRow>
                 );

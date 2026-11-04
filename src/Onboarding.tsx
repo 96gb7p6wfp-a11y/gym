@@ -11,6 +11,7 @@ type Props = {
   disabled?: boolean;
   onComplete: (preferences: TrainingPreferences, options: { applyPlan: boolean }) => Promise<boolean>;
   onSkip?: () => Promise<boolean>;
+  onRestoreBackup?: () => void;
   onOpenChange?: (open: boolean) => void;
 };
 const goals: { value: TrainingPreferences['goal']; label: string; detail: string }[] = [
@@ -31,7 +32,7 @@ const equipment: { value: TrainingPreferences['equipment'][number]; label: strin
 ];
 
 /** Preferences are a draft until one validated profile save succeeds. */
-export function Onboarding({ open, initialPreferences, editing = false, disabled = false, onComplete, onSkip, onOpenChange }: Props) {
+export function Onboarding({ open, initialPreferences, editing = false, disabled = false, onComplete, onSkip, onRestoreBackup, onOpenChange }: Props) {
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<TrainingPreferences>(() => structuredClone(initialPreferences ?? DEFAULT_TRAINING_PREFERENCES));
   const [sport, setSport] = useState(initialPreferences?.sport ?? '');
@@ -85,6 +86,7 @@ export function Onboarding({ open, initialPreferences, editing = false, disabled
         {step > 0 && <button type="button" className="text-button" disabled={locked} onClick={() => { setStep(value => value - 1); setError(''); }}><ArrowLeft size={16} />Back</button>}
         <button type="button" className="btn" disabled={locked} onClick={() => step < 2 ? setStep(value => value + 1) : void finish()}>{busy ? 'Saving…' : step < 2 ? 'Continue' : editing ? 'Save preferences' : draft.goal === 'own' ? 'Create my workout' : 'Start training'}{!busy && <ArrowRight size={17} />}</button>
       </div>
+      {!editing && step === 0 && onRestoreBackup && <button type="button" className="text-button onboarding-restore" disabled={locked} onClick={onRestoreBackup}>Restore a backup</button>}
       {!editing && onSkip && <button type="button" className="text-button onboarding-skip" disabled={locked} onClick={() => void finish(true)}>Skip setup · use a simple starting plan</button>}
     </DialogContent>
   </Dialog>;

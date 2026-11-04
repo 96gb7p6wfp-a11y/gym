@@ -57,11 +57,14 @@ for (const completedSets of [1000,5000,10000] as const) {
       const originalSet=Storage.prototype.setItem;
       Storage.prototype.setItem=function(storageKey,value) {
         const result=originalSet.call(this,storageKey,value);
+        const writtenAt=performance.now();
         const bench=window.__setlineBenchmark;
         if(this===localStorage && storageKey===key && bench.started!==undefined) {
-          if(bench.phase==='input') {bench.metrics.inputSave=performance.now()-bench.started;bench.phase=undefined;}
-          if(bench.phase==='restore' && value.slice(0,200).includes('"restoreGeneration"')) {
-            originalSet.call(sessionStorage,restoreMetric,String(performance.now()-bench.started));
+          if(bench.phase==='input') {bench.metrics.inputSave=writtenAt-bench.started;bench.phase=undefined;}
+          // A newly assigned restore marker is appended after the records; its
+          // object-key position is not part of the storage contract.
+          if(bench.phase==='restore' && value.includes('"restoreGeneration":')) {
+            originalSet.call(sessionStorage,restoreMetric,String(writtenAt-bench.started));
             bench.phase=undefined;
           }
         }

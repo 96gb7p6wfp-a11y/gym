@@ -11,7 +11,8 @@ export const TrainingPreferencesSchema = z.object({
     .min(1).max(5).refine(values => new Set(values).size === values.length, 'Choose each equipment type once.'),
   sport: z.string().trim().min(1).max(40).optional(),
 });
-export const OnboardingStateSchema = z.object({ version: z.literal(16), status: z.enum(['pending', 'completed', 'skipped']) });
+export const OnboardingStateSchema = z.object({ version: z.literal(16), status: z.enum(['pending', 'completed', 'skipped']),
+  installation: z.enum(['new', 'existing']).optional() });
 export type TrainingPreferences = z.infer<typeof TrainingPreferencesSchema>;
 export type PresentationMode = 'simple' | 'athlete';
 export const DEFAULT_TRAINING_PREFERENCES: Readonly<TrainingPreferences> = Object.freeze<TrainingPreferences>({
@@ -32,7 +33,7 @@ function emptyPlan(): PlanDay[] {
 /** Only used when the device has no existing Setline data. No athlete details are inferred. */
 export function createNewProfile() {
   return { plan: emptyPlan(), bodyWeight: null, restSeconds: 90,
-    presentationMode: 'simple' as const, onboarding: { version: 16 as const, status: 'pending' as const } };
+    presentationMode: 'simple' as const, onboarding: { version: 16 as const, status: 'pending' as const, installation: 'new' as const } };
 }
 
 function movement(name: string, key: string, preferences: TrainingPreferences, extra: Partial<PlanExercise> = {}): PlanExercise {

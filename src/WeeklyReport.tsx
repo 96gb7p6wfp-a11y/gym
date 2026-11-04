@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import type { ActivityRecord } from './activities';
-import { currentReportDate, getWeeklyReport, reportWeekStart, shiftReportDate, type PerformanceComparison, type ReportNutritionRecord, type ReportPlanDay, type ReportSession } from './weekly-report';
+import { currentReportDate, getWeeklyReport, reportCalorieSummary, reportWeekStart, shiftReportDate, type PerformanceComparison, type ReportNutritionRecord, type ReportPlanDay, type ReportSession } from './weekly-report';
 import './weekly-report.css';
 import { isGymTraining } from './training-classification';
 
@@ -28,7 +28,7 @@ function counted(value: number, singular: string, plural: string): string {
 }
 
 function performanceLabel(comparison: PerformanceComparison): string {
-  if (comparison.kind === 'weight') return `${displayNumber(comparison.previous)} kg × ${comparison.previousReps} → ${displayNumber(comparison.current)} kg × ${comparison.currentReps}`;
+  if (comparison.kind === 'weight') return `${displayNumber(comparison.previous)} kg × ${comparison.previousReps} → ${displayNumber(comparison.current)} kg × ${comparison.currentReps}${comparison.equipmentLabel ? ` · ${comparison.equipmentLabel}` : ''} · ${comparison.effort === 'matched' ? `RIR ${comparison.rir} matched` : 'effort unrecorded'}`;
   const label = { touch: 'highest touch', height: 'jump height', distance: 'distance' }[comparison.kind];
   return `${label}: ${displayNumber(comparison.previous)} → ${displayNumber(comparison.current)} cm`;
 }
@@ -71,12 +71,12 @@ export function WeeklyReport({ sessions, activities, plan, bodyWeight, initialWe
       <div><strong>{trainingTime}</strong><span>training time</span></div>
       <div><strong>{report.completedPlannedGymDays}/{report.plannedGymDays}</strong><span>planned gym days</span></div>
     </div>
-    {bestComparison && <div className="weekly-report-highlight"><span>Best progress</span><strong>{bestComparison.name}</strong><p>{performanceLabel(bestComparison)}</p></div>}
+    {bestComparison && <div className="weekly-report-highlight"><span>Recorded change</span><strong>{bestComparison.name}</strong><p>{performanceLabel(bestComparison)}</p></div>}
     <div className="weekly-report-recommendation"><h3>{report.hasData ? 'Next week' : 'Start here'}</h3><p>{recommendation}</p></div>
     <details className="weekly-report-disclosure">
       <summary>Report details</summary>
       <div className="weekly-report-expanded">
-        <p className="weekly-report-details">{counted(report.totals.workouts, 'completed workout', 'completed workouts')} · {displayNumber(report.totals.minutes)} recorded minutes · {displayNumber(report.totals.activeCalories)} active kcal logged / est.</p>
+        <p className="weekly-report-details">{counted(report.totals.workouts, 'completed workout', 'completed workouts')} · {displayNumber(report.totals.minutes)} recorded minutes · {reportCalorieSummary(report.totals)}</p>
         <p className="weekly-report-details">{counted(report.totals.completedSets, 'completed set', 'completed sets')} · {displayNumber(report.totals.volumeKg)} kg volume · {counted(report.totals.extraActivities, 'extra activity', 'extra activities')}</p>
         <p className="weekly-report-details" aria-label="Weekly jump exposure">Gym jumps · {report.jumpExposure.plannedGymContacts} planned · {report.jumpExposure.completedGymContacts} derived from completed reps<br />Sport contacts · {report.jumpExposure.recordedVolleyballContacts} volleyball · {report.jumpExposure.recordedPeContacts} PE · {report.jumpExposure.recordedOtherContacts} other counted{report.jumpExposure.estimatedSportContacts > 0 && <><br />{report.jumpExposure.estimatedSportContacts} estimated sport contacts · kept separate</>}{report.jumpExposure.unclassifiedSportContacts > 0 && <><br />{report.jumpExposure.unclassifiedSportContacts} sport contacts with source unspecified · not counted or estimated</>}{report.jumpExposure.unmeasuredSportSessions > 0 && <><br />{report.jumpExposure.unmeasuredSportSessions} sport {report.jumpExposure.unmeasuredSportSessions === 1 ? 'session' : 'sessions'} without a contact count</>}</p>
         <p className="weekly-report-details">{report.weightTrend.currentAverage === null ? 'Weight trend · check in on 3 mornings across at least 4 days to build a weekly average.' : <>Weekly-average weight · {displayNumber(report.weightTrend.currentAverage)} kg{report.weightTrend.changeKg !== null && ` · ${report.weightTrend.changeKg > 0 ? '+' : ''}${displayNumber(report.weightTrend.changeKg)} kg versus last week`}</>}</p>
@@ -89,7 +89,7 @@ export function WeeklyReport({ sessions, activities, plan, bodyWeight, initialWe
         <div className="weekly-report-analysis" aria-live="polite">
           <h3>This week</h3>
           <ul>{report.insights.map(insight => <li key={insight}>{insight}</li>)}</ul>
-          {report.performance.length > 0 && <section className="weekly-report-performance"><h3>Exercise comparisons ({report.performance.length})</h3><p className="small-note">Last week's latest matching session → this week's best completed set or measurement. Compare the same setup; heavier sets with fewer reps do not automatically mean more strength.</p><ul>{report.performance.map(comparison => <li key={JSON.stringify([comparison.key, comparison.kind, comparison.name])}><strong>{comparison.name}</strong><span>{performanceLabel(comparison)}</span></li>)}</ul></section>}
+          {report.performance.length > 0 && <section className="weekly-report-performance"><h3>Exercise comparisons ({report.performance.length})</h3><p className="small-note">Last week's latest matching session → this week's best completed set or measurement. Strength comparisons require matching reps, equipment and setup; recorded RIR must match when known. Unrecorded effort is unknown, and a load change alone does not prove greater strength.</p><ul>{report.performance.map(comparison => <li key={comparison.id ?? JSON.stringify([comparison.key, comparison.kind, comparison.name])}><strong>{comparison.name}</strong><span>{performanceLabel(comparison)}</span></li>)}</ul></section>}
           <h3>Next week</h3>
           <ul>{report.actions.map(action => <li key={action}>{action}</li>)}</ul>
         </div>
