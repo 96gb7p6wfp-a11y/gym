@@ -1,5 +1,7 @@
 /* One calm working surface. Round controls stay close to the next action. */
 .focused-workout { display: grid; gap: 0; min-width: 0; color: var(--ink, #27312d); }
+.focused-workout__limited { margin:10px 0 14px; padding:12px 14px; border:1px solid var(--line); border-radius:14px; background:var(--surface-soft); color:var(--sub); font-size:12px; line-height:1.5; }
+.focused-workout__limited strong { display:block; margin-bottom:3px; color:var(--ink); font-size:13px; }
 .focused-workout .focused-exercise { min-width: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--ink, #27312d); scroll-margin-top: calc(16px + var(--app-safe-area-top, 0px)); }
 .focused-stage-topline { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; margin-bottom: 14px; }
 .focused-stage-topline > span { min-width: 0; color: var(--sub, #65716a); font-size: 12px; font-weight: 500; line-height: 1.4; }

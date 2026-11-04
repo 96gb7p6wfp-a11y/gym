@@ -47,6 +47,8 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
   const workingExercises = plan.exercises.filter(exercise => exercise.optionalWork !== true);
   const optionalExercises = plan.exercises.filter(exercise => exercise.optionalWork === true);
   const workingSets = workingExercises.reduce((count, exercise) => count + exercise.sets, 0);
+  const safetyLimitedStrength = plan.programRevision === '13.1' && workingExercises.some(exercise => exercise.mode === 'weight' && exercise.preparationOnly);
+  const safetyLimitedImpact = plan.programRevision === '13.1' && Boolean(plan.note?.includes('Impact clearance is not confirmed'));
   const contacts = masterJumpContacts(plan);
   const supersets = [...new Set(workingExercises.flatMap(exercise => exercise.superset ? [exercise.superset.id] : []))]
     .map(id => workingExercises.filter(exercise => exercise.superset?.id === id).sort((a, b) => a.superset!.order - b.superset!.order))
@@ -117,6 +119,13 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
           <DialogTitle className="">{workoutTitle(plan)}</DialogTitle>
           <DialogDescription className="">{purpose.subtitle}</DialogDescription>
         </DialogHeader>
+        {(safetyLimitedStrength || safetyLimitedImpact) && <div className="plan-preview__clearance" role="status">
+          <strong>{safetyLimitedStrength ? 'Preparation session — not the full strength day' : 'Impact work is adjusted'}</strong>
+          <p>{safetyLimitedStrength
+            ? 'Your full strength plan is not shown: unconfirmed heavy-lifting guidance limits weighted exercises to two easy sets. It is not intended to feel like a heavy gym day.'
+            : 'Maximal jumps and ballistic work are currently excluded because impact guidance is unconfirmed.'}</p>
+          <p>Review the impact and lifting guidance in your volleyball program before changing these limits.</p>
+        </div>}
         <div className="plan-preview__metadata"><div className="plan-preview__summary"><span><Clock3 size={15} aria-hidden="true" />{plan.durationRange ?? `About ${plan.minutes} min`}</span><span>{workingExercises.length} exercises · {workingSets} sets</span></div>
         <p className="plan-preview__scope">For {dayLabel} only. Weekly plan unchanged.</p></div>
         <details className="plan-preview__warmup">

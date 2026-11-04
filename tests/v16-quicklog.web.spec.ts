@@ -9,7 +9,7 @@ const logs = async (page: Page) => (await read(page)).sessions.find((row: { sess
 const activeRecord = async (page: Page) => (await read(page)).sessions.find((row: { session: { status: string } }) => row.session.status === 'active');
 const quickRow = (page: Page, name: string, number = 1) => page.getByRole('group', { name: `Quick log ${name} set ${number}`, exact: true });
 
-async function seed(page: Page) {
+async function seed(page: Page, blankNextSet = false) {
   const exercise = (key: string, name: string, extra = {}) => ExerciseSchema.parse({
     key, name, group: 'Training', sets: 3, target: '8 reps', mode: 'weight', rest: 60, perSide: false, ...extra,
   });
@@ -24,6 +24,7 @@ async function seed(page: Page) {
   const active = SessionSchema.parse(createSession(plan, 0, DATE, profile, []));
   active.startedAt = Date.parse(`${DATE}T10:00:00Z`); active.runningSince = null;
   active.exercises[0].logs.forEach((log, index) => Object.assign(log, { kg: 60 - index * 2.5, reps: 8 - index, rir: 2 }));
+  if (blankNextSet) Object.assign(active.exercises[0].logs[1], { kg: null, reps: null });
   active.exercises[1].logs[0].seconds = 45;
   active.exercises[2].logs[0].reps = 1;
   active.exercises[3].logs[0].reps = 12;
@@ -42,6 +43,28 @@ async function seed(page: Page) {
 test.beforeEach(async ({ page }) => {
   await page.clock.install({ time: new Date(`${DATE}T10:00:00Z`) });
   await page.goto('/');
+});
+
+test('Focus automatically suggests the completed set for an empty next set without marking it done', async ({ page }) => {
+  await seed(page, true);
+  const focus = page.getByRole('region', { name: 'Current exercise', exact: true });
+  await focus.getByRole('button', { name: `Complete ${PRESS} set 1`, exact: true }).click();
+  await expect.poll(async () => (await logs(page))[1]).toMatchObject({ kg: 60, reps: 8, done: false });
+  await expect(focus.getByRole('textbox', { name: `${PRESS} set 2 weight in kilograms`, exact: true })).toHaveValue('60');
+  await expect(focus.getByRole('spinbutton', { name: `${PRESS} set 2 reps`, exact: true })).toHaveValue('8');
+});
+
+test('Quick Log automatically prefills the next empty row but keeps an intentional weight untouched', async ({ page }) => {
+  await seed(page, true);
+  await page.getByRole('button', { name: 'Quick Log', exact: true }).click();
+  await quickRow(page, PRESS, 1).getByRole('button', { name: `Complete ${PRESS} set 1`, exact: true }).click();
+  await expect.poll(async () => (await logs(page))[1]).toMatchObject({ kg: 60, reps: 8, done: false });
+  const next = quickRow(page, PRESS, 2);
+  await next.getByRole('textbox', { name: `${PRESS} set 2 weight in kilograms`, exact: true }).fill('62.5');
+  await expect.poll(async () => (await logs(page))[1].kg).toBe(62.5);
+  await page.reload();
+  await page.getByRole('tab', { name: 'Train', exact: true }).click();
+  await expect.poll(async () => (await logs(page))[1].kg).toBe(62.5);
 });
 
 test('Focus and Quick Log share inputs, completion, undo and the same durable session', async ({ page }) => {
