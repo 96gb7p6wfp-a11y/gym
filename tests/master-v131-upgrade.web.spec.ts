@@ -35,6 +35,7 @@ async function seedV81(page: Page, active = false) {
 }
 
 async function review(page: Page) {
+  await openPlan(page);
   await page.getByRole('button', { name: /^V13.1 is ready Review plan/ }).click();
   const sheet = page.getByRole('dialog', { name: 'Upgrade to V13.1', exact: true });
   await expect(sheet).toBeVisible();

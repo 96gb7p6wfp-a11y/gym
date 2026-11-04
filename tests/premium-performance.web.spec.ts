@@ -1,4 +1,4 @@
-import { openSection, finishWarmup } from './helpers/navigation';
+import { settingsGroup, openSection, finishWarmup } from './helpers/navigation';
 import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, SessionSchema, createSession } from '../src/domain.js';
@@ -13,6 +13,7 @@ async function tab(page: Page, name: string) {
 async function settings(page: Page) {
   await tab(page, 'More');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await settingsGroup(page, 'Appearance & Sound');
   const sheet = page.getByRole('dialog', { name: 'Your preferences', exact: true });
   await expect(sheet).toBeVisible();
   return sheet;
@@ -26,6 +27,7 @@ async function performance(page: Page) {
 
 async function logJump(page: Page, cm: string, measurement: 'height' | 'touch' = 'height', date = DATE) {
   await tab(page, 'Progress');
+  await page.getByRole('group', { name: 'Chart metric', exact: true }).getByRole('button', { name: 'Jump', exact: true }).click();
   await page.getByRole('button', { name: 'Log jump', exact: true }).click();
   const sheet = page.getByRole('dialog', { name: 'Log jump', exact: true });
   await expect(sheet).toBeVisible();
@@ -132,6 +134,7 @@ test('readiness is explicit and jump records, appearance and active work survive
   let preferences = await settings(page);
   await preferences.getByRole('button', { name: 'Dark', exact: true }).click();
   await expect(preferences.getByRole('button', { name: 'Dark', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await settingsGroup(page, 'Data & Backup');
   const downloadPromise = page.waitForEvent('download');
   await preferences.getByRole('button', { name: 'Export backup', exact: true }).click();
   const download = await downloadPromise;

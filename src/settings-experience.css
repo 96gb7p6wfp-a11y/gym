@@ -1,0 +1,26 @@
+.settings-experience { display: grid; gap: 16px; min-width: 0; }
+.settings-experience [hidden] { display: none !important; }
+.settings-experience__groups { min-width: 0; outline: none; }
+.settings-experience__intro { margin: 0 0 16px; color: var(--sub); font-size: 14px; line-height: 1.5; }
+.settings-experience__groups .menu-group { overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
+.settings-experience__groups .menu-row { min-height: 72px; padding: 16px; }
+.settings-experience__groups .menu-row strong { font-size: 16px; line-height: 1.4; }
+.settings-experience__groups .menu-row-copy > span { margin-top: 4px; font-size: 13px; line-height: 1.4; }
+.settings-experience__back { justify-self: start; gap: 8px; min-height: 44px; padding: 8px 0; font-size: 14px; }
+.settings-experience__panel { min-width: 0; }
+.settings-experience__heading { display: grid; gap: 8px; margin-bottom: 24px; }
+.settings-experience__heading h3 { margin: 0; color: var(--ink); font-size: 20px; line-height: 1.25; letter-spacing: -.02em; }
+.settings-experience__heading h3:focus { outline: none; }
+.settings-experience__heading p { margin: 0; color: var(--sub); font-size: 14px; line-height: 1.5; }
+.settings-experience__content { display: grid; gap: 24px; min-width: 0; }
+.settings-experience__content > .presentation-settings { margin: 0; }
+.settings-experience__content > .settings-estimates { margin: 0; }
+.settings-experience__content > .training-terms { margin: 0; }
+.settings-experience__content .field-label { font-size: 14px; }
+.settings-experience__content input:not([type='range']):not([type='checkbox']):not([type='radio']) { font-size: 16px; border-radius: 14px; }
+.settings-experience__app-info { min-width: 0; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--line); }
+.settings-experience__app-info .training-plan-status { margin: 0; }
+@media (max-width: 350px) {
+  .settings-experience__groups .menu-row { padding: 16px 12px; }
+  .settings-experience__heading { margin-bottom: 16px; }
+}

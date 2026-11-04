@@ -2,13 +2,14 @@
 .workout-preview { display:block; margin:4px 0 0; padding:0 16px; list-style:none; border:0; border-radius:24px; background:var(--surface); color:var(--ink); box-shadow:var(--shadow-card); overflow:hidden; }
 .workout-preview__item { display:block; margin:0; padding:0; border:0; border-bottom:1px solid var(--line); background:transparent; }
 .workout-preview__item:last-child { border-bottom:0; }
-.workout-preview__row { display:grid; grid-template-columns:26px minmax(0,1fr) minmax(48px,68px) 14px; align-items:center; gap:10px; width:100%; min-height:88px; margin:0; padding:16px 0; border:0; background:transparent; color:var(--ink); text-align:left; box-shadow:none; }
-.workout-preview__index { display:grid; place-items:center; align-self:start; min-height:28px; border-radius:10px; background:var(--surface-soft); color:var(--sub); font-family:var(--font-display); font-size:11px; font-weight:600; line-height:24px; font-variant-numeric:tabular-nums; }
+.workout-preview__row { display:grid; grid-template-columns:24px minmax(0,1fr) 16px; align-items:center; gap:10px; width:100%; min-height:72px; margin:0; padding:12px 0; border:0; background:transparent; color:var(--ink); text-align:left; box-shadow:none; }
+.workout-preview__index { display:grid; place-items:center; align-self:start; min-height:28px; border-radius:10px; background:var(--surface-soft); color:var(--sub); font-family:var(--font-display); font-size:12px; font-weight:600; line-height:24px; font-variant-numeric:tabular-nums; }
 .workout-preview__copy { display:grid; gap:5px; min-width:0; }
 .workout-preview__copy>strong { color:var(--ink); font-family:var(--font-display); font-size:16px; font-weight:650; line-height:1.3; letter-spacing:-.025em; overflow-wrap:break-word; }
-.workout-preview__copy>span { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; color:var(--sub); font-size:12px; font-weight:400; line-height:1.45; }
-.workout-preview__dose { display:grid; gap:4px; min-width:0; color:var(--sub); text-align:right; font-size:11px; line-height:1.5; font-weight:400; font-variant-numeric:tabular-nums; }
-.workout-preview__dose>strong { color:var(--ink); font-size:13px; line-height:1.4; font-weight:600; }
+.workout-preview__copy>span { color:var(--sub); font-size:13px; font-weight:400; line-height:1.45; overflow-wrap:anywhere; }
+.workout-preview__dose { min-width:0; font-variant-numeric:tabular-nums; }
+.workout-preview__copy>.workout-preview__equipment { font-size:12px; }
+.workout-preview__copy>.workout-preview__pair { color:var(--accent); font-size:12px; font-weight:550; }
 .workout-preview__row>svg { color:var(--sub); }
 .workout-preview__row:active { background:var(--surface-soft); }
 .workout-preview__row:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; border-radius:12px; }
@@ -20,7 +21,12 @@
 .workout-preview__optional>p { margin:0 0 10px; font-size:12px; line-height:1.5; }
 .workout-preview__optional>button { display:flex; align-items:center; gap:8px; width:100%; min-height:52px; border:0; background:transparent; color:var(--ink); text-align:left; font-size:13px; }
 .workout-preview__optional>button>span { flex:1; }
-.workout-preview__optional>button>small { color:var(--sub); font-size:11px; }
-@media(max-width:350px) { .workout-preview { padding-inline:12px; } .workout-preview__row { grid-template-columns:24px minmax(0,1fr) minmax(43px,52px) 12px; gap:8px; } .workout-preview__copy>strong { font-size:15px; } }
+.workout-preview__optional>button>small { color:var(--sub); font-size:12px; }
+@media(max-width:350px) { .workout-preview { padding-inline:12px; } .workout-preview__row { grid-template-columns:20px minmax(0,1fr) 14px; gap:8px; } .workout-preview__copy>strong { font-size:15px; } }
 @media(prefers-reduced-motion:no-preference) { .workout-preview__row { transition:background-color 100ms ease; } }
 @media(hover:hover) and (pointer:fine) { .workout-preview__row:hover { background:var(--surface-soft); } }
+
+.preview-session-details { display:grid; gap:8px; padding:16px; border-radius:18px; background:var(--surface-soft); color:var(--ink); }
+.preview-session-details h3 { margin:0; font-size:16px; font-weight:650; }
+.preview-session-details p { margin:0; font-size:14px; line-height:1.5; overflow-wrap:anywhere; }
+.preview-session-details__note { color:var(--sub); }

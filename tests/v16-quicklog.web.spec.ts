@@ -121,6 +121,7 @@ test('equipment labels are optional, editable and do not relabel older workout h
   const initial = await seed(page);
   await page.getByRole('button', { name: 'Quick Log', exact: true }).click();
   const exercise = page.getByRole('region', { name: `Quick log ${PRESS}`, exact: true });
+  await exercise.locator('.quick-exercise__effort > summary').click();
   await exercise.getByRole('button', { name: `Equipment for ${PRESS}`, exact: true }).click();
   const editor = page.getByRole('dialog', { name: 'Equipment label', exact: true });
   await editor.getByRole('textbox', { name: 'Machine or equipment label', exact: true }).fill('Matrix Chest Press');

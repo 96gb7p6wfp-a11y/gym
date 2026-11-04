@@ -9,6 +9,7 @@ async function state(page: Page) {
 
 async function openEntry(page: Page) {
   await page.getByRole('tab', { name: 'Progress', exact: true }).click();
+  await page.getByRole('group', { name: 'Chart metric', exact: true }).getByRole('button', { name: 'Jump', exact: true }).click();
   await page.getByRole('button', { name: 'Log jump', exact: true }).click();
   return page.getByRole('dialog', { name: 'Log jump', exact: true });
 }
@@ -80,7 +81,8 @@ test('a video estimate stays labeled and cannot become a measured trend or perso
   await page.getByRole('tab', { name: 'Progress', exact: true }).click();
   await page.getByRole('group', { name: 'Chart metric', exact: true }).getByRole('button', { name: 'Jump', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Jump performance', exact: true })).toContainText('Your first jump.');
-  await expect(page.getByRole('region', { name: 'Progress summary', exact: true })).not.toContainText('85');
+  await expect(page.getByRole('region', { name: 'Progress summary', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Jump performance', exact: true })).not.toContainText('85');
 });
 
 test('touch must exceed reach and an unmeasured jump is never saved', async ({ page }) => {

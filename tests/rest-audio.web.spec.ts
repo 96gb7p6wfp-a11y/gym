@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE } from '../src/domain.js';
 import { REST_DEADLINE_KEY } from '../src/rest-deadline';
-import { openDisclosure, openSection } from './helpers/navigation';
+import { settingsGroup, openDisclosure, openSection } from './helpers/navigation';
 
 const STORE = 'setline.gym.v1';
 
@@ -72,6 +72,7 @@ async function openTimer(page: Page) {
 async function openSoundSettings(page: Page) {
   await openSection(page, 'You');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await settingsGroup(page, 'Appearance & Sound');
   return page.getByRole('dialog', { name: 'Your preferences', exact: true });
 }
 async function plays(page: Page) { return page.evaluate(() => (window as any).__restAudioProbe.plays as number); }

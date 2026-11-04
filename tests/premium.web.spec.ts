@@ -142,13 +142,15 @@ test('reuses recent meals and saved foods as new records without changing the or
 test('offers a one-tap progress check-in and charts only recorded body weights', async ({ page }) => {
   await tab(page, 'Progress');
   await expect(page.getByRole('img', { name: /^Body weight trend:/ })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Log weight', exact: true }).click();
+  await page.getByRole('button', { name: 'Body weight', exact: true }).click();
+  await page.getByRole('button', { name: 'Log body weight', exact: true }).click();
   let check = page.getByRole('dialog', { name: 'Weight check-in', exact: true });
   await expect(check).toBeVisible();
   await check.getByLabel('Body weight · kg', { exact: true }).fill('64.2');
   await check.getByRole('button', { name: 'Save weight', exact: true }).click();
-  await expect(check.locator('.nutrition-weight-average')).toContainText('64.2 kg');
-  await check.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(check).not.toBeVisible();
+  await expect(page.getByRole('region', { name: 'Body weight trend', exact: true })).toContainText('64.2');
+  await tab(page, 'Nutrition');
   await page.getByLabel('Nutrition date', { exact: true }).fill('2026-10-07');
   await openDisclosure(page, 'Nutrition options');
   await page.getByRole('button', { name: /^Weight check-in/ }).click();

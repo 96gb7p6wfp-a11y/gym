@@ -53,11 +53,14 @@ test('a shoulder-only session offers shoulder preparation and stretches without 
   await seed(page, { appearance: 'dark' });
   const before = await state(page);
   const cover = page.getByRole('region', { name: 'Your day', exact: true });
-  await expect(cover.locator('[aria-label="Today motivation"]')).toBeVisible();
+  await expect(cover.locator('[aria-label="Session type"]')).toBeVisible();
   await cover.getByRole('button', { name: 'Start workout', exact: true }).click();
   await finishWarmup(page);
   const current = page.getByRole('region', { name: 'Current exercise', exact: true });
-  const coach = current.getByRole('status', { name: 'Set focus', exact: true });
+  const notes = current.locator('.focused-training-notes');
+  await expect(notes).not.toHaveAttribute('open');
+  await notes.locator(':scope > summary').click();
+  const coach = notes.getByRole('status', { name: 'Set focus', exact: true });
   await expect(coach.getByText('Coach', { exact: true })).toBeVisible();
   await expect(current.getByRole('button', { name: `Exercise details for ${SHOULDER}`, exact: true })).toBeVisible();
   expect(await current.locator('.focused-effort').evaluate(element => parseFloat(getComputedStyle(element).borderTopWidth)),

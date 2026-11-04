@@ -89,9 +89,11 @@ test('the V13.1 schedule can be inspected and dismissed without changing a legac
   expect(await read(page)).toEqual(before);
 });
 
-test('Today exposes V13.1 directly and applying it shows the new Saturday workout without nested menus', async ({ page }) => {
+test('Training plan exposes V13.1 review and applying it shows the new Saturday workout', async ({ page }) => {
   await seedLegacy(page);
   const before = await read(page);
+  await expect(page.getByRole('button', { name: /^V13.1 is ready Review plan/ })).toHaveCount(0);
+  await openPlan(page);
   const action = page.getByRole('button', { name: /^V13.1 is ready Review plan/ });
   await expect(action).toBeVisible();
   await action.click();
@@ -116,7 +118,7 @@ test('an older active workout clearly explains why it keeps its saved prescripti
   await expect(page.locator('.session-card h2')).toHaveText('My custom upper');
 });
 
-test('an athlete without an active program can start V13.1 this week from the visible Today action', async ({ page }) => {
+test('an athlete without an active program can start V13.1 this week from Training plan', async ({ page }) => {
   await seedLegacy(page);
   await page.evaluate(key => {
     const data = JSON.parse(localStorage.getItem(key)!);
@@ -125,6 +127,7 @@ test('an athlete without an active program can start V13.1 this week from the vi
   }, STORE);
   await page.reload();
   const before = await read(page);
+  await openPlan(page);
   await page.getByRole('button', { name: /^V13.1 is ready Review plan/ }).click();
   await expect(program(page).getByLabel('Start Monday', { exact: true })).toHaveValue('2026-10-26');
   await program(page).getByRole('button', { name: 'Use this plan', exact: true }).click();

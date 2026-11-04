@@ -90,7 +90,10 @@ test('editing planned pair rest updates both partners for that date and retains 
   await editor.getByRole('spinbutton', { name: 'Rest after pair · seconds', exact: true }).fill('90');
   await editor.getByRole('button', { name: 'Save for this day', exact: true }).click();
   await expect(editor).not.toBeVisible();
-  await expect(preview.getByText('Superset A · 90 sec after pair', { exact: true })).toHaveCount(2);
+  const pairedRows = preview.locator('.plan-preview__exercise').filter({ hasText: 'Superset A' });
+  await expect(pairedRows).toHaveCount(2);
+  await expect(pairedRows.locator('.plan-preview__pair')).toHaveText(['Superset A', 'Superset A']);
+  await expect(pairedRows.locator('.plan-preview__dose')).toHaveText([/90 sec after pair/, /90 sec after pair/]);
   const after = await read(page);
   const day = after.profile.sessionDrafts.find((draft: { date: string }) => draft.date === '2026-11-05').plan;
   const shoulders = day.exercises.filter((exercise: { superset?: { id: string } }) => exercise.superset?.id === 'v131-shoulders');
@@ -101,5 +104,6 @@ test('editing planned pair rest updates both partners for that date and retains 
   await page.reload();
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: 'View workout', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'Workout preview', exact: true }).getByText('Superset A · 90 sec after pair', { exact: true })).toHaveCount(2);
+  await expect(pairedRows).toHaveCount(2);
+  await expect(pairedRows.locator('.plan-preview__dose')).toHaveText([/90 sec after pair/, /90 sec after pair/]);
 });

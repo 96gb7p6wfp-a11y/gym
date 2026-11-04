@@ -2,12 +2,13 @@ import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE } from '../src/domain.js';
 import { BACKUP_STATUS_KEY, BACKUP_REMINDER_AFTER_MS } from '../src/backup-status';
-import { openSection } from './helpers/navigation';
+import { settingsGroup, openSection } from './helpers/navigation';
 
 const STORE = 'setline.gym.v1';
 async function settings(page: Page) {
   await openSection(page, 'You');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await settingsGroup(page, 'Data & Backup');
   return page.locator('.data-settings');
 }
 test.beforeEach(async ({ page }) => {
@@ -63,7 +64,7 @@ test('local problem report includes no diagnostics until opted in and never incl
   expect(preview.diagnostics).toBeUndefined();
   await support.getByLabel('Include app and browser diagnostics (optional)', { exact: true }).check();
   preview = JSON.parse(await support.getByRole('textbox', { name: 'Report preview', exact: true }).inputValue());
-  expect(preview.diagnostics.appVersion).toBe('Setline V16');
+  expect(preview.diagnostics.appVersion).toBe('Setline V17');
   expect(Object.keys(preview.diagnostics).sort()).toEqual(['appVersion', 'browser', 'connection', 'localStorage', 'presentation', 'serviceWorker', 'viewport']);
   const downloaded = page.waitForEvent('download');
   await support.getByRole('button', { name: 'Export report', exact: true }).click();

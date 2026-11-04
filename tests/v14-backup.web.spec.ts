@@ -1,11 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
-import { openSection } from './helpers/navigation';
+import { settingsGroup, openSection } from './helpers/navigation';
 
 const STORE = 'setline.gym.v1';
 async function settings(page: Page) {
   await openSection(page, 'You');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await settingsGroup(page, 'Data & Backup');
   return page.locator('.data-settings');
 }
 async function backup(page: Page) {
@@ -39,8 +40,10 @@ test('restore retains exportable previous records after reload', async ({ page }
   let data = await settings(page);
   const old = await backup(page);
   const preferences = page.getByRole('dialog');
+  await settingsGroup(page, 'Training');
   await preferences.getByLabel('Body weight · kg', { exact: true }).fill('73');
-  await preferences.getByRole('button', { name: 'Save preferences', exact: true }).click();
+  await preferences.getByRole('button', { name: 'Save training defaults', exact: true }).click();
+  await preferences.getByRole('button', { name: 'Close', exact: true }).click();
   data = await settings(page);
   const saved = await backup(page);
   await data.getByLabel('Restore Setline backup', { exact: true }).setInputFiles({ name: 'older.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(old)) });
@@ -129,8 +132,10 @@ test('unsupported file sharing provides download fallback and preserves records'
 test('an already open tab cannot save preferences over a restored backup', async ({ page, context }) => {
   await page.goto('/');
   let data = await settings(page);
+  await settingsGroup(page, 'Training');
   await page.getByLabel('Body weight · kg', { exact: true }).fill('73');
-  await page.getByRole('button', { name: 'Save preferences', exact: true }).click();
+  await page.getByRole('button', { name: 'Save training defaults', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Your preferences', exact: true }).getByRole('button', { name: 'Close', exact: true }).click();
   data = await settings(page);
   const incoming = await backup(page);
   incoming.data.profile.bodyWeight = 82;
@@ -141,8 +146,9 @@ test('an already open tab cannot save preferences over a restored backup', async
   page.once('dialog', dialog => dialog.accept());
   await Promise.all([page.waitForNavigation(), data.getByRole('button', { name: 'Restore backup', exact: true }).click()]);
   const before = await page.evaluate(key => localStorage.getItem(key), STORE);
+  await settingsGroup(stalePage, 'Training');
   await stalePage.getByLabel('Body weight · kg', { exact: true }).fill('99');
-  await stalePage.getByRole('button', { name: 'Save preferences', exact: true }).click();
+  await stalePage.getByRole('button', { name: 'Save training defaults', exact: true }).click();
   await expect(stalePage.getByText('Local data was restored in another tab. Reload the app before saving changes.', { exact: true })).toBeVisible();
   expect(await page.evaluate(key => localStorage.getItem(key), STORE)).toBe(before);
   await stalePage.close();

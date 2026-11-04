@@ -12,6 +12,7 @@ import type { StretchStep } from './stretch-routine';
 import { getQuickWarmupPresentation } from './session-preparation';
 import { masterJumpContacts } from './volleyball-master-plan';
 import { workoutTitle } from './presentation';
+import { previewRestLabel, PreviewSessionDetails } from './WorkoutPreview';
 import './workout-plan-preview.css';
 
 export interface WorkoutPlanPreviewProps {
@@ -132,7 +133,12 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
               return <li key={exercise.key} className="plan-preview__exercise">
               <button type="button" className="plan-preview__exercise-main" aria-label={`Exercise details for ${exercise.name}`} aria-haspopup="dialog" onClick={event => { rowTrigger.current = event.currentTarget; setGuide(exercise); }}>
                 <span className="plan-preview__number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-                <span className="plan-preview__exercise-copy"><strong>{exercise.name}</strong><span>{exercise.benefit ?? findLibraryExercise(exercise)?.primaryBenefit ?? exercise.group}</span>{last && <span className="plan-preview__previous">Previous · {last}</span>}<span className="plan-preview__dose">{exercise.sets} × {exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.defaultKg != null ? ` · ${exercise.defaultKg} kg` : ''}<span>{exercise.superset ? `Superset ${exercise.superset.label} · ${exercise.superset.restAfterRound} sec after pair` : `${/^A[12].*complex pair/i.test(exercise.group) ? `${exercise.group} · ` : ''}${exercise.rest > 0 ? `${exercise.rest} sec rest` : 'No timed rest'}`}</span></span></span>
+                <span className="plan-preview__exercise-copy"><strong>{exercise.name}</strong><span className="plan-preview__dose">{exercise.sets} × {exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.defaultKg != null ? ` · ${exercise.defaultKg} kg` : ''} · {previewRestLabel(exercise)}</span>
+                  {exercise.superset ? <span className="plan-preview__pair">Superset {exercise.superset.label}</span>
+                    : /complex pair/i.test(exercise.group) && <span className="plan-preview__pair">{exercise.group}</span>}
+                  {exercise.equipmentLabel && <span className="plan-preview__equipment">{exercise.equipmentLabel}</span>}
+                  {last && <span className="plan-preview__previous">Previous · {last}</span>}
+                </span>
               </button>
               <button type="button" className="icon-button plan-preview__options" aria-label={`Options for ${exercise.name}`} aria-haspopup="dialog" disabled={locked} onClick={() => openOptions(exercise)}><MoreHorizontal size={22} aria-hidden="true" /></button>
             </li>;
@@ -185,6 +191,6 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
       </DialogContent>
     </Dialog>
     <ExerciseLibrarySheet open={open && libraryOpen} onOpenChange={setLibraryOpen} onSelect={item => void chooseExercise(item)} replacementFor={replacement} title={replaceKey ? 'Replace exercise' : 'Add exercise'} />
-    {guide && <ExerciseGuideSheet exercise={guide} open={open && Boolean(guide)} onOpenChange={next => { if (!next) setGuide(null); }} onCloseAutoFocus={event => { event.preventDefault(); rowTrigger.current?.focus({ preventScroll: true }); }} />}
+    {guide && <ExerciseGuideSheet exercise={guide} open={open && Boolean(guide)} onOpenChange={next => { if (!next) setGuide(null); }} onCloseAutoFocus={event => { event.preventDefault(); rowTrigger.current?.focus({ preventScroll: true }); }}><PreviewSessionDetails exercise={guide} /></ExerciseGuideSheet>}
   </>;
 }

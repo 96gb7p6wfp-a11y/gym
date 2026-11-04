@@ -163,7 +163,7 @@ test('Progress keeps one chart at a time and never mixes highest touch with jump
   const jump = overview.getByRole('img', { name: /^Approach jump trend:/ });
   await expect(jump).toHaveAttribute('aria-label', /65 to 67\.5 centimetres/);
   await expect(overview.getByRole('region', { name: 'Jump performance', exact: true })).not.toContainText('307.5');
-  await metrics.getByRole('button', { name: 'Weight', exact: true }).click();
+  await metrics.getByRole('button', { name: 'Body weight', exact: true }).click();
   await expect(jump).not.toBeVisible();
   await expect(overview.getByRole('img')).toHaveCount(0);
   await metrics.getByRole('button', { name: 'Strength', exact: true }).click();

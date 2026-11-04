@@ -59,7 +59,9 @@ test('activates V13.1, saves the old week and keeps PE planned while the easy ru
   expect(saved.sessions).toEqual(before.sessions);
   await page.getByRole('tab', { name: 'Today', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Your day', exact: true })).toContainText('Upper A');
-  await expect(page.getByRole('region', { name: 'Your day', exact: true })).toContainText('Week 1');
+  await expect(page.getByRole('region', { name: 'Your day', exact: true })).not.toContainText('Week 1');
+  await openPlan(page);
+  await expect(page.getByRole('region', { name: 'Active training plan', exact: true })).toContainText('Week 1');
   await day(page, 'Thu'); await expect(page.locator('.master-day-note')).not.toContainText('Easy 5 km');
   await day(page, 'Fri'); await expect(page.locator('.master-day-note')).toContainText('School PE');
   expect((await read(page)).activities).toEqual([]);

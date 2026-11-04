@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { performanceFixture } from './v16-performance-fixture.ts';
+import { settingsGroup } from './helpers/navigation';
 
 const STORE='setline.gym.v1';
 const RESTORE_METRIC='setline.test.v16.restore-ms';
@@ -105,6 +106,7 @@ for (const completedSets of [1000,5000,10000] as const) {
 
     await page.getByRole('tab',{name:'You',exact:true}).click();
     await page.getByRole('button',{name:'Settings',exact:true}).click();
+    await settingsGroup(page, 'Data & Backup');
     const settings=page.getByRole('dialog',{name:'Your preferences',exact:true});
     const exportButton=settings.getByRole('button',{name:'Export backup',exact:true});
     await exportButton.evaluate(element=>{

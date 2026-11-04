@@ -4,7 +4,6 @@ import { dateKey, addDays, sessionDuration, sumNutrients } from './domain';
 import { getSessionPurpose } from './training-purpose';
 import { getTrainingCadence } from './training-cadence';
 import { currentReportDate, reportWeekStart } from './weekly-report';
-import { getDailyMotivation } from './coaching-summary';
 import { workoutTitle } from './presentation';
 import './today.css';
 
@@ -18,6 +17,9 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
   const unscheduled = !active && !completed && plan.exercises.filter(exercise => !exercise.optionalWork).length === 0 && plan.kind !== 'recovery';
   const shownPlan = active ? session : completed ?? plan;
   const title = workoutTitle(shownPlan);
+  const sessionLabel = active ? 'Session in progress' : completed ? 'Workout recorded'
+    : shownPlan.kind === 'recovery' ? 'Recovery day' : /match/i.test(shownPlan.name) ? 'Match day'
+      : shownPlan.kind === 'sport' ? (/volleyball/i.test(shownPlan.name) ? 'On-court session' : 'Sport session') : 'Strength session';
   const purpose = getSessionPurpose(shownPlan, (day.getDay() + 6) % 7);
   const cadence = useMemo(() => getTrainingCadence({ sessions, activities, plan: weeklyPlan,
     today, weekStart: reportWeekStart(date) }), [sessions, activities, weeklyPlan, today, date]);
@@ -32,7 +34,10 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
   const berlinTime = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(now);
   for (let offset = 0; offset <= 7; offset++) {
     const next = addDays(day, offset);
-    if (athleteMode && volleyballSchedule.days.includes((next.getDay() + 6) % 7) && (offset > 0 || berlinTime < volleyballSchedule.endTime)) { nextVolleyball = next; break; }
+    const coveredByToday = offset === 0 && shownPlan.kind === 'sport' && /volleyball/i.test(shownPlan.name)
+      && !/match/i.test(shownPlan.name);
+    if (athleteMode && !coveredByToday && volleyballSchedule.days.includes((next.getDay() + 6) % 7)
+      && (offset > 0 || berlinTime < volleyballSchedule.endTime)) { nextVolleyball = next; break; }
   }
   const weekLabel = cadence.weekStart === reportWeekStart(today) ? 'This week'
     : `Week of ${new Date(`${cadence.weekStart}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
@@ -55,12 +60,12 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
   return <div className="today-view journal-today">
     <section className="day-cover" aria-label="Your day" data-session-state={active ? 'active' : completed ? 'complete' : shownPlan.kind === 'recovery' ? 'recovery' : 'ready'}>
       <div className="day-cover__edition">
-        <p className="day-motivation" aria-label="Today motivation">{athleteMode ? getDailyMotivation({ kind: shownPlan.kind, active, completed: !!completed && !active }) : active ? 'One set at a time. Make it yours.' : completed ? 'Workout recorded. Every session counts.' : 'Start comfortably. Build a routine that fits your life.'}</p>
+        <p className="day-context" aria-label="Session type">{sessionLabel}</p>
         <button type="button" className="icon-button" aria-label="Choose training day" onClick={onBrowseTrain ?? onTrain}><CalendarDays size={19} aria-hidden="true" /></button>
       </div>
       <h2 key={`${date}-${title}`} className={`day-cover__title${title.length > 30 ? ' day-cover__title--long' : ''}`}>{title}</h2>
       <p className="day-cover__purpose">{purpose.subtitle}</p>
-      <div className="day-cover__plan-row"><p className="day-cover__prescription">{sessionMeta}{programLabel && !active && !completed && <span className="day-cover__phase"> · {programLabel}</span>}</p>
+      <div className="day-cover__plan-row"><p className="day-cover__prescription">{sessionMeta}</p>
         {!active && !completed && <button type="button" className="day-cover__preview" disabled={disabled} onClick={onPreview}>View workout<ChevronRight size={14} aria-hidden="true" /></button>}
       </div>
       {active && plannedSetCount > 0 && <div className="day-cover__track" role="progressbar" aria-label="Current workout" aria-valuemin={0} aria-valuemax={plannedSetCount} aria-valuenow={setCount}><span style={{ width: `${plannedSetCount ? setCount / plannedSetCount * 100 : 0}%` }} /></div>}
@@ -73,7 +78,6 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
       </button>
     </section>
 
-    {programOffer && <button type="button" className="program-review-row" onClick={onReviewProgram}><span>{programOffer}</span><strong>Review plan<ChevronRight size={17} aria-hidden="true" /></strong></button>}
     <div className="day-agenda">
       {nextVolleyball && <section className="day-next" aria-label="Next training event">
         <p className="day-caption">Next on court</p>

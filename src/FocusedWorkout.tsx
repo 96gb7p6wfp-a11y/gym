@@ -18,6 +18,7 @@ import { CompletionIntentGate, type CompletionIntent } from './set-completion';
 import { formatPreviousSet } from './previous-performance';
 import { QuickWorkoutLog } from './QuickWorkoutLog';
 import { EquipmentLabelEditor } from './EquipmentLabel';
+import { exerciseInputKind, hasRecordedLoad } from './exercise-input';
 
 export interface FocusedSetLog {
   id: string;
@@ -87,7 +88,8 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
   const [reuseRevision, setReuseRevision] = useState(0);
   const [layout, setLayout] = useState<'focus' | 'quick'>('focus');
   const [equipmentTarget, setEquipmentTarget] = useState<string | null>(null);
-  const [setFeedback, setSetFeedback] = useState<{ id: string; text: string } | null>(null);
+  const [bodyweightLoadShown, setBodyweightLoadShown] = useState(() => new Set<string>());
+  const [setFeedback, setSetFeedback] = useState<{ id: string; text: string; receipt: string } | null>(null);
   const [, updateCompletionState] = useState(0);
   const initialTarget = initialExercise && (initialStep?.setId ?? initialExercise.logs[0]?.id);
   const [completionGate] = useState(() => new CompletionIntentGate(initialExercise && initialTarget
@@ -123,6 +125,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
     invalidWeightInputs.current.clear();
     setLayout('focus');
     setEquipmentTarget(null);
+    setBodyweightLoadShown(new Set());
     // A restored or different workout starts at its first unfinished set.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
@@ -150,6 +153,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
     const completedIndex = current.logs.findIndex(entry => entry.id === completed.id);
     setSetFeedback({
       id: `${current.key}-${completed.id}`,
+      receipt: `${current.name} · Set ${completedIndex + 1} recorded${formatPreviousSet(current, completed) ? ` · ${formatPreviousSet(current, completed)}` : ''}`,
       text: completedSetCue({
         exercise: { ...current, category: findLibraryExercise(current)?.category }, completed, previous: previousLogs[completedIndex],
         previousMeasurement: previousMovement?.measurement,
@@ -194,6 +198,9 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
     ? { ...entry, logs: entry.logs.map(set => set.id === log.id ? { ...set, done: true } : set) } : entry), exercise.key, log.id);
   const nextExercise = exercises.find(entry => entry.key === anticipated?.exerciseKey);
   const equipmentExercise = exercises.find(entry => entry.key === equipmentTarget);
+  const inputKind = exerciseInputKind(exercise);
+  const showWeight = inputKind === 'weight' || (inputKind === 'bodyweight'
+    && (bodyweightLoadShown.has(exercise.key) || hasRecordedLoad(exercise.logs)));
 
   function pauseMovementTimer() {
     const running = exercises.find(entry => entry.runningSince != null);
@@ -218,7 +225,14 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
     updateCompletionState(value => value + 1);
   }
 
+  function revealAddedLoad() {
+    setBodyweightLoadShown(current => new Set(current).add(exercise.key));
+  }
+
   function editSet(patch: Partial<FocusedSetLog>) {
+    // Keep a revealed field mounted when a positive load is cleared or invalid.
+    // Unmounting DecimalWeightInput would discard its visible draft and guard.
+    if (inputKind === 'bodyweight' && Object.hasOwn(patch, 'kg')) revealAddedLoad();
     // An actual input/stepper/reuse action deliberately selects this set.
     // Automatic selection and parent rerenders never call this function.
     armSet(exercise.key, log.id);
@@ -326,14 +340,17 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                 <div className="focused-exercise__set-position"><strong>Set {setIndex + 1} <span>of {exercise.logs.length}</span></strong>
                   <span className="focused-exercise__target">{exercise.target}{exercise.perSide ? ' / side' : ''}{athleteMode && exercise.targetRpe ? ` · RPE ${exercise.targetRpe}` : ''}</span>
                 </div>
-                {previousMetric && <span className="focused-exercise__previous">Previous <b>{previousMetric}</b></span>}
+                {(previousMetric || reuse) && <div className="focused-set-reference">
+                  {previousMetric && <span className="focused-exercise__previous">Previous <b>{previousMetric}</b></span>}
+                  {reuse && <button type="button" className="focused-reuse" aria-label={`Reuse previous ${exercise.name} set ${setIndex + 1} weights and reps`}
+                    title={`Previous workout · ${reuse.date}`}
+                    onClick={() => {
+                      invalidWeightInputs.current.delete(log.id);
+                      setReuseRevision(value => value + 1);
+                      editSet(reuse.patch);
+                    }}><RotateCcw size={15} aria-hidden="true" />{exercise.measurement ? 'Use previous reps' : 'Use previous'}</button>}
+                </div>}
               </div>
-              {reuse && <button type="button" className="focused-reuse" aria-label={`Reuse previous ${exercise.name} set ${setIndex + 1} weights and reps`}
-                onClick={() => {
-                  invalidWeightInputs.current.delete(log.id);
-                  setReuseRevision(value => value + 1);
-                  editSet(reuse.patch);
-                }}><RotateCcw size={15} aria-hidden="true" /><span>Reuse {formatPreviousSet(exercise, { ...log, ...reuse.patch, measurementCm: null, done: true })}<small>Previous workout · {reuse.date}</small></span></button>}
               {exercise.mode === 'timed' ? <TimedSetControls key={`${exercise.key}-${log.id}`} setId={log.id}
                 seconds={log.seconds} target={exercise.target} exerciseKey={exercise.key} exerciseName={exercise.name}
                 elapsedMs={exercise.elapsedMs} runningSince={exercise.runningSince} timerSetId={exercise.timerSetId ?? null}
@@ -341,7 +358,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                 onInteraction={() => armSet(exercise.key, log.id)}
                 onSecondsChange={seconds => onSet(exercise.key, log.id, { seconds })} onTimer={onTimer} /> :
               <div className="focused-set-controls" key={`${exercise.key}-${log.id}`}>
-                {!exercise.measurement && (
+                {showWeight && (
                   <div className="focused-set-field">
                     <span>{exercise.mode === 'bodyweight' ? 'Added weight' : 'Weight'} <small>kg</small></span>
                     <div className="focused-number-stepper"><DecimalWeightInput key={reuseRevision} value={log.kg} placeholder={exercise.mode === 'bodyweight' ? 'BW' : '0'}
@@ -388,10 +405,11 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                 {log.done ? <RotateCcw size={19} aria-hidden="true" /> : <Check size={20} aria-hidden="true" />}
                 {log.done ? 'Undo set' : 'Complete set'}
               </button>
-              {!editing && <p className="focused-set-encouragement" role="status" aria-label="Set focus" aria-atomic="true"
-                data-feedback={setFeedback ? 'complete' : 'ready'}>
-                <span key={setFeedback?.id ?? `${exercise.key}-focus`}><strong>{setFeedback ? <Check className="focused-set-receipt" size={16} aria-hidden="true" /> : 'Coach'}</strong>{' · '}{setFeedback?.text ?? qualityCue}</span>
+              {!editing && setFeedback && <p className="focused-completion-receipt" role="status" aria-label="Set completion" aria-atomic="true">
+                <Check size={16} aria-hidden="true" /><span>{setFeedback.receipt}</span>
               </p>}
+              {inputKind === 'bodyweight' && !showWeight && <button type="button" className="focused-load-toggle text-button"
+                aria-label={`Add weight to ${exercise.name}`} onClick={revealAddedLoad}>Add weight · optional</button>}
               {athleteMode && !log.done && exercise.mode !== 'timed' && <div className="focused-rir" role="group" aria-label="Quick reps in reserve">
                 <span>Reps in reserve · optional <button type="button" className="focused-rir-clear" aria-label="Clear reps in reserve" aria-pressed={log.rir == null} onClick={() => editSet({ rir: null })}>Clear</button></span>
                 <div>{[0, 1, 2, 3, 4, 5].map(rir => <button key={rir} type="button" aria-label={`${rir} reps in reserve`} aria-pressed={log.rir === rir}
@@ -408,11 +426,19 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                 ))}
               </div>
             </div>
-            {!exercise.measurement && exercise.mode !== 'timed' && onEquipmentChange && <button type="button" className="focused-equipment-label text-button"
-              aria-label={`Equipment for ${exercise.name}`} onClick={() => setEquipmentTarget(exercise.key)}>{exercise.equipmentLabel ?? 'Add equipment label'}</button>}
-            {!onEquipmentChange && exercise.equipmentLabel && <p className="small-note">{exercise.equipmentLabel}</p>}
-            {(exercise.benefit || libraryExercise) && <p className="focused-exercise-benefit">{exercise.benefit ?? libraryExercise?.primaryBenefit}</p>}
             <ExerciseGuide exercise={exercise} key={exercise.key} />
+            <details className="focused-training-notes">
+              <summary><span>Training notes</span><small>{exercise.equipmentLabel ?? 'Equipment & guidance'}</small><ChevronRight size={16} aria-hidden="true" /></summary>
+              {!exercise.measurement && exercise.mode !== 'timed' && onEquipmentChange && <button type="button" className="focused-equipment-label text-button"
+                aria-label={`Equipment for ${exercise.name}`} onClick={() => setEquipmentTarget(exercise.key)}>{exercise.equipmentLabel ?? 'Add equipment label'}</button>}
+              {!onEquipmentChange && exercise.equipmentLabel && <p className="small-note">{exercise.equipmentLabel}</p>}
+              {(exercise.benefit || libraryExercise) && <p className="focused-exercise-benefit">{exercise.benefit ?? libraryExercise?.primaryBenefit}</p>}
+              {!editing && <p className="focused-set-encouragement" role="status" aria-label="Set focus" aria-atomic="true"
+                data-feedback={setFeedback ? 'complete' : 'ready'}>
+                <span key={setFeedback?.id ?? `${exercise.key}-focus`}><strong>{setFeedback ? <Check className="focused-set-receipt" size={16} aria-hidden="true" /> : 'Coach'}</strong>{' · '}{setFeedback?.text ?? qualityCue}</span>
+              </p>}
+              {reuse && <p className="small-note">Previous workout · {reuse.date}. Reuse copies a draft for this set; it does not record today's work.</p>}
+            </details>
             {(!log.done || !athleteMode) && <details className="focused-effort"><summary>{athleteMode ? 'Effort' : 'Effort & advanced'} <span>{log.rir == null ? 'Optional' : `${log.rir} reps in reserve`}</span></summary>
               {!log.done && <label className="field-label">Reps in reserve<input type="number" min="0" max="10" step="1" inputMode="numeric" aria-label={`${exercise.name} set ${setIndex + 1} reps in reserve`} value={log.rir ?? ''} onChange={event => editSet({ rir: event.target.value === '' ? null : Math.min(10, Math.max(0, Number(event.target.value))) })} /></label>}
               <p className="small-note">RIR: How many more reps you could complete.</p>

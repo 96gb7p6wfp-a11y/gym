@@ -16,6 +16,7 @@ async function seed(page: Page, revision?: '8.1' | '13.1', startDate = '2026-10-
     schemaVersion: 1, profile, profileVersion: 2, sessions: [], nutrition: [], activities: [],
   })), { key: STORE, profile });
   await page.reload();
+  await page.getByRole('tab', { name: 'Train', exact: true }).click();
 }
 
 test.beforeEach(async ({ page }) => {
@@ -27,7 +28,7 @@ test('V14 names the saved plan separately and opening training keeps the older p
   await seed(page, '8.1');
   const before = await page.evaluate(key => localStorage.getItem(key), STORE);
   const status = page.getByRole('region', { name: 'Active training plan', exact: true });
-  await expect(status).toContainText('Setline V16');
+  await expect(status).not.toContainText('Setline V');
   await expect(status).toContainText('Plan · V8.1');
   await expect(status).toContainText('Week 5 of 8');
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
