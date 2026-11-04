@@ -5,6 +5,7 @@
 .day-cover__edition>.day-motivation { margin:0; color:var(--ink); font-size:13px; line-height:1.45; font-weight:550; letter-spacing:-.01em; text-wrap:balance; }
 .day-cover__edition>.icon-button { position:absolute; right:-8px; top:-8px; background:color-mix(in srgb,var(--surface) 65%,transparent); color:var(--accent); }
 .day-cover .day-cover__title { max-width:15ch; margin:16px 0 0; color:var(--ink); font-family:var(--font-display); font-size:clamp(30px,8.3vw,36px); line-height:1.1; letter-spacing:-.045em; font-weight:720; text-wrap:balance; }
+.day-cover .day-cover__title--long { max-width:none; font-size:clamp(25px,7vw,32px); line-height:1.12; overflow-wrap:break-word; }
 .day-cover__purpose { max-width:30ch; margin:12px 0 0; color:var(--ink); font-size:15px; line-height:1.45; font-weight:450; letter-spacing:-.015em; }
 .day-cover__prescription { margin:12px 0 0; color:var(--sub); font-size:12px; line-height:1.45; font-variant-numeric:tabular-nums; }
 .day-cover__track { height:4px; margin:16px 0 -4px; border-radius:999px; background:color-mix(in srgb,var(--accent) 15%,transparent); overflow:hidden; }
@@ -46,6 +47,7 @@
  .day-cover__edition { min-height:22px; }
  .day-cover__edition>.day-motivation { font-size:12px; line-height:1.4; }
  .day-cover .day-cover__title { margin-top:8px; font-size:28px; }
+ .day-cover .day-cover__title--long { font-size:24px; }
  .day-cover__purpose { margin-top:8px; font-size:14px; }
  .day-cover__prescription { margin-top:10px; font-size:12px; }
  .day-cover .day-cover__start { margin-top:10px; min-height:52px; padding-inline:16px; }

@@ -535,7 +535,7 @@ test('validates and persists editable day plans without changing an existing wor
   await selectTab(page, 'Workout');
   await openAllSets(page);
   await expect(page.getByRole('spinbutton', { name: `${MOVEMENT} set 1 reps`, exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Upper Body', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Upper Power + Muscle', exact: true })).toBeVisible();
   await selectTab(page, 'My plan');
   await page.getByRole('button', { name: 'Edit Monday', exact: true }).click();
   await expect(editor.getByLabel('Workout name', { exact: true })).toHaveValue('Custom strength');

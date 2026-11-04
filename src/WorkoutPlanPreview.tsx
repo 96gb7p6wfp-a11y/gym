@@ -11,6 +11,7 @@ import { addPlanExercise, movePlanExercise, removePlanExercise, replacePlanExerc
 import type { StretchStep } from './stretch-routine';
 import { getQuickWarmupPresentation } from './session-preparation';
 import { masterJumpContacts } from './volleyball-master-plan';
+import { workoutTitle } from './presentation';
 import './workout-plan-preview.css';
 
 export interface WorkoutPlanPreviewProps {
@@ -113,7 +114,7 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
       <DialogContent className="app-dialog workout-plan-preview-sheet" aria-label="Workout preview" aria-labelledby={undefined}>
         <DialogHeader className="plan-preview__header">
           <p className="eyebrow">Workout preview · {dayLabel}</p>
-          <DialogTitle className="">{plan.name}</DialogTitle>
+          <DialogTitle className="">{workoutTitle(plan)}</DialogTitle>
           <DialogDescription className="">{purpose.subtitle}</DialogDescription>
         </DialogHeader>
         <div className="plan-preview__metadata"><div className="plan-preview__summary"><span><Clock3 size={15} aria-hidden="true" />{plan.durationRange ?? `About ${plan.minutes} min`}</span><span>{workingExercises.length} exercises · {workingSets} sets</span></div>
@@ -126,13 +127,16 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
         <section className="plan-preview__main" aria-label="Main workout">
           <h3>Main workout</h3>
           {workingExercises.length > 0 ? <ol className="plan-preview__list" aria-label="Scheduled exercises">
-            {workingExercises.map((exercise, index) => <li key={exercise.key} className="plan-preview__exercise">
+            {workingExercises.map((exercise, index) => {
+              const last = previous?.(exercise);
+              return <li key={exercise.key} className="plan-preview__exercise">
               <button type="button" className="plan-preview__exercise-main" aria-label={`Exercise details for ${exercise.name}`} aria-haspopup="dialog" onClick={event => { rowTrigger.current = event.currentTarget; setGuide(exercise); }}>
                 <span className="plan-preview__number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-                <span className="plan-preview__exercise-copy"><strong>{exercise.name}</strong><span>{exercise.benefit ?? findLibraryExercise(exercise)?.primaryBenefit ?? exercise.group}</span><span className="plan-preview__previous">{previous?.(exercise) ? `Previous · ${previous(exercise)}` : 'No comparable working-set load recorded'}</span><span className="plan-preview__dose">{exercise.sets} × {exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.defaultKg != null ? ` · ${exercise.defaultKg} kg` : ''}<span>{exercise.superset ? `Superset ${exercise.superset.label} · ${exercise.superset.restAfterRound} sec after pair` : `${/^A[12].*complex pair/i.test(exercise.group) ? `${exercise.group} · ` : ''}${exercise.rest > 0 ? `${exercise.rest} sec rest` : 'No timed rest'}`}</span></span></span>
+                <span className="plan-preview__exercise-copy"><strong>{exercise.name}</strong><span>{exercise.benefit ?? findLibraryExercise(exercise)?.primaryBenefit ?? exercise.group}</span>{last && <span className="plan-preview__previous">Previous · {last}</span>}<span className="plan-preview__dose">{exercise.sets} × {exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.defaultKg != null ? ` · ${exercise.defaultKg} kg` : ''}<span>{exercise.superset ? `Superset ${exercise.superset.label} · ${exercise.superset.restAfterRound} sec after pair` : `${/^A[12].*complex pair/i.test(exercise.group) ? `${exercise.group} · ` : ''}${exercise.rest > 0 ? `${exercise.rest} sec rest` : 'No timed rest'}`}</span></span></span>
               </button>
               <button type="button" className="icon-button plan-preview__options" aria-label={`Options for ${exercise.name}`} aria-haspopup="dialog" disabled={locked} onClick={() => openOptions(exercise)}><MoreHorizontal size={22} aria-hidden="true" /></button>
-            </li>)}
+            </li>;
+            })}
           </ol> : <p className="plan-preview__empty">{plan.kind === 'recovery' ? 'An easy day. View your preparation above, then start your mobility routine.' : 'Add a movement to prepare your session.'}</p>}
           {plan.programRevision === '8.1' && contacts.planned > 0 && <p className="plan-preview__contacts">{contacts.planned} planned main jump contacts. A ceiling, not a target; stop sooner if quality drops.</p>}
           {plan.programRevision === '13.1' && contacts.planned > 0 && <p className="plan-preview__contacts">{contacts.planned} planned gym jump contacts. A starting recommendation, not a quota. Excludes preparation, volleyball and PE; stop sooner if quality drops.</p>}

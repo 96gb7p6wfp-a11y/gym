@@ -8,6 +8,8 @@ import { useRestAudio } from "./useRestAudio";
 import { useRestDeadline } from "./useRestDeadline";
 import { recordedExerciseChartValue } from "./exercise-chart";
 import { previousSetReuse } from "./workout-reuse";
+import { targetSetTransition } from "./set-completion";
+import { readCompletionReceipt, saveCompletionReceipt, readRestOwner, saveRestOwner } from "./completion-receipt";
 import { DEFAULT_REST_VOLUME } from "./rest-audio";
 import { TimerSoundSettings } from "./TimerSoundSettings";
 import { PwaUpdateControl } from "./PwaUpdateControl";
@@ -34,7 +36,8 @@ import { FocusedWorkout } from "./FocusedWorkout";
 import { WorkoutPreview } from "./WorkoutPreview";
 import { ProgressOverview } from "./ProgressOverview";
 import { RemindersPanel } from "./RemindersPanel";
-import { shortSessionName } from "./presentation";
+import { shortSessionName, workoutTitle } from "./presentation";
+import { formatPreviousSet, previousPerformance } from "./previous-performance";
 import { VolleyballMasterProgram, MasterProgramReadiness } from './VolleyballMasterProgram';
 import { applyMasterReadiness, applyMasterClearance, createVolleyballMasterPlan, getMasterProgramWeek, getMasterProgramPhase, masterWeekStart, masterScheduledEvents, masterPlannedMinutes, resolveMasterProgramPlan, createRecommendedMasterPlan, isMasterReadinessRequired, masterJumpContacts } from './volleyball-master-plan';
 import { PageHeader, BottomNavigation, SegmentedControl, MenuRow } from "./components/design";
@@ -208,7 +211,12 @@ function GymApp({
   const today = berlinDate(now);
   let [restEndsAt, setRestDeadline] = useRestDeadline();
   const [restFinished, setRestFinished] = React.useState(null);
-  function setRestEndsAt(deadline) { setRestFinished(null); setRestDeadline(deadline); }
+  const restOwner = React.useRef(readRestOwner());
+  const consumedCompletionIntents = React.useRef(new Set());
+  const lastSetReceipt = React.useRef(null);
+  const receiptLoaded = React.useRef(false);
+  if (!receiptLoaded.current) { lastSetReceipt.current = readCompletionReceipt(); receiptLoaded.current = true; }
+  function setRestEndsAt(deadline, owner = restOwner.current) { restOwner.current = deadline === null ? null : owner; saveRestOwner(restOwner.current); setRestFinished(null); setRestDeadline(deadline); }
   let [restSeconds, setRestSeconds] = React.useState(90);
   const restAudio = useRestAudio({ enabled: profile.timerSoundEnabled !== false, volume: profile.timerSoundVolume ?? DEFAULT_REST_VOLUME, endsAt: restEndsAt,
     onComplete: result => {
@@ -236,6 +244,7 @@ function GymApp({
   let [mutatingRecordId, setMutatingRecordId] = React.useState(null);
   let [recentlyDeletedOpen, setRecentlyDeletedOpen] = React.useState(!1);
   let [editingHistoryId, setEditingHistoryId] = React.useState(null);
+  const editingIdRef = React.useRef(editingHistoryId); editingIdRef.current = editingHistoryId;
   let [progressExerciseKey, setProgressExerciseKey] =
     React.useState(`chest-press`);
   let sessionsRef = React.useRef([]);
@@ -748,14 +757,14 @@ function GymApp({
       ? exercise.logs.find(log => log.id === exercise.timerSetId) : exercise.logs.find(log => !log.done);
     if (set) toggleMovementTimer(key, { action: exercise.runningSince === null ? `start` : `pause`, setId: set.id }, !0);
   }
-  function markSetDone(e, t, n) {
-    if (n && !editingHistoryId) void restAudio.unlock();
-    let r = sessionsRef.current.find(
-      (e) => e.id === (editingHistoryId ?? activeSession?.id),
-    );
-    if (!r) return;
-    let i = r.exercises.find((t) => t.key === e);
-    let a = i.logs.find((e) => e.id === t);
+  function markSetDone(e, t, n, intent) {
+    const selectedId = editingIdRef.current ?? sessionsRef.current.find(session => session.status === 'active')?.id;
+    const target = { sessionId: intent?.sessionId ?? selectedId, exerciseKey: e, setId: t };
+    if (!selectedId || target.sessionId !== selectedId || (intent?.intentId && consumedCompletionIntents.current.has(intent.intentId))) return false;
+    let r = sessionsRef.current.find(session => session.id === selectedId);
+    let i = r?.exercises.find(entry => entry.key === e);
+    let a = i?.logs.find(entry => entry.id === t);
+    if (!r || !i || !a || a.done === n) return false;
     let o = i.mode === `timed` ? (editingHistoryId ? a.seconds : recordedTimedSetSeconds(i, a, Date.now())) :
       (i.runningSince === null
         ? null
@@ -767,45 +776,43 @@ function GymApp({
           ? `Enter a time, or run the movement timer first.`
           : `Enter your reps before checking off this set.`,
       );
-      return;
+      return false;
     }
     if (n && i.mode === `weight` && !isValidWorkoutWeight(a.kg)) {
       toast.error(`Enter the weight you used. Use 0 for no added weight.`);
-      return;
+      return false;
     }
     if (n && a.kg !== null && !isValidWorkoutWeight(a.kg)) {
       toast.error(`Enter a weight between 0 and 2,000 kg.`);
-      return;
+      return false;
     }
     let s = Date.now();
-    const exercises = r.exercises.map((r) =>
-          r.key === e
-            ? {
-                ...r,
-                elapsedMs: n
-                  ? elapsedTime(r.elapsedMs, r.runningSince, s)
-                  : r.elapsedMs,
-                runningSince: n ? null : r.runningSince,
-                logs: r.logs.map((e) =>
-                  e.id === t
-                    ? {
-                        ...e,
-                        done: n,
-                        seconds: n ? o : e.seconds,
-                      }
-                    : e,
-                ),
-              }
-            : r,
-        );
+    const transitioned = targetSetTransition(r, target, n, n ? { seconds: o } : {});
+    if (transitioned === r) return false;
+    if (intent?.intentId) consumedCompletionIntents.current.add(intent.intentId);
+    const exercises = transitioned.exercises.map(entry => entry.key !== e || !n ? entry : {
+      ...entry, elapsedMs: elapsedTime(entry.elapsedMs, entry.runningSince, s), runningSince: null,
+    });
+    if (n) { lastSetReceipt.current = target; saveCompletionReceipt(target); }
+    else if (lastSetReceipt.current?.sessionId === target.sessionId && lastSetReceipt.current?.exerciseKey === e && lastSetReceipt.current?.setId === t) {
+      lastSetReceipt.current = null; saveCompletionReceipt(null);
+    }
     queueSession({ ...r, exercises }, !0);
+    if (!n && restOwner.current?.sessionId === target.sessionId && restOwner.current?.exerciseKey === e && restOwner.current?.setId === t) setRestEndsAt(null);
     if (n && r.status === `active`) {
+      void restAudio.unlock();
       const seconds = restAfterCompletedSet(exercises, e, t);
       if (seconds > 0) {
         setRestSeconds(seconds);
-        setRestEndsAt(s + seconds * 1e3);
+        setRestEndsAt(s + seconds * 1e3, target);
       } else setRestEndsAt(null);
     }
+    return true;
+  }
+  function undoLastSet() {
+    const target = lastSetReceipt.current;
+    if (!target) return false;
+    return markSetDone(target.exerciseKey, target.setId, false, { sessionId: target.sessionId });
   }
   async function finishWorkout() {
     if (!activeSession || finishSaving) return;
@@ -1107,8 +1114,13 @@ function GymApp({
         ? `Total time · sec`
         : `Total reps`;
   function comparablePrevious(exercise, date, excludedId) {
-    const previous = previousExercise(completedSessions, exercise.exerciseId ?? exercise.key, date, excludedId);
-    return previous && areComparableExercises(previous.exercise, exercise) ? previous : null;
+    for (const session of completedSessions.filter(session => session.id !== excludedId && session.date <= date && session.deletedAt == null).slice().sort((a,b) => b.date.localeCompare(a.date) || b.startedAt-a.startedAt)) {
+      const candidates = session.exercises.filter(entry => !entry.preparationOnly && areComparableExercises(entry, exercise));
+      const matched = candidates.find(entry => entry.key === exercise.key) ?? (candidates.length === 1 ? candidates[0] : null);
+      if (matched) return { session, exercise: matched };
+      if (candidates.length) return null;
+    }
+    return null;
   }
   function volleyballIsSoon() {
     const clock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(now));
@@ -1311,7 +1323,7 @@ function GymApp({
               )}
 
               <section className={`session-card native-session ${currentSession ? 'session-card--active' : ''} ${editingHistoryId ? 'native-session--editing' : ''}`}>
-                <div className="native-session-overview"><p className="session-tag">{editingHistoryId ? 'Editing saved workout' : activeSession ? 'Session in progress' : `${WEEKDAYS[selectedDay]} · ${formatDate(selectedDate, true)}`}</p><h2>{currentSession ? currentSession.goal ? getSessionPurpose(currentSession).title : shortSessionName(currentSession.name) : getSessionPurpose(selectedPlan, selectedDay).title}</h2>{!currentSession && <p className="session-purpose-line">{getSessionPurpose(selectedPlan, selectedDay).subtitle}</p>}<p className="native-session-prescription">{currentSession ? currentSession.kind === `sport` ? `On court · reflect after training` : currentSession.kind === `recovery` && !totalSets ? `${cooldownItems.filter(step => step.done).length} / ${cooldownItems.length} movements complete` : `${doneSets} / ${totalSets} sets complete` : selectedPlan.kind === `recovery` ? `${selectedPlan.durationRange ?? `${selectedPlan.minutes} min`} · mobility & stretching` : selectedPlan.kind === `sport` ? /match/i.test(selectedPlan.name) ? `Match · ${selectedPlan.startTime ?? "time not set"} · record actual duration` : `${selectedPlan.minutes} min · on court` : `${selectedWorkingExercises.length} exercises · ${totalSets} sets · ${selectedPlan.durationRange ?? `${selectedPlan.minutes} min`}`}</p></div>
+                <div className="native-session-overview"><p className="session-tag">{editingHistoryId ? 'Editing saved workout' : activeSession ? 'Session in progress' : `${WEEKDAYS[selectedDay]} · ${formatDate(selectedDate, true)}`}</p><h2 className={workoutTitle(currentSession ?? selectedPlan).length > 30 ? `native-session-title--long` : undefined}>{workoutTitle(currentSession ?? selectedPlan)}</h2>{!currentSession && <p className="session-purpose-line">{getSessionPurpose(selectedPlan, selectedDay).subtitle}</p>}<p className="native-session-prescription">{currentSession ? currentSession.kind === `sport` ? `On court · reflect after training` : currentSession.kind === `recovery` && !totalSets ? `${cooldownItems.filter(step => step.done).length} / ${cooldownItems.length} movements complete` : `${doneSets} / ${totalSets} sets complete` : selectedPlan.kind === `recovery` ? `${selectedPlan.durationRange ?? `${selectedPlan.minutes} min`} · mobility & stretching` : selectedPlan.kind === `sport` ? /match/i.test(selectedPlan.name) ? `Match · ${selectedPlan.startTime ?? "time not set"} · record actual duration` : `${selectedPlan.minutes} min · on court` : `${selectedWorkingExercises.length} exercises · ${totalSets} sets · ${selectedPlan.durationRange ?? `${selectedPlan.minutes} min`}`}</p></div>
                 <div className="native-session-actionbar">{activeSession && <span className="session-clock"><Clock3 size={14} />{formatElapsedTime(sessionDuration(activeSession, now))}</span>}
                   {editingHistoryId ? (
                     <button
@@ -1436,6 +1448,9 @@ function GymApp({
                   onExerciseAction={setExerciseActionKey}
                   previous={(exercise) => comparablePrevious(exercise, currentSession.date, currentSession.id)}
                   onSet={updateSet} onDone={markSetDone} onTimer={toggleMovementTimer}
+                  onUndoLast={undoLastSet}
+                  lastCompletedTarget={lastSetReceipt.current?.sessionId === currentSession.id ? lastSetReceipt.current : undefined}
+                  canUndoLast={!!(lastSetReceipt.current?.sessionId === currentSession.id && currentSession.exercises.some(exercise => exercise.key === lastSetReceipt.current.exerciseKey && exercise.logs.some(log => log.id === lastSetReceipt.current.setId && log.done)))}
                   renderAllSets={(e, t) => (
                     <ExerciseTracker
                       defaultExpanded
@@ -1449,7 +1464,7 @@ function GymApp({
                       )}
                       editing={!!editingHistoryId}
                       onSet={(t, n) => updateSet(e.key, t, n, !0)}
-                      onDone={(t, n) => markSetDone(e.key, t, n)}
+                      onDone={(t, n) => markSetDone(e.key, t, n, { sessionId: currentSession.id })}
                       onTimer={() => toggleSetStopwatch(e.key)}
                       onAdd={() =>
                         updateExercise(e.key, (e) => ({
@@ -1488,10 +1503,8 @@ function GymApp({
                 <div className="planned-section">
                 <details className="planned-preview"><summary>Exercises <span>{selectedWorkingExercises.length}</span></summary>
                 <WorkoutPreview exercises={selectedPlan.exercises} previous={exercise => {
-                  const previous = comparablePrevious(exercise, selectedDate);
-                  const best = topSet(previous?.exercise);
-                  return best ? `${formatNumber(best.kg)} kg × ${best.reps}` : previous
-                    ? `${previous.exercise.logs.filter(log => log.done).length} sets last time` : undefined;
+                  const prior = previousPerformance(exercise, completedSessions, selectedDate);
+                  return prior ? `${prior.label} · ${prior.date}` : undefined;
                 }} /></details>
                 </div>
               )}
@@ -1664,7 +1677,7 @@ function GymApp({
                       onClick={() => {
                         setRestSeconds(e);
                         restEndsAt !== null &&
-                          (void restAudio.unlock(), setRestEndsAt(Date.now() + e * 1e3));
+                          (void restAudio.unlock(), setRestEndsAt(Date.now() + e * 1e3, null));
                       }}
                       key={e}
                     >
@@ -1678,7 +1691,7 @@ function GymApp({
                     <button
                       className={`btn full`}
                       onClick={() =>
-                        (void restAudio.unlock(), setRestEndsAt(Date.now() + restSeconds * 1e3))
+                        (void restAudio.unlock(), setRestEndsAt(Date.now() + restSeconds * 1e3, null))
                       }
                     >
                       <Play size={16} />
@@ -1891,7 +1904,7 @@ function GymApp({
                           {e.date.slice(0, 4)}
                         </span>
                       </div>
-                      <h2>{e.name}</h2>
+                      <h2>{workoutTitle(e)}</h2>
                       <p>{WEEKDAYS[e.day]}</p>
                       <div className={`history-metrics`}>
                         <span>
@@ -2025,8 +2038,8 @@ function GymApp({
       </section>}
       <WorkoutPlanPreview open={previewContext !== null} onOpenChange={open => { if (!open) setPreviewContext(null); }} plan={previewWorkout.plan}
         previous={exercise => {
-          const prior = previousSetReuse(exercise, 0, completedSessions, previewWorkout.date, '');
-          return prior && prior.patch.kg != null ? `${formatNumber(prior.patch.kg)} kg × ${prior.patch.reps} · ${prior.date}` : undefined;
+          const prior = previousPerformance(exercise, completedSessions, previewWorkout.date);
+          return prior ? `${prior.label} · ${prior.date}` : undefined;
         }}
         dayLabel={formatDate(previewWorkout.date, true)} warmup={getQuickWarmup(previewWorkout.plan, preparationFor(previewWorkout.plan, 'warmup'))}
         disabled={!loaded || profileSaving || !!loadError || !!activeSession}
@@ -2250,7 +2263,7 @@ function GymApp({
       >
         <DialogContent className={`app-dialog history-dialog`}>
           <DialogHeader>
-            <DialogTitle>{selectedHistory?.name}</DialogTitle>
+            <DialogTitle>{selectedHistory ? workoutTitle(selectedHistory) : 'Workout'}</DialogTitle>
             <DialogDescription>
               {selectedHistory
                 ? `${WEEKDAYS[selectedHistory.day]}, ${formatDate(selectedHistory.date)} ${selectedHistory.date.slice(0, 4)}`
@@ -2488,7 +2501,7 @@ function PreparationChecklist({
 function PlanDayDetails({ plan: plan }) {
   return (
     <ReactJSX.Fragment>
-      <h2>{shortSessionName(plan.name)}</h2>
+      <h2>{workoutTitle(plan)}</h2>
       <p className={`muted`}>
         {`About `}
         {plan.minutes}
@@ -2574,12 +2587,12 @@ function ExerciseTracker({
   let bestCurrentSet = topSet(exercise);
   let bestPreviousSet = topSet(last?.exercise);
   let weightDelta =
-    bestCurrentSet && bestPreviousSet
+    bestCurrentSet && bestPreviousSet && bestCurrentSet.reps === bestPreviousSet.reps
       ? (bestCurrentSet.kg ?? 0) - (bestPreviousSet.kg ?? 0)
       : null;
   let timedInMinutes =
     exercise.mode === `timed` && exercise.target.includes(`min`);
-  let previousLogs = last?.exercise.logs.filter((e) => e.done) ?? [];
+  let previousLogs = last?.exercise.logs ?? [];
   return (
     <section
       className={`exercise-card ${doneCount === exercise.logs.length ? `exercise-complete` : ``}`}
@@ -2670,15 +2683,7 @@ function ExerciseTracker({
                   <TableRow className={t.done ? `set-done` : ``} key={t.id}>
                     <TableCell className={`set-index`}>{n + 1}</TableCell>
                     <TableCell className={`last-set`}>
-                      {r
-                        ? exercise.measurement
-                          ? r.measurementCm == null
-                            ? `${r.reps ?? `—`} reps`
-                            : `${formatNumber(r.measurementCm)} cm`
-                          : exercise.mode === `timed`
-                            ? `${formatNumber((r.seconds ?? 0) / (timedInMinutes ? 60 : 1))}${timedInMinutes ? `m` : `s`}`
-                            : `${r.kg === null ? `BW` : formatNumber(r.kg)} × ${r.reps ?? `—`}`
-                        : `—`}
+                      {formatPreviousSet(exercise, r) ?? '—'}
                     </TableCell>
                     {!exercise.measurement && exercise.mode !== `timed` && (
                       <TableCell>
