@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import {
-  calculateNutritionGoal, validateNutritionGoalInput, NUTRITION_GOAL_SOURCES, PERSONAL_NUTRITION_START,
+  calculateNutritionGoal, validateNutritionGoalInput, NUTRITION_GOAL_SOURCES,
   type NutritionGoalInput, type NutritionGoalSettings,
 } from './nutrition-goals';
 import './nutrition-calculator.css';
 
 interface Props {
   profile?: NutritionGoalSettings;
-  bodyWeight: number;
+  bodyWeight: number | null;
   disabled: boolean;
   onProfileSave: (input: NutritionGoalInput) => Promise<boolean | void>;
   onApplyTargets: (targets: { calories: number; protein: number; fat: number; carbs: number }) => Promise<void>;
@@ -15,8 +15,10 @@ interface Props {
 
 type Draft = { [K in keyof NutritionGoalInput]: string };
 
-function toDraft(input: NutritionGoalInput): Draft {
-  return Object.fromEntries(Object.entries(input).map(([key, value]) => [key, String(value)])) as Draft;
+function toDraft(profile: NutritionGoalSettings | undefined, bodyWeight: number | null): Draft {
+  return { age: profile ? String(profile.age) : '', heightCm: profile ? String(profile.heightCm) : '',
+    bodyWeightKg: bodyWeight == null ? '' : String(bodyWeight), sex: profile?.sex ?? 'unspecified',
+    activityFactor: profile ? String(profile.activityFactor) : '1.4', surplusKcal: profile ? String(profile.surplusKcal) : '0' };
 }
 
 function toInput(draft: Draft): NutritionGoalInput {
@@ -29,22 +31,18 @@ function toInput(draft: Draft): NutritionGoalInput {
 }
 
 export default function NutritionCalculator({ profile, bodyWeight, disabled, onProfileSave, onApplyTargets }: Props) {
-  const [draft, setDraft] = useState(() => toDraft({ ...PERSONAL_NUTRITION_START, ...profile, bodyWeightKg: bodyWeight }));
+  const [draft, setDraft] = useState(() => toDraft(profile, bodyWeight));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   useEffect(() => {
-    setDraft(toDraft({ ...PERSONAL_NUTRITION_START, ...profile, bodyWeightKg: bodyWeight }));
+    setDraft(toDraft(profile, bodyWeight));
   }, [profile?.age, profile?.heightCm, profile?.sex, profile?.activityFactor, profile?.surplusKcal, bodyWeight]);
   let estimate: ReturnType<typeof calculateNutritionGoal> | null = null;
   try { estimate = calculateNutritionGoal(toInput(draft)); } catch { /* Validation appears when the user saves. */ }
   function update(key: keyof Draft, value: string) {
     setDraft(current => ({ ...current, [key]: value }));
     setError(''); setMessage('');
-  }
-  function loadSharedDetails() {
-    setDraft(toDraft(PERSONAL_NUTRITION_START));
-    setMessage('Your details are ready. Save to apply.'); setError('');
   }
   async function save(applyTargets: boolean) {
     if (busy || disabled) return;
@@ -63,7 +61,7 @@ export default function NutritionCalculator({ profile, bodyWeight, disabled, onP
     finally { setBusy(false); }
   }
   return <section className="panel nutrition-calculator" aria-labelledby="nutrition-calculator-heading">
-    <div className="panel-heading"><h3 id="nutrition-calculator-heading">Suggested targets</h3><span className="small-label">Muscle gain</span></div>
+    <div className="panel-heading"><h3 id="nutrition-calculator-heading">Suggested targets</h3><span className="small-label">Optional estimate</span></div>
     {estimate ? <>
       <strong className="nutrition-calculator__calories">{estimate.calories.toLocaleString('en-GB')} <span>kcal/day</span></strong>
       <dl className="nutrition-calculator__macros">
@@ -72,8 +70,7 @@ export default function NutritionCalculator({ profile, bodyWeight, disabled, onP
         <div><dt>Fat</dt><dd>{estimate.fat} g</dd></div>
       </dl>
     </> : <p>Choose an energy equation and valid details below, or edit your targets manually.</p>}
-    <p className="small-note">Includes your gym and volleyball schedule.</p>
-    {!profile && <button className="text-button nutrition-calculator__shared" disabled={busy} onClick={loadSharedDetails}>Use my shared details (18 years, 180 cm, 64 kg)</button>}
+    <p className="small-note">Uses the activity level you choose. Personal details are optional unless you want a calculated estimate.</p>
     <details className="nutrition-calculator__details">
       <summary>Edit calculation details</summary>
       <div className="nutrition-calculator__fields">
@@ -82,13 +79,12 @@ export default function NutritionCalculator({ profile, bodyWeight, disabled, onP
         <label className="field-label">Weight for calculation · kg<input type="text" inputMode="decimal" value={draft.bodyWeightKg} onChange={e => update('bodyWeightKg', e.target.value)} /></label>
         <label className="field-label">Energy equation<select aria-label="Energy equation" value={draft.sex} onChange={e => update('sex', e.target.value)}><option value="male">Male</option><option value="female">Female</option><option value="unspecified">Prefer not to specify</option></select></label>
         <label className="field-label nutrition-calculator__wide">Activity level<select aria-label="Activity level" value={draft.activityFactor} onChange={e => update('activityFactor', e.target.value)}>
-          <option value="1.2">Mostly sedentary · 1.2</option><option value="1.4">Lightly active · 1.4</option><option value="1.55">Moderately active · 1.55</option><option value="1.65">Gym 4× + volleyball 2× weekly · 1.65</option><option value="1.8">Very active · 1.8</option><option value="2">Highly active · 2.0</option>
+          <option value="1.2">Mostly sedentary · 1.2</option><option value="1.4">Lightly active · 1.4</option><option value="1.55">Moderately active · 1.55</option><option value="1.65">Active · 1.65</option><option value="1.8">Very active · 1.8</option><option value="2">Highly active · 2.0</option>
           {![1.2, 1.4, 1.55, 1.65, 1.8, 2].includes(Number(draft.activityFactor)) && <option value={draft.activityFactor}>Custom · {draft.activityFactor}</option>}
         </select></label>
         <label className="field-label nutrition-calculator__wide">Daily calorie surplus · kcal<input type="number" min={0} max={500} step={50} value={draft.surplusKcal} onChange={e => update('surplusKcal', e.target.value)} /></label>
       </div>
       <div className="nutrition-calculator__actions">
-        <button className="text-button" disabled={busy} onClick={loadSharedDetails}>Use my shared details</button>
         <button className="btn secondary" disabled={disabled || busy} onClick={() => void save(false)}>{busy ? 'Saving…' : 'Save calculation details'}</button>
       </div>
     </details>
@@ -98,7 +94,7 @@ export default function NutritionCalculator({ profile, bodyWeight, disabled, onP
     {message && <p className="small-note" role="status">{message}</p>}
     <details className="nutrition-calculator__details">
       <summary>How the estimate works</summary>
-      <p>Activity already includes gym and volleyball. Logged workout calories are not added again.</p>
+      <p>The selected activity level already includes your training. Logged workout calories are not added again.</p>
       {estimate && <p>Resting energy ≈ {estimate.bmr} kcal. × activity level {draft.activityFactor} ≈ {estimate.maintenanceKcal} kcal maintenance. + {draft.surplusKcal} kcal, rounded to 100 kcal.</p>}
       <p>Protein ≈ 2 g/kg; a useful range is 1.6–2.2 g/kg. Fat ≈ 24% of calories. Carbs = (calories − protein × 4 − fat × 9) ÷ 4.</p>
       <p>Compare weekly average morning weights. Aim for roughly 0.1–0.25 kg/week. If well-sampled seven-day averages stay stable for about two weeks, consider adding 150–200 kcal/day; apply changes only when you choose. If gain stays much faster, review your target.</p>

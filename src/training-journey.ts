@@ -27,13 +27,13 @@ export function getTrainingJourney({ sessions, nutritionRecords = [], performanc
   const weeks = new Map<string, { date: string; workouts: number; days: Set<string>; sets: number; volumeKg: number }>();
   // All history remains bounded by stored records; empty weeks are shown in 4/12-week views only.
   if (range !== 'all') for (let date = reportWeekStart(start); date <= today; date = shiftReportDate(date, 7)) weeks.set(date, { date, workouts: 0, days: new Set(), sets: 0, volumeKg: 0 });
-  const groups = new Map<string, { name: string; reps: number; points: JourneyPoint[] }>();
+  const groups = new Map<string, { name: string; reps: number; equipmentLabel?: string; points: JourneyPoint[] }>();
   for (const session of gym) {
     const week = reportWeekStart(session.date);
     const bucket = weeks.get(week) ?? { date: week, workouts: 0, days: new Set<string>(), sets: 0, volumeKg: 0 };
     bucket.workouts++; bucket.days.add(session.date);
     // Combine repeated instances in one session before taking its best matched-rep set.
-    const daily = new Map<string, { name: string; reps: number; value: number; rir: number | null }>();
+    const daily = new Map<string, { name: string; reps: number; equipmentLabel?: string; value: number; rir: number | null }>();
     for (const exercise of session.exercises) {
       if (exercise.preparationOnly) continue;
       bucket.sets += exercise.logs.filter(log => log.done).length;
@@ -43,17 +43,17 @@ export function getTrainingJourney({ sessions, nutritionRecords = [], performanc
         bucket.volumeKg += log.kg * log.reps;
         const id = `${exercisePerformanceIdentity(exercise)}:${Boolean(exercise.perSide)}:${log.reps}`;
         const old = daily.get(id);
-        if (!old || log.kg > old.value) daily.set(id, { name: exercise.name, reps: log.reps, value: log.kg, rir: log.rir ?? null });
+        if (!old || log.kg > old.value) daily.set(id, { name: exercise.name, reps: log.reps, equipmentLabel: exercise.equipmentLabel?.trim().replace(/\s+/g, ' ') || undefined, value: log.kg, rir: log.rir ?? null });
       }
     }
     for (const [id, point] of daily) {
-      const group = groups.get(id) ?? { name: point.name, reps: point.reps, points: [] };
+      const group = groups.get(id) ?? { name: point.name, reps: point.reps, equipmentLabel: point.equipmentLabel, points: [] };
       group.points.push({ date: session.date, value: point.value, rir: point.rir, sessionId: session.id }); groups.set(id, group);
     }
     weeks.set(week, bucket);
   }
-  const series: JourneySeries[] = [...groups].map(([id, group]) => ({ id: `strength:${id}`, metric: 'strength', name: `${group.name} · ${group.reps} reps`, unit: 'kg',
-    context: 'Best completed set at the same reps and movement setup. Compare recorded RIR too; this is load, not a strength score.', points: group.points }));
+  const series: JourneySeries[] = [...groups].map(([id, group]) => ({ id: `strength:${id}`, metric: 'strength', name: `${group.name} · ${group.reps} reps${group.equipmentLabel ? ` · ${group.equipmentLabel}` : ''}`, unit: 'kg',
+    context: `Best completed set at the same reps and movement setup. ${group.equipmentLabel ? `Equipment: ${group.equipmentLabel}.` : 'Equipment was not labeled; verify the same setup yourself.'} Compare recorded RIR too; this is load, not a strength score.`, points: group.points }));
   const jumps = getJumpSummaries(live, performance?.jumps ?? [], today);
   for (const jump of jumps) {
     const points = jump.points.filter(p => p.date >= start);

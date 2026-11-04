@@ -6,7 +6,7 @@ const STORE = 'setline.gym.v1';
 async function setup(page: Page, mode: 'current' | 'legacy' | 'ready' = 'current', active = false) {
   const session = active ? createSession(DEFAULT_PROFILE.plan[0], 0, '2026-10-19', DEFAULT_PROFILE, []) : undefined;
   await page.addInitScript(({ key, profile, session, mode }) => {
-    if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify({
+    if (!localStorage.getItem(key) || JSON.parse(localStorage.getItem(key)!).profileVersion === 0) localStorage.setItem(key, JSON.stringify({
       schemaVersion: 1, profile, profileVersion: 1, sessions: session ? [{ session, version: 1 }] : [], nutrition: [], activities: [],
     }));
     const probe = { checks: 0, requests: 0 };

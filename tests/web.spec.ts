@@ -535,7 +535,7 @@ test('validates and persists editable day plans without changing an existing wor
   await selectTab(page, 'Workout');
   await openAllSets(page);
   await expect(page.getByRole('spinbutton', { name: `${MOVEMENT} set 1 reps`, exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Upper Body', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Upper Power + Muscle', exact: true })).toBeVisible();
   await selectTab(page, 'My plan');
   await page.getByRole('button', { name: 'Edit Monday', exact: true }).click();
   await expect(editor.getByLabel('Workout name', { exact: true })).toHaveValue('Custom strength');
@@ -839,10 +839,11 @@ test('exports a portable backup, rejects invalid imports, and restores after a c
     page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
     preferences.getByRole('button', { name: 'Delete all local data', exact: true }).click(),
   ]);
-  await selectTab(page, 'History');
-  await expect(page.getByText('0 completed workouts', { exact: true })).toBeVisible();
-  preferences = await openPreferences(page);
-  await expect(preferences.getByLabel('Body weight · kg', { exact: true })).toHaveValue('64');
+  await expect(page.getByRole('dialog', { name: 'What brings you here?', exact: true })).toBeVisible();
+  expect(await page.evaluate(key => localStorage.getItem(key), STORE_KEY)).toBeNull();
+  await page.getByRole('button', { name: 'Restore a backup', exact: true }).click();
+  preferences = page.getByRole('dialog', { name: 'Your preferences', exact: true });
+  await expect(preferences.getByLabel('Body weight · kg', { exact: true })).toHaveValue('');
   await preferences.getByLabel('Restore Setline backup', { exact: true }).setInputFiles({
     name: download.suggestedFilename(), mimeType: 'application/json', buffer: Buffer.from(backupText),
   });

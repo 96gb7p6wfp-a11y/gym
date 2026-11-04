@@ -25,6 +25,10 @@ export interface TimedSetControlsProps {
   /** Override the duration input's accessible name when reusing these controls. */
   label?: string;
   done?: boolean;
+  /** Focus auto-advance must not write into or arm the next unreviewed set. */
+  prefill?: boolean;
+  /** Called only by deliberate input/timer actions, never automatic effects. */
+  onInteraction?: () => void;
   onSecondsChange: (seconds: number | null) => void;
   onTimer: (exerciseKey: string, options?: TimedSetTimerOptions) => void;
 }
@@ -44,7 +48,7 @@ function clock(seconds: number): string {
  */
 export function TimedSetControls({
   setId, seconds, target, exerciseKey, exerciseName, elapsedMs, runningSince, timerSetId,
-  now, editing, setNumber = 1, label, done = false, onSecondsChange, onTimer,
+  now, editing, setNumber = 1, label, done = false, prefill = true, onInteraction, onSecondsChange, onTimer,
 }: TimedSetControlsProps) {
   const inMinutes = /\bmin(?:ute)?s?\b/i.test(target);
   const firstTarget = Number(target.match(/\d+(?:[.,]\d+)?/)?.[0]?.replace(',', '.') ?? 0);
@@ -64,12 +68,12 @@ export function TimedSetControls({
   const inputName = label ?? `${exerciseName} set ${setNumber} ${inMinutes ? 'minutes' : 'seconds'}`;
 
   useEffect(() => {
-    if (prefilledSet.current === setId) return;
+    if (!prefill || prefilledSet.current === setId) return;
     prefilledSet.current = setId;
     autoStopped.current = null;
     // Historical empty values stay empty until the user edits them.
     if (!editing && !done && seconds == null) onSecondsChange(preset);
-  }, [setId, editing, done, seconds, preset, onSecondsChange]);
+  }, [setId, editing, done, seconds, preset, prefill, onSecondsChange]);
 
   useEffect(() => {
     if (!canTime || !countdown || !running || !complete) return;
@@ -83,12 +87,14 @@ export function TimedSetControls({
 
   function setDuration(next: number | null) {
     if (running) return;
+    onInteraction?.();
     autoStopped.current = null;
     if (elapsed > 0 && !editing) onTimer(exerciseKey, { action: 'reset', setId });
     onSecondsChange(next);
   }
 
   function toggle() {
+    onInteraction?.();
     autoStopped.current = null;
     if (running) {
       onTimer(exerciseKey, { action: 'pause', setId });
@@ -101,6 +107,7 @@ export function TimedSetControls({
   }
 
   function reset() {
+    onInteraction?.();
     autoStopped.current = null;
     onTimer(exerciseKey, { action: 'reset', setId });
   }

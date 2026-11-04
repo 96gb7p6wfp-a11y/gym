@@ -107,7 +107,7 @@ test('choosing an unspecified equation preserves privacy and allows manual targe
   await expect(page.locator('.nutrition-totals')).toContainText('No target set');
 });
 
-test('older profiles explicitly load the shared details while historical workout weight stays unchanged', async ({ page }) => {
+test('older profiles enter their own calculation details while historical workout weight stays unchanged', async ({ page }) => {
   const { nutrition: _nutrition, volleyballSchedule: _schedule, ...olderFields } = DEFAULT_PROFILE;
   const legacyProfile = { ...olderFields, bodyWeight: 61 };
   const historical = stopSessionTimers(createSession(legacyProfile.plan[0], 0, '2026-10-05', legacyProfile, []), 'completed');
@@ -121,8 +121,16 @@ test('older profiles explicitly load the shared details while historical workout
   await openSection(page, 'Nutrition');
   await openTargets(page);
   const calculator = page.locator('.nutrition-calculator');
-  await expect(calculator).toContainText('2,900 kcal/day');
-  await calculator.getByRole('button', { name: 'Use my shared details (18 years, 180 cm, 64 kg)', exact: true }).click();
+  await expect(calculator.getByRole('button', { name: 'Use these daily targets', exact: true })).toBeDisabled();
+  await calculator.getByText('Edit calculation details', { exact: true }).click();
+  await expect(calculator.getByLabel('Age', { exact: true })).toHaveValue('');
+  await expect(calculator.getByLabel('Height · cm', { exact: true })).toHaveValue('');
+  await calculator.getByLabel('Age', { exact: true }).fill('18');
+  await calculator.getByLabel('Height · cm', { exact: true }).fill('180');
+  await calculator.getByLabel('Weight for calculation · kg', { exact: true }).fill('64');
+  await calculator.getByLabel('Energy equation', { exact: true }).selectOption('male');
+  await calculator.getByLabel('Activity level', { exact: true }).selectOption('1.65');
+  await calculator.getByLabel('Daily calorie surplus · kcal', { exact: true }).fill('200');
   await expect(calculator).toContainText('3,000 kcal/day');
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('setline.gym.v1')!).profile.bodyWeight)).toBe(61);
   await calculator.getByRole('button', { name: 'Use these daily targets', exact: true }).click();

@@ -10,7 +10,7 @@ async function setup(page: Page, instrument = true) {
   await page.clock.install({ time: new Date('2026-10-19T10:00:00Z') });
   await page.clock.pauseAt(new Date('2026-10-19T10:00:01Z'));
   await page.addInitScript(({ key, profile, instrument }) => {
-    if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify({
+    if (!localStorage.getItem(key) || JSON.parse(localStorage.getItem(key)!).profileVersion === 0) localStorage.setItem(key, JSON.stringify({
       schemaVersion: 1, profile, profileVersion: 1, sessions: [], nutrition: [], activities: [],
     }));
     if (!instrument) return;

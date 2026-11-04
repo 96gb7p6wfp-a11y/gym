@@ -131,6 +131,7 @@ export function WorkoutBuilder({ open, onOpenChange, initialWorkout, onSave, tit
                       <summary>More options</summary>
                       <div className="builder-prescription-grid">
                         <label className="field-label">Movement<input maxLength={120} value={exercise.name} onChange={event => patchExercise(index, { name: event.target.value })} /></label>
+                        <label className="field-label">Equipment label · optional<input maxLength={80} value={exercise.equipmentLabel ?? ''} autoComplete="off" placeholder="e.g. Technogym Chest Press" onChange={event => patchExercise(index, { equipmentLabel: event.target.value || undefined })} /></label>
                         <label className="field-label">Target RPE<input type="number" inputMode="decimal" min={1} max={10} step={0.5} placeholder="Optional" value={exercise.targetRpe ?? ''} onChange={event => patchExercise(index, { targetRpe: event.target.value === '' ? undefined : Number(event.target.value) })} /></label>
                         <label className="field-label">Logging<select value={exercise.mode} onChange={event => patchExercise(index, { mode: event.target.value as PlanExercise['mode'], quantityUnit: undefined })}><option value="weight">Weight + reps</option><option value="bodyweight">Bodyweight + reps</option><option value="timed">Time</option></select></label>
                       </div>

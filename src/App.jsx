@@ -1,3 +1,9 @@
+import './v16.css';
+import { createNewProfile, createStarterPlan, DEFAULT_TRAINING_PREFERENCES, presentationMode } from './onboarding';
+import { Onboarding } from './Onboarding';
+import HistorySearch from './HistorySearch';
+import { BackupReminder } from './DataSettings';
+import { SupportPrivacy } from './SupportPrivacy';
 import { berlinDate, calendarDayIndex } from "./calendar-date";
 import { upgradeMasterProgram, restorePreviousMasterProgram } from "./master-program-upgrade";
 import { WorkoutPlanPreview } from "./WorkoutPlanPreview";
@@ -8,6 +14,8 @@ import { useRestAudio } from "./useRestAudio";
 import { useRestDeadline } from "./useRestDeadline";
 import { recordedExerciseChartValue } from "./exercise-chart";
 import { previousSetReuse } from "./workout-reuse";
+import { targetSetTransition } from "./set-completion";
+import { readCompletionReceipt, saveCompletionReceipt, readRestOwner, saveRestOwner } from "./completion-receipt";
 import { DEFAULT_REST_VOLUME } from "./rest-audio";
 import { TimerSoundSettings } from "./TimerSoundSettings";
 import { PwaUpdateControl } from "./PwaUpdateControl";
@@ -34,7 +42,8 @@ import { FocusedWorkout } from "./FocusedWorkout";
 import { WorkoutPreview } from "./WorkoutPreview";
 import { ProgressOverview } from "./ProgressOverview";
 import { RemindersPanel } from "./RemindersPanel";
-import { shortSessionName } from "./presentation";
+import { shortSessionName, workoutTitle } from "./presentation";
+import { formatPreviousSet, previousPerformance } from "./previous-performance";
 import { VolleyballMasterProgram, MasterProgramReadiness } from './VolleyballMasterProgram';
 import { applyMasterReadiness, applyMasterClearance, createVolleyballMasterPlan, getMasterProgramWeek, getMasterProgramPhase, masterWeekStart, masterScheduledEvents, masterPlannedMinutes, resolveMasterProgramPlan, createRecommendedMasterPlan, isMasterReadinessRequired, masterJumpContacts } from './volleyball-master-plan';
 import { PageHeader, BottomNavigation, SegmentedControl, MenuRow } from "./components/design";
@@ -156,13 +165,17 @@ const TrainingJourney = deferredScreen(() => import('./TrainingJourney'), 'Loadi
 const StrengthChart = deferredScreen(() => import('./StrengthChart'), 'Loading chart…');
 
 async function requestTracker(payload) {
-  return requestLocal("/api/tracker", payload, DEFAULT_PROFILE);
+  return requestLocal("/api/tracker", payload);
 }
 function GymApp({
   initialDate = berlinDate(),
   initialNow = Date.now(),
 } = {}) {
-  let [profile, setProfile] = React.useState(DEFAULT_PROFILE);
+  let [profile, setProfile] = React.useState(createNewProfile);
+  const athleteMode = presentationMode(profile) === `athlete`;
+  const establishedProfile = !profile.onboarding || profile.onboarding.installation === `existing`;
+  const [preferencesOpen, setPreferencesOpen] = React.useState(false);
+  const [supportOpen, setSupportOpen] = React.useState(false);
   let [sessions, setSessions] = React.useState([]);
   let [activityRecords, setActivityRecords] = React.useState([]);
   let [reportNutrition, setReportNutrition] = React.useState(undefined);
@@ -208,7 +221,12 @@ function GymApp({
   const today = berlinDate(now);
   let [restEndsAt, setRestDeadline] = useRestDeadline();
   const [restFinished, setRestFinished] = React.useState(null);
-  function setRestEndsAt(deadline) { setRestFinished(null); setRestDeadline(deadline); }
+  const restOwner = React.useRef(readRestOwner());
+  const consumedCompletionIntents = React.useRef(new Set());
+  const lastSetReceipt = React.useRef(null);
+  const receiptLoaded = React.useRef(false);
+  if (!receiptLoaded.current) { lastSetReceipt.current = readCompletionReceipt(); receiptLoaded.current = true; }
+  function setRestEndsAt(deadline, owner = restOwner.current) { restOwner.current = deadline === null ? null : owner; saveRestOwner(restOwner.current); setRestFinished(null); setRestDeadline(deadline); }
   let [restSeconds, setRestSeconds] = React.useState(90);
   const restAudio = useRestAudio({ enabled: profile.timerSoundEnabled !== false, volume: profile.timerSoundVolume ?? DEFAULT_REST_VOLUME, endsAt: restEndsAt,
     onComplete: result => {
@@ -236,6 +254,7 @@ function GymApp({
   let [mutatingRecordId, setMutatingRecordId] = React.useState(null);
   let [recentlyDeletedOpen, setRecentlyDeletedOpen] = React.useState(!1);
   let [editingHistoryId, setEditingHistoryId] = React.useState(null);
+  const editingIdRef = React.useRef(editingHistoryId); editingIdRef.current = editingHistoryId;
   let [progressExerciseKey, setProgressExerciseKey] =
     React.useState(`chest-press`);
   let sessionsRef = React.useRef([]);
@@ -402,8 +421,8 @@ function GymApp({
   const { plan: selectedPlan, slot: selectedSlot } = selectedContext;
   const todayContext = workoutForDate(today);
   const todayMasterWeek = todayContext.masterWeek;
-  const programOffer = loaded && !loadError && (!profile.masterProgram || profile.masterProgram.revision !== '13.1')
-    ? 'V13.1 is ready' : loaded && profile.masterProgram?.revision === '13.1' && today < profile.masterProgram.startDate
+  const programOffer = athleteMode && loaded && !loadError && (!profile.masterProgram || profile.masterProgram.revision !== '13.1')
+    ? 'V13.1 is ready' : athleteMode && loaded && profile.masterProgram?.revision === '13.1' && today < profile.masterProgram.startDate
       ? `V13.1 starts ${formatDate(profile.masterProgram.startDate, true)}` : null;
   const masterBlockComplete = !!profile.masterProgram && !todayMasterWeek && today >= profile.masterProgram.startDate;
   const previewWorkout = previewContext ? workoutForDate(previewContext.date, previewContext.slot) : selectedContext;
@@ -411,12 +430,12 @@ function GymApp({
     : findSessionDraft(profile.sessionDrafts, warmupContext.date, warmupContext.slot));
   const warmupPlan = preparationDraft?.plan ?? (warmupContext ? workoutForDate(warmupContext.date, warmupContext.slot).plan : selectedPlan);
   const gateWarmupItems = preparationFor(warmupPlan, 'warmup');
-  let completedSessions = sessions
+  const completedSessions = React.useMemo(() => sessions
     .filter((e) => e.status === `completed`)
-    .sort((e, t) => t.date.localeCompare(e.date) || t.startedAt - e.startedAt);
-  let deletedSessions = sessions
+    .sort((e, t) => t.date.localeCompare(e.date) || t.startedAt - e.startedAt), [sessions]);
+  const deletedSessions = React.useMemo(() => sessions
     .filter((e) => e.status === `deleted`)
-    .sort((e, t) => (t.deletedAt ?? 0) - (e.deletedAt ?? 0));
+    .sort((e, t) => (t.deletedAt ?? 0) - (e.deletedAt ?? 0)), [sessions]);
   let dayCompletedSession = completedSessions.find(
     (e) => e.date === selectedDate,
   );
@@ -492,6 +511,7 @@ function GymApp({
     }, minutes: totalMinutes, calories: totalCalories };
   }
   function guidanceForDate(date, includeRoutine = true) {
+    if (!athleteMode || profile.bodyWeight == null) return null;
     return <DailyGuidance {...dailyContext(date)} includeRoutine={includeRoutine} />;
   }
   const selectedWorkingExercises = selectedPlan.exercises.filter(exercise => exercise.optionalWork !== true);
@@ -748,14 +768,14 @@ function GymApp({
       ? exercise.logs.find(log => log.id === exercise.timerSetId) : exercise.logs.find(log => !log.done);
     if (set) toggleMovementTimer(key, { action: exercise.runningSince === null ? `start` : `pause`, setId: set.id }, !0);
   }
-  function markSetDone(e, t, n) {
-    if (n && !editingHistoryId) void restAudio.unlock();
-    let r = sessionsRef.current.find(
-      (e) => e.id === (editingHistoryId ?? activeSession?.id),
-    );
-    if (!r) return;
-    let i = r.exercises.find((t) => t.key === e);
-    let a = i.logs.find((e) => e.id === t);
+  function markSetDone(e, t, n, intent) {
+    const selectedId = editingIdRef.current ?? sessionsRef.current.find(session => session.status === 'active')?.id;
+    const target = { sessionId: intent?.sessionId ?? selectedId, exerciseKey: e, setId: t };
+    if (!selectedId || target.sessionId !== selectedId || (intent?.intentId && consumedCompletionIntents.current.has(intent.intentId))) return false;
+    let r = sessionsRef.current.find(session => session.id === selectedId);
+    let i = r?.exercises.find(entry => entry.key === e);
+    let a = i?.logs.find(entry => entry.id === t);
+    if (!r || !i || !a || a.done === n) return false;
     let o = i.mode === `timed` ? (editingHistoryId ? a.seconds : recordedTimedSetSeconds(i, a, Date.now())) :
       (i.runningSince === null
         ? null
@@ -767,45 +787,43 @@ function GymApp({
           ? `Enter a time, or run the movement timer first.`
           : `Enter your reps before checking off this set.`,
       );
-      return;
+      return false;
     }
     if (n && i.mode === `weight` && !isValidWorkoutWeight(a.kg)) {
       toast.error(`Enter the weight you used. Use 0 for no added weight.`);
-      return;
+      return false;
     }
     if (n && a.kg !== null && !isValidWorkoutWeight(a.kg)) {
       toast.error(`Enter a weight between 0 and 2,000 kg.`);
-      return;
+      return false;
     }
     let s = Date.now();
-    const exercises = r.exercises.map((r) =>
-          r.key === e
-            ? {
-                ...r,
-                elapsedMs: n
-                  ? elapsedTime(r.elapsedMs, r.runningSince, s)
-                  : r.elapsedMs,
-                runningSince: n ? null : r.runningSince,
-                logs: r.logs.map((e) =>
-                  e.id === t
-                    ? {
-                        ...e,
-                        done: n,
-                        seconds: n ? o : e.seconds,
-                      }
-                    : e,
-                ),
-              }
-            : r,
-        );
+    const transitioned = targetSetTransition(r, target, n, n ? { seconds: o } : {});
+    if (transitioned === r) return false;
+    if (intent?.intentId) consumedCompletionIntents.current.add(intent.intentId);
+    const exercises = transitioned.exercises.map(entry => entry.key !== e || !n ? entry : {
+      ...entry, elapsedMs: elapsedTime(entry.elapsedMs, entry.runningSince, s), runningSince: null,
+    });
+    if (n) { lastSetReceipt.current = target; saveCompletionReceipt(target); }
+    else if (lastSetReceipt.current?.sessionId === target.sessionId && lastSetReceipt.current?.exerciseKey === e && lastSetReceipt.current?.setId === t) {
+      lastSetReceipt.current = null; saveCompletionReceipt(null);
+    }
     queueSession({ ...r, exercises }, !0);
+    if (!n && restOwner.current?.sessionId === target.sessionId && restOwner.current?.exerciseKey === e && restOwner.current?.setId === t) setRestEndsAt(null);
     if (n && r.status === `active`) {
+      void restAudio.unlock();
       const seconds = restAfterCompletedSet(exercises, e, t);
       if (seconds > 0) {
         setRestSeconds(seconds);
-        setRestEndsAt(s + seconds * 1e3);
+        setRestEndsAt(s + seconds * 1e3, target);
       } else setRestEndsAt(null);
     }
+    return true;
+  }
+  function undoLastSet() {
+    const target = lastSetReceipt.current;
+    if (!target) return false;
+    return markSetDone(target.exerciseKey, target.setId, false, { sessionId: target.sessionId });
   }
   async function finishWorkout() {
     if (!activeSession || finishSaving) return;
@@ -865,6 +883,28 @@ function GymApp({
     } finally {
       setProfileSaving(!1);
     }
+  }
+  async function finishOnboarding(preferences, { applyPlan = true } = {}, status = `completed`) {
+    const isNew = profile.onboarding?.status === `pending`;
+    if (applyPlan && !isNew && activeSession) { toast.error(`Finish your active workout before replacing the weekly plan.`); return false; }
+    if (applyPlan && !isNew && profile.masterProgramBackup && (profile.masterProgramArchive?.length ?? 0) >= 20) {
+      toast.error(`Your plan archive is full. Export a backup before changing the weekly plan.`); return false;
+    }
+    const archivedPlan = applyPlan && !isNew ? { masterProgramBackup: {
+      savedAt: Date.now(), plan: profile.plan, ...(profile.masterProgram ? { masterProgram: profile.masterProgram } : {}),
+      ...(profile.preMasterPlan ? { preMasterPlan: profile.preMasterPlan } : {}),
+      ...(profile.masterMatchWeekend ? { masterMatchWeekend: profile.masterMatchWeekend } : {}),
+      ...(profile.sessionDrafts ? { sessionDrafts: profile.sessionDrafts } : {}) },
+      ...(profile.masterProgramBackup ? { masterProgramArchive: [...(profile.masterProgramArchive ?? []), profile.masterProgramBackup] } : {}) } : {};
+    const next = { ...profile, ...archivedPlan, trainingPreferences: preferences,
+      presentationMode: profile.presentationMode ?? (isNew ? `simple` : `athlete`),
+      onboarding: { version: 16, status, installation: profile.onboarding?.installation ?? (isNew ? `new` : `existing`) },
+      ...(applyPlan ? { plan: createStarterPlan(preferences), masterProgram: undefined,
+        preMasterPlan: undefined, masterMatchWeekend: undefined, sessionDrafts: undefined } : {}) };
+    if (!(await saveProfile(next, { notify: false }))) return false;
+    setPreferencesOpen(false);
+    if (isNew && preferences.goal === `own`) { setTab(`train`); openCustomWorkout(); }
+    return true;
   }
   function openCustomWorkout(workout = null, day = undefined) {
     setCustomBuilder({ workout: workout ? structuredClone(workout) : null, id: workout?.id, day });
@@ -959,7 +999,7 @@ function GymApp({
     }
     return true;
   }
-  const volleyballSchedule = profile.volleyballSchedule ?? DEFAULT_PROFILE.volleyballSchedule;
+  const volleyballSchedule = profile.volleyballSchedule ?? (establishedProfile ? DEFAULT_PROFILE.volleyballSchedule : { days: [], startTime: ``, endTime: ``, timeZone: `Europe/Berlin` });
   async function saveVolleyballSchedule(schedule) {
     const plan = profile.plan.map((day, index) => schedule.days.includes(index)
       ? { ...day, note: day.note.replace(/\b\d{2}:\d{2}[–-]\d{2}:\d{2}/g,
@@ -1063,7 +1103,7 @@ function GymApp({
     if (loaded && [`today`, `progress`].includes(tab)) void loadReportNutrition();
   }, [tab, loaded, today]);
   void 0;
-  let allExercises = Array.from(
+  const allExercises = React.useMemo(() => Array.from(
     new Map(
       [
         ...completedSessions.flatMap((e) => e.exercises),
@@ -1073,17 +1113,17 @@ function GymApp({
         ]),
       ].map((e) => [exercisePerformanceIdentity(e), e]),
     ).values(),
-  );
+  ), [completedSessions, profile.plan]);
   let progressExercise =
     allExercises.find((e) => exercisePerformanceIdentity(e) === progressExerciseKey || (e.exerciseId ?? e.key) === progressExerciseKey) ?? allExercises[0];
-  let exerciseSessions = completedSessions
+  const exerciseSessions = React.useMemo(() => completedSessions
     .filter((e) =>
       e.exercises.some(
         (e) => progressExercise && areComparableExercises(e, progressExercise) && e.logs.some((e) => e.done),
       ),
     )
-    .reverse();
-  let chartData = exerciseSessions
+    .reverse(), [completedSessions, progressExercise]);
+  const chartData = React.useMemo(() => exerciseSessions
     .slice(-12)
     .filter(
       (e) =>
@@ -1098,7 +1138,7 @@ function GymApp({
         date: formatDate(e.date, !0),
         value: recordedExerciseChartValue(t),
       };
-    }).filter(point => point.value !== null);
+    }).filter(point => point.value !== null), [exerciseSessions, progressExercise]);
   let chartMetricLabel = progressExercise?.measurement
     ? measurementLabel(progressExercise)
     : progressExercise?.mode === `weight`
@@ -1107,10 +1147,16 @@ function GymApp({
         ? `Total time · sec`
         : `Total reps`;
   function comparablePrevious(exercise, date, excludedId) {
-    const previous = previousExercise(completedSessions, exercise.exerciseId ?? exercise.key, date, excludedId);
-    return previous && areComparableExercises(previous.exercise, exercise) ? previous : null;
+    for (const session of completedSessions.filter(session => session.id !== excludedId && session.date <= date && session.deletedAt == null).slice().sort((a,b) => b.date.localeCompare(a.date) || b.startedAt-a.startedAt)) {
+      const candidates = session.exercises.filter(entry => !entry.preparationOnly && areComparableExercises(entry, exercise));
+      const matched = candidates.find(entry => entry.key === exercise.key) ?? (candidates.length === 1 ? candidates[0] : null);
+      if (matched) return { session, exercise: matched };
+      if (candidates.length) return null;
+    }
+    return null;
   }
   function volleyballIsSoon() {
+    if (!volleyballSchedule.days.length) return false;
     const clock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(now));
     const [hour, minute] = clock.split(':').map(Number);
     const [startHour, startMinute] = volleyballSchedule.startTime.split(':').map(Number);
@@ -1277,10 +1323,10 @@ function GymApp({
           </div>
         )}
         <TabsContent value="today">
-          <TodayView date={today} plan={todayContext.plan} session={activeSession?.date === today ? activeSession : undefined} otherSession={activeSession?.date !== today ? activeSession : undefined} completed={todayCompletedSession} now={now}
+          <TodayView athleteMode={athleteMode} date={today} plan={todayContext.plan} session={activeSession?.date === today ? activeSession : undefined} otherSession={activeSession?.date !== today ? activeSession : undefined} completed={todayCompletedSession} now={now}
             activities={activityRecords} nutrition={reportNutrition} volleyballSchedule={volleyballSchedule}
             sessions={sessions} weeklyPlan={currentWeekPlan} performance={performance.data} bodyWeight={profile.bodyWeight} today={today}
-            programOffer={programOffer} onReviewProgram={reviewProgram} blockComplete={masterBlockComplete} programLabel={todayMasterWeek ? `Week ${todayMasterWeek} · ${getMasterProgramPhase(todayMasterWeek)}` : masterBlockComplete ? 'Block complete' : undefined} scheduledEvents={masterScheduledEvents(profile.masterProgram, today)}
+            programOffer={athleteMode ? programOffer : null} onReviewProgram={reviewProgram} blockComplete={masterBlockComplete} programLabel={todayMasterWeek ? `Week ${todayMasterWeek} · ${getMasterProgramPhase(todayMasterWeek)}` : masterBlockComplete ? 'Block complete' : undefined} scheduledEvents={athleteMode ? masterScheduledEvents(profile.masterProgram, today) : []}
             onProgress={() => { setProgressView('overview'); setTab('progress'); }}
             disabled={!loaded || saving || profileSaving || !!loadError} onPreview={() => openPreview(todayContext)} onStart={() => startWorkout(todayContext)} onTrain={() => { setEditingHistoryId(null); if (!activeSession) selectTrainingDate(today); setTab(`train`); }} onBrowseTrain={() => setTab(`train`)}
             onViewLog={setSelectedHistory} onNutrition={() => setTab(`nutrition`)} onPlan={() => masterBlockComplete ? openProgramConfiguration() : openPlan()}
@@ -1311,7 +1357,7 @@ function GymApp({
               )}
 
               <section className={`session-card native-session ${currentSession ? 'session-card--active' : ''} ${editingHistoryId ? 'native-session--editing' : ''}`}>
-                <div className="native-session-overview"><p className="session-tag">{editingHistoryId ? 'Editing saved workout' : activeSession ? 'Session in progress' : `${WEEKDAYS[selectedDay]} · ${formatDate(selectedDate, true)}`}</p><h2>{currentSession ? currentSession.goal ? getSessionPurpose(currentSession).title : shortSessionName(currentSession.name) : getSessionPurpose(selectedPlan, selectedDay).title}</h2>{!currentSession && <p className="session-purpose-line">{getSessionPurpose(selectedPlan, selectedDay).subtitle}</p>}<p className="native-session-prescription">{currentSession ? currentSession.kind === `sport` ? `On court · reflect after training` : currentSession.kind === `recovery` && !totalSets ? `${cooldownItems.filter(step => step.done).length} / ${cooldownItems.length} movements complete` : `${doneSets} / ${totalSets} sets complete` : selectedPlan.kind === `recovery` ? `${selectedPlan.durationRange ?? `${selectedPlan.minutes} min`} · mobility & stretching` : selectedPlan.kind === `sport` ? /match/i.test(selectedPlan.name) ? `Match · ${selectedPlan.startTime ?? "time not set"} · record actual duration` : `${selectedPlan.minutes} min · on court` : `${selectedWorkingExercises.length} exercises · ${totalSets} sets · ${selectedPlan.durationRange ?? `${selectedPlan.minutes} min`}`}</p></div>
+                <div className="native-session-overview"><p className="session-tag">{editingHistoryId ? 'Editing saved workout' : activeSession ? 'Session in progress' : `${WEEKDAYS[selectedDay]} · ${formatDate(selectedDate, true)}`}</p><h2 className={workoutTitle(currentSession ?? selectedPlan).length > 30 ? `native-session-title--long` : undefined}>{workoutTitle(currentSession ?? selectedPlan)}</h2>{!currentSession && <p className="session-purpose-line">{getSessionPurpose(selectedPlan, selectedDay).subtitle}</p>}<p className="native-session-prescription">{currentSession ? currentSession.kind === `sport` ? `On court · reflect after training` : currentSession.kind === `recovery` && !totalSets ? `${cooldownItems.filter(step => step.done).length} / ${cooldownItems.length} movements complete` : `${doneSets} / ${totalSets} sets complete` : selectedPlan.kind === `recovery` ? `${selectedPlan.durationRange ?? `${selectedPlan.minutes} min`} · mobility & stretching` : selectedPlan.kind === `sport` ? /match/i.test(selectedPlan.name) ? `Match · ${selectedPlan.startTime ?? "time not set"} · record actual duration` : `${selectedPlan.minutes} min · on court` : `${selectedWorkingExercises.length} exercises · ${totalSets} sets · ${selectedPlan.durationRange ?? `${selectedPlan.minutes} min`}`}</p></div>
                 <div className="native-session-actionbar">{activeSession && <span className="session-clock"><Clock3 size={14} />{formatElapsedTime(sessionDuration(activeSession, now))}</span>}
                   {editingHistoryId ? (
                     <button
@@ -1428,7 +1474,7 @@ function GymApp({
                     disabled={saving || !!loadError} /></section> : <>
                   {currentSession.kind === 'sport' && <section className="sport-reflection" aria-label="Volleyball reflection"><h3>How did training feel?</h3><p>What went well? One thing to work on next time.</p><label className="sr-only" htmlFor="volleyball-reflection">Volleyball reflection</label><textarea id="volleyball-reflection" maxLength={2000} placeholder="Energy, jumps, hitting, or one small win…" value={currentSession.notes} onChange={event => updateSession(session => ({ ...session, notes: event.target.value }))} /><TrainingExposureFields value={currentSession.trainingExposure} onChange={trainingExposure => updateSession(session => ({ ...session, trainingExposure }))} defaultSport={reflectionSport} disabled={saving || !!loadError} /></section>}
                   <SessionExerciseArea sport={currentSession.kind === 'sport'} editing={!!editingHistoryId}>
-                  <FocusedWorkout sessionId={currentSession.id} exercises={currentSession.exercises} now={now} editing={!!editingHistoryId}
+                  <FocusedWorkout athleteMode={athleteMode} onEquipmentChange={(key, label) => updateExercise(key, exercise => ({ ...exercise, equipmentLabel: label }))} sessionId={currentSession.id} exercises={currentSession.exercises} now={now} editing={!!editingHistoryId}
                   sessions={completedSessions} date={currentSession.date}
                   context={{ readiness: performance.data?.readiness.find(row => row.date === currentSession.date),
                     lowFatigueSession: /primer/i.test(currentSession.name) || ['yellow', 'red'].includes(profile.masterProgram?.readiness?.find(row => row.date === currentSession.date)?.status) || (currentSession.programRevision && profile.masterProgram && [4, 8].includes(getMasterProgramWeek(profile.masterProgram.startDate, currentSession.date))),
@@ -1436,6 +1482,9 @@ function GymApp({
                   onExerciseAction={setExerciseActionKey}
                   previous={(exercise) => comparablePrevious(exercise, currentSession.date, currentSession.id)}
                   onSet={updateSet} onDone={markSetDone} onTimer={toggleMovementTimer}
+                  onUndoLast={undoLastSet}
+                  lastCompletedTarget={lastSetReceipt.current?.sessionId === currentSession.id ? lastSetReceipt.current : undefined}
+                  canUndoLast={!!(lastSetReceipt.current?.sessionId === currentSession.id && currentSession.exercises.some(exercise => exercise.key === lastSetReceipt.current.exerciseKey && exercise.logs.some(log => log.id === lastSetReceipt.current.setId && log.done)))}
                   renderAllSets={(e, t) => (
                     <ExerciseTracker
                       defaultExpanded
@@ -1449,7 +1498,7 @@ function GymApp({
                       )}
                       editing={!!editingHistoryId}
                       onSet={(t, n) => updateSet(e.key, t, n, !0)}
-                      onDone={(t, n) => markSetDone(e.key, t, n)}
+                      onDone={(t, n) => markSetDone(e.key, t, n, { sessionId: currentSession.id })}
                       onTimer={() => toggleSetStopwatch(e.key)}
                       onAdd={() =>
                         updateExercise(e.key, (e) => ({
@@ -1488,10 +1537,8 @@ function GymApp({
                 <div className="planned-section">
                 <details className="planned-preview"><summary>Exercises <span>{selectedWorkingExercises.length}</span></summary>
                 <WorkoutPreview exercises={selectedPlan.exercises} previous={exercise => {
-                  const previous = comparablePrevious(exercise, selectedDate);
-                  const best = topSet(previous?.exercise);
-                  return best ? `${formatNumber(best.kg)} kg × ${best.reps}` : previous
-                    ? `${previous.exercise.logs.filter(log => log.done).length} sets last time` : undefined;
+                  const prior = previousPerformance(exercise, completedSessions, selectedDate);
+                  return prior ? `${prior.label} · ${prior.date}` : undefined;
                 }} /></details>
                 </div>
               )}
@@ -1619,7 +1666,7 @@ function GymApp({
                         ? `Active kcal · entered`
                         : `Active kcal · est.`
                     }
-                    value={formatNumber(
+                    value={(currentSession ? getCalories(currentSession, now) == null : weekCompletedSessions.some(session => getCalories(session) == null)) ? `—` : formatNumber(
                       currentSession
                         ? getCalories(currentSession, now)
                         : weekCompletedSessions.reduce(
@@ -1664,7 +1711,7 @@ function GymApp({
                       onClick={() => {
                         setRestSeconds(e);
                         restEndsAt !== null &&
-                          (void restAudio.unlock(), setRestEndsAt(Date.now() + e * 1e3));
+                          (void restAudio.unlock(), setRestEndsAt(Date.now() + e * 1e3, null));
                       }}
                       key={e}
                     >
@@ -1678,7 +1725,7 @@ function GymApp({
                     <button
                       className={`btn full`}
                       onClick={() =>
-                        (void restAudio.unlock(), setRestEndsAt(Date.now() + restSeconds * 1e3))
+                        (void restAudio.unlock(), setRestEndsAt(Date.now() + restSeconds * 1e3, null))
                       }
                     >
                       <Play size={16} />
@@ -1703,10 +1750,10 @@ function GymApp({
                 <button type="button" className="text-button" onClick={() => { openSettings(); setTimeout(() => document.querySelector('.timer-sound-settings')?.scrollIntoView({ block: 'start' }), 0); }}>Timer sound</button>
               </section>
               </details>
-              <details className="train-secondary"><summary>Fuel &amp; recovery</summary>
+              {athleteMode && <details className="train-secondary"><summary>Fuel &amp; recovery</summary>
                 <ShortRoutine input={dailyContext(workoutDate).input} />
                 {guidanceForDate(workoutDate, false)}
-              </details>
+              </details>}
             </aside></div></details>
           </div>
         </TabsContent>
@@ -1718,7 +1765,7 @@ function GymApp({
               onSaveJump={performance.saveJump} onSaveJumps={performance.saveJumps} onDeleteJump={performance.deleteJump}
               onLogWeight={() => { setNutritionAction('weight'); setTab('nutrition'); }} /></>}
           {progressView === 'journey' && <TrainingJourney sessions={sessions} nutritionRecords={reportNutrition} performance={performance.data} today={today} onViewSession={id => setSelectedHistory(sessions.find(session => session.id === id) ?? null)} />}
-          {progressView === `overview` && <ProgressOverview sessions={sessions} activities={activityRecords} plan={currentWeekPlan} bodyWeight={profile.bodyWeight} nutritionRecords={reportNutrition} performance={performance.data} today={today}
+          {progressView === `overview` && <ProgressOverview athleteMode={athleteMode} sessions={sessions} activities={activityRecords} plan={currentWeekPlan} bodyWeight={profile.bodyWeight} nutritionRecords={reportNutrition} performance={performance.data} today={today}
             onViewJourney={() => setProgressView('journey')}
             onViewPerformance={() => { setPerformanceAction(undefined); setProgressView('details'); }}
             onLogJump={() => { setPerformanceAction('log-jump'); setProgressView('details'); }}
@@ -1735,7 +1782,7 @@ function GymApp({
               <SelectContent>
                 {allExercises.map((e) => (
                   <SelectItem value={exercisePerformanceIdentity(e)} key={exercisePerformanceIdentity(e)}>
-                    {e.name}
+                    {e.name}{e.equipmentLabel ? ` · ${e.equipmentLabel}` : ``}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -1873,8 +1920,8 @@ function GymApp({
                 >{`Your saved sets, weights, and times`}</span>
               </div>
               {completedSessions.length ? (
-                <div className={`history-grid`}>
-                  {completedSessions.map((e) => (
+                <HistorySearch sessions={completedSessions}>{visibleSessions => <div className={`history-grid`}>
+                  {visibleSessions.map((e) => (
                     <button
                       className={`history-card`}
                       onClick={() => setSelectedHistory(e)}
@@ -1891,7 +1938,7 @@ function GymApp({
                           {e.date.slice(0, 4)}
                         </span>
                       </div>
-                      <h2>{e.name}</h2>
+                      <h2>{workoutTitle(e)}</h2>
                       <p>{WEEKDAYS[e.day]}</p>
                       <div className={`history-metrics`}>
                         <span>
@@ -1906,9 +1953,7 @@ function GymApp({
                         </span>
                         <span>
                           <Flame size={15} />
-                          {getCalories(e)}
-                          {` kcal`}
-                          {e.watchCalories === null ? ` est.` : ``}
+                          {getCalories(e) == null ? `Not estimated` : `${getCalories(e)} kcal${e.watchCalories === null ? ` est.` : ``}`}
                         </span>
                       </div>
                       <div className={`history-volume`}>
@@ -1918,7 +1963,7 @@ function GymApp({
                       </div>
                     </button>
                   ))}
-                </div>
+                </div>}</HistorySearch>
               ) : (
                 <div className={`empty-state large`}>
                   <RotateCcwClock size={34} />
@@ -1950,7 +1995,7 @@ function GymApp({
 </details></>}
         </TabsContent>
         <TabsContent value="more">
-          {moreView === `nutrition` && <NutritionView bodyWeight={profile.bodyWeight} dailyGuidance={guidanceForDate}
+          {moreView === `nutrition` && <NutritionView personalProgramTargets={establishedProfile} athleteMode={athleteMode} bodyWeight={profile.bodyWeight} dailyGuidance={guidanceForDate}
             nutritionProfile={profile.nutrition}
             onNutritionProfileChange={saveNutritionProfile} volleyballSchedule={volleyballSchedule} initialAction={nutritionAction} onActionHandled={() => setNutritionAction(null)} onOpenRoutine={(date) => { setRoutineDate(date); setMoreView(`routine`); }} />}
           {moreView === `plan` && <>
@@ -1961,7 +2006,7 @@ function GymApp({
             const date = dateKey(addDays(weekStart, t)); const recorded = completedSessions.some(session => session.date === date);
             return <article className={`plan-day${date === today ? ' is-today' : ''}`} key={t}><div className="plan-day__date"><span>{WEEKDAYS[t].slice(0, 3)}</span><strong>{addDays(weekStart, t).getDate()}</strong></div><details className="plan-day-details"><summary><strong>{getSessionPurpose(e, t).title}</strong><span>{e.kind === 'sport' && e.name === 'Volleyball' ? `${volleyballSchedule.startTime}–${volleyballSchedule.endTime}` : /match/i.test(e.name) ? `Match · ${e.startTime ?? 'time not set'}` : `${e.durationRange ?? `${e.minutes} min`} · ${getSessionPurpose(e, t).subtitle}`}{recorded ? ' · Recorded' : date === today ? ' · Today' : ''}</span><ChevronRight size={16} /></summary><PlanDayDetails plan={e} /></details><button type="button" className="icon-button" aria-label={`Edit ${WEEKDAYS[t]}`} disabled={!loaded} onClick={() => editPlanDay(t)}>{recorded ? <Check size={17} /> : <Ellipsis size={20} />}</button>{e.extraSession && <div className="plan-day__extra"><details className="plan-day-details"><summary><strong>{shortSessionName(e.extraSession.name)}</strong><span>{e.extraSession.minutes} min</span><ChevronRight size={15} /></summary><PlanDayDetails plan={e.extraSession} /></details><button className="text-button" disabled={!loaded} onClick={() => editPlanDay(t, true)}><Pencil size={14} />Edit primer</button></div>}</article>;
           })}</div></section>
-          <details className="plan-schedule"><summary>Volleyball schedule <span>{volleyballSchedule.startTime}–{volleyballSchedule.endTime}</span></summary><TrainingSchedule schedule={volleyballSchedule} onSave={saveVolleyballSchedule} /></details>
+          {athleteMode && <details className="plan-schedule"><summary>Volleyball schedule <span>{volleyballSchedule.startTime}–{volleyballSchedule.endTime}</span></summary><TrainingSchedule schedule={volleyballSchedule} onSave={saveVolleyballSchedule} /></details>}
           <details className="native-program-options"><summary>Programme & customization</summary>          <VolleyballMasterProgram settings={profile.masterProgram} defaultStartDate={profile.masterProgram ? dateKey(addDays(new Date(`${masterWeekStart(today)}T12:00:00`), 7)) : masterWeekStart(today)} selectedDate={selectedDate} today={today} basePlan={profile.plan} matchWeekend={profile.masterMatchWeekend} onSave={saveMasterProgram} onUpgrade={upgradeProgram} onRestorePrevious={restorePreviousProgram} hasPreviousPlan={!!profile.masterProgramBackup} upgradeOpen={programUpgradeOpen} onUpgradeOpenChange={setProgramUpgradeOpen} disabled={profileSaving || !loaded} />
           {!profile.masterProgram && <details className="plan-program"><summary>Jump training block</summary>
           <section className={`panel program-overview`}>
@@ -1999,10 +2044,11 @@ function GymApp({
           {moreView === `routine` && <RemindersPanel showHeading={false} date={routineDate} onDateChange={setRoutineDate} />}
           {moreView === `menu` && <div className="more-menu">
             <AppUpdateNotice activeWorkout={!!activeSession} onOpenSettings={openSettings} />
+            <BackupReminder onOpen={openSettings} />
             <section className="native-menu-section"><h2>Daily</h2><div className="menu-group"><MenuRow title="Nutrition" subtitle="Meals & daily targets" onClick={() => setTab('nutrition')} /><MenuRow title="Routine" subtitle="Supplements & medication" onClick={() => setMoreView('routine')} /></div></section>
-            <section className="native-menu-section"><h2>Training</h2><div className="menu-group"><MenuRow title="Training plan" icon={<ListChecks />} onClick={openPlan} /><MenuRow title="My workouts" icon={<Dumbbell />} onClick={() => setMoreView('workouts')} /><MenuRow title="Exercise library" icon={<Search />} onClick={() => setLibraryOpen(true)} /></div></section>
-            <section className="native-menu-section"><h2>Your records</h2><div className="menu-group"><MenuRow title="History" icon={<History />} onClick={() => { setProgressView('history'); setTab('progress'); }} /><MenuRow title="Body weight" icon={<Activity />} onClick={() => { setNutritionAction('weight'); setTab('nutrition'); }} /><MenuRow title="Jump tests" icon={<ChartColumn />} onClick={() => { setPerformanceAction('log-jump'); setProgressView('details'); setTab('progress'); }} /></div></section>
-            <section className="native-menu-section"><h2>App & data</h2><div className="menu-group"><MenuRow title="Settings" onClick={openSettings} /><MenuRow title="Import activities" subtitle="Strava, Adidas Running & watch exports" icon={<Upload />} onClick={() => setImportOpen(true)} /><MenuRow title="Backup & data" icon={<ShieldCheck />} onClick={openSettings} /><MenuRow title="Install Setline" icon={<House />} onClick={() => setInstallOpen(true)} /></div></section>
+            <section className="native-menu-section"><h2>Training</h2><div className="menu-group"><MenuRow title="Training plan" icon={<ListChecks />} onClick={openPlan} /><MenuRow title="Training preferences" onClick={() => setPreferencesOpen(true)} /><MenuRow title="My workouts" icon={<Dumbbell />} onClick={() => setMoreView('workouts')} /><MenuRow title="Exercise library" icon={<Search />} onClick={() => setLibraryOpen(true)} /></div></section>
+            <section className="native-menu-section"><h2>Body & Progress</h2><div className="menu-group"><MenuRow title="History" icon={<History />} onClick={() => { setProgressView('history'); setTab('progress'); }} /><MenuRow title="Body weight" icon={<Activity />} onClick={() => { setNutritionAction('weight'); setTab('nutrition'); }} />{athleteMode && <MenuRow title="Jump tests" icon={<ChartColumn />} onClick={() => { setPerformanceAction('log-jump'); setProgressView('details'); setTab('progress'); }} />}</div></section>
+            <section className="native-menu-section"><h2>Data & Settings</h2><div className="menu-group"><MenuRow title="Settings" onClick={openSettings} />{!athleteMode && <MenuRow title="Advanced athlete tools" subtitle="Jump tests, effort & sport planning" onClick={async () => { if (await saveProfile({ ...profile, presentationMode: `athlete` }, { notify: false })) { setProgressView(`details`); setTab(`progress`); } }} />}<MenuRow title="Report a problem" onClick={() => setSupportOpen(true)} /><MenuRow title="Import activities" subtitle="Strava, Adidas Running & watch exports" icon={<Upload />} onClick={() => setImportOpen(true)} /><MenuRow title="Backup & data" icon={<ShieldCheck />} onClick={openSettings} /><MenuRow title="Install Setline" icon={<House />} onClick={() => setInstallOpen(true)} /></div></section>
             {importOpen && <ActivityImport bodyWeight={profile.bodyWeight} records={activityRecords} onImport={importExtraActivities} disabled={!loaded} open={importOpen} onOpenChange={setImportOpen} hideLauncher />}
           </div>}
           <ExerciseLibrarySheet open={libraryOpen} onOpenChange={setLibraryOpen} onSelect={() => {}} browseOnly />
@@ -2025,8 +2071,8 @@ function GymApp({
       </section>}
       <WorkoutPlanPreview open={previewContext !== null} onOpenChange={open => { if (!open) setPreviewContext(null); }} plan={previewWorkout.plan}
         previous={exercise => {
-          const prior = previousSetReuse(exercise, 0, completedSessions, previewWorkout.date, '');
-          return prior && prior.patch.kg != null ? `${formatNumber(prior.patch.kg)} kg × ${prior.patch.reps} · ${prior.date}` : undefined;
+          const prior = previousPerformance(exercise, completedSessions, previewWorkout.date);
+          return prior ? `${prior.label} · ${prior.date}` : undefined;
         }}
         dayLabel={formatDate(previewWorkout.date, true)} warmup={getQuickWarmup(previewWorkout.plan, preparationFor(previewWorkout.plan, 'warmup'))}
         disabled={!loaded || profileSaving || !!loadError || !!activeSession}
@@ -2117,6 +2163,11 @@ function GymApp({
           </button>
         </DialogContent>
       </Dialog>
+      <Onboarding open={!settingsOpen && loaded && !loadError && (profile.onboarding?.status === `pending` || preferencesOpen)}
+        editing={profile.onboarding?.status !== `pending`} initialPreferences={profile.trainingPreferences}
+        disabled={profileSaving} onOpenChange={setPreferencesOpen}
+        onRestoreBackup={openSettings} onComplete={finishOnboarding} onSkip={() => finishOnboarding(DEFAULT_TRAINING_PREFERENCES, { applyPlan: true }, `skipped`)} />
+      <Dialog open={supportOpen} onOpenChange={setSupportOpen}><DialogContent className="app-dialog"><DialogHeader><DialogTitle>Help & privacy</DialogTitle><DialogDescription>Your data and local problem reports.</DialogDescription></DialogHeader><SupportPrivacy reportInitiallyOpen /></DialogContent></Dialog>
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DialogContent className={`app-dialog`}>
           <DialogHeader>
@@ -2130,11 +2181,11 @@ function GymApp({
               min={`20`}
               max={`400`}
               step={`0.1`}
-              value={settingsDraft.bodyWeight}
+              value={settingsDraft.bodyWeight ?? ``}
               onChange={(e) =>
                 setSettingsDraft((t) => ({
                   ...t,
-                  bodyWeight: Number(e.target.value),
+                  bodyWeight: e.target.value.trim() === `` ? null : Number(e.target.value),
                 }))
               }
             />
@@ -2163,6 +2214,12 @@ function GymApp({
               rel={`noreferrer`}
             >{`2024 Compendium of Physical Activities`}</a>
           </details>
+          <section className="presentation-settings" aria-label="App presentation">
+            <h3>Make Setline yours</h3><p>Both modes use the same workouts and records.</p>
+            <div className="mode-options" role="group" aria-label="Presentation mode">{[`simple`, `athlete`].map(mode => <button type="button" key={mode} aria-pressed={presentationMode(profile) === mode} disabled={profileSaving || !loaded} onClick={() => saveProfile({ ...profile, presentationMode: mode }, { notify: false })}>{mode === `simple` ? `Simple` : `Athlete`}</button>)}</div>
+            <p className="small-note">Simple keeps the workout front and centre. Athlete adds sport, effort and performance shortcuts.</p>
+            <button type="button" className="text-button" onClick={() => { setSettingsOpen(false); setPreferencesOpen(true); }}>Training preferences</button>
+          </section>
           <PwaUpdateControl onBeforeReload={async () => {
             if (settingsDraft.bodyWeight !== profile.bodyWeight || settingsDraft.restSeconds !== profile.restSeconds) {
               throw new Error('Save your preference changes before updating.');
@@ -2187,6 +2244,12 @@ function GymApp({
             audioState={restAudio.audioState} testSound={restAudio.testSound} unlock={restAudio.unlock} />
           <AppearanceSettings value={profile.appearance ?? 'system'} disabled={profileSaving} onChange={appearance => saveProfile({ ...profile, appearance }, { notify: false })} />
           <DataSettings beforeExport={flushPendingWrites} onReplace={replaceLocalData} />
+          <details className="training-terms"><summary>Training terms · optional</summary><dl>
+            <dt>RIR</dt><dd>How many more reps you could complete.</dd><dt>RPE</dt><dd>How hard the effort felt.</dd>
+            <dt>Primer</dt><dd>A short preparation session before a demanding activity.</dd>
+            <dt>Complex Pair</dt><dd>Two linked exercises performed in a prescribed sequence.</dd>
+          </dl></details>
+          <SupportPrivacy />
           <button
             className={`text-button`}
             onClick={() => {
@@ -2250,7 +2313,7 @@ function GymApp({
       >
         <DialogContent className={`app-dialog history-dialog`}>
           <DialogHeader>
-            <DialogTitle>{selectedHistory?.name}</DialogTitle>
+            <DialogTitle>{selectedHistory ? workoutTitle(selectedHistory) : 'Workout'}</DialogTitle>
             <DialogDescription>
               {selectedHistory
                 ? `${WEEKDAYS[selectedHistory.day]}, ${formatDate(selectedHistory.date)} ${selectedHistory.date.slice(0, 4)}`
@@ -2279,13 +2342,12 @@ function GymApp({
                   {`kg volume`}
                 </span>}
                 <span>
-                  <strong>{getCalories(selectedHistory)}</strong>
-                  {`active kcal`}
-                  {selectedHistory.watchCalories === null ? ` est.` : ``}
+                  <strong>{getCalories(selectedHistory) ?? `Not estimated`}</strong>
+                  {getCalories(selectedHistory) == null ? `Add body weight or watch calories for an estimate` : `active kcal${selectedHistory.watchCalories === null ? ` est.` : ``}`}
                 </span>
               </div>}
               <details className="history-set-details"><summary>Session details</summary>
-              {completedCelebrationId === selectedHistory.id && <div className="history-energy"><strong>{getCalories(selectedHistory)}</strong> active kcal{selectedHistory.watchCalories === null ? ' est.' : ''}</div>}
+              {completedCelebrationId === selectedHistory.id && getCalories(selectedHistory) != null && <div className="history-energy"><strong>{getCalories(selectedHistory)}</strong> active kcal{selectedHistory.watchCalories === null ? ' est.' : ''}</div>}
               {selectedHistory.exercises
                 .filter((e) => e.logs.some((e) => e.done))
                 .map((e) => (
@@ -2488,7 +2550,7 @@ function PreparationChecklist({
 function PlanDayDetails({ plan: plan }) {
   return (
     <ReactJSX.Fragment>
-      <h2>{shortSessionName(plan.name)}</h2>
+      <h2>{workoutTitle(plan)}</h2>
       <p className={`muted`}>
         {`About `}
         {plan.minutes}
@@ -2574,12 +2636,12 @@ function ExerciseTracker({
   let bestCurrentSet = topSet(exercise);
   let bestPreviousSet = topSet(last?.exercise);
   let weightDelta =
-    bestCurrentSet && bestPreviousSet
+    bestCurrentSet && bestPreviousSet && bestCurrentSet.reps === bestPreviousSet.reps
       ? (bestCurrentSet.kg ?? 0) - (bestPreviousSet.kg ?? 0)
       : null;
   let timedInMinutes =
     exercise.mode === `timed` && exercise.target.includes(`min`);
-  let previousLogs = last?.exercise.logs.filter((e) => e.done) ?? [];
+  let previousLogs = last?.exercise.logs ?? [];
   return (
     <section
       className={`exercise-card ${doneCount === exercise.logs.length ? `exercise-complete` : ``}`}
@@ -2670,15 +2732,7 @@ function ExerciseTracker({
                   <TableRow className={t.done ? `set-done` : ``} key={t.id}>
                     <TableCell className={`set-index`}>{n + 1}</TableCell>
                     <TableCell className={`last-set`}>
-                      {r
-                        ? exercise.measurement
-                          ? r.measurementCm == null
-                            ? `${r.reps ?? `—`} reps`
-                            : `${formatNumber(r.measurementCm)} cm`
-                          : exercise.mode === `timed`
-                            ? `${formatNumber((r.seconds ?? 0) / (timedInMinutes ? 60 : 1))}${timedInMinutes ? `m` : `s`}`
-                            : `${r.kg === null ? `BW` : formatNumber(r.kg)} × ${r.reps ?? `—`}`
-                        : `—`}
+                      {formatPreviousSet(exercise, r) ?? '—'}
                     </TableCell>
                     {!exercise.measurement && exercise.mode !== `timed` && (
                       <TableCell>
@@ -2776,15 +2830,18 @@ function ExerciseTracker({
                       <Checkbox
                         className={`set-check`}
                         checked={t.done}
+                        disabled={t.done}
                         aria-label={`Complete ${exercise.name} set ${n + 1}`}
                         onCheckedChange={(e) => {
                           if (e === !0 && invalidWeightInputs.current.has(t.id)) {
                             toast.error(`Enter a weight between 0 and 2,000 kg using . or ,`);
                             return;
                           }
-                          onDone(t.id, e === !0);
+                          if (e === true) onDone(t.id, true);
                         }}
                       />
+                      <button type="button" className="set-undo" disabled={!t.done}
+                        aria-label={`Undo ${exercise.name} set ${n + 1}`} onClick={() => onDone(t.id, false)}>Undo</button>
                     </TableCell>
                   </TableRow>
                 );

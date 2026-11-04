@@ -1,3 +1,4 @@
+import { createNewProfile } from './onboarding.ts';
 import { DEFAULT_PROFILE, NutritionPayloadSchema, ProfileSchema, SessionSchema } from './domain.js';
 import { PerformanceDataSchema, emptyPerformance, type PerformanceData } from './performance-data.ts';
 import { ExtraActivitySchema, type ActivityRecord } from './activities.ts';
@@ -150,18 +151,18 @@ function parseState(value: unknown): LocalState {
 }
 
 /** The reference's request contract, implemented entirely in this device's storage. */
-export function createLocalClient(storage: StoragePort) {
+export function createLocalClient(storage: StoragePort, initialProfile: unknown = DEFAULT_PROFILE) {
   // Each tab keeps the generation it first read. A restore replaces the marker
   // atomically with the state, so an older tab cannot save same-version records
   // over the restored data. Reloading creates a client for the new generation.
   let observedGeneration: string | null | undefined;
-  function read(defaultProfile: unknown = DEFAULT_PROFILE): LocalState {
+  function read(defaultProfile: unknown = initialProfile): LocalState {
     let raw: string | null;
     try { raw = storage.getItem(STORAGE_KEY); }
     catch { throw new Error('Device storage is unavailable. Allow site storage in your browser, then retry.'); }
     if (raw === null) {
       observedGeneration ??= null;
-      return { schemaVersion: 1, profile: clone(ProfileSchema.parse(defaultProfile)), profileVersion: 0, sessions: [], nutrition: [], activities: [], reminders: defaultReminderState() };
+      return { schemaVersion: 1, profile: clone(ProfileSchema.parse(defaultProfile)), profileVersion: 0, sessions: [], nutrition: [], activities: [], reminders: (defaultProfile as { onboarding?: unknown })?.onboarding ? { items: [], entries: [] } : defaultReminderState() };
     }
     try {
       const state = parseState(JSON.parse(raw));
@@ -179,7 +180,7 @@ export function createLocalClient(storage: StoragePort) {
     if (!version(expected) || expected !== actual) throw new Error('This record changed in another tab. Reload the app before editing it again.');
   }
 
-  async function request(path: string, payload?: unknown, defaultProfile: unknown = DEFAULT_PROFILE): Promise<RecordValue> {
+  async function request(path: string, payload?: unknown, defaultProfile: unknown = initialProfile): Promise<RecordValue> {
     if (path === '/api/nutrition/analyze') throw new Error('Automatic photo analysis is unavailable in this offline app. Add foods and nutrition amounts manually.');
     if (path !== '/api/tracker' && path !== '/api/nutrition' && path !== '/api/reminders' && path !== '/api/performance') throw new Error('Unknown local data operation.');
     const state = read(defaultProfile);
@@ -351,7 +352,7 @@ export function createLocalClient(storage: StoragePort) {
 
 let localBrowserClient: ReturnType<typeof createLocalClient> | undefined;
 function browserClient() {
-  try { return localBrowserClient ??= createLocalClient(window.localStorage); }
+  try { return localBrowserClient ??= createLocalClient(window.localStorage, createNewProfile()); }
   catch { throw new Error('Device storage is unavailable. Allow site storage in your browser, then retry.'); }
 }
 export function requestLocal(path: string, payload?: unknown, defaultProfile?: unknown) {

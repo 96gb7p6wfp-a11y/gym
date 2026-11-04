@@ -14,7 +14,7 @@ async function seed(page: Page, withTargets = true) {
     ...(withTargets ? [{ id: 'targets', date: '2026-11-01', version: 3, payload: { kind: 'targets', calories: 2800, protein: 120, carbs: 350, fat: 80, goalWeight: 68 } }] : []),
   ];
   await page.addInitScript(({ profile, nutrition, reminders }) => {
-    if (!localStorage.getItem('setline.gym.v1')) localStorage.setItem('setline.gym.v1', JSON.stringify({
+    if (!localStorage.getItem('setline.gym.v1') || JSON.parse(localStorage.getItem('setline.gym.v1')!).profileVersion === 0) localStorage.setItem('setline.gym.v1', JSON.stringify({
       schemaVersion: 1, profile, profileVersion: 1, sessions: [], nutrition, reminders, activities: [],
     }));
   }, { profile: DEFAULT_PROFILE, nutrition, reminders: defaultReminderState() });

@@ -5,17 +5,19 @@ import { getSessionPurpose } from './training-purpose';
 import { getTrainingCadence } from './training-cadence';
 import { currentReportDate, reportWeekStart } from './weekly-report';
 import { getDailyMotivation } from './coaching-summary';
+import { workoutTitle } from './presentation';
 import './today.css';
 
 /** A session cover, rather than a collection of daily statistics. */
 export function TodayView({ date, plan, session, otherSession, completed, activities, nutrition, now = Date.now(),
-  sessions = [], weeklyPlan = [], performance, bodyWeight, today = currentReportDate(),
+  sessions = [], weeklyPlan = [], performance, bodyWeight, today = currentReportDate(), athleteMode = true,
   volleyballSchedule, onStart, onPreview, onTrain, onBrowseTrain, onViewLog, onNutrition, onPlan, onActivity,
   onProgress, disabled, programLabel, blockComplete = false, programOffer, onReviewProgram, scheduledEvents = [] }) {
   const day = new Date(`${date}T12:00:00`);
   const active = session?.status === 'active';
   const unscheduled = !active && !completed && plan.exercises.filter(exercise => !exercise.optionalWork).length === 0 && plan.kind !== 'recovery';
   const shownPlan = active ? session : completed ?? plan;
+  const title = workoutTitle(shownPlan);
   const purpose = getSessionPurpose(shownPlan, (day.getDay() + 6) % 7);
   const cadence = useMemo(() => getTrainingCadence({ sessions, activities, plan: weeklyPlan,
     today, weekStart: reportWeekStart(date) }), [sessions, activities, weeklyPlan, today, date]);
@@ -30,7 +32,7 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
   const berlinTime = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(now);
   for (let offset = 0; offset <= 7; offset++) {
     const next = addDays(day, offset);
-    if (volleyballSchedule.days.includes((next.getDay() + 6) % 7) && (offset > 0 || berlinTime < volleyballSchedule.endTime)) { nextVolleyball = next; break; }
+    if (athleteMode && volleyballSchedule.days.includes((next.getDay() + 6) % 7) && (offset > 0 || berlinTime < volleyballSchedule.endTime)) { nextVolleyball = next; break; }
   }
   const weekLabel = cadence.weekStart === reportWeekStart(today) ? 'This week'
     : `Week of ${new Date(`${cadence.weekStart}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
@@ -53,10 +55,10 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
   return <div className="today-view journal-today">
     <section className="day-cover" aria-label="Your day" data-session-state={active ? 'active' : completed ? 'complete' : shownPlan.kind === 'recovery' ? 'recovery' : 'ready'}>
       <div className="day-cover__edition">
-        <p className="day-motivation" aria-label="Today motivation">{getDailyMotivation({ kind: shownPlan.kind, active, completed: !!completed && !active })}</p>
+        <p className="day-motivation" aria-label="Today motivation">{athleteMode ? getDailyMotivation({ kind: shownPlan.kind, active, completed: !!completed && !active }) : active ? 'One set at a time. Make it yours.' : completed ? 'Workout recorded. Every session counts.' : 'Start comfortably. Build a routine that fits your life.'}</p>
         <button type="button" className="icon-button" aria-label="Choose training day" onClick={onBrowseTrain ?? onTrain}><CalendarDays size={19} aria-hidden="true" /></button>
       </div>
-      <h2 key={`${date}-${purpose.title}`} className="day-cover__title">{purpose.title}</h2>
+      <h2 key={`${date}-${title}`} className={`day-cover__title${title.length > 30 ? ' day-cover__title--long' : ''}`}>{title}</h2>
       <p className="day-cover__purpose">{purpose.subtitle}</p>
       <div className="day-cover__plan-row"><p className="day-cover__prescription">{sessionMeta}{programLabel && !active && !completed && <span className="day-cover__phase"> · {programLabel}</span>}</p>
         {!active && !completed && <button type="button" className="day-cover__preview" disabled={disabled} onClick={onPreview}>View workout<ChevronRight size={14} aria-hidden="true" /></button>}

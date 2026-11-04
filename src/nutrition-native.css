@@ -117,3 +117,17 @@ html[data-keyboard-open='true'] .nutrition-native .nutrition-log-dock { visibili
  .nutrition-native .nutrition-daily progress::-webkit-progress-value { transition:none; }
  .nutrition-native .nutrition-log-action:active { transform:none; }
 }
+/* Two fast entry paths; both write the same local nutrition log. */
+.nutrition-view.nutrition-native .nutrition-log-dock { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:10px; }
+.nutrition-native .nutrition-quick-action { min-height:54px; padding:12px 18px; border:1px solid var(--line); border-radius:100px; background:var(--surface); color:var(--ink); font-size:14px; font-weight:600; white-space:nowrap; }
+.nutrition-native .nutrition-quick-action:focus-visible,.nutrition-native-sheet .nutrition-portion-actions button:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+.nutrition-native-sheet .nutrition-quick-form { display:grid; gap:18px; }
+.nutrition-native-sheet .nutrition-quick-form .nutrition-quick-add[open] { padding-bottom:16px; }
+.nutrition-native-sheet .nutrition-favorite-toggle { display:flex; align-items:center; gap:10px; min-height:44px; color:var(--ink); font-size:14px; cursor:pointer; }
+.nutrition-native-sheet .nutrition-favorite-toggle input { flex:0 0 22px; width:22px; height:22px; accent-color:var(--accent); }
+.nutrition-native-sheet .nutrition-portion-actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.nutrition-native-sheet .nutrition-portion-actions>span { width:100%; color:var(--sub); font-size:12px; }
+.nutrition-native-sheet .nutrition-portion-actions>button { flex:1; min-height:44px; padding:10px; border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink); font-size:13px; }
+.nutrition-native .nutrition-daily__macros strong>small { color:var(--sub); font-size:11px; font-weight:400; }
+@media(max-width:360px) { .nutrition-native .nutrition-quick-action { padding:12px 15px; } .nutrition-view.nutrition-native .nutrition-log-dock { gap:8px; } }
+.nutrition-native .nutrition-meal__name>.nutrition-partial-label { display:block; overflow:visible; color:var(--accent); font-weight:500; }

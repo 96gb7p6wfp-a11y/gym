@@ -1,0 +1,5 @@
+.equipment-label-form { display:grid; gap:14px; min-width:0; }
+.equipment-label-form .field-label { min-width:0; }
+.equipment-label-form input { width:100%; min-width:0; min-height:48px; font-size:16px; }
+.equipment-label-form p { margin:0; color:var(--sub); font-size:13px; line-height:1.5; }
+.equipment-label-form .equipment-label-error { color:var(--danger); }

@@ -3,6 +3,7 @@ import { SessionSchema, PlanDaySchema, NutritionPayloadSchema, completedSets, es
 import { estimateActivity, type ActivityRecord } from './activities.ts';
 import { isGymTraining } from './training-classification.ts';
 import { getTrainingExposureSummary, type TrainingExposureSummary } from './training-exposure.ts';
+import { exercisePerformanceIdentity } from './exercise-identity.ts';
 
 export type ReportSession = z.infer<typeof SessionSchema>;
 export type ReportPlanDay = z.infer<typeof PlanDaySchema>;
@@ -36,7 +37,10 @@ export interface ReportTotals {
   minutes: number;
   completedSets: number;
   volumeKg: number;
+  /** Recorded/estimated subtotal; completeness fields distinguish missing data. */
   activeCalories: number;
+  missingCalorieEstimates?: number;
+  recordedCalorieEstimates?: number;
   runKm: number;
   cycleKm: number;
 }
@@ -49,6 +53,12 @@ export interface PerformanceComparison {
   current: number;
   previousReps?: number;
   currentReps?: number;
+  id?: string;
+  equipmentLabel?: string;
+  previousDate?: string;
+  currentDate?: string;
+  effort?: 'matched' | 'unrecorded';
+  rir?: number | null;
 }
 
 export interface WeeklyReportData {
@@ -101,6 +111,9 @@ function collectWeek(dates: readonly string[], sessions: readonly ReportSession[
   const dateSet = new Set(dates);
   const workouts = sessions.filter(session => session.status === 'completed' && session.deletedAt == null && dateSet.has(session.date));
   const activities = records.filter(({ activity }) => activity.deletedAt === null && dateSet.has(activity.date)).map(({ activity }) => activity);
+  const calorieValues = [...workouts.map(session => getCalories(session)), ...activities.map(activity => estimateActivity(activity).calories)];
+  const knownCalories = calorieValues.filter((value): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0);
+  const missingCalorieEstimates = calorieValues.length - knownCalories.length;
   const totals: ReportTotals = {
     workouts: workouts.length,
     gymDays: new Set(workouts.filter(isGymTraining).map(session => session.date)).size,
@@ -111,20 +124,29 @@ function collectWeek(dates: readonly string[], sessions: readonly ReportSession[
     completedSets: workouts.reduce((total, session) => total + completedSets(session), 0),
     // The legacy domain helper is named estimatedCalories but returns kg × reps.
     volumeKg: workouts.reduce((total, session) => total + loggedWeightVolume(session.exercises), 0),
-    activeCalories: Math.round(workouts.reduce((total, session) => total + getCalories(session), 0)
-      + activities.reduce((total, activity) => total + estimateActivity(activity).calories, 0)),
+    activeCalories: Math.round(knownCalories.reduce((total, calories) => total + calories, 0)),
+    ...(missingCalorieEstimates ? { missingCalorieEstimates, recordedCalorieEstimates: knownCalories.length } : {}),
     runKm: activities.filter(activity => activity.type === 'run').reduce((total, activity) => total + (activity.distanceKm ?? 0), 0),
     cycleKm: activities.filter(activity => activity.type === 'cycle').reduce((total, activity) => total + (activity.distanceKm ?? 0), 0),
   };
   return { workouts, activities, totals };
 }
 
-type PerformanceValue = PerformanceComparison & { date: string; startedAt: number };
+/** Preserve unknown versus a real zero reading in both UI and exported reports. */
+export function reportCalorieSummary(totals: ReportTotals): string {
+  const amount = totals.activeCalories.toLocaleString('en-GB', { maximumFractionDigits: 1 });
+  if (!totals.missingCalorieEstimates) return `${amount} active kcal logged / est.`;
+  const missing = `${totals.missingCalorieEstimates} training ${totals.missingCalorieEstimates === 1 ? 'entry' : 'entries'} without calorie data`;
+  return totals.recordedCalorieEstimates ? `${amount} active kcal recorded / estimated · partial; ${missing}`
+    : `Active calories not estimated · ${missing}`;
+}
+
+type PerformanceValue = PerformanceComparison & { date: string; startedAt: number; configuration: string; recordedRir?: number | null };
 
 function completedPerformance(session: ReportSession): PerformanceValue[] {
   return session.exercises.flatMap<PerformanceValue>(exercise => {
     if (exercise.preparationOnly) return [];
-    const base = { key: exercise.key, name: exercise.name, date: session.date, startedAt: session.startedAt };
+    const base = { key: exercise.key, name: exercise.name, date: session.date, startedAt: session.startedAt, configuration: exercisePerformanceIdentity(exercise), equipmentLabel: exercise.equipmentLabel };
     // Measurements represent different things: touch, jump height and distance never mix.
     if (exercise.measurement) {
       const values = exercise.logs.filter(log => log.done && (log.measurementCm ?? 0) > 0
@@ -136,13 +158,12 @@ function completedPerformance(session: ReportSession): PerformanceValue[] {
     const best = exercise.logs.filter(log => log.done && (log.kg ?? 0) > 0 && (log.reps ?? 0) > 0)
       .reduce<(typeof exercise.logs)[number] | undefined>((top, log) => !top || log.kg! > top.kg!
         || (log.kg === top.kg && log.reps! > top.reps!) ? log : top, undefined);
-    return best ? [{ ...base, kind: 'weight' as const, previous: 0, current: best.kg!, currentReps: best.reps! }] : [];
+    return best ? [{ ...base, kind: 'weight' as const, previous: 0, current: best.kg!, currentReps: best.reps!, recordedRir: best.rir ?? null }] : [];
   });
 }
 
 function performanceIdentity(value: PerformanceValue): string {
-  // A custom rename can keep the old key, but must not inherit its comparisons.
-  return JSON.stringify([value.key, value.kind, value.name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-GB')]);
+  return JSON.stringify([value.configuration, value.kind]);
 }
 
 function comparePerformance(current: readonly ReportSession[], previous: readonly ReportSession[]): PerformanceComparison[] {
@@ -161,8 +182,13 @@ function comparePerformance(current: readonly ReportSession[], previous: readonl
   return [...after.entries()].flatMap(([key, value]) => {
     const earlier = before.get(key);
     if (!earlier) return [];
-    return [{ key: value.key, name: value.name, kind: value.kind, previous: earlier.current, current: value.current,
-      ...(value.kind === 'weight' ? { previousReps: earlier.currentReps, currentReps: value.currentReps } : {}) }];
+    const knownRir = (rir: number | null | undefined): rir is number => typeof rir === 'number' && Number.isFinite(rir) && rir >= 0 && rir <= 10;
+    if (value.kind === 'weight' && (earlier.currentReps !== value.currentReps
+      || (knownRir(earlier.recordedRir) && knownRir(value.recordedRir) && earlier.recordedRir !== value.recordedRir))) return [];
+    const effort = knownRir(earlier.recordedRir) && knownRir(value.recordedRir) ? 'matched' as const : 'unrecorded' as const;
+    return [{ id: key, key: value.key, name: value.name, kind: value.kind, previous: earlier.current, current: value.current,
+      previousDate: earlier.date, currentDate: value.date, ...(value.equipmentLabel ? { equipmentLabel: value.equipmentLabel } : {}),
+      ...(value.kind === 'weight' ? { previousReps: earlier.currentReps, currentReps: value.currentReps, effort, rir: effort === 'matched' ? value.recordedRir : null } : {}) }];
   }).sort((a, b) => a.name.localeCompare(b.name));
 }
 

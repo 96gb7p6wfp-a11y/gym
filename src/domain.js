@@ -12,6 +12,8 @@ import {
 import { ZodIssueCode } from "zod";
 import { MasterProgramSettingsSchema } from './volleyball-master-plan.ts';
 import { TrainingExposureSchema } from './training-exposure.ts';
+import { TrainingPreferencesSchema, OnboardingStateSchema } from './onboarding.ts';
+import { areComparableExercises } from './exercise-identity.ts';
 
 var NutritionAmountSchema = zNumber().finite().min(0).max(2e4),
   FoodSchema = zObject({
@@ -19,14 +21,15 @@ var NutritionAmountSchema = zNumber().finite().min(0).max(2e4),
     portion: zString().max(100),
     calories: NutritionAmountSchema,
     protein: NutritionAmountSchema,
-    carbs: NutritionAmountSchema,
-    fat: NutritionAmountSchema,
+    carbs: NutritionAmountSchema.nullable(),
+    fat: NutritionAmountSchema.nullable(),
   }),
   MealSchema = zObject({
     kind: zLiteral(`meal`),
     name: zString().trim().min(1).max(100),
     foods: zArray(FoodSchema).min(1).max(30),
     source: zEnum([`manual`, `photo`]),
+    favorite: zBoolean().optional(),
     notes: zString().max(1e3),
     assumptions: zString().max(1e3),
     confidence: zEnum([`low`, `medium`, `high`]).nullable(),
@@ -70,8 +73,8 @@ function sumNutrients(e) {
     (e, t) => ({
       calories: e.calories + t.calories,
       protein: e.protein + t.protein,
-      carbs: e.carbs + t.carbs,
-      fat: e.fat + t.fat,
+      carbs: e.carbs + (t.carbs ?? 0),
+      fat: e.fat + (t.fat ?? 0),
     }),
     {
       calories: 0,
@@ -832,6 +835,7 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     mode: zEnum([`weight`, `bodyweight`, `timed`]),
     rest: zNumber().int().min(0).max(600),
     perSide: zBoolean(),
+    equipmentLabel: zString().trim().min(1).max(80).optional(),
     cue: zString().max(500).optional(),
     measurement: zEnum([`touch`, `height`, `distance`]).optional(),
     exerciseId: zString().min(1).max(120).optional(),
@@ -913,7 +917,10 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
       `Saved workouts need unique identifiers.`,
     ).optional(),
     appearance: zEnum([`system`, `light`, `dark`]).optional(),
-    bodyWeight: zNumber().finite().min(20).max(400),
+    presentationMode: zEnum([`simple`, `athlete`]).optional(),
+    trainingPreferences: TrainingPreferencesSchema.optional(),
+    onboarding: OnboardingStateSchema.optional(),
+    bodyWeight: zNumber().finite().min(20).max(400).nullable(),
     restSeconds: zNumber().int().min(15).max(600),
     nutrition: zObject({
       age: zNumber().int().min(18).max(100),
@@ -976,7 +983,7 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     finishedAt: zNumber().min(0).nullable(),
     elapsedMs: zNumber().min(0).max(6048e5),
     runningSince: zNumber().min(0).nullable(),
-    bodyWeight: zNumber().min(20).max(400),
+    bodyWeight: zNumber().min(20).max(400).nullable(),
     met: zNumber().min(1).max(15),
     watchCalories: optionalAmount(2e4),
     notes: zString().max(2e3),
@@ -1081,6 +1088,7 @@ function estimatedCalories(e) {
   );
 }
 function getCalories(e, t = Date.now()) {
+  if (e.watchCalories === null && !(Number.isFinite(e.bodyWeight) && e.bodyWeight > 0)) return null;
   return e.watchCalories === null
     ? Math.round(
         (((Math.max(0, e.met - 1) * 3.5 * e.bodyWeight) / 200) *
@@ -1133,6 +1141,20 @@ function formatDate(e, t = !1) {
     month: t ? `short` : `long`,
   });
 }
+/** Find one comparable movement in the newest completed source session.
+ * Keep raw set ordinals: an unfinished first set must never borrow the second.
+ * This imports only the dependency-free identity helper, not analytics/domain.
+ */
+function previousSessionSeed(sessions, exercise, date) {
+  if (exercise.preparationOnly || (exercise.mode === 'bodyweight' && exercise.defaultKg === 0)) return undefined;
+  for (const session of sessions.filter(entry => entry.status === 'completed' && entry.deletedAt == null && entry.date <= date)
+    .sort((a, b) => b.date.localeCompare(a.date) || b.startedAt - a.startedAt)) {
+    const candidates = session.exercises.filter(entry => !entry.preparationOnly && areComparableExercises(entry, exercise));
+    if (!candidates.length) continue;
+    return candidates.find(entry => entry.key === exercise.key) ?? (candidates.length === 1 ? candidates[0] : undefined);
+  }
+  return undefined;
+}
 function createSession(e, t, n, r, i) {
   let a = Date.now();
   return {
@@ -1164,10 +1186,7 @@ function createSession(e, t, n, r, i) {
       done: !1,
     })),
     exercises: e.exercises.filter((exercise) => exercise.optionalWork !== true).map((e) => {
-      let t = previousExercise(i, e.exerciseId ?? e.key, n)?.exercise;
-      // A renamed movement or a different measurement is a new baseline.
-      const normalizedName = value => value.trim().replace(/\s+/g, ' ').toLowerCase();
-      if (e.preparationOnly || (e.mode === 'bodyweight' && e.defaultKg === 0) || (t && (normalizedName(t.name) !== normalizedName(e.name) || t.mode !== e.mode || (t.measurement ?? null) !== (e.measurement ?? null)))) t = undefined;
+      const t = previousSessionSeed(i, e, n);
       return {
         ...e,
         elapsedMs: 0,
@@ -1177,7 +1196,8 @@ function createSession(e, t, n, r, i) {
             length: e.sets,
           },
           (_, n) => {
-            let r = t?.logs.filter((e) => e.done)[n];
+            const previous = t?.logs[n];
+            const r = previous?.done ? previous : undefined;
             return {
               id: crypto.randomUUID(),
               kg: r ? r.kg : (e.defaultKg ?? null),

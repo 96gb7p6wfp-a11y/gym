@@ -1,4 +1,9 @@
-/** Display aliases only. Stored plan titles, exercise keys and history stay intact. */
+/** The stored name is the title everywhere a whole workout is presented. */
+export function workoutTitle(source: string | { name: string }): string {
+  return (typeof source === 'string' ? source : source.name).trim();
+}
+
+/** Compact calendar aliases only; never use these as a workout's primary title. */
 export function shortSessionName(name: string): string {
   return ({
     'Upper Power + Muscle': 'Upper Body',

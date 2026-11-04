@@ -273,7 +273,8 @@ test('set encouragement acknowledges a logged set without interrupting the next 
   await current.getByRole('spinbutton', { name: 'Medicine Ball Spike Slam set 1 reps', exact: true }).fill('3');
   await current.getByRole('button', { name: 'Complete Medicine Ball Spike Slam set 1', exact: true }).tap();
   await expect(cue).toContainText('Set 1 of 3 logged. One step at a time.');
-  await expect(current.getByRole('button', { name: 'Complete Medicine Ball Spike Slam set 2', exact: true })).toBeEnabled();
+  await expect(current.getByRole('button', { name: 'Complete Medicine Ball Spike Slam set 2', exact: true })).toBeDisabled();
+  await expect(current.getByRole('button', { name: 'Ready for Medicine Ball Spike Slam set 2', exact: true })).toBeEnabled();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.locator('.rest-floating')).toBeVisible();
   expect((await state(page)).sessions[0].session.exercises[0].logs.filter((log: any) => log.done)).toHaveLength(1);

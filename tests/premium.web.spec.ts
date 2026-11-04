@@ -51,7 +51,7 @@ test('keeps the Today action immediately reachable on a short iPhone with safe a
   await expect(page.locator('.session-card h2')).toBeVisible();
 });
 
-test('completes a focused decimal set, carries only into empty sets and keeps actions above rest', async ({ page }) => {
+test('completes a focused decimal set, preserves other sets and keeps actions above rest', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await safeAreas(page);
   await tab(page, 'Train');
@@ -64,10 +64,11 @@ test('completes a focused decimal set, carries only into empty sets and keeps ac
   await weight.pressSequentially('12,5');
   await exercise.getByRole('spinbutton', { name: `${MOVEMENT} set 1 reps`, exact: true }).fill('4');
   await exercise.getByRole('button', { name: `Complete ${MOVEMENT} set 1`, exact: true }).tap();
-  await expect(exercise.getByRole('textbox', { name: `${MOVEMENT} set 2 weight in kilograms`, exact: true })).toHaveValue('12.5');
-  await expect(exercise.getByRole('spinbutton', { name: `${MOVEMENT} set 2 reps`, exact: true })).toHaveValue('4');
+  await expect(exercise.getByRole('textbox', { name: `${MOVEMENT} set 2 weight in kilograms`, exact: true })).toHaveValue('');
+  await expect(exercise.getByRole('spinbutton', { name: `${MOVEMENT} set 2 reps`, exact: true })).toHaveValue('');
   await expect(page.locator('.rest-floating')).toBeVisible();
   const complete = exercise.getByRole('button', { name: `Complete ${MOVEMENT} set 2`, exact: true });
+  await expect(complete).toBeDisabled();
   await complete.scrollIntoViewIfNeeded();
   await unobscured(complete);
   const rest = await page.locator('.rest-floating').boundingBox();
@@ -78,6 +79,8 @@ test('completes a focused decimal set, carries only into empty sets and keeps ac
   await exercise.getByRole('textbox', { name: `${MOVEMENT} set 3 weight in kilograms`, exact: true }).fill('15');
   await exercise.getByRole('spinbutton', { name: `${MOVEMENT} set 3 reps`, exact: true }).fill('3');
   await exercise.getByRole('button', { name: `View ${MOVEMENT} set 2`, exact: true }).click();
+  await exercise.getByRole('textbox', { name: `${MOVEMENT} set 2 weight in kilograms`, exact: true }).fill('12.5');
+  await exercise.getByRole('spinbutton', { name: `${MOVEMENT} set 2 reps`, exact: true }).fill('4');
   await complete.click();
   await expect(exercise.getByRole('textbox', { name: `${MOVEMENT} set 3 weight in kilograms`, exact: true })).toHaveValue('15');
   await expect(exercise.getByRole('spinbutton', { name: `${MOVEMENT} set 3 reps`, exact: true })).toHaveValue('3');

@@ -4,6 +4,7 @@ import {
   TrainingGoalSchema, elapsedTime,
 } from './domain.js';
 import type { SupersetLink } from './training-flow';
+import { createStarterPlan, type TrainingPreferences } from './onboarding.ts';
 
 export type TrainingGoal = z.infer<typeof TrainingGoalSchema>;
 export type PlanExercise = z.infer<typeof ExerciseSchema>;
@@ -174,7 +175,8 @@ export function movePlanExercise(plan: PlanDay, key: string, toIndex: number): P
 }
 
 /** Restore recommendations without changing preferences, templates or logged work. */
-export function resetRecommendedPlan<T extends { plan: PlanDay[]; volleyballSchedule?: { days: number[]; startTime: string; endTime: string } }>(profile: T): T {
+export function resetRecommendedPlan<T extends { plan: PlanDay[]; trainingPreferences?: TrainingPreferences; volleyballSchedule?: { days: number[]; startTime: string; endTime: string } }>(profile: T): T {
+  if (profile.trainingPreferences) return { ...profile, plan: createStarterPlan(profile.trainingPreferences) };
   const schedule = profile.volleyballSchedule ?? DEFAULT_PROFILE.volleyballSchedule;
   const plan = copy(DEFAULT_PROFILE.plan).map((day: PlanDay, index: number) => ({
     ...day,

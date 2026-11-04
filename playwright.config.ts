@@ -1,4 +1,6 @@
 import { defineConfig } from '@playwright/test';
+import { DEFAULT_PROFILE } from './src/domain.js';
+import { defaultReminderState } from './src/reminders';
 
 export default defineConfig({
   testDir: './tests',
@@ -10,6 +12,12 @@ export default defineConfig({
   reporter: 'list',
   use: {
     baseURL: 'http://127.0.0.1:4173',
+    // Existing V15 regression cases exercise an established installation. Fresh
+    // V16 onboarding cases explicitly opt into an empty storageState.
+    storageState: { cookies: [], origins: [{ origin: 'http://127.0.0.1:4173', localStorage: [{
+      name: 'setline.gym.v1', value: JSON.stringify({ schemaVersion: 1, profile: DEFAULT_PROFILE,
+        profileVersion: 0, sessions: [], nutrition: [], activities: [], reminders: defaultReminderState() }),
+    }] }] },
     browserName: 'chromium',
     viewport: { width: 390, height: 844 },
     deviceScaleFactor: 3,
