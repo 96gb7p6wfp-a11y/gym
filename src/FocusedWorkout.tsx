@@ -300,10 +300,6 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
           </div>
         </div>
         <div className="focused-exercise-title"><h2 className="focused-exercise__name">{exercise.name}</h2></div>
-        {!exercise.measurement && exercise.mode !== 'timed' && onEquipmentChange && <button type="button" className="focused-equipment-label text-button"
-          aria-label={`Equipment for ${exercise.name}`} onClick={() => setEquipmentTarget(exercise.key)}>{exercise.equipmentLabel ?? 'Add equipment label'}</button>}
-        {!onEquipmentChange && exercise.equipmentLabel && <p className="small-note">{exercise.equipmentLabel}</p>}
-        {(exercise.benefit || libraryExercise) && <p className="focused-exercise-benefit">{exercise.benefit ?? libraryExercise?.primaryBenefit}</p>}
         {athleteMode && pair && pairedSet && <div className="focused-pair" role="group" aria-label={`${pair.kind === 'superset' ? 'Superset' : 'Complex pair'} ${pair.label}`}>
           <div className="focused-pair__heading">
             <span>{pair.kind === 'superset' ? 'Superset' : 'Complex'} {pair.label}</span><strong>Round {setIndex + 1} <span>of {rounds}</span></strong>
@@ -386,16 +382,16 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                   </div>
                 )}
               </div>}
-              {!editing && <p className="focused-set-encouragement" role="status" aria-label="Set focus" aria-atomic="true"
-                data-feedback={setFeedback ? 'complete' : 'ready'}>
-                <span key={setFeedback?.id ?? `${exercise.key}-focus`}><strong>{setFeedback ? <Check className="focused-set-receipt" size={16} aria-hidden="true" /> : 'Coach'}</strong>{' · '}{setFeedback?.text ?? qualityCue}</span>
-              </p>}
               <button type="button" className={`btn focused-complete-set${log.done ? ' secondary' : ''}`}
                 disabled={!completionReady}
                 aria-label={`${log.done ? 'Undo' : 'Complete'} ${exercise.name} set ${setIndex + 1}`} onClick={completeSet}>
                 {log.done ? <RotateCcw size={19} aria-hidden="true" /> : <Check size={20} aria-hidden="true" />}
                 {log.done ? 'Undo set' : 'Complete set'}
               </button>
+              {!editing && <p className="focused-set-encouragement" role="status" aria-label="Set focus" aria-atomic="true"
+                data-feedback={setFeedback ? 'complete' : 'ready'}>
+                <span key={setFeedback?.id ?? `${exercise.key}-focus`}><strong>{setFeedback ? <Check className="focused-set-receipt" size={16} aria-hidden="true" /> : 'Coach'}</strong>{' · '}{setFeedback?.text ?? qualityCue}</span>
+              </p>}
               {athleteMode && !log.done && exercise.mode !== 'timed' && <div className="focused-rir" role="group" aria-label="Quick reps in reserve">
                 <span>Reps in reserve · optional <button type="button" className="focused-rir-clear" aria-label="Clear reps in reserve" aria-pressed={log.rir == null} onClick={() => editSet({ rir: null })}>Clear</button></span>
                 <div>{[0, 1, 2, 3, 4, 5].map(rir => <button key={rir} type="button" aria-label={`${rir} reps in reserve`} aria-pressed={log.rir === rir}
@@ -412,6 +408,10 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                 ))}
               </div>
             </div>
+            {!exercise.measurement && exercise.mode !== 'timed' && onEquipmentChange && <button type="button" className="focused-equipment-label text-button"
+              aria-label={`Equipment for ${exercise.name}`} onClick={() => setEquipmentTarget(exercise.key)}>{exercise.equipmentLabel ?? 'Add equipment label'}</button>}
+            {!onEquipmentChange && exercise.equipmentLabel && <p className="small-note">{exercise.equipmentLabel}</p>}
+            {(exercise.benefit || libraryExercise) && <p className="focused-exercise-benefit">{exercise.benefit ?? libraryExercise?.primaryBenefit}</p>}
             <ExerciseGuide exercise={exercise} key={exercise.key} />
             {(!log.done || !athleteMode) && <details className="focused-effort"><summary>{athleteMode ? 'Effort' : 'Effort & advanced'} <span>{log.rir == null ? 'Optional' : `${log.rir} reps in reserve`}</span></summary>
               {!log.done && <label className="field-label">Reps in reserve<input type="number" min="0" max="10" step="1" inputMode="numeric" aria-label={`${exercise.name} set ${setIndex + 1} reps in reserve`} value={log.rir ?? ''} onChange={event => editSet({ rir: event.target.value === '' ? null : Math.min(10, Math.max(0, Number(event.target.value))) })} /></label>}

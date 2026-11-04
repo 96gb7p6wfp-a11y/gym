@@ -11,7 +11,7 @@ function history(date:string,kg:number){
 async function seed(page:Page,hasHistory=true){
  const sessions=hasHistory?[history('2026-01-05',40),history('2026-10-06',50),history('2026-10-20',55)]:[];
  await page.addInitScript(({key,profile,sessions})=>{
- if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify({schemaVersion:1,profile,profileVersion:1,sessions:sessions.map(session=>({session,version:1})),nutrition:[],activities:[]}));
+ if(!localStorage.getItem(key) || JSON.parse(localStorage.getItem(key)!).profileVersion === 0)localStorage.setItem(key,JSON.stringify({schemaVersion:1,profile,profileVersion:1,sessions:sessions.map(session=>({session,version:1})),nutrition:[],activities:[]}));
  },{key:STORE,profile:DEFAULT_PROFILE,sessions});
  await page.goto('/');
 }
