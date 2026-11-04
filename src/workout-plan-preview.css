@@ -3,6 +3,9 @@
 .plan-preview__metadata { display:grid; gap:8px; }
 .plan-preview__header { padding-right:34px; }
 .plan-preview__header .eyebrow { font-size:10px; letter-spacing:.06em; }
+.plan-preview__clearance { display:grid; gap:6px; padding:14px 15px; border:1px solid color-mix(in srgb, var(--accent) 30%, var(--line)); border-radius:16px; background:var(--surface-soft); }
+.plan-preview__clearance strong { color:var(--ink); font-size:14px; font-weight:650; line-height:1.4; }
+.plan-preview__clearance p { color:var(--sub); font-size:12px; line-height:1.5; }
 .plan-preview__summary { display:flex; flex-wrap:wrap; align-items:center; gap:8px 18px; color:var(--sub); font-size:13px; line-height:1.5; font-variant-numeric:tabular-nums; }
 .plan-preview__summary>span { display:inline-flex; align-items:center; gap:6px; }
 .plan-preview__scope { max-width:36ch; color:var(--sub); font-size:12px; line-height:1.5; }

@@ -7,6 +7,7 @@ import { formatPreviousSet } from './previous-performance';
 import { TimedSetControls } from './TimedSetControls';
 import type { TimedSetAction } from './timed-sets';
 import type { FocusedExercise, FocusedSetLog } from './FocusedWorkout';
+import { lastSetSuggestion } from './set-autofill';
 import './quick-workout-log.css';
 
 interface QuickWorkoutLogProps {
@@ -46,6 +47,8 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
   const inMinutes = /\bmin(?:ute)?s?\b/i.test(exercise.target);
   const name = `${exercise.name} set ${index + 1}`;
   const ready = gate.isArmed(target);
+  const lastSet = !editing && !log.done ? lastSetSuggestion(exercise, log.id) : null;
+  const canCopy = lastSet && (log.kg !== lastSet.kg || log.reps !== lastSet.reps);
 
   function arm() {
     gate.arm(target);
@@ -91,6 +94,10 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
       aria-label={`${log.done ? 'Completed' : 'Complete'} ${name}`} aria-pressed={log.done} onClick={complete}>
       {log.done ? <Check size={19} aria-hidden="true" /> : <span aria-hidden="true">✓</span>}
     </button>
+    {canCopy && lastSet && <div className="quick-set__review"><button type="button" onClick={() => edit(lastSet)}
+      aria-label={`Copy previous completed set to ${name}`}>
+      Copy set {index} · {lastSet.kg == null ? 'bodyweight' : `${lastSet.kg} kg`} × {lastSet.reps}
+    </button></div>}
     {!log.done && !ready && <div className="quick-set__review"><button type="button" onClick={arm} aria-label={`Ready for ${name}`}>Review & ready</button></div>}
     {timed && !log.done && <details className="quick-set__timer"><summary>Set {index + 1} timer</summary>
       <TimedSetControls setId={log.id} exerciseKey={exercise.key} exerciseName={exercise.name} setNumber={index + 1}
