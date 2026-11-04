@@ -1,0 +1,35 @@
+.workout-layout-switch { display:flex; gap:4px; width:fit-content; max-width:100%; margin:0 0 18px; padding:4px; border-radius:99px; background:var(--surface-soft); }
+.workout-layout-switch button { min-height:44px; min-width:88px; padding:8px 14px; border:0; border-radius:99px; background:transparent; color:var(--sub); font:inherit; font-size:13px; font-weight:600; }
+.workout-layout-switch button[aria-pressed='true'] { background:var(--surface); color:var(--ink); box-shadow:var(--shadow-card); }
+.workout-layout-switch button:focus-visible,.quick-workout button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.quick-workout { display:grid; gap:18px; min-width:0; }
+.quick-workout__intro { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.quick-workout__intro p { margin:0; color:var(--sub); font-size:12px; line-height:1.4; }
+.quick-workout .text-button { min-height:44px; padding:6px 0; color:var(--accent); font-size:12px; }
+.quick-exercise { min-width:0; padding:16px 12px 8px; border:1px solid var(--line); border-radius:24px; background:var(--surface); }
+.quick-exercise > header { margin-bottom:14px; }
+.quick-exercise h2 { margin:0; color:var(--ink); font-family:var(--font-display,inherit); font-size:21px; line-height:1.2; font-weight:650; letter-spacing:-.025em; overflow-wrap:anywhere; }
+.quick-exercise header p { margin:6px 0 0; color:var(--sub); font-size:12px; line-height:1.4; }
+.quick-set,.quick-log-head { display:grid; grid-template-columns:20px minmax(42px,.95fr) minmax(44px,1fr) minmax(40px,.8fr) 44px; align-items:center; gap:5px; min-width:0; }
+.quick-log-head { min-height:30px; color:var(--sub); font-size:10px; text-align:center; }
+.quick-set { padding:9px 0; border-top:1px solid var(--line); }
+.quick-set > * { min-width:0; }
+.quick-set__number { color:var(--sub); font-size:12px; text-align:center; }
+.quick-set__previous { color:var(--sub); font-size:10px; line-height:1.35; text-align:center; overflow-wrap:anywhere; }
+.quick-workout .set-input { width:100%; min-width:0; min-height:46px; margin:0; padding:8px 2px; border:0; border-radius:12px; background:var(--surface-soft); color:var(--ink); font-size:17px; font-variant-numeric:tabular-nums; text-align:center; appearance:textfield; }
+.quick-workout .set-input:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+.quick-workout .weight-input-field { display:block; min-width:0; }
+.quick-workout .weight-input-error { font-size:10px; overflow-wrap:anywhere; }
+.quick-workout input::-webkit-inner-spin-button,.quick-workout input::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+.quick-set__complete { display:grid; place-items:center; width:44px; min-width:44px; min-height:46px; padding:0; border:1px solid var(--line); border-radius:50%; background:transparent; color:var(--accent); font-size:19px; }
+.quick-set__complete[aria-pressed='true'] { background:var(--accent); color:var(--on-accent); border-color:var(--accent); opacity:1; }
+.quick-set--timed,.quick-log-head--timed { grid-template-columns:20px minmax(50px,.95fr) minmax(80px,1.8fr) 44px; }
+.quick-set__review,.quick-set__timer { grid-column:2 / -1; }
+.quick-set__review button { min-height:44px; padding:8px 0; color:var(--accent); font-size:12px; }
+.quick-set__timer > summary { display:flex; align-items:center; min-height:44px; color:var(--sub); font-size:12px; cursor:pointer; }
+.quick-exercise__effort { border-top:1px solid var(--line); }
+.quick-exercise__effort > summary { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:48px; color:var(--ink); font-size:12px; cursor:pointer; }
+.quick-exercise__effort summary span,.quick-exercise__effort p { color:var(--sub); font-size:12px; line-height:1.45; }
+.quick-exercise__effort label { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:48px; color:var(--sub); font-size:12px; }
+.quick-exercise__effort input { width:72px; min-height:44px; padding:6px; font-size:16px; }
+@media (prefers-reduced-motion:reduce) { .quick-workout * { scroll-behavior:auto; } }

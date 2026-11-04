@@ -7,7 +7,7 @@ import { reportWeekStart, shiftReportDate, type ReportNutritionRecord, type Repo
 
 type LoggedExercise = ReportSession['exercises'][number];
 type LoggedSet = LoggedExercise['logs'][number];
-export type ProgressionExercise = Pick<LoggedExercise, 'key' | 'name' | 'group' | 'target' | 'mode'> & Partial<Pick<LoggedExercise, 'measurement' | 'quantityUnit' | 'targetRpe'>> & { exerciseId?: string; preparationOnly?: boolean; sets?: number };
+export type ProgressionExercise = Pick<LoggedExercise, 'key' | 'name' | 'group' | 'target' | 'mode'> & Partial<Pick<LoggedExercise, 'measurement' | 'quantityUnit' | 'targetRpe' | 'perSide'>> & { exerciseId?: string; equipmentLabel?: string; preparationOnly?: boolean; sets?: number };
 export interface ProgressionRecommendation {
   kind: 'load' | 'reps' | 'hold' | 'reduce' | 'quality' | 'baseline';
   title: string;
@@ -50,21 +50,40 @@ export interface PerformanceSummary {
   weight: WeightSummary;
   jumps: JumpSummary[];
   records: PersonalRecord[];
-  strengthChanges: { name: string; previous: number; current: number; reps: number; percent: number }[];
+  strengthChanges: StrengthChange[];
   gymSessions: number; gymDays: number; volleyballSessions: number; consistencyPercent: number | null;
   weeklyVolumeKg: number; weeklySets: number;
   load: { level: 'unknown' | 'limited' | 'steady' | 'higher'; label: string; cue: string };
   insights: string[];
 }
 
+export interface StrengthChange {
+  id: string;
+  name: string;
+  previous: number;
+  current: number;
+  reps: number;
+  percent: number;
+  previousDate: string;
+  currentDate: string;
+  sessionCount: number;
+  equipmentLabel?: string;
+  effort: 'matched' | 'unrecorded';
+  rir: number | null;
+}
+
 const round = (n: number, places = 1) => Math.round(n * 10 ** places) / 10 ** places;
 const number = (n: number) => n.toLocaleString('en-GB', { maximumFractionDigits: 1 });
 const positive = (n: number | null | undefined): n is number => typeof n === 'number' && Number.isFinite(n) && n > 0;
 const validDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(new Date(`${value}T12:00:00Z`).getTime()) && new Date(`${value}T12:00:00Z`).toISOString().slice(0, 10) === value;
-export interface PerformanceExerciseReference { key: string; name: string; mode: string; measurement?: string; exerciseId?: string; perSide?: boolean; quantityUnit?: string }
+export interface PerformanceExerciseReference { key: string; name: string; mode: string; measurement?: string; exerciseId?: string; perSide?: boolean; quantityUnit?: string; equipmentLabel?: string }
+/** Identity is optional. Older unlabeled sets stay unknown rather than inheriting a machine. */
+export function normalizeEquipmentLabel(label?: string): string | null {
+  return label?.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-GB') || null;
+}
 /** Reused by charts and comparisons so a renamed or remeasured movement cannot inherit unrelated results. */
 export function exercisePerformanceIdentity(exercise: PerformanceExerciseReference): string {
-  return JSON.stringify([exercise.exerciseId ?? exercise.key, exercise.name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-GB'), exercise.mode, exercise.measurement ?? null, Boolean(exercise.perSide), exercise.quantityUnit ?? null]);
+  return JSON.stringify([exercise.exerciseId ?? exercise.key, exercise.name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-GB'), exercise.mode, exercise.measurement ?? null, Boolean(exercise.perSide), exercise.quantityUnit ?? null, normalizeEquipmentLabel(exercise.equipmentLabel)]);
 }
 export function areComparableExercises(a: PerformanceExerciseReference, b: PerformanceExerciseReference): boolean {
   return exercisePerformanceIdentity(a) === exercisePerformanceIdentity(b);
@@ -75,6 +94,16 @@ const strengthSets = (exercise: LoggedExercise) => exercise.logs.filter(log => l
 const measuredSets = (exercise: LoggedExercise) => exercise.logs.filter(log => log.done && positive(log.measurementCm) && (exercise.mode === 'timed' ? positive(log.seconds) : positive(log.reps)));
 const lowerBody = (exercise: ProgressionExercise) => /squat|lunge|deadlift|hip thrust|leg press|hamstring|calf|calves|lower|quad|glute|jump|nordic|leg curl|leg extension|step.?up|hip.?flex|adduct|tibialis|copenhagen|good.?morning|romanian|\brdl\b/i.test(`${exercise.name} ${exercise.group} ${findLibraryExercise(exercise)?.muscles.join(' ') ?? ''}`);
 const powerExercise = (exercise: ProgressionExercise) => ['Power', 'Plyometric', 'Speed'].includes(findLibraryExercise(exercise)?.category ?? '') || /jump|plyo|bound|pogo|hop|throw|slam|explosive|sprint|power clean|hang clean|snatch/i.test(`${exercise.name} ${exercise.group}`);
+const validRir = (rir: number | null | undefined): rir is number => typeof rir === 'number' && Number.isFinite(rir) && rir >= 0 && rir <= 10;
+/** Unknown effort is reported as unknown; known different efforts are not a like-for-like gain. */
+export function areComparableSetEfforts(a: Pick<LoggedSet, 'rir'>, b: Pick<LoggedSet, 'rir'>): boolean {
+  return !validRir(a.rir) || !validRir(b.rir) || a.rir === b.rir;
+}
+/** Estimates are for conventional loaded strength sets, never jumps, throws, time, carries or assistance. */
+export function isOneRepMaxExercise(exercise: ProgressionExercise): boolean {
+  return exercise.mode === 'weight' && !exercise.preparationOnly && !exercise.measurement && !exercise.quantityUnit
+    && !powerExercise(exercise) && !/assisted.*pull.?up|pull.?up.*assisted/i.test(exercise.name);
+}
 export function exerciseIntent(exercise: ProgressionExercise): string {
   if (powerExercise(exercise)) return 'Fast intent · stop when speed or landing quality drops';
   if (exercise.mode === 'timed') return 'Steady position · comfortable breathing';
@@ -122,7 +151,7 @@ export function getProgressionRecommendation(exercise: ProgressionExercise, sess
   if (!completed.length || !range) return { ...base, kind: 'baseline', title: 'Build your baseline', cue: 'Use a controlled load and leave about 2 reps in reserve.', reason: 'A completed comparable session is needed before suggesting progression.' };
   // Compare sets at the same load; a changed exercise name or mode has its own history.
   const best = [...completed].sort((a, b) => (b.kg ?? 0) - (a.kg ?? 0) || b.reps! - a.reps!)[0];
-  const priorSets = previous?.logs.filter(log => log.done && positive(log.reps) && log.kg === best.kg) ?? [];
+  const priorSets = previous?.logs.filter(log => log.done && positive(log.reps) && log.kg === best.kg && areComparableSetEfforts(log, best)) ?? [];
   const priorReps = priorSets.length ? Math.max(...priorSets.map(log => log.reps!)) : null;
   const previousLabel = { kg: best.kg, reps: best.reps! };
   const decline = priorReps !== null && priorReps - best.reps! >= 2;
@@ -293,7 +322,8 @@ export function getPersonalRecords(sessions: readonly ReportSession[], today: st
   function consider(exercise: LoggedExercise, session: Pick<ReportSession, 'id' | 'date'>, kind: PersonalRecord['kind'], value: number, unit: PersonalRecord['unit'], context: string, qualifier = '') {
     const key = `${identity(exercise)}:${kind}:${qualifier}`;
     const old = records.get(key);
-    if (!old || value > old.value) records.set(key, { key, exerciseKey: exercise.exerciseId ?? exercise.key, name: exercise.name, kind, value: round(value), unit, date: session.date, sessionId: session.id, context, isNew: !!old && (old.sessionId !== session.id || old.isNew) });
+    const equipment = normalizeEquipmentLabel(exercise.equipmentLabel) ? exercise.equipmentLabel!.trim().replace(/\s+/g, ' ') : undefined;
+    if (!old || value > old.value) records.set(key, { key, exerciseKey: exercise.exerciseId ?? exercise.key, name: exercise.name, kind, value: round(value), unit, date: session.date, sessionId: session.id, context: equipment ? `${context} · ${equipment}` : context, isNew: !!old && (old.sessionId !== session.id || old.isNew) });
   }
   for (const session of savedSessions(sessions, today)) for (const exercise of session.exercises) {
     if (exercise.preparationOnly || exercise.quantityUnit || /assisted.*pull.?up|pull.?up.*assisted/i.test(exercise.name)) continue;
@@ -313,7 +343,7 @@ export function getPersonalRecords(sessions: readonly ReportSession[], today: st
     for (const log of logs) {
       consider(exercise, session, 'weight', log.kg!, 'kg', `${log.reps} reps`);
       consider(exercise, session, 'reps', log.reps!, 'reps', `At ${number(log.kg!)} kg`, String(log.kg));
-      const estimate = estimateOneRepMax(log.kg!, log.reps!);
+      const estimate = isOneRepMaxExercise(exercise) ? estimateOneRepMax(log.kg!, log.reps!) : null;
       if (estimate !== null) consider(exercise, session, 'estimated-1rm', estimate, 'kg', `Estimated · ${number(log.kg!)} kg × ${log.reps}`);
     }
     if (logs.length) consider(exercise, session, 'volume', logs.reduce((total, log) => total + log.kg! * log.reps!, 0), 'kg', 'One-session logged volume');
@@ -358,28 +388,42 @@ export function getPerformanceSummary({ sessions, activities = [], plan = [], nu
     ? { level: 'higher', label: 'Take it easier', cue: 'Your check-in suggests a lighter day. Reduce load or a set if movement quality drops.' }
     : sampled && ((setIncrease ?? 0) > 0.2 || (volumeIncrease ?? 0) > 0.2 || hardMinutes >= 90)
       ? { level: 'higher', label: 'More work recorded', cue: 'More sets, weighted work or hard activity recorded. Keep jumps crisp and avoid adding extra leg volume.' }
-      : sampled ? { level: 'steady', label: (setIncrease ?? 0) < -0.2 ? 'Less recorded load' : 'Load is steady', cue: (setIncrease ?? 0) < -0.2 ? 'Fewer sets were recorded than last week. This alone does not measure recovery.' : 'Recorded set count is similar to last week. Let warm-up quality guide today.' }
+      : sampled ? { level: 'steady', label: (setIncrease ?? 0) < -0.2 ? 'Less recorded load' : 'Recorded load is steady', cue: (setIncrease ?? 0) < -0.2 ? 'Fewer sets were recorded than last week. This alone does not measure recovery.' : 'Recorded set count is similar to last week. Let warm-up quality guide today.' }
         : last7.length + recentActivities.length ? { level: 'limited', label: 'Building a baseline', cue: 'More consistent logs are needed to compare load. This is not a recovery assessment.' }
           : { level: 'unknown', label: 'No load baseline', cue: 'Log training and how you feel to build context. Recovery cannot be inferred from missing logs.' };
   const strengthChanges: PerformanceSummary['strengthChanges'] = [];
   const exerciseGroups = new Map<string, { date: string; exercise: LoggedExercise }[]>();
   for (const session of month) for (const exercise of session.exercises) if (!exercise.preparationOnly && exercise.mode === 'weight' && !exercise.measurement && !exercise.quantityUnit && !/assisted.*pull.?up|pull.?up.*assisted/i.test(exercise.name) && strengthSets(exercise).length) exerciseGroups.set(identity(exercise), [...(exerciseGroups.get(identity(exercise)) ?? []), { date: session.date, exercise }]);
-  for (const items of exerciseGroups.values()) {
+  for (const [exerciseId, items] of exerciseGroups) {
     const first = items[0], last = items.at(-1)!;
     if (first.date === last.date) continue;
-    const counts = new Set(strengthSets(last.exercise).map(log => log.reps!));
+    const firstLogs = items.filter(item => item.date === first.date).flatMap(item => strengthSets(item.exercise));
+    const lastLogs = items.filter(item => item.date === last.date).flatMap(item => strengthSets(item.exercise));
+    const counts = new Set(lastLogs.map(log => log.reps!));
     const matches = [...counts].flatMap(reps => {
-      const before = strengthSets(first.exercise).filter(log => log.reps === reps);
-      const after = strengthSets(last.exercise).filter(log => log.reps === reps);
+      const before = firstLogs.filter(log => log.reps === reps);
+      const after = lastLogs.filter(log => log.reps === reps);
       if (!before.length) return [];
-      const previous = Math.max(...before.map(log => log.kg!));
-      const current = Math.max(...after.map(log => log.kg!));
-      return [{ name: last.exercise.name, previous, current, reps,
-        percent: round((current - previous) / previous * 100), observations: before.length + after.length }];
+      const beforeEfforts = [...new Set(before.map(log => validRir(log.rir) ? log.rir : null))];
+      const afterEfforts = [...new Set(after.map(log => validRir(log.rir) ? log.rir : null))];
+      return beforeEfforts.flatMap(beforeRir => afterEfforts.flatMap(afterRir => {
+        if (beforeRir !== null && afterRir !== null && beforeRir !== afterRir) return [];
+        const beforeSets = before.filter(log => (validRir(log.rir) ? log.rir : null) === beforeRir);
+        const afterSets = after.filter(log => (validRir(log.rir) ? log.rir : null) === afterRir);
+        const previous = Math.max(...beforeSets.map(log => log.kg!));
+        const current = Math.max(...afterSets.map(log => log.kg!));
+        const effort = beforeRir !== null && afterRir !== null ? 'matched' as const : 'unrecorded' as const;
+        const rir = effort === 'matched' ? beforeRir : null;
+        const sessionCount = new Set(items.filter(item => strengthSets(item.exercise).some(log => log.reps === reps
+          && (rir === null || log.rir === rir))).map(item => item.date)).size;
+        return [{ id: exerciseId, name: last.exercise.name, previous, current, reps, previousDate: first.date, currentDate: last.date,
+          sessionCount, equipmentLabel: last.exercise.equipmentLabel?.trim().replace(/\s+/g, ' ') || undefined, effort, rir,
+          percent: round((current - previous) / previous * 100), observations: beforeSets.length + afterSets.length }];
+      }));
     });
     // Prefer the most observed fixed-rep comparison, including declines. Never
     // choose a rep cohort or movement because its percentage gain is larger.
-    const chosen = matches.sort((a,b) => b.observations-a.observations || a.reps-b.reps)[0];
+    const chosen = matches.sort((a,b) => b.observations-a.observations || (a.effort === 'matched' ? 0 : 1)-(b.effort === 'matched' ? 0 : 1) || a.reps-b.reps)[0];
     if (chosen) { const { observations: _count, ...change } = chosen; strengthChanges.push(change); }
   }
   strengthChanges.sort((a,b) => a.name.localeCompare(b.name) || a.reps-b.reps);
@@ -391,8 +435,14 @@ export function getPerformanceSummary({ sessions, activities = [], plan = [], nu
     jumpImprovement ? `${jumpImprovement.type[0].toUpperCase()}${jumpImprovement.type.slice(1)} jump is up ${number(jumpImprovement.change30Days!)} cm across recorded tests.` : null,
     approachAdvantage && approachAdvantage.date >= shiftReportDate(today, -29)
       ? `Approach Advantage: ${approachAdvantage.advantageCm > 0 ? '+' : ''}${number(approachAdvantage.advantageCm)} cm from matched reach tests on ${approachAdvantage.date}. This describes that test, not a training effect.` : null,
-    bestStrength ? `${bestStrength.name}: +${number(bestStrength.current - bestStrength.previous)} kg at ${bestStrength.reps} reps.` : null,
+    bestStrength ? strengthChangeInsight(bestStrength) : null,
     load.level === 'higher' ? load.cue : null,
   ].filter((item): item is string => item !== null).slice(0, 3);
   return { weight, jumps, records, strengthChanges, gymSessions, gymDays, volleyballSessions, consistencyPercent: null, weeklyVolumeKg: round(volume(week)), weeklySets: setCount(week), load, insights };
+}
+
+/** What changed, its recorded basis, and one optional next step. Never a recovery verdict. */
+export function strengthChangeInsight(change: StrengthChange): string {
+  const difference = change.current - change.previous;
+  return `${change.name}: ${difference > 0 ? '+' : ''}${number(difference)} kg at ${change.reps} reps, ${change.previousDate} → ${change.currentDate}${change.equipmentLabel ? ` · ${change.equipmentLabel}` : ''}. ${change.effort === 'matched' ? `RIR ${change.rir} in both comparisons` : 'Effort was not recorded for both comparisons'}; ${change.sessionCount} recorded training days. Repeat the same setup and rep target before changing load.`;
 }

@@ -10,6 +10,7 @@ import NutritionCalculator from "./NutritionCalculator";
 import { AthleticNutritionProposal } from "./AthleticNutritionProposal";
 import { MealRoutineCue, MealTimingReminders } from "./RemindersPanel";
 import "./nutrition-native.css";
+import { parseQuickMeal, scaleFood, hasPartialNutrition, macroCompleteness } from "./quick-nutrition";
 import { simpleFoodGuidance } from "./nutrition-goals";
 import { getWeightSummary } from "./performance-insights";
 import {
@@ -46,8 +47,8 @@ var emptyFood = () => ({
   portion: ``,
   calories: 0,
   protein: 0,
-  carbs: 0,
-  fat: 0,
+  carbs: null,
+  fat: null,
 });
 var emptyMeal = () => ({
   kind: `meal`,
@@ -85,7 +86,7 @@ async function resizeMealPhoto(e) {
     URL.revokeObjectURL(t);
   }
 }
-function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile, onNutritionProfileChange, volleyballSchedule, onOpenRoutine, initialAction, onActionHandled }) {
+function NutritionView({ bodyWeight: bodyWeight, athleteMode = true, dailyGuidance, nutritionProfile, onNutritionProfileChange, volleyballSchedule, onOpenRoutine, initialAction, onActionHandled }) {
   let [selectedDate, setSelectedDate] = React.useState(() =>
     berlinDate(),
   );
@@ -105,6 +106,9 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
   let [analyzing, setAnalyzing] = React.useState(!1);
   let [targetsOpen, setTargetsOpen] = React.useState(!1);
   let [profileOpen, setProfileOpen] = React.useState(!1);
+  let [quickDraft, setQuickDraft] = React.useState(null);
+  let [quickError, setQuickError] = React.useState('');
+  const quickSaving = React.useRef(false);
   let [weightOpen, setWeightOpen] = React.useState(!1);
   React.useEffect(() => { if (initialAction === `weight`) { setWeightOpen(true); onActionHandled?.(); } }, [initialAction, onActionHandled]);
   let [targetsDraft, setTargetsDraft] = React.useState(
@@ -173,6 +177,15 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
         return true;
       }).slice(0, 6);
   }, [records]);
+  const favoriteMeals = React.useMemo(() => {
+    const seen = new Set();
+    return [...records].filter(record => record.payload.kind === 'meal' && record.payload.favorite)
+      .sort((a, b) => b.date.localeCompare(a.date)).filter(record => {
+        const signature = JSON.stringify([record.payload.name, record.payload.foods]);
+        if (seen.has(signature)) return false;
+        seen.add(signature); return true;
+      });
+  }, [records]);
   let savedFoods = React.useMemo(() => {
     const seen = new Set();
     return [...records].filter(record => record.payload.kind === `meal`)
@@ -228,6 +241,32 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
     } finally {
       setSaving(!1);
     }
+  }
+  function addQuickMeal() {
+    newMealIdRef.current = newId();
+    setQuickDraft({ name: '', calories: '', protein: '', carbs: '', fat: '', quantity: '1', favorite: false });
+    setQuickError('');
+  }
+  async function saveQuickMeal() {
+    if (!quickDraft || quickSaving.current) return;
+    setQuickError('');
+    let payload;
+    try { payload = parseQuickMeal(quickDraft); }
+    catch (error) { setQuickError(error instanceof Error ? error.message : 'Check the nutrition amounts.'); return; }
+    quickSaving.current = true;
+    setSaving(true);
+    try {
+      await saveNutritionRecord({ id: newMealIdRef.current, date: selectedDate, payload }, 0);
+      setMealSavedToken(current => ({ date: selectedDate, sequence: (current?.sequence ?? 0) + 1 }));
+      setQuickDraft(null);
+    } catch (error) { setQuickError(error instanceof Error ? error.message : 'Could not save this meal.'); }
+    finally { quickSaving.current = false; setSaving(false); }
+  }
+  function adjustPortion(index, factor) {
+    try {
+      setMealDraft({ ...mealDraft, foods: mealDraft.foods.map((food, entry) => entry === index ? scaleFood(food, factor) : food) });
+      setDraftError('');
+    } catch (error) { setDraftError(error instanceof Error ? error.message : 'Check the portion.'); }
   }
   async function setPhotoFile(e) {
     if (e) {
@@ -285,7 +324,7 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
     newMealIdRef.current = newId();
     setEditingMeal(null);
     setMealDate(selectedDate);
-    setMealDraft({ ...structuredClone(record.payload), source: `manual`, assumptions: ``, confidence: null });
+    setMealDraft({ ...structuredClone(record.payload), source: `manual`, assumptions: ``, confidence: null, favorite: false });
     setDraftError(``);
   }
   function reuseFood(food) {
@@ -358,7 +397,7 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
             </div>
             <div className="nutrition-daily__macros">{['carbs', 'fat'].map(key => <div key={key}>
               <span>{key === 'carbs' ? 'Carbs' : 'Fat'}</span>
-              <strong>{roundNutrient(dailyTotals[key])}<span>{targets[key] === null ? ' g' : ` / ${targets[key]} g`}</span></strong>
+              <strong>{macroCompleteness(mealsForDay.flatMap(record => record.payload.foods), key) === 'unknown' ? 'Not recorded' : <>{roundNutrient(dailyTotals[key])}<span>{targets[key] === null ? ' g' : ` / ${targets[key]} g`}</span>{macroCompleteness(mealsForDay.flatMap(record => record.payload.foods), key) === 'partial' && <small> · partial</small>}</>}</strong>
             </div>)}</div>
           </div>
         </> : <div className="nutrition-daily__welcome">
@@ -376,18 +415,18 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
           const meal = record.payload;
           const nutrients = sumNutrients(meal.foods);
           return <button type="button" className="nutrition-meal" onClick={() => { setEditingMeal(record); setMealDate(record.date); setMealDraft(structuredClone(meal)); setDraftError(``); }} key={record.id}>
-            <span className="nutrition-meal__name"><strong>{meal.name}</strong><small>{meal.foods.map(food => food.name).join(', ')}</small></span>
+            <span className="nutrition-meal__name"><strong>{meal.name}</strong><small>{meal.foods.map(food => food.name).join(', ')}{meal.favorite ? ' · Favorite' : ''}</small>{hasPartialNutrition(meal.foods) && <small className="nutrition-partial-label">Partial macros</small>}</span>
             <span className="nutrition-meal__energy"><strong>{roundNutrient(nutrients.calories)}{' '}<small>kcal</small></strong><small>{roundNutrient(nutrients.protein)} g protein</small></span>
             <ChevronRight size={17} aria-hidden="true" />
           </button>;
         }) : <div className="nutrition-empty"><p>{loaded ? 'No meals logged yet.' : 'Loading your meals…'}</p>{hasTargets && <span>Log a meal to see what’s left.</span>}</div>}
       </section>
-      <div className="nutrition-log-dock"><button type="button" className="btn full nutrition-log-action" onClick={addMeal}><Plus size={19} aria-hidden="true" />Log meal</button></div>
+      <div className="nutrition-log-dock"><button type="button" className="nutrition-quick-action" onClick={addQuickMeal}>Quick entry</button><button type="button" className="btn full nutrition-log-action" onClick={addMeal}><Plus size={19} aria-hidden="true" />Log meal</button></div>
       <details className="nutrition-tools">
         <summary>Nutrition options<ChevronRight size={18} aria-hidden="true" /></summary>
         <div className="nutrition-tools__content">
         <button type="button" className="nutrition-tool-row" onClick={() => setProfileOpen(true)}><span><strong>Targets</strong><small>Your daily goals & profile</small></span><ChevronRight size={18} aria-hidden="true" /></button>
-        <button type="button" className="nutrition-tool-row" onClick={() => { setWeightError(``); setWeightOpen(true); }}><span><strong>Weight check-in</strong><small>{latestWeightRecord?.payload.kind === 'weight' ? `${latestWeightRecord.payload.kg} kg · latest` : `${bodyWeight} kg · profile`}</small></span><ChevronRight size={18} aria-hidden="true" /></button>
+        <button type="button" className="nutrition-tool-row" onClick={() => { setWeightError(``); setWeightOpen(true); }}><span><strong>Weight check-in</strong><small>{latestWeightRecord?.payload.kind === 'weight' ? `${latestWeightRecord.payload.kg} kg · latest` : bodyWeight == null ? 'Optional weight check-in' : `${bodyWeight} kg · profile`}</small></span><ChevronRight size={18} aria-hidden="true" /></button>
         <details className="nutrition-simple-fuel">
           <summary><span><strong>Fuel for training</strong><small>Before & after your session</small></span><ChevronRight size={18} aria-hidden="true" /></summary>
           <div className="nutrition-fuel-content"><p><strong>Before</strong>{foodGuidance.before}</p><p><strong>After</strong>{foodGuidance.after}</p><p><strong>Recovery</strong>{foodGuidance.recovery}</p>
@@ -399,23 +438,38 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
         {photoAnalysisReady && <button type="button" className="nutrition-tool-row" onClick={() => { setPhotoDialogOpen(true); setPhotoError(``); }}><span><strong>Meal photo</strong><small>Estimate, then review</small></span><Camera size={18} aria-hidden="true" /></button>}
         </div>
       </details>
+      <Dialog open={quickDraft !== null} onOpenChange={open => { if (!open && !saving) setQuickDraft(null); }}>
+        <DialogContent className="app-dialog nutrition-dialog nutrition-native-sheet nutrition-quick-sheet">
+          <DialogHeader><DialogTitle>Quick nutrition entry</DialogTitle><DialogDescription>Log what you know. Carbs and fat can stay blank.</DialogDescription></DialogHeader>
+          {quickDraft && <form onSubmit={event => { event.preventDefault(); void saveQuickMeal(); }} className="nutrition-quick-form">
+            <label className="field-label">Meal name · optional<input maxLength={100} value={quickDraft.name} placeholder="Quick meal" onChange={event => setQuickDraft({ ...quickDraft, name: event.target.value })} /></label>
+            <div className="nutrition-macro-inputs">{['calories', 'protein'].map(key => <label className="field-label" key={key}>{NUTRIENT_LABELS[key]}<input type="text" inputMode="decimal" autoComplete="off" value={quickDraft[key]} onChange={event => setQuickDraft({ ...quickDraft, [key]: event.target.value })} required /></label>)}</div>
+            <label className="field-label">Quantity · portions<input type="text" inputMode="decimal" value={quickDraft.quantity} onChange={event => setQuickDraft({ ...quickDraft, quantity: event.target.value })} /></label>
+            <details className="nutrition-quick-add"><summary>Carbs & fat · optional</summary><div className="nutrition-macro-inputs">{['carbs', 'fat'].map(key => <label className="field-label" key={key}>{NUTRIENT_LABELS[key]}<input type="text" inputMode="decimal" placeholder="Not recorded" value={quickDraft[key]} onChange={event => setQuickDraft({ ...quickDraft, [key]: event.target.value })} /></label>)}</div></details>
+            <label className="nutrition-favorite-toggle"><input type="checkbox" checked={quickDraft.favorite} onChange={event => setQuickDraft({ ...quickDraft, favorite: event.target.checked })} />Save as a favorite meal</label>
+            <p className="small-note">Amounts above describe one portion. Quantity scales the recorded amounts; unknown macros stay unknown.</p>
+            {quickError && <p className="nutrition-error" role="alert">{quickError}</p>}
+            <button type="submit" className="btn full" disabled={!loaded || saving}>{saving ? 'Saving…' : 'Save quick entry'}</button>
+          </form>}
+        </DialogContent>
+      </Dialog>
       <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
         <DialogContent className="app-dialog nutrition-dialog nutrition-native-sheet nutrition-targets-sheet">
-          <DialogHeader><DialogTitle>Daily targets</DialogTitle><DialogDescription>Fuel muscle gain and volleyball.</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>Daily targets</DialogTitle><DialogDescription>Choose targets that fit your training.</DialogDescription></DialogHeader>
           <div className="nutrition-targets-summary"><div><span className="small-label">Your goals</span><p>{targets.calories === null ? 'No target set' : `${targets.calories} kcal · ${targets.protein ?? '–'} g protein`}</p><small className="muted">{targets.goalWeight === null ? 'Goal weight is optional' : `Goal weight: ${targets.goalWeight} kg`}</small></div><button type="button" className="text-button" onClick={() => { setTargetsDraft({ ...targets }); setDraftError(``); setProfileOpen(false); setTargetsOpen(true); }}>Edit targets</button></div>
-          <AthleticNutritionProposal currentTargets={targets} disabled={!loaded || saving} onApplyTargets={applyEstimatedTargets} />
+          {athleteMode && <AthleticNutritionProposal currentTargets={targets} disabled={!loaded || saving} onApplyTargets={applyEstimatedTargets} />}
           <details className="nutrition-calculator-disclosure"><summary>Personal calorie calculator</summary><NutritionCalculator profile={nutritionProfile} bodyWeight={bodyWeight} disabled={!loaded || saving || !onNutritionProfileChange} onProfileSave={onNutritionProfileChange} onApplyTargets={applyEstimatedTargets} /></details>
         </DialogContent>
       </Dialog>
       <Dialog open={weightOpen} onOpenChange={setWeightOpen}>
         <DialogContent className="app-dialog nutrition-dialog nutrition-native-sheet">
           <DialogHeader><DialogTitle>Weight check-in</DialogTitle><DialogDescription>{formatDate(selectedDate)} · Use similar conditions each time.</DialogDescription></DialogHeader>
-          <label className="field-label">Body weight · kg<input type="text" inputMode="decimal" value={weightInput} placeholder={todayWeightRecord?.payload.kind === 'weight' ? String(todayWeightRecord.payload.kg) : String(bodyWeight)} onChange={event => setWeightInput(event.target.value)} /></label>
+          <label className="field-label">Body weight · kg<input type="text" inputMode="decimal" value={weightInput} placeholder={todayWeightRecord?.payload.kind === 'weight' ? String(todayWeightRecord.payload.kg) : bodyWeight == null ? '' : String(bodyWeight)} onChange={event => setWeightInput(event.target.value)} /></label>
           {weightError && <p className="nutrition-error" role="alert">{weightError}</p>}
           <button type="button" className="btn full" disabled={!loaded || saving || !weightInput} onClick={() => void saveWeight()}>{saving ? 'Saving…' : 'Save weight'}</button>
           {currentWeekWeight !== null && <div className="nutrition-weight-average"><strong>{roundNutrient(currentWeekWeight)} kg</strong><span>7-day average</span>{previousWeekWeight !== null && <small>{currentWeekWeight - previousWeekWeight >= 0 ? '+' : ''}{roundNutrient(currentWeekWeight - previousWeekWeight)} kg vs last week</small>}</div>}
           {weightTrend.insight && <p className="small-note">{weightTrend.insight}</p>}
-          <p className="small-note">Aim for 0.1–0.25 kg/week. If well-sampled seven-day averages stay flat for about two weeks, consider +150–200 kcal/day. Targets change only when you apply them.</p>
+          <p className="small-note">{athleteMode ? 'For a muscle-gain goal, aim for 0.1–0.25 kg/week. If well-sampled seven-day averages stay flat for about two weeks, consider +150–200 kcal/day. Targets change only when you apply them.' : 'Record under similar conditions and follow your trend over several weeks. Weight is optional and does not change your training plan or targets automatically.'}</p>
         </DialogContent>
       </Dialog>
       <Dialog
@@ -532,6 +586,10 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
           </DialogHeader>
           {mealDraft && (
             <ReactJSX.Fragment>
+              {!editingMeal && favoriteMeals.length > 0 && <details className="nutrition-quick-add" open>
+                <summary>Favorite meals</summary>
+                <div className="nutrition-quick-add__list">{favoriteMeals.map(record => <button type="button" key={record.id} onClick={() => reuseMeal(record)}><span>{record.payload.name}</span><small>{roundNutrient(sumNutrients(record.payload.foods).calories)} kcal</small></button>)}</div>
+              </details>}
               {!editingMeal && recentMeals.length > 0 && <details className="nutrition-quick-add">
                 <summary>Recent meals</summary>
                 <div className="nutrition-quick-add__list">{recentMeals.map(record => <button type="button" key={record.id} onClick={() => reuseMeal(record)}><span>{record.payload.name}</span><small>{roundNutrient(sumNutrients(record.payload.foods).calories)} kcal</small></button>)}</div>
@@ -602,6 +660,9 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
                       }
                     />
                   </label>
+                  <div className="nutrition-portion-actions" role="group" aria-label={`Adjust food ${t + 1} portion`}>
+                    <span>Adjust quantity</span><button type="button" onClick={() => adjustPortion(t, .5)}>Half portion</button><button type="button" onClick={() => adjustPortion(t, 2)}>Double portion</button>
+                  </div>
                   <div className={`nutrition-macro-inputs`}>
                     {NUTRIENT_KEYS.map((n) => (
                       <label className={`field-label`} key={n}>
@@ -611,7 +672,8 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
                           min={`0`}
                           max={`20000`}
                           step={`0.1`}
-                          value={e[n]}
+                          value={e[n] ?? ''}
+                          placeholder={n === 'carbs' || n === 'fat' ? 'Not recorded' : undefined}
                           inputMode={`decimal`}
                           onFocus={event => event.target.select()}
                           onChange={(e) =>
@@ -621,7 +683,7 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
                                 i === t
                                   ? {
                                       ...r,
-                                      [n]: Number(e.target.value),
+                                      [n]: e.target.value.trim() === '' && (n === 'carbs' || n === 'fat') ? null : Number(e.target.value),
                                     }
                                   : r,
                               ),
@@ -659,6 +721,8 @@ function NutritionView({ bodyWeight: bodyWeight, dailyGuidance, nutritionProfile
                   })
                 }
               >{`Add another food`}</button>
+              <label className="nutrition-favorite-toggle"><input type="checkbox" checked={mealDraft.favorite === true} onChange={event => setMealDraft({ ...mealDraft, favorite: event.target.checked })} />Save as a favorite meal</label>
+              {hasPartialNutrition(mealDraft.foods) && <p className="small-note">Partial macros: blank carbs or fat are not recorded. Calories and protein are included; add the missing amounts whenever you know them.</p>}
               <details className="nutrition-quick-add nutrition-meal-details">
                 <summary>Meal details</summary>
                 <label className="field-label">Meal date<input type="date" value={mealDate} onChange={event => setMealDate(event.target.value)} /></label>

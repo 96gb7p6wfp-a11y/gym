@@ -1,0 +1,10 @@
+.presentation-settings { margin: 1.25rem 0; padding-block: 1rem; border-block: 1px solid var(--border); }
+.presentation-settings h3 { font-size: 1rem; margin: 0 0 .5rem; }
+.presentation-settings p { line-height: 1.5; }
+.mode-options { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; padding: .3rem; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 1rem; }
+.mode-options button { min-height: 46px; border-radius: .75rem; color: var(--sub); background: transparent; font-weight: 650; }
+.mode-options button[aria-pressed="true"] { color: var(--ink); background: var(--surface); box-shadow: 0 1px 5px #0001; outline: 1px solid var(--border); }
+.training-terms { margin: 1rem 0; border-top: 1px solid var(--border); padding-top: .6rem; }
+.training-terms summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+.training-terms dt { font-weight: 650; margin-block-start: .8rem; }
+.training-terms dd { margin: .25rem 0; line-height: 1.5; color: var(--sub); }

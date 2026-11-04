@@ -22,7 +22,7 @@ export function getTrainingPlanStatus(profile: StatusProfile, today: string, sel
   const planVersion = settings ? trainingPlanVersion(settings)
     : JSON.stringify(ProfileSchema.shape.plan.parse(profile.plan)) === originalPlan ? 'Original weekly plan' : 'Custom weekly plan';
   return {
-    appVersion: 'Setline V15',
+    appVersion: 'Setline V16',
     planVersion,
     cycle: settings ? trainingBlockStatus(settings, today) : 'No eight-week block active',
     selected: selectedDate !== today

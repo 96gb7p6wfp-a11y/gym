@@ -12,7 +12,7 @@ test('chart engine loads on demand and first-use detail screens work offline wit
     return { session: SessionSchema.parse(session), version: 1 };
   });
   await page.addInitScript(({ key, profile, sessions }) => {
-    if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify({
+    if (!localStorage.getItem(key) || JSON.parse(localStorage.getItem(key)!).profileVersion === 0) localStorage.setItem(key, JSON.stringify({
       schemaVersion: 1, profile, profileVersion: 1, sessions, nutrition: [], activities: [],
     }));
   }, { key: STORE, profile: DEFAULT_PROFILE, sessions });

@@ -7,7 +7,7 @@ const STORE = 'setline.gym.v1';
 async function seed(page: Page, appearance: 'light' | 'dark') {
   await page.clock.install({ time: new Date('2026-10-19T10:00:00Z') });
   await page.addInitScript(({ key, profile, appearance }) => {
-    if (!localStorage.getItem(key)) {
+    if (!localStorage.getItem(key) || JSON.parse(localStorage.getItem(key)!).profileVersion === 0) {
       localStorage.setItem(key, JSON.stringify({
         schemaVersion: 1,
         profileVersion: 1,
@@ -139,8 +139,10 @@ for (const appearance of ['light', 'dark'] as const) {
     // live action and retained decimal input against their own layered surface.
     const next = current.getByRole('button', { name: 'Complete Medicine Ball Spike Slam set 2', exact: true });
     await expect(next).toBeVisible();
+    await expect(next).toBeDisabled();
+    await current.getByRole('button', { name: 'Ready for Medicine Ball Spike Slam set 2', exact: true }).click();
     await expectReadable(next);
-    await expect(current.getByRole('textbox', { name: 'Medicine Ball Spike Slam set 2 weight in kilograms', exact: true })).toHaveValue('12.5');
+    await expect(current.getByRole('textbox', { name: 'Medicine Ball Spike Slam set 2 weight in kilograms', exact: true })).toHaveValue('');
     await expectReadable(page.locator('.rest-floating > span, .rest-floating > strong, .rest-floating > button'));
 
     await page.getByRole('tab', { name: 'You', exact: true }).click();

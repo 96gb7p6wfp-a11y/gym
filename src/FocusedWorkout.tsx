@@ -16,6 +16,8 @@ import { completedSetCue, setQualityCue } from './set-encouragement';
 import { previousSetReuse } from './workout-reuse';
 import { CompletionIntentGate, type CompletionIntent } from './set-completion';
 import { formatPreviousSet } from './previous-performance';
+import { QuickWorkoutLog } from './QuickWorkoutLog';
+import { EquipmentLabelEditor } from './EquipmentLabel';
 
 export interface FocusedSetLog {
   id: string;
@@ -47,6 +49,7 @@ export interface FocusedExercise {
   benefit?: string;
   superset?: SupersetLink;
   preparationOnly?: boolean;
+  equipmentLabel?: string;
 }
 
 export interface FocusedWorkoutProps {
@@ -66,13 +69,15 @@ export interface FocusedWorkoutProps {
   date?: string;
   context?: ProgressionContext;
   onExerciseAction?: (key: string) => void;
+  athleteMode?: boolean;
+  onEquipmentChange?: (exerciseKey: string, label: string | undefined) => Promise<boolean | void> | boolean | void;
 }
 
 const amount = (raw: string, maximum: number) => raw.trim() === ''
   ? null : Math.min(maximum, Math.max(0, Number(raw.replace(',', '.')) || 0));
 
 /** The existing session mutations remain the only source of workout data. */
-export function FocusedWorkout({ sessionId, editing = false, exercises, now, previous, onSet, onDone, onUndoLast, canUndoLast = false, lastCompletedTarget, onTimer, renderAllSets, sessions = [], date = new Date().toISOString().slice(0, 10), context, onExerciseAction }: FocusedWorkoutProps) {
+export function FocusedWorkout({ sessionId, editing = false, exercises, now, previous, onSet, onDone, onUndoLast, canUndoLast = false, lastCompletedTarget, onTimer, renderAllSets, sessions = [], date = new Date().toISOString().slice(0, 10), context, onExerciseAction, athleteMode = true, onEquipmentChange }: FocusedWorkoutProps) {
   const initialStep = firstUnfinishedStep(exercises);
   const initialExercise = exercises.find(exercise => exercise.key === initialStep?.exerciseKey) ?? exercises[0];
   const [exerciseKey, setExerciseKey] = useState(initialExercise?.key);
@@ -80,6 +85,8 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
   const [allSetsOpen, setAllSetsOpen] = useState(false);
   const [movementsOpen, setMovementsOpen] = useState(false);
   const [reuseRevision, setReuseRevision] = useState(0);
+  const [layout, setLayout] = useState<'focus' | 'quick'>('focus');
+  const [equipmentTarget, setEquipmentTarget] = useState<string | null>(null);
   const [setFeedback, setSetFeedback] = useState<{ id: string; text: string } | null>(null);
   const [, updateCompletionState] = useState(0);
   const initialTarget = initialExercise && (initialStep?.setId ?? initialExercise.logs[0]?.id);
@@ -114,6 +121,8 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
     completionGate.reset(exercise && targetId ? { sessionId, exerciseKey: exercise.key, setId: targetId } : undefined);
     updateCompletionState(value => value + 1);
     invalidWeightInputs.current.clear();
+    setLayout('focus');
+    setEquipmentTarget(null);
     // A restored or different workout starts at its first unfinished set.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
@@ -184,6 +193,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
   const anticipated = nextStepAfterCompletion(exercises.map(entry => entry.key === exercise.key
     ? { ...entry, logs: entry.logs.map(set => set.id === log.id ? { ...set, done: true } : set) } : entry), exercise.key, log.id);
   const nextExercise = exercises.find(entry => entry.key === anticipated?.exerciseKey);
+  const equipmentExercise = exercises.find(entry => entry.key === equipmentTarget);
 
   function pauseMovementTimer() {
     const running = exercises.find(entry => entry.runningSince != null);
@@ -231,9 +241,9 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
     }
   }
 
-  function undoLastSet() {
+  function undoLastSet(): boolean {
     const undoTarget = lastCompletedTarget;
-    if (!onUndoLast?.()) return;
+    if (!onUndoLast?.()) return false;
     pendingCompletion.current = null;
     completionGate.reset();
     updateCompletionState(value => value + 1);
@@ -242,10 +252,36 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
       setExerciseKey(undoTarget.exerciseKey);
       setSetId(undoTarget.setId);
     }
+    return true;
+  }
+
+  function changeLayout(next: 'focus' | 'quick') {
+    if (layout === next) return;
+    if (invalidWeightInputs.current.size) {
+      toast.error('Correct the invalid weight before changing the logging view.');
+      return;
+    }
+    pendingCompletion.current = null;
+    setLayout(next);
+  }
+
+  function selectQuickSet(key: string, id: string) {
+    pendingCompletion.current = null;
+    setExerciseKey(key);
+    setSetId(id);
+    armSet(key, id);
   }
 
   return (
     <div className="focused-workout" data-session-id={sessionId}>
+      <div className="workout-layout-switch" role="group" aria-label="Workout logging layout">
+        <button type="button" aria-pressed={layout === 'focus'} onClick={() => changeLayout('focus')}>Focus</button>
+        <button type="button" aria-pressed={layout === 'quick'} onClick={() => changeLayout('quick')}>Quick Log</button>
+      </div>
+      {layout === 'quick' ? <QuickWorkoutLog sessionId={sessionId} exercises={exercises} previous={previous} onSet={onSet} onDone={onDone}
+        onTimer={onTimer} onSelect={selectQuickSet} onInvalidChange={(id, invalid) => { if (invalid) invalidWeightInputs.current.add(id); else invalidWeightInputs.current.delete(id); }}
+        onEquipment={onEquipmentChange ? key => setEquipmentTarget(key) : undefined} onUndoLast={onUndoLast ? undoLastSet : undefined}
+        canUndoLast={canUndoLast} athleteMode={athleteMode} now={now} editing={editing} /> : <>
       <section className="focused-exercise" aria-label="Current exercise" ref={exerciseCard}>
         <div className="focused-stage-topline">
           <span aria-label={allDone ? 'All sets complete' : `Exercise ${exerciseIndex + 1} of ${exercises.length}`}>{allDone ? 'Complete' : `${String(exerciseIndex + 1).padStart(2, '0')} / ${String(exercises.length).padStart(2, '0')}`}</span>
@@ -264,8 +300,11 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
           </div>
         </div>
         <div className="focused-exercise-title"><h2 className="focused-exercise__name">{exercise.name}</h2></div>
+        {!exercise.measurement && exercise.mode !== 'timed' && onEquipmentChange && <button type="button" className="focused-equipment-label text-button"
+          aria-label={`Equipment for ${exercise.name}`} onClick={() => setEquipmentTarget(exercise.key)}>{exercise.equipmentLabel ?? 'Add equipment label'}</button>}
+        {!onEquipmentChange && exercise.equipmentLabel && <p className="small-note">{exercise.equipmentLabel}</p>}
         {(exercise.benefit || libraryExercise) && <p className="focused-exercise-benefit">{exercise.benefit ?? libraryExercise?.primaryBenefit}</p>}
-        {pair && pairedSet && <div className="focused-pair" role="group" aria-label={`${pair.kind === 'superset' ? 'Superset' : 'Complex pair'} ${pair.label}`}>
+        {athleteMode && pair && pairedSet && <div className="focused-pair" role="group" aria-label={`${pair.kind === 'superset' ? 'Superset' : 'Complex pair'} ${pair.label}`}>
           <div className="focused-pair__heading">
             <span>{pair.kind === 'superset' ? 'Superset' : 'Complex'} {pair.label}</span><strong>Round {setIndex + 1} <span>of {rounds}</span></strong>
           </div>
@@ -281,7 +320,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
           })}</div>
           <p>{pair.kind === 'superset' ? `Move to the partner, then rest ${pair.restAfterRound} sec after the pair. Rest longer if needed.` : exercise.rest > 0 ? `${exercise.rest % 60 === 0 ? `${exercise.rest / 60} min` : `${exercise.rest} sec`} rest between steps` : 'Follow your planned rest'}</p>
         </div>}
-        {pair?.kind === 'superset' && !pairedSet && <p className="small-note">Extra standalone set · keep your normal rest.</p>}
+        {athleteMode && pair?.kind === 'superset' && !pairedSet && <p className="small-note">Extra standalone set · keep your normal rest.</p>}
         {allSetsOpen ? (
           <div className="focused-workout__all-sets">{renderAllSets(exercise, Math.max(0, exerciseIndex))}</div>
         ) : (
@@ -289,7 +328,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
             <div className="focused-working-set">
               <div className="focused-exercise__set-heading">
                 <div className="focused-exercise__set-position"><strong>Set {setIndex + 1} <span>of {exercise.logs.length}</span></strong>
-                  <span className="focused-exercise__target">{exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.targetRpe ? ` · RPE ${exercise.targetRpe}` : ''}</span>
+                  <span className="focused-exercise__target">{exercise.target}{exercise.perSide ? ' / side' : ''}{athleteMode && exercise.targetRpe ? ` · RPE ${exercise.targetRpe}` : ''}</span>
                 </div>
                 {previousMetric && <span className="focused-exercise__previous">Previous <b>{previousMetric}</b></span>}
               </div>
@@ -357,7 +396,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                 {log.done ? <RotateCcw size={19} aria-hidden="true" /> : <Check size={20} aria-hidden="true" />}
                 {log.done ? 'Undo set' : 'Complete set'}
               </button>
-              {!log.done && exercise.mode !== 'timed' && <div className="focused-rir" role="group" aria-label="Quick reps in reserve">
+              {athleteMode && !log.done && exercise.mode !== 'timed' && <div className="focused-rir" role="group" aria-label="Quick reps in reserve">
                 <span>Reps in reserve · optional <button type="button" className="focused-rir-clear" aria-label="Clear reps in reserve" aria-pressed={log.rir == null} onClick={() => editSet({ rir: null })}>Clear</button></span>
                 <div>{[0, 1, 2, 3, 4, 5].map(rir => <button key={rir} type="button" aria-label={`${rir} reps in reserve`} aria-pressed={log.rir === rir}
                   onClick={() => editSet({ rir })}>{rir}</button>)}
@@ -374,8 +413,16 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
               </div>
             </div>
             <ExerciseGuide exercise={exercise} key={exercise.key} />
-            {!log.done && <details className="focused-effort"><summary>Effort <span>{log.rir == null ? 'Optional' : `${log.rir} reps in reserve`}</span></summary><label className="field-label">Reps in reserve<input type="number" min="0" max="10" step="1" inputMode="numeric" aria-label={`${exercise.name} set ${setIndex + 1} reps in reserve`} value={log.rir ?? ''} onChange={event => editSet({ rir: event.target.value === '' ? null : Math.min(10, Math.max(0, Number(event.target.value))) })} /></label><p className="small-note">How many more clean reps could you do?</p></details>}
-            {!editing && ['load', 'reps', 'hold', 'reduce'].includes(recommendation.kind) && <ProgressionCue recommendation={recommendation} onApply={log.done ? undefined : () => editSet({ ...(recommendation.kg !== undefined ? { kg: recommendation.kg } : {}), ...(recommendation.reps !== undefined ? { reps: recommendation.reps } : {}) })} />}
+            {(!log.done || !athleteMode) && <details className="focused-effort"><summary>{athleteMode ? 'Effort' : 'Effort & advanced'} <span>{log.rir == null ? 'Optional' : `${log.rir} reps in reserve`}</span></summary>
+              {!log.done && <label className="field-label">Reps in reserve<input type="number" min="0" max="10" step="1" inputMode="numeric" aria-label={`${exercise.name} set ${setIndex + 1} reps in reserve`} value={log.rir ?? ''} onChange={event => editSet({ rir: event.target.value === '' ? null : Math.min(10, Math.max(0, Number(event.target.value))) })} /></label>}
+              <p className="small-note">RIR: How many more reps you could complete.</p>
+              {!athleteMode && <><p className="small-note">RPE: How hard the effort felt.{exercise.targetRpe ? ` Planned effort: ${exercise.targetRpe}.` : ''}</p>
+                <p className="small-note">Primer: A short preparation session before a demanding activity.</p>
+                <p className="small-note">Complex Pair: Two linked exercises performed in a prescribed sequence.{pair ? ` Your ${pair.first.name} and ${pair.second.name} follow this sequence.` : ''}</p>
+                {!editing && ['load', 'reps', 'hold', 'reduce'].includes(recommendation.kind) && <ProgressionCue recommendation={recommendation} onApply={log.done ? undefined : () => editSet({ ...(recommendation.kg !== undefined ? { kg: recommendation.kg } : {}), ...(recommendation.reps !== undefined ? { reps: recommendation.reps } : {}) })} />}
+              </>}
+            </details>}
+            {athleteMode && !editing && ['load', 'reps', 'hold', 'reduce'].includes(recommendation.kind) && <ProgressionCue recommendation={recommendation} onApply={log.done ? undefined : () => editSet({ ...(recommendation.kg !== undefined ? { kg: recommendation.kg } : {}), ...(recommendation.reps !== undefined ? { reps: recommendation.reps } : {}) })} />}
           </>
         )}
       </section>
@@ -397,6 +444,10 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
       {nextExercise && <p className="focused-workout__next">{pair && findTrainingPair(exercises, nextExercise.key)?.startIndex === pair.startIndex
         ? pair.kind === 'superset' && (anticipated?.setIndex ?? 0) >= pair.pairedRounds ? 'Extra standalone set' : `Next in pair · round ${anticipated?.round}` : 'Up next'}<span>{nextExercise.name}</span></p>}
       {allDone && <p className="focused-workout__finished" role="status">All sets complete. Finish when you’re ready.</p>}
+      </>}
+      {equipmentExercise && onEquipmentChange && <EquipmentLabelEditor open onOpenChange={open => { if (!open) setEquipmentTarget(null); }}
+        exerciseName={equipmentExercise.name} label={equipmentExercise.equipmentLabel}
+        onSave={label => onEquipmentChange(equipmentExercise.key, label)} />}
     </div>
   );
 }

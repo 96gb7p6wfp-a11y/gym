@@ -12,7 +12,7 @@ async function seed(page: Page, { date = '2026-11-05', match = false, cleared = 
     masterProgram: { version: 1, revision: '13.1', startDate: '2026-11-02', matchWeeks: match ? [1] : [],
       clearance: { impact: cleared ? 'cleared' : 'unknown', heavyLifting: cleared ? 'cleared' : 'unknown' } } });
   await page.addInitScript(({ key, profile }) => {
-    if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify({ schemaVersion: 1, profile, profileVersion: 1, sessions: [], nutrition: [], activities: [] }));
+    if (!localStorage.getItem(key) || JSON.parse(localStorage.getItem(key)!).profileVersion === 0) localStorage.setItem(key, JSON.stringify({ schemaVersion: 1, profile, profileVersion: 1, sessions: [], nutrition: [], activities: [] }));
   }, { key: STORE, profile });
   await page.goto('/');
   await page.getByRole('tab', { name: 'Train', exact: true }).click();

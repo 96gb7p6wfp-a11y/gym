@@ -5,7 +5,9 @@ import { findLibraryExercise, toPlanExercise } from '../src/exercise-library';
 const STORE = 'setline.gym.v1';
 const current = (page: Page) => page.getByRole('region', { name: 'Current exercise', exact: true });
 const completed = async (page: Page, name: string, set: number) => {
-  await current(page).getByRole('button', { name: `Complete ${name} set ${set}`, exact: true }).tap();
+  const button = current(page).getByRole('button', { name: `Complete ${name} set ${set}`, exact: true });
+  if (await button.isDisabled()) await current(page).getByRole('button', { name: `Ready for ${name} set ${set}`, exact: true }).click();
+  await button.tap();
 };
 
 async function seed(page: Page, appearance: 'light' | 'dark') {

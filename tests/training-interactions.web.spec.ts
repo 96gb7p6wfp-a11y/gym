@@ -21,7 +21,9 @@ function current(page: Page) {
 }
 
 async function complete(page: Page, name: string, set: number) {
-  await current(page).getByRole('button', { name: `Complete ${name} set ${set}`, exact: true }).tap();
+  const button = current(page).getByRole('button', { name: `Complete ${name} set ${set}`, exact: true });
+  if (await button.isDisabled()) await current(page).getByRole('button', { name: `Ready for ${name} set ${set}`, exact: true }).click();
+  await button.tap();
 }
 
 async function readExercise(page: Page, name: string) {
@@ -178,6 +180,8 @@ test('runs, pauses, resumes and reloads a per-set countdown without automaticall
   await expect(page.getByRole('button', { name: 'Restart timer for Pogo Jump', exact: true })).toBeVisible();
   expect((await readExercise(page, 'Pogo Jump')).logs[0].done).toBe(false);
   await complete(page, 'Pogo Jump', 1);
+  await expect(current(page).getByRole('spinbutton', { name: 'Pogo Jump set 2 seconds', exact: true })).toHaveValue('');
+  await current(page).getByRole('button', { name: 'Ready for Pogo Jump set 2', exact: true }).click();
   await expect(current(page).getByRole('spinbutton', { name: 'Pogo Jump set 2 seconds', exact: true })).toHaveValue('10');
   await expect(clock).toHaveText('00:10');
   await page.getByRole('button', { name: 'Start timer for Pogo Jump', exact: true }).tap();
@@ -227,6 +231,9 @@ test('keeps completion and undo readable after repeated iPhone taps and pointer 
   await expect(next).toBeVisible();
   await next.hover();
   expect(await contrast(next)).toBeGreaterThan(4.5);
+  await expect(next).toBeDisabled();
+  await current(page).getByRole('textbox', { name: `${name} set 2 weight in kilograms`, exact: true }).fill('6');
+  await current(page).getByRole('spinbutton', { name: `${name} set 2 reps`, exact: true }).fill('4');
   await next.tap();
   const third = current(page).getByRole('button', { name: `Complete ${name} set 3`, exact: true });
   expect(await contrast(third)).toBeGreaterThan(4.5);
