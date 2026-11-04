@@ -1,5 +1,37 @@
 # Standalone app validation
 
+## Setline V17 — 4 November 2026
+
+Baseline: V16 main `dcc75aa`. The V17 branch refines Progress navigation,
+warm-up, Focus, Quick Log, Today, workout preview and grouped settings. Storage
+keys/schema, completion transitions, backup format and training prescriptions
+are unchanged. All browser fixtures are isolated from real user installations.
+
+| Check | Actual result |
+| --- | --- |
+| `npm run typecheck` | Passed |
+| `npm test` | 550 passed, no failures/skips |
+| `npm run build` | Passed; existing bundle-size advisory remains |
+| Full browser run, 3 workers | 306 passed, 6 old UI expectations/navigation failures, 18.9 minutes |
+| Corrected UI / V17 rerun, 2 workers | 57 passed, 2.9 minutes |
+| Corrected 1,000 / 5,000 / 10,000-set stress run, 1 worker | 3 passed, 20.7 seconds |
+| Corrected offline activity export, 1 worker | 1 passed, 10.1 seconds |
+| `npm run lint` | Missing script/configuration; lint was not verified |
+| Diff whitespace and capture-script syntax | Passed |
+
+All 312 distinct browser scenarios have passing evidence across these runs;
+the full run itself was not a clean 312-test pass. The six failed old tests were
+adapted to the real new labels and Data & Backup navigation, preserving their
+original data and behavior assertions. No production source change was needed
+after that full run. The 32 new V17 browser cases passed in the full run and again
+in the final scoped run. Four new unit cases cover exercise input classification.
+
+See [V17 implementation and verification](docs/SETLINE_V17_RELEASE.md) for
+before/after differences, the full change scope, actual stress measurements,
+screen-capture reproduction and limitations. Physical iPhone Safari/PWA,
+VoiceOver, Dynamic Type, storage pressure and locked-screen audio remain
+unverified. V17 has not been pushed to main or deployed in this task.
+
 ## Setline V15 results and product review — 3 November 2026
 
 Built on `eb92334`, the deployed V14 main merge. No storage/schema migration,
