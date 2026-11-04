@@ -301,3 +301,9 @@ The current visual direction and verified public UX benchmarks are recorded in
 [the current design rationale](docs/SETLINE_SOFT_DESIGN.md) and
 [the research record](docs/SETLINE_REINVENTION_RESEARCH.md). Accessible official
 pages and screenshots are distinguished from destinations the cloud proxy blocked.
+
+## V16 product maturity
+
+V16 adds safe, targeted set completion with Undo, neutral/skippable onboarding, Simple and Athlete presentation, shared Focus/Quick Log, optional machine identity, evidence-qualified progress, quick partial nutrition, searchable history and truthful backup/support controls. Existing V15/V13.1 records and local-first storage remain in place.
+
+See the [release and validation notes](docs/SETLINE_V16_RELEASE.md), [measured long-term performance](docs/V16-PERFORMANCE.md), and [data trust / future cloud architecture](docs/SETLINE_V16_DATA_TRUST.md). Physical iPhone behavior and legal/operator requirements are explicitly distinguished from automated verification.
