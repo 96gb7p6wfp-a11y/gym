@@ -18,7 +18,8 @@ const code=await new Promise((resolve,reject)=>{child.on('error',reject);child.o
 if(code!==0) {console.error(`Benchmark failed; no success report generated. Artifacts: ${temporary}`);process.exit(code??1);}
 const results=await Promise.all([1000,5000,10000].map(async count=>JSON.parse(await readFile(path.join(resultDirectory,`${count}.json`),'utf8'))));
 const commit=execFileSync('git',['rev-parse','--short','HEAD'],{cwd:root,encoding:'utf8'}).trim();
-const dirty=execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim().length>0;
+// A generated/untracked report must not describe a clean app build as modified.
+const dirty=execFileSync('git',['status','--porcelain','--','src','public','package.json','package-lock.json','vite.config.ts','scripts/finalize-web.mjs'],{cwd:root,encoding:'utf8'}).trim().length>0;
 const worker=await readFile(path.join(root,'dist','service-worker.js'),'utf8');
 const cache=worker.match(/const CACHE_NAME = CACHE_PREFIX \+ "([^"]+)"/)?.[1]??'unknown';
 const runtime={node:process.version,platform:platform(),release:release(),cpu:cpus()[0]?.model??'unknown',logicalCpus:cpus().length,memoryBytes:totalmem()};
@@ -26,7 +27,7 @@ const rounded=value=>value.toFixed(1);
 const rows=results.map(result=>`| ${result.completedSets.toLocaleString('en-GB')} | ${result.completedWorkouts} | ${['startup','inputPaint','inputSave','historySearch','chartRender','exportRequest','restore'].map(key=>rounded(result.milliseconds[key])).join(' | ')} | ${result.storage.utf8Bytes.toLocaleString('en-GB')} | ${result.storage.backupUtf8Bytes.toLocaleString('en-GB')} |`).join('\n');
 const report=`# Setline V16 measured long-term workflows
 
-Measured ${results[0].observedAt} against the existing production build (PWA cache \`${cache}\`), branch HEAD \`${commit}\`${dirty?' with uncommitted integration changes':''}. Run with \`npm run build\` followed by \`node scripts/benchmark-v16.mjs\`.
+Measured ${results[0].observedAt} against the existing production build (PWA cache \`${cache}\`), branch HEAD \`${commit}\`${dirty?' with uncommitted app-source changes':''}. Run with \`npm run build\` followed by \`node scripts/benchmark-v16.mjs\`.
 
 ## Actual observations
 

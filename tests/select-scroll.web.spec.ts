@@ -24,6 +24,10 @@ for (const screen of [
   { width: 844, height: 390, top: 0, bottom: 21, left: 59, right: 59 },
 ]) {
   test(`swipes the long movement list in both directions and selects a distant option at ${screen.width}px`, async ({ page }) => {
+    // Forty native gestures each contain twelve paced CDP moves. Allow their
+    // accumulated IPC overhead when browsers share a constrained CI worker.
+    // Scroll movement, bounds, final selection and scroll-unlock assertions stay strict.
+    test.setTimeout(90_000);
     const size = { width: screen.width, height: screen.height };
     await page.setViewportSize(size);
     await page.goto('/');
