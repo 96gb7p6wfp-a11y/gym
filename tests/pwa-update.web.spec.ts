@@ -91,3 +91,26 @@ test('an update preserves unsaved preference edits instead of reloading over the
   expect(await page.evaluate(() => (window as any).__pwaUpdateProbe.requests)).toBe(0);
   expect(await page.evaluate(key => localStorage.getItem(key), STORE)).toBe(before);
 });
+
+test('an update waits for explicit save or discard of training guidance edits', async ({ page }) => {
+  const updates = await setup(page, 'ready');
+  const before = await page.evaluate(key => localStorage.getItem(key), STORE);
+  await section(page, 'Training');
+  const sheet = page.getByRole('dialog', { name: 'Your preferences', exact: true });
+  await sheet.locator('summary').filter({ hasText: /^Impact & lifting guidance$/ }).click();
+  const guidance = sheet.getByRole('region', { name: 'Training guidance', exact: true });
+  await guidance.getByLabel('Heavy lifting clearance', { exact: true }).selectOption('cleared');
+  await section(page, 'Data & Backup');
+  await updates.getByRole('button', { name: 'Update app', exact: true }).click();
+  await expect(updates.getByRole('status')).toHaveText('Save or discard your training guidance edits before updating.');
+  expect(await page.evaluate(() => (window as any).__pwaUpdateProbe.requests)).toBe(0);
+  expect(await page.evaluate(key => localStorage.getItem(key), STORE)).toBe(before);
+  await section(page, 'Training');
+  await expect(guidance.getByLabel('Heavy lifting clearance', { exact: true })).toHaveValue('cleared');
+  await guidance.getByRole('button', { name: 'Discard guidance edits', exact: true }).click();
+  await expect(guidance.getByLabel('Heavy lifting clearance', { exact: true })).toHaveValue('unknown');
+  await section(page, 'Data & Backup');
+  await Promise.all([page.waitForNavigation(), updates.getByRole('button', { name: 'Update app', exact: true }).click()]);
+  expect(await page.evaluate(() => sessionStorage.getItem('update-test-complete'))).toBe('1');
+  expect(await page.evaluate(key => localStorage.getItem(key), STORE)).toBe(before);
+});

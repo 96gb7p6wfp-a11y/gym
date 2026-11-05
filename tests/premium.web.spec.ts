@@ -63,9 +63,16 @@ test('completes a focused decimal set, preserves other sets and keeps actions ab
   await weight.fill('');
   await weight.pressSequentially('12,5');
   await exercise.getByRole('spinbutton', { name: `${MOVEMENT} set 1 reps`, exact: true }).fill('4');
+  const logsBefore = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!).sessions[0].session.exercises[0].logs, STORE);
   await exercise.getByRole('button', { name: `Complete ${MOVEMENT} set 1`, exact: true }).tap();
-  await expect(exercise.getByRole('textbox', { name: `${MOVEMENT} set 2 weight in kilograms`, exact: true })).toHaveValue('');
-  await expect(exercise.getByRole('spinbutton', { name: `${MOVEMENT} set 2 reps`, exact: true })).toHaveValue('');
+  await expect(exercise.getByRole('textbox', { name: `${MOVEMENT} set 2 weight in kilograms`, exact: true })).toHaveValue('12.5');
+  await expect(exercise.getByRole('spinbutton', { name: `${MOVEMENT} set 2 reps`, exact: true })).toHaveValue('4');
+  const logsAfter = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!).sessions[0].session.exercises[0].logs, STORE);
+  expect(logsAfter[0]).toEqual({ ...logsBefore[0], kg: 12.5, reps: 4, done: true,
+    inputSources: { kg: 'manual', reps: 'manual' } });
+  expect(logsAfter[1]).toEqual({ ...logsBefore[1], kg: 12.5, reps: 4,
+    inputSources: { kg: 'last-set', reps: 'last-set' } });
+  expect(logsAfter.slice(2)).toEqual(logsBefore.slice(2));
   await expect(page.locator('.rest-floating')).toBeVisible();
   const complete = exercise.getByRole('button', { name: `Complete ${MOVEMENT} set 2`, exact: true });
   await expect(complete).toBeDisabled();

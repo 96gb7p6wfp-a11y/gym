@@ -1,0 +1,23 @@
+.setup-recovery { min-width:0; border:1px solid var(--line); border-radius:20px; padding:0 16px; background:var(--surface); }
+.setup-recovery > summary,.setup-recovery__plan > summary { display:flex; align-items:center; min-height:52px; cursor:pointer; color:var(--ink); font-size:16px; font-weight:600; }
+.setup-recovery > section { display:grid; min-width:0; gap:16px; padding-bottom:16px; }
+.setup-recovery p { margin:0; color:var(--sub); font-size:14px; line-height:1.55; overflow-wrap:anywhere; }
+.setup-recovery code { font:inherit; color:var(--ink); overflow-wrap:anywhere; }
+.setup-recovery__scope { display:flex; flex-wrap:wrap; gap:8px; }
+.setup-recovery__scope button { flex:1; min-width:100px; min-height:48px; padding:8px; border:1px solid var(--line); border-radius:14px; background:var(--surface-soft); color:var(--ink); font:inherit; font-size:14px; }
+.setup-recovery__scope button[aria-pressed=true] { background:var(--accent); border-color:var(--accent); color:var(--on-accent); }
+.setup-recovery .text-button { min-height:44px; }
+.setup-recovery__preview { display:grid; min-width:0; gap:16px; padding-top:16px; border-top:1px solid var(--line); }
+.setup-recovery__preview h4 { margin:0; font-size:18px; }
+.setup-recovery__preview dl { display:grid; gap:16px; margin:0; }
+.setup-recovery__preview dl > div { display:grid; min-width:0; gap:8px; }
+.setup-recovery__preview dt { font-size:14px; font-weight:600; }
+.setup-recovery__preview dd { display:grid; grid-template-columns:60px minmax(0,1fr); gap:8px; margin:0; font-size:13px; line-height:1.55; overflow-wrap:anywhere; }
+.setup-recovery__preview dd > span { color:var(--sub); }
+.setup-recovery__plan h5 { margin:16px 0 8px; font-size:14px; }
+.setup-recovery__plan ul { display:grid; gap:8px; margin:0; padding-left:20px; }
+.setup-recovery__plan li { font-size:13px; line-height:1.5; }
+.setup-recovery__plan li > span { display:block; color:var(--sub); }
+.setup-recovery .backup-buttons { display:flex; flex-wrap:wrap; gap:8px; }
+.setup-recovery p.setup-recovery__error { color:var(--danger,#a63a2b); }
+.setup-recovery :focus-visible { outline:2px solid var(--accent); outline-offset:3px; }

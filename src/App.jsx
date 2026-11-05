@@ -1,4 +1,12 @@
 import { SettingsExperience } from './SettingsExperience';
+import { rebaseObjectChanges } from './profile-updates';
+import { markSetInput, carryForwardAfterCompletion } from './set-autofill';
+import { effectiveTrainingGuidance, effectiveMasterProgram } from './training-guidance';
+import { getWorkoutPrescription } from './training-prescription';
+import { WorkoutPrescriptionSummary } from './WorkoutPrescriptionSummary';
+import { SetupRecovery } from './SetupRecovery';
+import { TrainingGuidanceForm } from './TrainingGuidanceForm';
+import { DayPrescriptionReset } from './DayPrescriptionReset';
 import './v16.css';
 import { createNewProfile, createStarterPlan, DEFAULT_TRAINING_PREFERENCES, presentationMode } from './onboarding';
 import { Onboarding } from './Onboarding';
@@ -6,7 +14,7 @@ import HistorySearch from './HistorySearch';
 import { BackupReminder } from './DataSettings';
 import { SupportPrivacy } from './SupportPrivacy';
 import { berlinDate, calendarDayIndex } from "./calendar-date";
-import { upgradeMasterProgram, restorePreviousMasterProgram } from "./master-program-upgrade";
+import { upgradeMasterProgram, restorePreviousMasterProgram, reviewMasterProgramUpgrade } from "./master-program-upgrade";
 import { WorkoutPlanPreview } from "./WorkoutPlanPreview";
 import { TrainingPlanStatus } from "./TrainingPlanStatus";
 import { WarmupFlow } from "./WarmupFlow";
@@ -46,7 +54,7 @@ import { RemindersPanel } from "./RemindersPanel";
 import { shortSessionName, workoutTitle } from "./presentation";
 import { formatPreviousSet, previousPerformance } from "./previous-performance";
 import { VolleyballMasterProgram, MasterProgramReadiness } from './VolleyballMasterProgram';
-import { applyMasterReadiness, applyMasterClearance, createVolleyballMasterPlan, getMasterProgramWeek, getMasterProgramPhase, masterWeekStart, masterScheduledEvents, masterPlannedMinutes, resolveMasterProgramPlan, createRecommendedMasterPlan, isMasterReadinessRequired, masterJumpContacts } from './volleyball-master-plan';
+import { applyMasterReadiness, applyMasterClearance, applyTrainingGuidance, createVolleyballMasterPlan, getMasterProgramWeek, getMasterProgramPhase, masterWeekStart, masterScheduledEvents, masterPlannedMinutes, resolveMasterProgramPlan, createRecommendedMasterPlan, isMasterReadinessRequired, masterJumpContacts } from './volleyball-master-plan';
 import { PageHeader, BottomNavigation, SegmentedControl, MenuRow } from "./components/design";
 import { House, Ellipsis, UserRound, ArrowLeft, Upload, ShieldCheck } from "lucide-react";
 import { DataSettings } from "./DataSettings";
@@ -173,6 +181,11 @@ function GymApp({
   initialNow = Date.now(),
 } = {}) {
   let [profile, setProfile] = React.useState(createNewProfile);
+  const profileRef = React.useRef(profile);
+  const profileSaveQueue = React.useRef(Promise.resolve());
+  const pendingProfileSaves = React.useRef(0);
+  const masterSettings = React.useMemo(() => effectiveMasterProgram(profile), [profile.masterProgram, profile.trainingGuidance]);
+  const trainingGuidance = effectiveTrainingGuidance(profile);
   const athleteMode = presentationMode(profile) === `athlete`;
   const establishedProfile = !profile.onboarding || profile.onboarding.installation === `existing`;
   const [preferencesOpen, setPreferencesOpen] = React.useState(false);
@@ -187,6 +200,7 @@ function GymApp({
   const [exerciseActionKey, setExerciseActionKey] = React.useState(null);
   const [customBuilder, setCustomBuilder] = React.useState(null);
   const [resetPlanOpen, setResetPlanOpen] = React.useState(false);
+  const [dayResetContext, setDayResetContext] = React.useState(null);
   const [programUpgradeOpen, setProgramUpgradeOpen] = React.useState(false);
   const [workoutChooserOpen, setWorkoutChooserOpen] = React.useState(false);
   const [performanceAction, setPerformanceAction] = React.useState(undefined);
@@ -243,6 +257,9 @@ function GymApp({
   let [discardOpen, setDiscardOpen] = React.useState(!1);
   let [settingsOpen, setSettingsOpen] = React.useState(!1);
   const [settingsSection, setSettingsSection] = React.useState(null);
+  const [guidanceOpen, setGuidanceOpen] = React.useState(false);
+  const [guidanceDirty, setGuidanceDirty] = React.useState(false);
+  const [recoveryOpen, setRecoveryOpen] = React.useState(false);
   let [settingsDraft, setSettingsDraft] = React.useState({
     bodyWeight: DEFAULT_PROFILE.bodyWeight,
     restSeconds: 90,
@@ -282,6 +299,7 @@ function GymApp({
         ),
       );
       setProfile(t);
+      profileRef.current = t;
       profileVersionRef.current = e.profileVersion;
       setSessions(n);
       setActivityRecords(e.activities ?? []);
@@ -347,7 +365,9 @@ function GymApp({
       t
     );
   }
-  async function replaceLocalData(replace) {
+  async function flushAllWrites() { await profileSaveQueue.current; return flushPendingWrites(); }
+  async function replaceLocalData(replace, { preserveRest = false } = {}) {
+    await profileSaveQueue.current;
     if (!(await flushPendingWrites())) throw new Error('Your workout could not save. Retry saving before replacing local data.');
     // A confirmed restore/reset must not be overwritten by the unload flush.
     const queued = new Map(pendingWritesRef.current);
@@ -355,7 +375,7 @@ function GymApp({
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     try {
       replace();
-      setRestEndsAt(null);
+      if (!preserveRest) setRestEndsAt(null);
       window.location.reload();
     } catch (error) {
       for (const [id, session] of queued) pendingWritesRef.current.set(id, session);
@@ -385,24 +405,26 @@ function GymApp({
     : activeSession;
   let selectedDate = dateKey(addDays(weekStart, selectedDay));
   function planForDate(date) {
-    if (!profile.masterProgram) return profile.plan;
-    if (date < profile.masterProgram.startDate) return profile.preMasterPlan ?? profile.plan;
-    return resolveMasterProgramPlan(profile.plan, profile.masterProgram, date, profile.masterMatchWeekend);
+    const applyGuidance = week => week.map(day => ({ ...applyTrainingGuidance(day, trainingGuidance),
+      ...(day.extraSession ? { extraSession: applyTrainingGuidance(day.extraSession, trainingGuidance) } : {}) }));
+    if (!masterSettings) return applyGuidance(profile.plan);
+    if (date < masterSettings.startDate) return applyGuidance(profile.preMasterPlan ?? profile.plan);
+    return resolveMasterProgramPlan(profile.plan, masterSettings, date, profile.masterMatchWeekend);
   }
-  let scheduledPlan = React.useMemo(() => planForDate(selectedDate), [profile.plan, profile.masterProgram, profile.preMasterPlan, profile.masterMatchWeekend, selectedDate]);
-  let currentWeekPlan = React.useMemo(() => planForDate(today), [profile.plan, profile.masterProgram, profile.preMasterPlan, profile.masterMatchWeekend, today]);
+  let scheduledPlan = React.useMemo(() => planForDate(selectedDate), [profile.plan, masterSettings, profile.trainingGuidance, profile.preMasterPlan, profile.masterMatchWeekend, selectedDate]);
+  let currentWeekPlan = React.useMemo(() => planForDate(today), [profile.plan, masterSettings, profile.trainingGuidance, profile.preMasterPlan, profile.masterMatchWeekend, today]);
   let masterWeek = profile.masterProgram && getMasterProgramWeek(profile.masterProgram.startDate, selectedDate);
   let selectedMasterMatch = !!masterWeek && profile.masterProgram.matchWeeks.includes(masterWeek);
   let editableWeekPlan = selectedMasterMatch ? [...profile.plan.slice(0, 5), ...(profile.masterMatchWeekend ?? createRecommendedMasterPlan(profile.masterProgram, true).slice(5))] : profile.plan;
   let dayEvents = masterScheduledEvents(profile.masterProgram, selectedDate);
   // A date and slot travel with every plan action. Neither browsing Train nor
   // midnight can retarget an open preview, preparation, or active session.
-  function workoutForDate(date, requestedSlot = 'main') {
+  function workoutForDate(date, requestedSlot = 'main', ignoreDraft = false) {
     const day = calendarDayIndex(date);
     const week = date === selectedDate ? scheduledPlan : date === today ? currentWeekPlan : planForDate(date);
     const slot = requestedSlot === 'extra' && week[day].extraSession ? 'extra' : 'main';
     const recommended = slot === 'extra' ? week[day].extraSession : week[day];
-    const savedDraft = findSessionDraft(profile.sessionDrafts, date, slot);
+    const savedDraft = ignoreDraft ? undefined : findSessionDraft(profile.sessionDrafts, date, slot);
     const masterWeek = profile.masterProgram && getMasterProgramWeek(profile.masterProgram.startDate, date);
     // Competition remains the primary Sunday recommendation. A personal gym
     // draft stays stored, but must not displace or duplicate the match.
@@ -416,8 +438,9 @@ function GymApp({
       ? { ...resolved, programRevision: '13.1' } : resolved;
     const adapted = draft && draft.customized !== false && (draft.readiness !== readiness || draft.plan.programRevision !== currentPrescription.programRevision)
       ? applyMasterReadiness(currentPrescription, readiness) : currentPrescription;
-    const plan = draft && draft.customized !== false && masterWeek && profile.masterProgram?.revision === '13.1'
-      ? applyMasterClearance({ ...adapted, programRevision: '13.1' }, profile.masterProgram.clearance) : adapted;
+    const plan = draft && draft.customized !== false && masterWeek && masterSettings?.revision === '13.1'
+      ? applyMasterClearance({ ...adapted, programRevision: '13.1' }, masterSettings.clearance)
+      : draft && draft.customized !== false ? applyTrainingGuidance(adapted, trainingGuidance) : adapted;
     const warmupIsCurrent = draft && (draft.customized !== false || resolved !== recommended) && draft.readiness === readiness;
     return { date, day, slot, plan, draft, masterWeek, warmupIsCurrent, protectedDraft };
   }
@@ -430,6 +453,8 @@ function GymApp({
       ? `V13.1 starts ${formatDate(profile.masterProgram.startDate, true)}` : null;
   const masterBlockComplete = !!profile.masterProgram && !todayMasterWeek && today >= profile.masterProgram.startDate;
   const previewWorkout = previewContext ? workoutForDate(previewContext.date, previewContext.slot) : selectedContext;
+  const resetWorkout = dayResetContext ? workoutForDate(dayResetContext.date, dayResetContext.slot) : null;
+  const resetWeeklyWorkout = dayResetContext ? workoutForDate(dayResetContext.date, dayResetContext.slot, true) : null;
   const preparationDraft = warmupContext && (warmupContext.protectedDraft ? protectedPreparation
     : findSessionDraft(profile.sessionDrafts, warmupContext.date, warmupContext.slot));
   const warmupPlan = preparationDraft?.plan ?? (warmupContext ? workoutForDate(warmupContext.date, warmupContext.slot).plan : selectedPlan);
@@ -444,6 +469,35 @@ function GymApp({
     (e) => e.date === selectedDate,
   );
   const todayCompletedSession = completedSessions.find(session => session.date === today);
+  function prescriptionFor(context, snapshot) {
+    let week = profile.plan;
+    if (masterSettings && context.date < masterSettings.startDate) week = profile.preMasterPlan ?? week;
+    let base = week[context.day];
+    if (masterSettings && context.masterWeek && masterSettings.matchWeeks.includes(context.masterWeek) && context.day >= 5) {
+      base = (profile.masterMatchWeekend ?? createRecommendedMasterPlan(masterSettings, true).slice(5))[context.day - 5];
+    }
+    if (masterSettings?.revision === '13.1' && context.day === 6 && context.masterWeek
+      && !masterSettings.matchWeeks.includes(context.masterWeek)
+      && masterSettings.rescheduledLowerDates?.includes(dateKey(addDays(new Date(`${context.date}T12:00:00`), -1)))) base = profile.plan[5];
+    if (context.slot === 'extra') base = base.extraSession ?? base;
+    return getWorkoutPrescription({
+      plan: snapshot ? { ...snapshot, exercises: snapshot.exercises.map(exercise => ({ ...exercise, sets: exercise.logs.length })) } : context.plan,
+      originalPlan: snapshot ? undefined : base, settings: masterSettings, guidance: trainingGuidance,
+      date: snapshot?.date ?? context.date,
+      source: snapshot ? 'snapshot' : context.draft && context.draft.customized !== false ? 'today-edit' : 'weekly',
+    });
+  }
+  const todayPrescription = prescriptionFor(todayContext, activeSession?.date === today ? activeSession : todayCompletedSession);
+  const selectedPrescription = prescriptionFor(selectedContext, viewingSession);
+  const previewPrescription = prescriptionFor(previewWorkout);
+  const upgradeReview = React.useMemo(() => reviewMasterProgramUpgrade(profile), [profile]);
+  const upgradePreview = React.useMemo(() => {
+    if (!profile.masterProgram || profile.masterProgram.revision === '13.1') return undefined;
+    try {
+      const candidate = upgradeMasterProgram(profile, Date.now(), { weeklyCustomizationPolicy: 'recommendations' });
+      return { plan: candidate.plan, matchWeekend: candidate.masterMatchWeekend };
+    } catch { return undefined; }
+  }, [profile]);
   let weekCompletedSessions = completedSessions.filter(
     (e) =>
       e.date >= dateKey(weekStart) && e.date <= dateKey(addDays(weekStart, 6)),
@@ -611,25 +665,27 @@ function GymApp({
     }
   }
   function updateSet(e, t, n, manualTime = !1) {
-    updateExercise(e, (e) => ({
-      ...e,
-      ...(manualTime && Object.hasOwn(n, `seconds`) && e.timerSetId === t
+    const selectedId = editingIdRef.current ?? sessionsRef.current.find(session => session.status === 'active')?.id;
+    const current = sessionsRef.current.find(session => session.id === selectedId);
+    const exercise = current?.exercises.find(exercise => exercise.key === e);
+    if (!current || !exercise?.logs.some(log => log.id === t)) return;
+    const updated = {
+      ...exercise,
+      ...(manualTime && Object.hasOwn(n, `seconds`) && exercise.timerSetId === t
         ? { timerSetId: null, elapsedMs: 0, runningSince: null } : {}),
-      logs: e.logs.map((r) => {
+      logs: exercise.logs.map((r) => {
         if (r.id !== t) return r;
-        let i = {
-          ...r,
-          ...n,
-        };
+        let i = markSetInput(r, n);
         return (
           i.done &&
-            (e.mode === `timed` ? !(i.seconds ?? 0) : !(i.reps ?? 0)) &&
+            (exercise.mode === `timed` ? !(i.seconds ?? 0) : !(i.reps ?? 0)) &&
             (i.done = !1),
-          i.done && e.mode === `weight` && !isValidWorkoutWeight(i.kg) && (i.done = !1),
+          i.done && exercise.mode === `weight` && !isValidWorkoutWeight(i.kg) && (i.done = !1),
           i
         );
       }),
-    }));
+    };
+    queueSession({ ...current, exercises: current.exercises.map(entry => entry === exercise ? updated : entry) });
   }
   async function saveDayDraft(plan, { date = selectedDate, slot = selectedSlot, override = false,
     customized = findSessionDraft(profile.sessionDrafts, date, slot)?.customized ?? !!findSessionDraft(profile.sessionDrafts, date, slot) } = {}) {
@@ -812,7 +868,8 @@ function GymApp({
     else if (lastSetReceipt.current?.sessionId === target.sessionId && lastSetReceipt.current?.exerciseKey === e && lastSetReceipt.current?.setId === t) {
       lastSetReceipt.current = null; saveCompletionReceipt(null);
     }
-    queueSession({ ...r, exercises }, !0);
+    const completed = { ...r, exercises };
+    queueSession(n ? carryForwardAfterCompletion(completed, target) : completed, !0);
     if (!n && restOwner.current?.sessionId === target.sessionId && restOwner.current?.exerciseKey === e && restOwner.current?.setId === t) setRestEndsAt(null);
     if (n && r.status === `active`) {
       void restAudio.unlock();
@@ -854,39 +911,39 @@ function GymApp({
     setRestEndsAt(null);
     r && (setCompletedCelebrationId(n.id), setSelectedHistory(n));
   }
-  async function saveProfile(e, { notify = true } = {}) {
-    let t = ProfileSchema.safeParse(e);
-    if (!t.success)
-      return (
-        toast.error(`Check the names, sets, and numbers in your plan.`),
-        !1
-      );
-    if (profileSaving) return !1;
-    setProfileSaving(!0);
-    try {
-      return (
-        (profileVersionRef.current = (
-          await requestTracker({
-            action: `profile`,
-            profile: t.data,
-            expectedVersion: profileVersionRef.current,
-          })
-        ).version),
-        setProfile(t.data),
-        setRestSeconds(e.restSeconds),
-        notify && toast.success(`Changes saved.`),
-        !0
-      );
-    } catch (e) {
-      return (
-        toast.error(
-          e instanceof Error ? e.message : `Your changes couldn’t save.`,
-        ),
-        !1
-      );
-    } finally {
-      setProfileSaving(!1);
+  async function saveProfile(desired, { notify = true, checkpoint = false } = {}) {
+    if (!loaded || loadError) {
+      toast.error(loadError ? `Your saved data needs review before changing settings. Open Data & Backup.` : `Wait for your saved profile to load.`);
+      return false;
     }
+    const parsed = ProfileSchema.safeParse(desired);
+    if (!parsed.success) { toast.error(`Check the names, sets, and numbers in your plan.`); return false; }
+    // A callback may have opened before another preference finished saving.
+    // Rebase only its deliberate changes, and serialize the versioned writes.
+    const base = structuredClone(profile);
+    pendingProfileSaves.current += 1;
+    setProfileSaving(true);
+    const save = async () => {
+      try {
+        const next = ProfileSchema.parse(rebaseObjectChanges(base, profileRef.current, parsed.data));
+        const result = await requestTracker({ action: `profile`, profile: next, expectedVersion: profileVersionRef.current, ...(checkpoint ? { checkpoint: true } : {}) });
+        profileVersionRef.current = result.version;
+        profileRef.current = next;
+        setProfile(next);
+        if (!restOwner.current) setRestSeconds(next.restSeconds);
+        if (notify) toast.success(`Changes saved.`);
+        return true;
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : `Your changes couldn’t save.`);
+        return false;
+      } finally {
+        pendingProfileSaves.current -= 1;
+        if (mountedRef.current) setProfileSaving(pendingProfileSaves.current > 0);
+      }
+    };
+    const pending = profileSaveQueue.current.then(save, save);
+    profileSaveQueue.current = pending.then(() => undefined, () => undefined);
+    return pending;
   }
   async function finishOnboarding(preferences, { applyPlan = true } = {}, status = `completed`) {
     const isNew = profile.onboarding?.status === `pending`;
@@ -900,12 +957,12 @@ function GymApp({
       ...(profile.masterMatchWeekend ? { masterMatchWeekend: profile.masterMatchWeekend } : {}),
       ...(profile.sessionDrafts ? { sessionDrafts: profile.sessionDrafts } : {}) },
       ...(profile.masterProgramBackup ? { masterProgramArchive: [...(profile.masterProgramArchive ?? []), profile.masterProgramBackup] } : {}) } : {};
-    const next = { ...profile, ...archivedPlan, trainingPreferences: preferences,
+    const next = { ...profile, ...archivedPlan, ...(trainingGuidance ? { trainingGuidance: structuredClone(trainingGuidance) } : {}), trainingPreferences: preferences,
       presentationMode: profile.presentationMode ?? (isNew ? `simple` : `athlete`),
       onboarding: { version: 16, status, installation: profile.onboarding?.installation ?? (isNew ? `new` : `existing`) },
       ...(applyPlan ? { plan: createStarterPlan(preferences), masterProgram: undefined,
         preMasterPlan: undefined, masterMatchWeekend: undefined, sessionDrafts: undefined } : {}) };
-    if (!(await saveProfile(next, { notify: false }))) return false;
+    if (!(await saveProfile(next, { notify: false, checkpoint: applyPlan && !isNew }))) return false;
     setPreferencesOpen(false);
     if (isNew && preferences.goal === `own`) { setTab(`train`); openCustomWorkout(); }
     return true;
@@ -941,9 +998,12 @@ function GymApp({
     return saved;
   }
   async function saveMasterProgram(settings) {
+    const guidance = settings?.clearance ?? trainingGuidance;
+    const guidanceFields = guidance ? { trainingGuidance: structuredClone(guidance) } : {};
+    if (settings && guidance) settings = { ...settings, clearance: structuredClone(guidance) };
     if (settings && !profile.masterProgram) {
-      const saved = await saveProfile({ ...profile, preMasterPlan: structuredClone(profile.plan),
-        plan: createVolleyballMasterPlan(), masterMatchWeekend: createVolleyballMasterPlan(true).slice(5), masterProgram: settings });
+      const saved = await saveProfile({ ...profile, ...guidanceFields, preMasterPlan: structuredClone(profile.plan),
+        plan: createVolleyballMasterPlan(), masterMatchWeekend: createVolleyballMasterPlan(true).slice(5), masterProgram: settings }, { checkpoint: true });
       if (saved) { setWeekStart(new Date(`${settings.startDate}T12:00:00`)); setSelectedDay(0); setExtraSessionVisible(false); }
       return saved;
     }
@@ -960,21 +1020,24 @@ function GymApp({
         toast.error('This weekend has a personal date edit. Move or reset that edit before moving Lower B.');
         return false;
       }
-      return saveProfile({ ...profile, masterProgram: settings,
-        ...(affected.size && profile.sessionDrafts ? { sessionDrafts: profile.sessionDrafts.filter(draft => !affected.has(draft.date)) } : {}) }, { notify: false });
+      return saveProfile({ ...profile, ...guidanceFields, masterProgram: settings,
+        ...(affected.size && profile.sessionDrafts ? { sessionDrafts: profile.sessionDrafts.filter(draft => !affected.has(draft.date)) } : {}) }, {
+        notify: false, checkpoint: settings.startDate !== profile.masterProgram.startDate
+          || JSON.stringify(guidance) !== JSON.stringify(trainingGuidance),
+      });
     }
     const { masterProgram, preMasterPlan, masterMatchWeekend, ...savedProfile } = profile;
-    return saveProfile({ ...savedProfile, plan: preMasterPlan ?? profile.plan });
+    return saveProfile({ ...savedProfile, ...guidanceFields, plan: preMasterPlan ?? profile.plan }, { checkpoint: true });
   }
-  async function upgradeProgram() {
+  async function upgradeProgram(options) {
     if (!(await flushPendingWrites())) return false;
-    const saved = await saveProfile(upgradeMasterProgram(profile), { notify: false });
+    const saved = await saveProfile(upgradeMasterProgram(profile, Date.now(), options), { notify: false, checkpoint: true });
     if (saved) toast.success('V13.1 ready. Your cycle and workout records stay.');
     return saved;
   }
   async function restorePreviousProgram() {
     if (!(await flushPendingWrites())) return false;
-    const saved = await saveProfile(restorePreviousMasterProgram(profile), { notify: false });
+    const saved = await saveProfile(restorePreviousMasterProgram(profile), { notify: false, checkpoint: true });
     if (saved) toast.success('Previous program restored.');
     return saved;
   }
@@ -1208,9 +1271,26 @@ function GymApp({
   }
   const trainingDefaultsDirty = settingsDraft.bodyWeight !== profile.bodyWeight || settingsDraft.restSeconds !== profile.restSeconds;
   function openSettings(section = null) {
+    setGuidanceOpen(false); setRecoveryOpen(false);
     setSettingsSection([`training`, `appearance`, `data`].includes(section) ? section : null);
     setSettingsDraft({ bodyWeight: profile.bodyWeight, restSeconds: profile.restSeconds });
     setSettingsOpen(true);
+  }
+  function reviewTrainingGuidance() { openSettings(`training`); setGuidanceOpen(true); }
+  function reviewSetupRecovery() { openSettings(`data`); setRecoveryOpen(true); }
+  function saveTrainingGuidance(guidance) {
+    return saveProfile({ ...profile, trainingGuidance: guidance,
+      ...(profile.masterProgram ? { masterProgram: { ...profile.masterProgram, clearance: guidance } } : {}) }, { notify: false, checkpoint: true });
+  }
+  async function resetPlannedDate() {
+    const context = dayResetContext;
+    await profileSaveQueue.current;
+    const fresh = await requestTracker();
+    if (!context || context.profileVersion !== profileVersionRef.current || context.profileVersion !== fresh.profileVersion) throw new Error('Your setup changed after this review. Close and review the current date again.');
+    if (sessionsRef.current.some(session => session.status === 'active') || fresh.sessions.some(record => record.session.status === 'active')) throw new Error('Finish your active workout before changing the date prescription.');
+    const latest = profileRef.current;
+    if (!findSessionDraft(latest.sessionDrafts, context.date, context.slot)) throw new Error('This date no longer has a saved edit. Close this review and open the current workout.');
+    return saveProfile({ ...latest, sessionDrafts: latest.sessionDrafts.filter(draft => draft.date !== context.date || draft.slot !== context.slot) }, { checkpoint: true });
   }
   const weekSelector = <div className="compact-week">
           <div className={`week-heading`}>
@@ -1348,14 +1428,16 @@ function GymApp({
                   loaded ? void flushPendingWrites() : void loadWorkouts()
                 }
               >{`Retry`}</button>
+              <button type="button" className="text-button" onClick={reviewSetupRecovery}>Recover settings or plan</button>
             </div>
           </div>
         )}
         <TabsContent value="today">
           <TodayView athleteMode={athleteMode} date={today} plan={todayContext.plan} session={activeSession?.date === today ? activeSession : undefined} otherSession={activeSession?.date !== today ? activeSession : undefined} completed={todayCompletedSession} now={now}
+            prescription={todayPrescription}
             activities={activityRecords} nutrition={reportNutrition} volleyballSchedule={volleyballSchedule}
             sessions={sessions} weeklyPlan={currentWeekPlan} performance={performance.data} bodyWeight={profile.bodyWeight} today={today}
-            programOffer={athleteMode ? programOffer : null} onReviewProgram={reviewProgram} blockComplete={masterBlockComplete} programLabel={todayMasterWeek ? `Week ${todayMasterWeek} · ${getMasterProgramPhase(todayMasterWeek)}` : masterBlockComplete ? 'Block complete' : undefined} scheduledEvents={athleteMode ? masterScheduledEvents(profile.masterProgram, today) : []}
+            programOffer={athleteMode ? programOffer : null} onReviewProgram={reviewTrainingGuidance} blockComplete={masterBlockComplete} programLabel={todayMasterWeek ? `Week ${todayMasterWeek} · ${getMasterProgramPhase(todayMasterWeek)}` : masterBlockComplete ? 'Block complete' : undefined} scheduledEvents={athleteMode ? masterScheduledEvents(profile.masterProgram, today) : []}
             onProgress={() => { setProgressView('overview'); setTab('progress'); }}
             disabled={!loaded || saving || profileSaving || !!loadError} onPreview={() => openPreview(todayContext)} onStart={() => startWorkout(todayContext)} onTrain={() => { setEditingHistoryId(null); if (!activeSession) selectTrainingDate(today); setTab(`train`); }} onBrowseTrain={() => setTab(`train`)}
             onViewLog={setSelectedHistory} onNutrition={() => setTab(`nutrition`)} onPlan={() => masterBlockComplete ? openProgramConfiguration() : openPlan()}
@@ -1476,7 +1558,7 @@ function GymApp({
               {activeSession && currentSession?.id === activeSession.id && profile.masterProgram?.revision === '13.1' && activeSession.programRevision !== '13.1' && <p className="master-contact-status">V13.1 applies to your next workout. This session keeps its original plan.</p>}
               {!currentSession && masterWeek && <>
                 <div className="master-day-note"><p><strong>{`Week ${masterWeek} · ${getMasterProgramPhase(masterWeek)}`}</strong><span>{selectedMasterMatch ? 'Sunday match week' : 'No Sunday match'}</span></p>{dayEvents.map(event => <p key={event.name}><strong>{event.name}</strong><span>{event.detail}</span></p>)}</div>
-                {(selectedPlan.kind === 'strength' || isMasterReadinessRequired(profile.masterProgram, selectedDate, selectedPlan)) && <MasterProgramReadiness settings={profile.masterProgram} date={selectedDate} disabled={profileSaving || !loaded} onSave={saveMasterProgram} />}
+                {(selectedPlan.kind === 'strength' || isMasterReadinessRequired(masterSettings, selectedDate, selectedPlan)) && <MasterProgramReadiness settings={masterSettings} date={selectedDate} disabled={profileSaving || !loaded} onSave={saveMasterProgram} />}
               </>}
               {dayCompletedSession && !currentSession && (
                 <div className={`completed-banner`}>
@@ -1555,6 +1637,7 @@ function GymApp({
                       key={`${currentSession.id}-${e.key}`}
                     />
                   )} />
+                  <WorkoutPrescriptionSummary prescription={selectedPrescription} onReviewProgram={reviewTrainingGuidance} compact />
                   <WorkoutCustomizer session={currentSession} selectedKey={exerciseActionKey} onSelectedKeyChange={setExerciseActionKey}
                     onChange={customizeSession} onSaveAs={saveCurrentAsWorkout}
                     readiness={performance.data?.readiness.find(row => row.date === currentSession.date)} onReadiness={performance.saveReadiness}
@@ -2035,7 +2118,7 @@ function GymApp({
             return <article className={`plan-day${date === today ? ' is-today' : ''}`} key={t}><div className="plan-day__date"><span>{WEEKDAYS[t].slice(0, 3)}</span><strong>{addDays(weekStart, t).getDate()}</strong></div><details className="plan-day-details"><summary><strong>{getSessionPurpose(e, t).title}</strong><span>{e.kind === 'sport' && e.name === 'Volleyball' ? `${volleyballSchedule.startTime}–${volleyballSchedule.endTime}` : /match/i.test(e.name) ? `Match · ${e.startTime ?? 'time not set'}` : `${e.durationRange ?? `${e.minutes} min`} · ${getSessionPurpose(e, t).subtitle}`}{recorded ? ' · Recorded' : date === today ? ' · Today' : ''}</span><ChevronRight size={16} /></summary><PlanDayDetails plan={e} /></details><button type="button" className="icon-button" aria-label={`Edit ${WEEKDAYS[t]}`} disabled={!loaded} onClick={() => editPlanDay(t)}>{recorded ? <Check size={17} /> : <Ellipsis size={20} />}</button>{e.extraSession && <div className="plan-day__extra"><details className="plan-day-details"><summary><strong>{shortSessionName(e.extraSession.name)}</strong><span>{e.extraSession.minutes} min</span><ChevronRight size={15} /></summary><PlanDayDetails plan={e.extraSession} /></details><button className="text-button" disabled={!loaded} onClick={() => editPlanDay(t, true)}><Pencil size={14} />Edit primer</button></div>}</article>;
           })}</div></section>
           {athleteMode && <details className="plan-schedule"><summary>Volleyball schedule <span>{volleyballSchedule.startTime}–{volleyballSchedule.endTime}</span></summary><TrainingSchedule schedule={volleyballSchedule} onSave={saveVolleyballSchedule} /></details>}
-          <details className="native-program-options"><summary>Programme & customization</summary>          <VolleyballMasterProgram settings={profile.masterProgram} defaultStartDate={profile.masterProgram ? dateKey(addDays(new Date(`${masterWeekStart(today)}T12:00:00`), 7)) : masterWeekStart(today)} selectedDate={selectedDate} today={today} basePlan={profile.plan} matchWeekend={profile.masterMatchWeekend} onSave={saveMasterProgram} onUpgrade={upgradeProgram} onRestorePrevious={restorePreviousProgram} hasPreviousPlan={!!profile.masterProgramBackup} upgradeOpen={programUpgradeOpen} onUpgradeOpenChange={setProgramUpgradeOpen} disabled={profileSaving || !loaded} />
+          <details className="native-program-options"><summary>Programme & customization</summary>          <VolleyballMasterProgram settings={masterSettings} guidance={trainingGuidance} upgradeReview={upgradeReview} upgradePreview={upgradePreview} defaultStartDate={profile.masterProgram ? dateKey(addDays(new Date(`${masterWeekStart(today)}T12:00:00`), 7)) : masterWeekStart(today)} selectedDate={selectedDate} today={today} basePlan={profile.plan} matchWeekend={profile.masterMatchWeekend} onSave={saveMasterProgram} onUpgrade={upgradeProgram} onRestorePrevious={restorePreviousProgram} hasPreviousPlan={!!profile.masterProgramBackup} upgradeOpen={programUpgradeOpen} onUpgradeOpenChange={setProgramUpgradeOpen} disabled={profileSaving || !loaded} />
           {!profile.masterProgram && <details className="plan-program"><summary>Jump training block</summary>
           <section className={`panel program-overview`}>
             <div className={`panel-heading`}>
@@ -2098,6 +2181,10 @@ function GymApp({
         <button type="button" className="icon-button" aria-label="Dismiss rest complete" onClick={() => setRestFinished(null)}><X size={18} /></button>
       </section>}
       <WorkoutPlanPreview open={previewContext !== null} onOpenChange={open => { if (!open) setPreviewContext(null); }} plan={previewWorkout.plan}
+        prescription={previewPrescription} onReviewProgram={reviewTrainingGuidance}
+        onReviewReset={previewWorkout.draft && previewWorkout.draft.customized !== false ? () => {
+          setDayResetContext({ date: previewWorkout.date, slot: previewWorkout.slot, profileVersion: profileVersionRef.current }); setPreviewContext(null);
+        } : undefined}
         previous={exercise => {
           const prior = previousPerformance(exercise, completedSessions, previewWorkout.date);
           return prior ? `${prior.label} · ${prior.date}` : undefined;
@@ -2106,6 +2193,10 @@ function GymApp({
         disabled={!loaded || profileSaving || !!loadError || !!activeSession}
         onChange={plan => saveDayDraft({ ...plan, warmup: preparationFor({ ...plan, warmup: plan.warmup?.map(step => ({ ...step, done: false })) }, 'warmup') }, { date: previewWorkout.date, slot: previewWorkout.slot, customized: true })}
         onStart={() => startWorkout(previewWorkout)} />
+      {dayResetContext && <DayPrescriptionReset key={`${dayResetContext.date}-${dayResetContext.slot}-${dayResetContext.profileVersion}`}
+        open onOpenChange={open => { if (!open) setDayResetContext(null); }} date={dayResetContext.date}
+        currentPlan={resetWorkout.plan} weeklyPlan={resetWeeklyWorkout.plan} onConfirm={resetPlannedDate}
+        disabled={profileSaving || !loaded || !!loadError || !!activeSession} />}
       <Dialog open={todayActivitiesOpen} onOpenChange={setTodayActivitiesOpen}><DialogContent className="app-dialog"><DialogHeader><DialogTitle>Today’s activities</DialogTitle><DialogDescription>{formatDate(today)} · recorded outside your workout</DialogDescription></DialogHeader><ExtraActivities date={today} bodyWeight={profile.bodyWeight} records={activityRecords} onSave={saveExtraActivity} disabled={!loaded || !!loadError} /></DialogContent></Dialog>
       <WarmupFlow open={warmupContext !== null} onOpenChange={open => { if (!open) setWarmupContext(null); }}
         plan={warmupPlan} items={gateWarmupItems} override={preparationDraft?.warmupOverride === true}
@@ -2200,7 +2291,16 @@ function GymApp({
         <DialogContent className="app-dialog settings-dialog">
           <DialogHeader><DialogTitle>Your preferences</DialogTitle><DialogDescription>Training, appearance, sound and local data.</DialogDescription></DialogHeader>
           <SettingsExperience section={settingsSection} onSectionChange={setSettingsSection} saving={profileSaving}
+            trainingStatus={<TrainingPlanStatus profile={profile} today={today} />}
+            recoveryAction={<button type="button" className="text-button" onClick={reviewSetupRecovery}>Recover my setup</button>}
+            profile={<>
+              <p>{profile.bodyWeight == null ? 'Body weight not recorded' : `${profile.bodyWeight} kg`}{profile.nutrition ? ` · ${profile.nutrition.heightCm} cm · ${profile.nutrition.age} years` : ' · Personal calculation inputs not recorded'}</p>
+              <p className="small-note">These are saved inputs on this address. Training preferences and medical guidance are separate from nutrition calculations.</p>
+              <button type="button" className="text-button" onClick={() => { setSettingsOpen(false); setNutritionAction(`profile`); setTab(`nutrition`); }}>Edit personal information</button>
+            </>}
             training={<>
+          <TrainingGuidanceForm guidance={trainingGuidance} onSave={saveTrainingGuidance} open={guidanceOpen} onOpenChange={setGuidanceOpen} onDirtyChange={setGuidanceDirty} disabled={!loaded || profileSaving || !!loadError} />
+          <button type="button" className="text-button" onClick={() => { setSettingsOpen(false); openProgramConfiguration(); }}>Training program &amp; schedule</button>
           <label className={`field-label`}>
             {`Body weight · kg`}
             <input
@@ -2269,12 +2369,16 @@ function GymApp({
             </>}
             data={<>
           <PwaUpdateControl onBeforeReload={async () => {
+            if (guidanceDirty) throw new Error('Save or discard your training guidance edits before updating.');
             if (settingsDraft.bodyWeight !== profile.bodyWeight || settingsDraft.restSeconds !== profile.restSeconds) {
               throw new Error('Save your preference changes before updating.');
             }
+            await profileSaveQueue.current;
             return flushPendingWrites();
           }} activeWorkout={!!activeSession} disabled={!loaded || profileSaving || saving} />
-          <DataSettings beforeExport={flushPendingWrites} onReplace={replaceLocalData} />
+          <SetupRecovery beforeExport={flushAllWrites} onReplace={replace => replaceLocalData(replace, { preserveRest: true })}
+            activeWorkout={!!activeSession} initiallyOpen={recoveryOpen} disabled={profileSaving || saving} />
+          <DataSettings beforeExport={flushAllWrites} onReplace={replaceLocalData} />
           <SupportPrivacy />
           <button
             className={`text-button`}
@@ -2494,7 +2598,7 @@ function GymApp({
         {(activeSession || editingHistoryId) && <p className="muted">Finish your current workout first.</p>}
         <button className="btn secondary full" onClick={() => { setWorkoutChooserOpen(false); openCustomWorkout(); }}><Plus size={18} /> Create workout</button>
       </DialogContent></Dialog>
-      <AlertDialog open={resetPlanOpen} onOpenChange={setResetPlanOpen}><AlertDialogContent className="app-dialog"><AlertDialogHeader><AlertDialogTitle>Restore recommended plan?</AlertDialogTitle><AlertDialogDescription>Your saved workouts, history and preferences stay. The weekly plan returns to its recommended schedule.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep my plan</AlertDialogCancel><AlertDialogAction disabled={profileSaving} onClick={async event => { event.preventDefault(); if (await saveProfile(profile.masterProgram ? { ...profile, plan: createRecommendedMasterPlan(profile.masterProgram), masterMatchWeekend: createRecommendedMasterPlan(profile.masterProgram, true).slice(5) } : resetRecommendedPlan(profile))) setResetPlanOpen(false); }}>Restore plan</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+      <AlertDialog open={resetPlanOpen} onOpenChange={setResetPlanOpen}><AlertDialogContent className="app-dialog"><AlertDialogHeader><AlertDialogTitle>Restore recommended plan?</AlertDialogTitle><AlertDialogDescription>Your saved workouts, history and preferences stay. The weekly plan returns to its recommended schedule.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep my plan</AlertDialogCancel><AlertDialogAction disabled={profileSaving} onClick={async event => { event.preventDefault(); if (await saveProfile(profile.masterProgram ? { ...profile, plan: createRecommendedMasterPlan(profile.masterProgram), masterMatchWeekend: createRecommendedMasterPlan(profile.masterProgram, true).slice(5) } : resetRecommendedPlan(profile), { checkpoint: true })) setResetPlanOpen(false); }}>Restore plan</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </Tabs>
   );
 }

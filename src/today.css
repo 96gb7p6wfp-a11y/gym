@@ -3,6 +3,12 @@
 .journal-today .day-cover { position:relative; margin:0; padding:24px; border-radius:24px; background:var(--wash); color:var(--ink); box-shadow:var(--shadow-card); }
 .day-cover__edition { position:relative; display:flex; align-items:center; min-height:28px; padding-right:40px; }
 .day-cover__edition>.day-context { margin:0; color:var(--ink); font-size:12px; line-height:1.4; font-weight:600; letter-spacing:.04em; }
+.day-cover__effort { display:inline-flex; align-items:center; gap:6px; margin-left:8px; color:var(--sub); font-size:12px; line-height:1.4; font-weight:550; }
+.day-cover__effort::before { content:'·'; }
+.day-cover__adjustment { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; min-height:44px; margin:8px 0 0; padding:4px 0; border:0; background:transparent; color:var(--ink); text-align:left; font:inherit; font-size:14px; line-height:1.4; }
+.day-cover__adjustment span { min-width:0; }
+.day-cover__adjustment svg { flex-shrink:0; color:var(--accent); }
+.day-cover__adjustment:focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:4px; }
 .day-cover__edition>.icon-button { position:absolute; right:-8px; top:-8px; background:color-mix(in srgb,var(--surface) 65%,transparent); color:var(--accent); }
 .day-cover .day-cover__title { max-width:15ch; margin:16px 0 0; color:var(--ink); font-family:var(--font-display); font-size:clamp(30px,8.3vw,36px); line-height:1.1; letter-spacing:-.045em; font-weight:720; text-wrap:balance; }
 .day-cover .day-cover__title--long { max-width:none; font-size:clamp(25px,7vw,32px); line-height:1.12; overflow-wrap:break-word; }
@@ -46,6 +52,8 @@
  .journal-today .day-cover { padding:14px; border-radius:24px; }
  .day-cover__edition { min-height:22px; }
  .day-cover__edition>.day-context { font-size:12px; line-height:1.4; }
+ .day-cover__effort { gap:4px; margin-left:6px; }
+ .day-cover__adjustment { margin-top:4px; font-size:13px; }
  .day-cover .day-cover__title { margin-top:8px; font-size:28px; }
  .day-cover .day-cover__title--long { font-size:24px; }
  .day-cover__purpose { margin-top:8px; font-size:14px; }

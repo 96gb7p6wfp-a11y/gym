@@ -64,7 +64,7 @@ test('local problem report includes no diagnostics until opted in and never incl
   expect(preview.diagnostics).toBeUndefined();
   await support.getByLabel('Include app and browser diagnostics (optional)', { exact: true }).check();
   preview = JSON.parse(await support.getByRole('textbox', { name: 'Report preview', exact: true }).inputValue());
-  expect(preview.diagnostics.appVersion).toBe('Setline V17');
+  expect(preview.diagnostics.appVersion).toBe('Setline V18');
   expect(Object.keys(preview.diagnostics).sort()).toEqual(['appVersion', 'browser', 'connection', 'localStorage', 'presentation', 'serviceWorker', 'viewport']);
   const downloaded = page.waitForEvent('download');
   await support.getByRole('button', { name: 'Export report', exact: true }).click();

@@ -91,7 +91,7 @@ for (const width of [320, 390]) {
   });
 }
 
-test('a workout keyboard keeps the current inputs and completion reachable without changing a set implicitly', async ({ page }) => {
+test('a workout keyboard keeps inputs and completion reachable without implicitly completing another set', async ({ page }) => {
   await safeAreas(page);
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: /^Mon / }).click();
@@ -113,8 +113,16 @@ test('a workout keyboard keeps the current inputs and completion reachable witho
   await expect(weight).not.toBeFocused();
   expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)!).sessions[0].session.exercises[0].logs[0].done, STORE)).toBe(false);
   await viewportKeyboard(page, 844); await weight.focus(); await viewportKeyboard(page, 500);
+  const logsBefore = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!).sessions[0].session.exercises[0].logs, STORE);
   await tappable(complete, 500); await complete.tap(); await viewportKeyboard(page, 844);
-  await expect(focused.getByRole('textbox', { name: 'Medicine Ball Spike Slam set 2 weight in kilograms', exact: true })).toHaveValue('');
+  await expect(focused.getByRole('textbox', { name: 'Medicine Ball Spike Slam set 2 weight in kilograms', exact: true })).toHaveValue('12.5');
+  await expect(focused.getByRole('spinbutton', { name: 'Medicine Ball Spike Slam set 2 reps', exact: true })).toHaveValue('4');
+  const logsAfter = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!).sessions[0].session.exercises[0].logs, STORE);
+  expect(logsAfter[0]).toEqual({ ...logsBefore[0], kg: 12.5, reps: 4, done: true,
+    inputSources: { kg: 'manual', reps: 'manual' } });
+  expect(logsAfter[1]).toEqual({ ...logsBefore[1], kg: 12.5, reps: 4,
+    inputSources: { kg: 'last-set', reps: 'last-set' } });
+  expect(logsAfter.slice(2)).toEqual(logsBefore.slice(2));
   await expect(focused.getByRole('button', { name: 'Complete Medicine Ball Spike Slam set 2', exact: true })).toBeDisabled();
   await expect(page.getByRole('tablist', { name: 'Main navigation', exact: true })).toBeVisible();
   await expect(page.locator('.rest-floating')).toBeVisible();

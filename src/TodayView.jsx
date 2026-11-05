@@ -11,7 +11,7 @@ import './today.css';
 export function TodayView({ date, plan, session, otherSession, completed, activities, nutrition, now = Date.now(),
   sessions = [], weeklyPlan = [], performance, bodyWeight, today = currentReportDate(), athleteMode = true,
   volleyballSchedule, onStart, onPreview, onTrain, onBrowseTrain, onViewLog, onNutrition, onPlan, onActivity,
-  onProgress, disabled, programLabel, blockComplete = false, programOffer, onReviewProgram, scheduledEvents = [] }) {
+  onProgress, disabled, programLabel, blockComplete = false, programOffer, onReviewProgram, scheduledEvents = [], prescription }) {
   const day = new Date(`${date}T12:00:00`);
   const active = session?.status === 'active';
   const unscheduled = !active && !completed && plan.exercises.filter(exercise => !exercise.optionalWork).length === 0 && plan.kind !== 'recovery';
@@ -21,6 +21,11 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
     : shownPlan.kind === 'recovery' ? 'Recovery day' : /match/i.test(shownPlan.name) ? 'Match day'
       : shownPlan.kind === 'sport' ? (/volleyball/i.test(shownPlan.name) ? 'On-court session' : 'Sport session') : 'Strength session';
   const purpose = getSessionPurpose(shownPlan, (day.getDay() + 6) % 7);
+  const adjustment = prescription?.reasons.find(reason => reason.code.startsWith('clearance-lifting-')
+    || reason.code === 'saved-preparation' || reason.code === 'readiness-yellow' || reason.code === 'readiness-red'
+    || reason.code === 'deload' || reason.code === 'match-week' || reason.code === 'post-match');
+  const reviewGuidance = adjustment && (adjustment.code.startsWith('clearance-') || adjustment.code === 'saved-preparation');
+  const showAdjustment = !active && !completed && adjustment;
   const cadence = useMemo(() => getTrainingCadence({ sessions, activities, plan: weeklyPlan,
     today, weekStart: reportWeekStart(date) }), [sessions, activities, weeklyPlan, today, date]);
   const extras = activities.filter(({ activity }) => activity.date === date && activity.deletedAt === null);
@@ -52,19 +57,24 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
     : completed ? `${completedMinutes} min · ${completed.kind === 'recovery' ? 'recovery recorded' : completed.kind === 'sport' ? 'training recorded' : `${setCount} completed sets`}`
       : plan.kind === 'sport' ? /match/i.test(plan.name) ? `Match · ${plan.startTime ?? 'time not set'} · log actual duration`
         : `${volleyballSchedule.startTime}–${volleyballSchedule.endTime} · Berlin time`
-        : `${plan.durationRange ?? `${plan.minutes} min`}${plan.kind === 'recovery' ? ' · mobility & stretching' : ` · ${plan.exercises.filter(exercise => !exercise.optionalWork).length} exercises`}`;
+        : `${prescription?.duration ?? plan.durationRange ?? `${plan.minutes} min`}${plan.kind === 'recovery' ? ' · mobility & stretching' : ` · ${plan.exercises.filter(exercise => !exercise.optionalWork).length} exercises`}`;
   const remainingCalories = targets?.calories == null ? null : Math.max(0, Math.round(targets.calories - totals.calories));
   const fuelDetail = remainingCalories === null ? 'Meals & daily targets'
     : `${remainingCalories.toLocaleString('en-GB')} kcal remaining · ${Math.round(totals.protein)}${targets.protein ? ` / ${Math.round(targets.protein)}` : ''} g protein`;
 
   return <div className="today-view journal-today">
-    <section className="day-cover" aria-label="Your day" data-session-state={active ? 'active' : completed ? 'complete' : shownPlan.kind === 'recovery' ? 'recovery' : 'ready'}>
+    <section className="day-cover" aria-label="Your day" data-session-state={active ? 'active' : completed ? 'complete' : shownPlan.kind === 'recovery' ? 'recovery' : 'ready'} data-adjusted={showAdjustment ? 'true' : undefined}>
       <div className="day-cover__edition">
         <p className="day-context" aria-label="Session type">{sessionLabel}</p>
+        {prescription && !completed && <span className="day-cover__effort" aria-label="Planned effort">{prescription.label}</span>}
         <button type="button" className="icon-button" aria-label="Choose training day" onClick={onBrowseTrain ?? onTrain}><CalendarDays size={19} aria-hidden="true" /></button>
       </div>
       <h2 key={`${date}-${title}`} className={`day-cover__title${title.length > 30 ? ' day-cover__title--long' : ''}`}>{title}</h2>
-      <p className="day-cover__purpose">{purpose.subtitle}</p>
+      {showAdjustment ? <button type="button" className="day-cover__adjustment"
+        aria-label={reviewGuidance && onReviewProgram ? 'Review training guidance' : 'View workout adjustments'}
+        onClick={reviewGuidance && onReviewProgram ? onReviewProgram : onPreview} disabled={disabled}>
+        <span>{adjustment.title}</span><ChevronRight size={16} aria-hidden="true" />
+      </button> : <p className="day-cover__purpose">{prescription?.label === 'Preparation' ? prescription.objective : purpose.subtitle}</p>}
       <div className="day-cover__plan-row"><p className="day-cover__prescription">{sessionMeta}</p>
         {!active && !completed && <button type="button" className="day-cover__preview" disabled={disabled} onClick={onPreview}>View workout<ChevronRight size={14} aria-hidden="true" /></button>}
       </div>

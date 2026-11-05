@@ -14,5 +14,6 @@ export function TrainingPlanStatus({ profile, today, selectedDate = today, sessi
     {session && <p>Workout snapshot · {session.programRevision ? `V${session.programRevision}` : 'unversioned saved plan'}</p>}
     {status.selected && <p className="training-plan-status__preview">{status.selected}</p>}
     {status.previous && <p>Available to restore · {status.previous}</p>}
+    {status.guidance && <p>Future workouts · {status.guidance}</p>}
   </section>;
 }

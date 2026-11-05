@@ -8,6 +8,7 @@ import { TimedSetControls } from './TimedSetControls';
 import type { TimedSetAction } from './timed-sets';
 import type { FocusedExercise, FocusedSetLog } from './FocusedWorkout';
 import { exerciseInputKind, hasRecordedLoad, measurementInputLabel } from './exercise-input';
+import { lastSetSuggestion } from './set-autofill';
 import './quick-workout-log.css';
 
 interface QuickWorkoutLogProps {
@@ -43,6 +44,7 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
   const [gate] = useState(() => new CompletionIntentGate(target));
   const [, renderGate] = useState(0);
   const [invalidWeight, setInvalidWeight] = useState(false);
+  const [reuseRevision, setReuseRevision] = useState(0);
   const metric = formatPreviousSet(exercise, previous);
   const kind = exerciseInputKind(exercise);
   const timed = kind === 'duration';
@@ -50,6 +52,9 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
   const inMinutes = /\bmin(?:ute)?s?\b/i.test(exercise.target);
   const name = `${exercise.name} set ${index + 1}`;
   const ready = gate.isArmed(target);
+  const lastSet = !editing && !log.done ? lastSetSuggestion(exercise, log.id) : null;
+  const canCopyLast = lastSet && (lastSet.patch.kg !== log.kg || lastSet.patch.reps !== log.reps);
+  const hasLastSetSuggestion = !log.done && Object.values(log.inputSources ?? {}).includes('last-set');
 
   function arm() {
     gate.arm(target);
@@ -72,7 +77,7 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
     if (!onDone(exercise.key, log.id, true, intent)) arm();
   }
 
-  const weightInput = <DecimalWeightInput value={log.kg} placeholder={optionalLoad ? '0' : 'kg'} label={`${name} weight in kilograms`}
+  const weightInput = <DecimalWeightInput key={reuseRevision} value={log.kg} placeholder={optionalLoad ? '0' : 'kg'} label={`${name} weight in kilograms`}
     onValidityChange={valid => {
       if (!valid && optionalLoad) onLoadInteraction();
       setInvalidWeight(!valid); onInvalidChange(log.id, !valid); onLoadValidityChange(log.id, !valid);
@@ -107,6 +112,17 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
       aria-label={`${log.done ? 'Completed' : 'Complete'} ${name}`} aria-pressed={log.done} onClick={complete}>
       {log.done && <Check size={19} aria-hidden="true" />}
     </button>
+    {hasLastSetSuggestion && <p className="quick-set__suggestion" aria-label={`${name} suggestion`}>Last-set suggestion · editable</p>}
+    {canCopyLast && lastSet && <div className="quick-set__review"><button type="button"
+      aria-label={`Copy last completed ${exercise.name} set ${lastSet.sourceSetNumber} to set ${index + 1}`}
+      onClick={() => {
+        setReuseRevision(value => value + 1);
+        setInvalidWeight(false);
+        onInvalidChange(log.id, false);
+        onLoadValidityChange(log.id, false);
+        if (optionalLoad && lastSet.patch.kg != null && lastSet.patch.kg > 0) onLoadInteraction();
+        edit(lastSet.patch);
+      }}>Use set {lastSet.sourceSetNumber} · {lastSet.patch.kg == null ? 'bodyweight' : `${lastSet.patch.kg} kg`} × {lastSet.patch.reps}</button></div>}
     {!log.done && !ready && <div className="quick-set__review"><button type="button" onClick={arm} aria-label={`Ready for ${name}`}>Review & ready</button></div>}
     {timed && !log.done && <details className="quick-set__timer"><summary>Set {index + 1} timer</summary>
       <TimedSetControls setId={log.id} exerciseKey={exercise.key} exerciseName={exercise.name} setNumber={index + 1}

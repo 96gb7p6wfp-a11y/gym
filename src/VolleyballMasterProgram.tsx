@@ -1,13 +1,45 @@
-import { useEffect, useState, type MouseEvent } from 'react';
+import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { MasterProgramSettingsSchema, createRecommendedMasterPlan, createVolleyballMasterPlan, getMasterProgramPhase, getMasterProgramWeek, resolveMasterProgramPlan, type MasterProgramSettings, type MasterReadiness } from './volleyball-master-plan';
 import type { PlanDay } from './workout-customization';
 import { berlinDate } from './calendar-date';
 import { trainingPlanVersion } from './training-plan-status';
+import { rebaseObjectChanges } from './profile-updates';
+import type { MasterProgramUpgradeOptions, MasterProgramUpgradeReview } from './master-program-upgrade';
+import type { TrainingGuidance } from './training-guidance';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui';
 import './volleyball-master-program.css';
 
 const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const newSettings = (startDate: string): MasterProgramSettings => ({ version: 1, revision: '13.1', startDate, matchWeeks: [] });
+const newSettings = (startDate: string, guidance?: TrainingGuidance): MasterProgramSettings => ({
+  version: 1, revision: '13.1', startDate, matchWeeks: [], ...(guidance ? { clearance: structuredClone(guidance) } : {}),
+});
+
+function UpgradeCustomizationReview({ review, acknowledged, onAcknowledge, disabled }: {
+  review: MasterProgramUpgradeReview; acknowledged: boolean;
+  onAcknowledge: (value: boolean) => void; disabled: boolean;
+}) {
+  return <section className="master-program__customization-review" aria-label="Personal customization review">
+    <h3>Your saved changes</h3>
+    {review.preserved.length > 0 && <details>
+      <summary>Compatible exercise changes kept<span>{review.preserved.length}</span></summary>
+      <ul>{review.preserved.map((item, index) => <li key={`${item.variant}-${item.day}-${index}`}>
+        <strong>{weekdays[item.day]}{item.variant === 'match' ? ' · match week' : ''}</strong><p>{item.message}</p>
+      </li>)}</ul>
+    </details>}
+    {review.needsReview.length > 0 ? <>
+      <p>Some saved changes cannot be matched safely to the new recommendations. Your current program stays active until you choose to apply an upgrade.</p>
+      <ul aria-label="Changes needing your review">{review.needsReview.map((item, index) => <li key={`${item.variant}-${item.day}-${index}`}>
+        <strong>{weekdays[item.day]} · {item.dayName}{item.variant === 'match' ? ' · match week' : ''}</strong><p>{item.message}</p>
+      </li>)}</ul>
+      <label className="master-program__upgrade-choice">
+        <input type="checkbox" checked={acknowledged} disabled={disabled}
+          aria-label="Use V13.1 recommendations for unmapped edits" onChange={event => onAcknowledge(event.target.checked)} />
+        <span>Use V13.1 recommendations for changes that cannot be carried over. My current week will be archived for recovery.</span>
+      </label>
+      <p className="small-note">Compatible exercise settings are still kept. This choice changes future weekly recommendations; it does not replace recorded workouts.</p>
+    </> : <p>Compatible exercise settings carry over. Your current week is saved for recovery, and recorded workouts stay unchanged.</p>}
+  </section>;
+}
 
 function ProgramPreview({ settings, date, basePlan, matchWeekend, baseline = false }: { settings: MasterProgramSettings; date: string; basePlan?: PlanDay[]; matchWeekend?: PlanDay[]; baseline?: boolean }) {
   const previewDate = getMasterProgramWeek(settings.startDate, date) ? date : settings.startDate;
@@ -29,29 +61,48 @@ function ProgramPreview({ settings, date, basePlan, matchWeekend, baseline = fal
   </div>;
 }
 
-export function VolleyballMasterProgram({ settings, defaultStartDate, selectedDate, today = berlinDate(), basePlan, matchWeekend, onSave, onUpgrade, onRestorePrevious, hasPreviousPlan = false, disabled = false, upgradeOpen, onUpgradeOpenChange }: {
+export function VolleyballMasterProgram({ settings, guidance, defaultStartDate, selectedDate, today = berlinDate(), basePlan, matchWeekend, onSave, onUpgrade, upgradeReview, upgradePreview, onRestorePrevious, hasPreviousPlan = false, disabled = false, upgradeOpen, onUpgradeOpenChange }: {
   settings?: MasterProgramSettings; defaultStartDate: string; selectedDate: string; today?: string;
+  guidance?: TrainingGuidance;
   basePlan?: PlanDay[]; matchWeekend?: PlanDay[];
   onSave: (settings: MasterProgramSettings | undefined) => Promise<boolean>;
-  onUpgrade?: () => Promise<boolean | void>; onRestorePrevious?: () => Promise<boolean | void>;
+  onUpgrade?: (options?: MasterProgramUpgradeOptions) => Promise<boolean | void>; onRestorePrevious?: () => Promise<boolean | void>;
+  upgradeReview?: MasterProgramUpgradeReview;
+  upgradePreview?: { plan: PlanDay[]; matchWeekend?: PlanDay[] };
   hasPreviousPlan?: boolean; disabled?: boolean;
   upgradeOpen?: boolean; onUpgradeOpenChange?: (open: boolean) => void;
 }) {
-  const [draft, setDraft] = useState<MasterProgramSettings>(settings ?? newSettings(defaultStartDate));
+  const [draft, setDraft] = useState<MasterProgramSettings>(() => structuredClone(settings ?? newSettings(defaultStartDate, guidance)));
+  const savedDraft = JSON.stringify({ active: Boolean(settings), settings: settings ?? newSettings(defaultStartDate, guidance) });
+  const previousSaved = useRef({ active: Boolean(settings), settings: structuredClone(settings ?? newSettings(defaultStartDate, guidance)) });
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const [restore, setRestore] = useState(false), [restorePrevious, setRestorePrevious] = useState(false);
   const [internalUpgrade, setInternalUpgrade] = useState(false), [nextBlock, setNextBlock] = useState(false);
+  const [useRecommendations, setUseRecommendations] = useState(false);
   const upgrade = upgradeOpen ?? internalUpgrade;
   function setUpgrade(open: boolean) { setInternalUpgrade(open); onUpgradeOpenChange?.(open); }
   const [nextStart, setNextStart] = useState(defaultStartDate);
   const [changedStart, setChangedStart] = useState<MasterProgramSettings | null>(null);
-  useEffect(() => { setDraft(settings ?? newSettings(defaultStartDate)); }, [settings, defaultStartDate]);
+  useEffect(() => {
+    const next = JSON.parse(savedDraft) as { active: boolean; settings: MasterProgramSettings };
+    const previous = previousSaved.current;
+    // Re-rendered profile objects and a new suggested next-block date must not
+    // erase deliberate edits. Real saved changes merge around those edits.
+    setDraft(current => previous.active === next.active
+      ? rebaseObjectChanges(previous.settings, next.settings, current) : structuredClone(next.settings));
+    previousSaved.current = next;
+  }, [savedDraft]);
+  useEffect(() => { if (upgrade) setUseRecommendations(false); }, [upgrade]);
   const week = settings && getMasterProgramWeek(settings.startDate, today);
   const legacy = !!settings && settings.revision !== '13.1';
   const complete = !!settings && today >= settings.startDate && !week;
   const locked = disabled || busy;
-  const reviewSettings = settings ? { ...settings, revision: '13.1' as const } : newSettings(defaultStartDate);
-  const previewValid = MasterProgramSettingsSchema.safeParse(draft).success;
+  const reviewSettings = settings ? { ...settings, revision: '13.1' as const } : newSettings(defaultStartDate, guidance);
+  const parsedDraft = MasterProgramSettingsSchema.safeParse(draft);
+  const previewValid = parsedDraft.success;
+  const savedProgram = MasterProgramSettingsSchema.safeParse(settings ?? newSettings(defaultStartDate, guidance));
+  const draftDirty = !parsedDraft.success || !savedProgram.success || JSON.stringify(parsedDraft.data) !== JSON.stringify(savedProgram.data);
+  const upgradeNeedsReview = Boolean(upgradeReview?.needsReview.length);
   async function save(next: MasterProgramSettings | undefined): Promise<boolean> {
     const parsed = next && MasterProgramSettingsSchema.safeParse(next);
     if (parsed && !parsed.success) { setError('Choose a valid Monday and match weeks.'); return false; }
@@ -64,8 +115,11 @@ export function VolleyballMasterProgram({ settings, defaultStartDate, selectedDa
   }
   async function applyUpgrade() {
     if (!onUpgrade || locked) return;
+    if (upgradeNeedsReview && !useRecommendations) {
+      setError('Review your customized week and confirm how the new recommendations should be applied.'); return;
+    }
     setBusy(true); setError('');
-    try { if (await onUpgrade() !== false) setUpgrade(false); else setError('The upgrade could not save. Try again.'); }
+    try { if (await onUpgrade({ weeklyCustomizationPolicy: useRecommendations ? 'recommendations' : 'preserve' }) !== false) setUpgrade(false); else setError('The upgrade could not save. Try again.'); }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not upgrade. Your existing plan stays.'); }
     finally { setBusy(false); }
   }
@@ -108,14 +162,15 @@ export function VolleyballMasterProgram({ settings, defaultStartDate, selectedDa
       {draft.revision === '13.1' && <details className="master-program__clearance"><summary>Impact & lifting guidance</summary>
         <p className="small-note">Unknown clearance keeps preparation conservative. Individual clinician restrictions take priority; ask for guidance before increasing impact or heavy straining.</p>
         {([['impact', 'Impact clearance'], ['heavyLifting', 'Heavy lifting clearance']] as const).map(([key, label]) => <label className="field-label" key={key}>{label}<select aria-label={label} disabled={locked} value={draft.clearance?.[key] ?? 'unknown'} onChange={event => setDraft({ ...draft, clearance: { impact: 'unknown', heavyLifting: 'unknown', ...draft.clearance, [key]: event.target.value as 'unknown' | 'cleared' | 'restricted' } })}><option value="unknown">Unknown / awaiting guidance</option><option value="cleared">Cleared within my guidance</option><option value="restricted">Restricted</option></select></label>)}
-        <label className="field-label">Personal guidance note<textarea rows={3} maxLength={500} disabled={locked} value={draft.clearance?.note ?? ''} placeholder="Optional restrictions or preparation instructions" onChange={event => setDraft({ ...draft, clearance: { impact: 'unknown', heavyLifting: 'unknown', ...draft.clearance, note: event.target.value } })} /></label>
-        <p className="small-note">Stored with your local program and included in your backups. This is your reported status, not medical approval from Setline.</p>
+        <label className="field-label">Personal guidance note<textarea aria-label="Personal guidance note" rows={3} maxLength={500} disabled={locked} value={draft.clearance?.note ?? ''} placeholder="Optional restrictions or preparation instructions" onChange={event => setDraft({ ...draft, clearance: { impact: 'unknown', heavyLifting: 'unknown', ...draft.clearance, note: event.target.value } })} /></label>
+        <p className="small-note">Kept when changing programs and included in your backups. Unconfirmed or restricted lifting means easy preparation; unconfirmed or restricted impact removes maximal jumps. Changes apply to future workouts. This is your reported status, not medical approval from Setline.</p>
       </details>}
       {draft.matchWeeks.length > 0 && <details className="master-program__match-times"><summary>Match times (optional)</summary><p className="small-note">Leave blank if unknown. Times use Europe/Berlin.</p>{draft.matchWeeks.map(value => <label className="field-label" key={value}>Week {value} match time<input type="time" disabled={locked} value={draft.matchTimes?.find(item => item.week === value)?.startTime ?? ''} onChange={event => setDraft({ ...draft, matchTimes: [...(draft.matchTimes ?? []).filter(item => item.week !== value), ...(event.target.value ? [{ week: value, startTime: event.target.value }] : [])].sort((a, b) => a.week - b.week) })} /></label>)}</details>}
       <details><summary>Optional work</summary><div className="master-program__optional">
         {optionalOptions.map(([key, label]) => <label key={key}><input type="checkbox" disabled={locked} checked={draft.optional?.[key] ?? false} onChange={event => setDraft({ ...draft, optional: { mondayArms: false, thursdayArms: false, tuesdayPogos: false, ...draft.optional, [key]: event.target.checked } })} />{label}</label>)}
         <p>Off by default. Add only when time, movement quality and recovery allow.</p></div></details>
       <button className="btn full" type="button" disabled={locked} onClick={() => settings && draft.startDate !== settings.startDate ? setChangedStart(draft) : void save(draft)}>{busy ? 'Saving…' : settings ? 'Save program' : 'Use this plan'}</button>
+      <p className="small-note master-program__save-status" role="status" aria-label="Program changes">{draftDirty ? 'Program changes are not saved yet.' : 'Program settings are up to date.'}</p>
       {!settings && <p className="small-note">Your current weekly plan is kept so you can return to it. History stays unchanged. No Sunday match is assumed.</p>}
     </details>
     {complete && !legacy && <div className="master-program__next-block"><p>This block is complete. Review your tests before choosing a new start.</p><button className="btn full" type="button" disabled={locked} onClick={() => { setNextStart(defaultStartDate); setError(''); setNextBlock(true); }}>Plan next block</button></div>}
@@ -129,7 +184,19 @@ export function VolleyballMasterProgram({ settings, defaultStartDate, selectedDa
     </details>
     {settings && (hasPreviousPlan && onRestorePrevious ? <div className="master-program__saved"><button className="text-button" type="button" disabled={locked} onClick={() => { setError(''); setRestorePrevious(true); }}>Restore previous program</button><details><summary>Older weekly plan</summary>{savedPlanButton}</details></div> : savedPlanButton)}
     {error && <p role="alert" className="builder-error">{error}</p>}
-    <Dialog open={upgrade} onOpenChange={(open: boolean) => { if (!busy) setUpgrade(open); }}><DialogContent className="app-dialog master-program-upgrade-sheet"><DialogHeader className=""><DialogTitle className="">Upgrade to V13.1</DialogTitle><DialogDescription className="">Review the new recommendations. Your current cycle start and match weeks stay.</DialogDescription></DialogHeader><h3 className="master-program__review-heading">Review changes</h3><p className="master-program__upgrade-note">Monday combines approach power and Upper A. Wednesday is strength-focused, without the old complex. Thursday includes ten exercises and two short supersets. No match: Lower Strength B Saturday when recovered, recovery Sunday. Match: optional 10–15 min Saturday preparation, Sunday competition.</p><ProgramPreview settings={reviewSettings} date={selectedDate} baseline /><p className="master-program__upgrade-note">Your current personalized program is saved for restore. V13.1 replaces the weekly recommendations; your date-specific edits, active workout and completed sessions stay unchanged.</p><button className="btn full" type="button" disabled={locked} onClick={() => void applyUpgrade()}>{busy ? 'Applying…' : 'Apply V13.1'}</button>{error && <p role="alert" className="builder-error">{error}</p>}</DialogContent></Dialog>
+    <Dialog open={upgrade} onOpenChange={(open: boolean) => { if (!busy) setUpgrade(open); }}>
+      <DialogContent className="app-dialog master-program-upgrade-sheet">
+        <DialogHeader className=""><DialogTitle className="">Upgrade to V13.1</DialogTitle><DialogDescription className="">Review the new recommendations. Your current cycle start and match weeks stay.</DialogDescription></DialogHeader>
+        <h3 className="master-program__review-heading">Review changes</h3>
+        <p className="master-program__upgrade-note">Monday combines approach power and Upper A. Wednesday is strength-focused, without the old complex. Thursday includes ten exercises and two short supersets. No match: Lower Strength B Saturday when recovered, recovery Sunday. Match: optional 10–15 min Saturday preparation, Sunday competition.</p>
+        {upgradeReview && <UpgradeCustomizationReview review={upgradeReview} acknowledged={useRecommendations} onAcknowledge={setUseRecommendations} disabled={locked} />}
+        <ProgramPreview settings={reviewSettings} date={selectedDate} basePlan={upgradePreview?.plan} matchWeekend={upgradePreview?.matchWeekend} baseline={!upgradePreview} />
+        <p className="master-program__upgrade-note">Your current personalized program is saved for restore. Your date-specific edits, active workout and completed sessions stay unchanged. Your recorded impact and lifting guidance still applies.</p>
+        <button className="btn full" type="button" disabled={locked || (upgradeNeedsReview && !useRecommendations)} onClick={() => void applyUpgrade()}>{busy ? 'Applying…' : 'Apply V13.1'}</button>
+        <button className="btn secondary full" type="button" disabled={busy} onClick={() => setUpgrade(false)}>Keep current program</button>
+        {error && <p role="alert" className="builder-error">{error}</p>}
+      </DialogContent>
+    </Dialog>
     <AlertDialog open={restorePrevious} onOpenChange={setRestorePrevious}><AlertDialogContent className="app-dialog"><AlertDialogHeader className=""><AlertDialogTitle className="">Restore your previous program?</AlertDialogTitle><AlertDialogDescription className="">Your saved personal program and its cycle settings return. Workout history, active sessions, nutrition and measurements stay unchanged.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className=""><AlertDialogCancel className="">Keep V13.1</AlertDialogCancel><AlertDialogAction className="" disabled={locked} onClick={(event: MouseEvent<HTMLButtonElement>) => { event.preventDefault(); void applyRestorePrevious(); }}>Restore previous program</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     <AlertDialog open={restore} onOpenChange={setRestore}><AlertDialogContent className="app-dialog"><AlertDialogHeader className=""><AlertDialogTitle className="">Return to your saved plan?</AlertDialogTitle><AlertDialogDescription className="">The weekly plan from before this block returns. History, meals, measurements and active workouts stay unchanged.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className=""><AlertDialogCancel className="">Keep program</AlertDialogCancel><AlertDialogAction className="" disabled={locked} onClick={(event: MouseEvent<HTMLButtonElement>) => { event.preventDefault(); void save(undefined); }}>Restore saved plan</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     <Dialog open={nextBlock} onOpenChange={(open: boolean) => { if (!busy) setNextBlock(open); }}><DialogContent className="app-dialog"><DialogHeader className=""><DialogTitle className="">Plan the next block?</DialogTitle><DialogDescription className="">Start a new eight-week cycle using your current weekly plan. Match weeks start empty; choose the new competition dates afterward. Your records stay.</DialogDescription></DialogHeader><label className="field-label">Next start Monday<input type="date" value={nextStart} disabled={locked} onChange={event => setNextStart(event.target.value)} /></label><button className="btn full" type="button" disabled={locked} onClick={() => settings && void save({ ...settings, startDate: nextStart, matchWeeks: [], matchTimes: [] })}>Start next block</button>{error && <p role="alert" className="builder-error">{error}</p>}</DialogContent></Dialog>

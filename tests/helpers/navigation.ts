@@ -41,3 +41,10 @@ export async function settingsGroup(page: Page, name: 'Training' | 'Appearance &
   }
   return group;
 }
+
+/** Upgrades with unmappable personal edits require the same explicit review as the app. */
+export async function acknowledgeProgramUpgrade(page: Page) {
+  const review = page.getByRole('dialog', { name: 'Upgrade to V13.1', exact: true });
+  const choice = review.getByRole('checkbox', { name: 'Use V13.1 recommendations for unmapped edits', exact: true });
+  if (await choice.isVisible()) await choice.check();
+}

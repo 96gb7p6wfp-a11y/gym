@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronRight } from 'lucide-react';
 import { MenuRow } from './components/design';
 import './settings-experience.css';
 
@@ -11,6 +11,9 @@ interface SettingsExperienceProps {
   training: ReactNode;
   appearance: ReactNode;
   data: ReactNode;
+  profile?: ReactNode;
+  trainingStatus?: ReactNode;
+  recoveryAction?: ReactNode;
   appInfo?: ReactNode;
   saving?: boolean;
 }
@@ -22,7 +25,7 @@ const groups = [
 ];
 
 /** Presentation only: changing groups never saves or replaces user data. */
-export function SettingsExperience({ section, onSectionChange, training, appearance, data, appInfo, saving = false }: SettingsExperienceProps) {
+export function SettingsExperience({ section, onSectionChange, training, appearance, data, profile, trainingStatus, recoveryAction, appInfo, saving = false }: SettingsExperienceProps) {
   const prefix = useId();
   const selected = groups.find(group => group.id === section);
   const content = { training, appearance, data };
@@ -46,10 +49,12 @@ export function SettingsExperience({ section, onSectionChange, training, appeara
   return <div className="settings-experience">
     <nav className="settings-experience__groups" aria-label="Settings groups" hidden={!!selected} ref={landing} tabIndex={-1}>
       <p className="settings-experience__intro">Make Setline fit the way you train.</p>
+      {trainingStatus && <div className="settings-experience__status" role="group" aria-label="Your saved setup">{trainingStatus}</div>}
       <div className="menu-group">
         {groups.map(group => <MenuRow key={group.id} title={group.title} subtitle={group.description}
           onClick={() => navigate(group.id)} />)}
       </div>
+      {recoveryAction && <div className="settings-experience__recovery">{recoveryAction}</div>}
     </nav>
     {selected && <button type="button" className="text-button settings-experience__back"
       aria-label="All settings" onClick={() => navigate(null)}><ArrowLeft size={18} aria-hidden="true" />All settings</button>}
@@ -64,7 +69,13 @@ export function SettingsExperience({ section, onSectionChange, training, appeara
         {group.id === 'appearance' && <p role="status" aria-live="polite">{saving ? 'Saving changes…' : 'Appearance and sound changes save automatically.'}</p>}
         {group.id === 'data' && <p>Keep a copy of your records and manage this installation.</p>}
       </header>
-      <div className="settings-experience__content">{content[group.id]}</div>
+      <div className="settings-experience__content">
+        {group.id === 'training' && profile && <details className="settings-experience__profile">
+          <summary><span><strong>My profile</strong><small>Personal information & goals</small></span><ChevronRight size={17} aria-hidden="true" /></summary>
+          <div>{profile}</div>
+        </details>}
+        {content[group.id]}
+      </div>
       {group.id === 'data' && appInfo && <div className="settings-experience__app-info">{appInfo}</div>}
     </section>)}
   </div>;

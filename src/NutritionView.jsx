@@ -111,6 +111,7 @@ function NutritionView({ bodyWeight: bodyWeight, athleteMode = true, personalPro
   const quickSaving = React.useRef(false);
   let [weightOpen, setWeightOpen] = React.useState(!1);
   React.useEffect(() => { if (initialAction === `weight`) { setWeightOpen(true); onActionHandled?.(); } }, [initialAction, onActionHandled]);
+  React.useEffect(() => { if (initialAction === `profile`) { setProfileOpen(true); onActionHandled?.(); } }, [initialAction, onActionHandled]);
   let [targetsDraft, setTargetsDraft] = React.useState(
     DEFAULT_NUTRITION_TARGETS,
   );

@@ -13,6 +13,8 @@ import { getQuickWarmupPresentation } from './session-preparation';
 import { masterJumpContacts } from './volleyball-master-plan';
 import { workoutTitle } from './presentation';
 import { previewRestLabel, PreviewSessionDetails } from './WorkoutPreview';
+import { getWorkoutPrescription, type WorkoutPrescription } from './training-prescription';
+import { WorkoutPrescriptionSummary } from './WorkoutPrescriptionSummary';
 import './workout-plan-preview.css';
 
 export interface WorkoutPlanPreviewProps {
@@ -25,10 +27,13 @@ export interface WorkoutPlanPreviewProps {
   onChange: (plan: PlanDay) => Promise<boolean | void> | boolean | void;
   onStart: () => void;
   previous?: (exercise: PlanExercise) => string | undefined;
+  prescription?: WorkoutPrescription;
+  onReviewProgram?: () => void;
+  onReviewReset?: () => void;
 }
 
 /** This editor only changes the selected day's plan. It never creates a session. */
-export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup, disabled = false, onChange, onStart, previous }: WorkoutPlanPreviewProps) {
+export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup, disabled = false, onChange, onStart, previous, prescription: suppliedPrescription, onReviewProgram, onReviewReset }: WorkoutPlanPreviewProps) {
   const [menuKey, setMenuKey] = useState<string | null>(null);
   const [guide, setGuide] = useState<PlanExercise | null>(null);
   const [editor, setEditor] = useState<PlanExercise | null>(null);
@@ -45,6 +50,7 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
   const replacement = plan.exercises.find(exercise => exercise.key === replaceKey);
   const purpose = getSessionPurpose(plan);
   const preparation = getQuickWarmupPresentation(plan);
+  const prescription = suppliedPrescription ?? getWorkoutPrescription({ plan });
   const workingExercises = plan.exercises.filter(exercise => exercise.optionalWork !== true);
   const optionalExercises = plan.exercises.filter(exercise => exercise.optionalWork === true);
   const workingSets = workingExercises.reduce((count, exercise) => count + exercise.sets, 0);
@@ -116,10 +122,12 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
         <DialogHeader className="plan-preview__header">
           <p className="eyebrow">Workout preview · {dayLabel}</p>
           <DialogTitle className="">{workoutTitle(plan)}</DialogTitle>
-          <DialogDescription className="">{purpose.subtitle}</DialogDescription>
+          <DialogDescription className="">{prescription.label === 'Preparation' ? prescription.objective : purpose.subtitle}</DialogDescription>
         </DialogHeader>
-        <div className="plan-preview__metadata"><div className="plan-preview__summary"><span><Clock3 size={15} aria-hidden="true" />{plan.durationRange ?? `About ${plan.minutes} min`}</span><span>{workingExercises.length} exercises · {workingSets} sets</span></div>
+        <div className="plan-preview__metadata"><div className="plan-preview__summary"><span><Clock3 size={15} aria-hidden="true" />{prescription.duration}</span><span>{workingExercises.length} exercises · {workingSets} sets</span></div>
         <p className="plan-preview__scope">For {dayLabel} only. Weekly plan unchanged.</p></div>
+        {onReviewReset && <button type="button" className="text-button" onClick={onReviewReset}>Review date-only reset</button>}
+        <WorkoutPrescriptionSummary prescription={prescription} onReviewProgram={onReviewProgram ? () => { onOpenChange(false); onReviewProgram(); } : undefined} />
         <details className="plan-preview__warmup">
           <summary><span><strong>Warm-up</strong><span>{preparation.duration} · {warmup.length} movements</span></span><ChevronRight size={19} aria-hidden="true" /></summary>
           <ol aria-label="Preview warm-up exercises">{warmup.map(step => <li key={step.key}><strong>{step.name}</strong><span>{step.target}</span><p>{step.cue}</p></li>)}</ol>

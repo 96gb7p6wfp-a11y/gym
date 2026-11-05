@@ -19,6 +19,7 @@ import { formatPreviousSet } from './previous-performance';
 import { QuickWorkoutLog } from './QuickWorkoutLog';
 import { EquipmentLabelEditor } from './EquipmentLabel';
 import { exerciseInputKind, hasRecordedLoad } from './exercise-input';
+import { lastSetSuggestion, type SetInputSources } from './set-autofill';
 
 export interface FocusedSetLog {
   id: string;
@@ -28,6 +29,7 @@ export interface FocusedSetLog {
   rir: number | null;
   done: boolean;
   measurementCm?: number | null;
+  inputSources?: SetInputSources;
 }
 
 export interface FocusedExercise {
@@ -101,7 +103,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
 
   useEffect(() => {
     if (!setFeedback) return;
-    const timeout = window.setTimeout(() => setSetFeedback(null), 6500);
+    const timeout = window.setTimeout(() => setSetFeedback(null), 3500);
     return () => window.clearTimeout(timeout);
   }, [setFeedback]);
 
@@ -183,6 +185,9 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
   const previousLogs = previous(exercise)?.exercise.logs ?? [];
   const previousMetric = formatPreviousSet(exercise, previousLogs[setIndex]);
   const reuse = !editing && !log.done ? previousSetReuse(exercise, setIndex, sessions, date, sessionId) : null;
+  const lastSet = !editing && !log.done ? lastSetSuggestion(exercise, log.id) : null;
+  const canCopyLast = lastSet && (lastSet.patch.kg !== log.kg || lastSet.patch.reps !== log.reps);
+  const hasLastSetSuggestion = !log.done && Object.values(log.inputSources ?? {}).includes('last-set');
   const libraryExercise = findLibraryExercise(exercise);
   const recommendation = getProgressionRecommendation(exercise, sessions, date,
     exercise.preparationOnly ? { ...context, lowFatigueSession: true } : context);
@@ -300,10 +305,10 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
         <div className="focused-stage-topline">
           <span aria-label={allDone ? 'All sets complete' : `Exercise ${exerciseIndex + 1} of ${exercises.length}`}>{allDone ? 'Complete' : `${String(exerciseIndex + 1).padStart(2, '0')} / ${String(exercises.length).padStart(2, '0')}`}</span>
           <div className="focused-stage-tools">
-            <button type="button" className="focused-exercise__text-action"
-              disabled={completionReady || log.done} onClick={() => armSet(exercise.key, log.id)}
+            {!completionReady && !log.done && <button type="button" className="focused-exercise__text-action"
+              onClick={() => armSet(exercise.key, log.id)}
               title="Review the selected set, then tap Ready to log it"
-              aria-label={`Ready for ${exercise.name} set ${setIndex + 1}`}>Ready</button>
+              aria-label={`Ready for ${exercise.name} set ${setIndex + 1}`}>Ready</button>}
             {!editing && onUndoLast && <button type="button" className="icon-button" aria-label="Undo last set"
               disabled={!canUndoLast} onClick={undoLastSet}><RotateCcw size={18} aria-hidden="true" /></button>}
             <button type="button" className="focused-exercise__text-action" aria-expanded={allSetsOpen}
@@ -340,7 +345,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                 <div className="focused-exercise__set-position"><strong>Set {setIndex + 1} <span>of {exercise.logs.length}</span></strong>
                   <span className="focused-exercise__target">{exercise.target}{exercise.perSide ? ' / side' : ''}{athleteMode && exercise.targetRpe ? ` · RPE ${exercise.targetRpe}` : ''}</span>
                 </div>
-                {(previousMetric || reuse) && <div className="focused-set-reference">
+                {(previousMetric || reuse || canCopyLast) && <div className="focused-set-reference">
                   {previousMetric && <span className="focused-exercise__previous">Previous <b>{previousMetric}</b></span>}
                   {reuse && <button type="button" className="focused-reuse" aria-label={`Reuse previous ${exercise.name} set ${setIndex + 1} weights and reps`}
                     title={`Previous workout · ${reuse.date}`}
@@ -349,6 +354,14 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                       setReuseRevision(value => value + 1);
                       editSet(reuse.patch);
                     }}><RotateCcw size={15} aria-hidden="true" />{exercise.measurement ? 'Use previous reps' : 'Use previous'}</button>}
+                  {canCopyLast && lastSet && <button type="button" className="focused-reuse"
+                    aria-label={`Copy last completed ${exercise.name} set ${lastSet.sourceSetNumber} to set ${setIndex + 1}`}
+                    title={`Current workout · ${lastSet.patch.kg == null ? 'Bodyweight' : `${lastSet.patch.kg} kg`} × ${lastSet.patch.reps}`}
+                    onClick={() => {
+                      invalidWeightInputs.current.delete(log.id);
+                      setReuseRevision(value => value + 1);
+                      editSet(lastSet.patch);
+                    }}><RotateCcw size={15} aria-hidden="true" />Use last set</button>}
                 </div>}
               </div>
               {exercise.mode === 'timed' ? <TimedSetControls key={`${exercise.key}-${log.id}`} setId={log.id}
@@ -405,6 +418,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                 {log.done ? <RotateCcw size={19} aria-hidden="true" /> : <Check size={20} aria-hidden="true" />}
                 {log.done ? 'Undo set' : 'Complete set'}
               </button>
+              {hasLastSetSuggestion && <p className="focused-draft-suggestion" aria-label="Current set suggestion">Last-set suggestion · editable</p>}
               {!editing && setFeedback && <p className="focused-completion-receipt" role="status" aria-label="Set completion" aria-atomic="true">
                 <Check size={16} aria-hidden="true" /><span>{setFeedback.receipt}</span>
               </p>}

@@ -104,8 +104,15 @@ test('bodyweight Focus keeps kilograms optional without losing a revealed invali
   await focus.getByRole('button', { name: 'Undo last set', exact: true }).click();
   const restored = (await state(page)).sessions.find((row: { session: { id: string } }) => row.session.id === initial.active.id).session;
   expect(restored.exercises[0].logs[0]).toMatchObject({ kg: 7.5, reps: 8, rir: 2, done: false });
-  expect(restored.exercises[0].logs[1]).toEqual(initial.active.exercises[0].logs[1]);
+  const suggestedNext = { ...initial.active.exercises[0].logs[1], kg: 7.5, inputSources: { kg: 'last-set' } };
+  // Undo reopens the completed set; its next-set suggestion stays an unfinished draft.
+  expect(restored.exercises[0].logs[1]).toEqual(suggestedNext);
   await page.reload();
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await expect(weight).toHaveValue('7.5');
+  const refreshed = await state(page);
+  const resumed = refreshed.sessions.find((row: { session: { id: string } }) => row.session.id === initial.active.id).session;
+  expect(resumed.exercises[0].logs[1]).toEqual(suggestedNext);
+  expect(refreshed.sessions.find((row: { session: { id: string } }) => row.session.id === initial.history.id).session).toEqual(initial.history);
+  expect(refreshed.profile).toEqual(initial.profile);
 });

@@ -9,7 +9,7 @@ export interface SupportPrivacyProps {
 }
 
 /** The report stays local. An operator/support service can be connected later. */
-export function SupportPrivacy({ appVersion = 'Setline V17', reportInitiallyOpen = false }: SupportPrivacyProps) {
+export function SupportPrivacy({ appVersion = 'Setline V18', reportInitiallyOpen = false }: SupportPrivacyProps) {
   const [description, setDescription] = useState('');
   const [includeDiagnostics, setIncludeDiagnostics] = useState(false);
   const [message, setMessage] = useState('');

@@ -27,6 +27,7 @@
 .quick-set__complete[aria-pressed='true'] { background:var(--accent); color:var(--on-accent); border-color:var(--accent); opacity:1; }
 .quick-set--single,.quick-log-head--single { grid-template-columns:16px minmax(72px,1.25fr) minmax(64px,1fr) 44px; }
 .quick-set__review,.quick-set__timer { grid-column:2 / -1; }
+.quick-set__suggestion { grid-column:2 / -1; margin:0; color:var(--sub); font-size:12px; line-height:1.4; }
 .quick-set__review button { min-height:44px; padding:8px 0; color:var(--accent); font-size:13px; }
 .quick-set__timer > summary { display:flex; align-items:center; min-height:44px; color:var(--sub); font-size:13px; cursor:pointer; }
 .quick-exercise__effort { border-top:1px solid var(--line); }
