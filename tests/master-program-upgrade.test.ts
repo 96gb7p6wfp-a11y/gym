@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession, stopSessionTimers } from '../src/domain.js';
-import { upgradeMasterProgram, restorePreviousMasterProgram } from '../src/master-program-upgrade.ts';
+import { upgradeMasterProgram, restorePreviousMasterProgram, reviewMasterProgramUpgrade } from '../src/master-program-upgrade.ts';
 import { createVolleyballMasterPlan, createV81VolleyballMasterPlan, getMasterProgramWeek } from '../src/volleyball-master-plan.ts';
 import { createLocalClient, STORAGE_KEY } from '../src/storage.ts';
 import { defaultReminderState } from '../src/reminders.ts';
@@ -37,7 +37,9 @@ class MemoryStorage {
 test('upgrade is explicit, retains the running cycle and saves the exact personal prescription', () => {
   const before = personalProgram();
   const untouched = structuredClone(before);
-  const next = upgradeMasterProgram(before, 1000);
+  assert.ok(reviewMasterProgramUpgrade(before).needsReview.length > 0);
+  assert.throws(() => upgradeMasterProgram(before, 1000), /cannot be mapped safely/);
+  const next = upgradeMasterProgram(before, 1000, { weeklyCustomizationPolicy: 'recommendations' });
   assert.deepEqual(before, untouched, 'reviewing or constructing an upgrade cannot mutate the current profile');
   assert.equal(next.masterProgram!.revision, '13.1');
   assert.equal(next.masterProgram!.startDate, before.masterProgram!.startDate);
@@ -83,11 +85,13 @@ test('V8.1 upgrades to V13.1 without losing its cycle, old backup or deliberate 
   assert.deepEqual(next.nutrition, before.nutrition, 'program upgrade never applies nutrition targets');
   const restoredV81 = restorePreviousMasterProgram(next);
   assert.deepEqual(restoredV81.plan, before.plan);
-  assert.deepEqual(restoredV81.masterProgram, before.masterProgram);
+  const effectiveUnknown = { impact: 'unknown', heavyLifting: 'unknown' };
+  assert.deepEqual(restoredV81.masterProgram, { ...before.masterProgram, clearance: effectiveUnknown });
+  assert.deepEqual(restoredV81.trainingGuidance, effectiveUnknown, 'switching back must not bypass the currently effective guidance');
   assert.deepEqual(restoredV81.masterProgramBackup, before.masterProgramBackup);
   const restoredPersonal = restorePreviousMasterProgram(restoredV81);
   assert.deepEqual(restoredPersonal.plan, personal.plan);
-  assert.deepEqual(restoredPersonal.masterProgram, personal.masterProgram);
+  assert.deepEqual(restoredPersonal.masterProgram, { ...personal.masterProgram, clearance: effectiveUnknown });
   assert.equal(restoredPersonal.masterProgramBackup, undefined);
   const client = createLocalClient(new MemoryStorage());
   await client.request('/api/tracker', { action: 'profile', profile: next, expectedVersion: 0 });
@@ -101,7 +105,7 @@ test('V8.1 upgrades to V13.1 without losing its cycle, old backup or deliberate 
 
 test('restoring the previous program keeps newer user edits and unrelated preferences', () => {
   const before = personalProgram();
-  const updated = upgradeMasterProgram(before, 1000);
+  const updated = upgradeMasterProgram(before, 1000, { weeklyCustomizationPolicy: 'recommendations' });
   updated.bodyWeight = 65;
   updated.timerSoundVolume = 0.7;
   updated.sessionDrafts!.push({ date: '2026-11-04', slot: 'main', customized: true,
@@ -109,7 +113,7 @@ test('restoring the previous program keeps newer user edits and unrelated prefer
   updated.sessionDrafts![0].plan.name = 'Latest Sunday edit';
   const restored = restorePreviousMasterProgram(updated);
   assert.deepEqual(restored.plan, before.plan);
-  assert.deepEqual(restored.masterProgram, before.masterProgram);
+  assert.deepEqual(restored.masterProgram, { ...before.masterProgram, clearance: { impact: 'unknown', heavyLifting: 'unknown' } });
   assert.deepEqual(restored.masterMatchWeekend, before.masterMatchWeekend);
   assert.deepEqual(restored.preMasterPlan, before.preMasterPlan);
   assert.equal(restored.masterProgramBackup, undefined);
@@ -161,7 +165,7 @@ test('legacy stores load without inventing an upgrade or changing active and his
   await client.request('/api/tracker');
   assert.equal(storage.getItem(STORAGE_KEY), originalRaw, 'opening an old program is read-only');
   const original = JSON.parse(originalRaw!);
-  const upgraded = upgradeMasterProgram(profile, 2000);
+  const upgraded = upgradeMasterProgram(profile, 2000, { weeklyCustomizationPolicy: 'recommendations' });
   await client.request('/api/tracker', { action: 'profile', profile: upgraded, expectedVersion: 7 });
   const changed = JSON.parse(storage.getItem(STORAGE_KEY)!);
   for (const field of ['sessions', 'nutrition', 'activities', 'reminders', 'performance', 'performanceVersion']) {
@@ -182,7 +186,7 @@ test('legacy stores load without inventing an upgrade or changing active and his
 test('malformed program backups reject atomically instead of discarding personal data', async () => {
   const storage = new MemoryStorage();
   const client = createLocalClient(storage);
-  const profile = upgradeMasterProgram(personalProgram(), 2000);
+  const profile = upgradeMasterProgram(personalProgram(), 2000, { weeklyCustomizationPolicy: 'recommendations' });
   await client.request('/api/tracker', { action: 'profile', profile, expectedVersion: 0 });
   const raw = storage.getItem(STORAGE_KEY);
   const backup = JSON.parse(client.exportBackup());

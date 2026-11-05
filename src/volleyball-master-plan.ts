@@ -544,6 +544,17 @@ function applyV131Readiness(workout: PlanDay, readiness?: MasterReadiness): Plan
 /** Unknown restrictions do not become approval simply because a plan is selected. */
 export function applyMasterClearance(workout: PlanDay, clearance?: MasterProgramSettings['clearance']): PlanDay {
   if (workout.programRevision !== '13.1' || workout.kind !== 'strength') return workout;
+  return applyRecordedClearance(workout, clearance);
+}
+
+/** Explicit personal guidance follows the athlete across program versions.
+ * Its absence never introduces new restrictions to an established legacy plan.
+ */
+export function applyTrainingGuidance(workout: PlanDay, clearance?: MasterProgramSettings['clearance']): PlanDay {
+  return clearance && workout.kind === 'strength' ? applyRecordedClearance(workout, clearance) : workout;
+}
+
+function applyRecordedClearance(workout: PlanDay, clearance?: MasterProgramSettings['clearance']): PlanDay {
   const impactApproved = clearance?.impact === 'cleared';
   const heavyApproved = clearance?.heavyLifting === 'cleared';
   if (impactApproved && heavyApproved) return workout;
@@ -610,7 +621,12 @@ export function isMasterReadinessRequired(settings: MasterProgramSettings | unde
 export function resolveMasterProgramPlan(basePlan: PlanDay[], settings: MasterProgramSettings, date: string,
   matchWeekend?: PlanDay[]): PlanDay[] {
   const week = getMasterProgramWeek(settings.startDate, date);
-  if (!week) return structuredClone(basePlan);
+  const withGuidance = (workout: PlanDay) => settings.clearance
+    ? applyTrainingGuidance(workout, settings.clearance) : applyMasterClearance(workout);
+  if (!week) return structuredClone(basePlan).map(day => ({
+    ...withGuidance(day),
+    ...(day.extraSession ? { extraSession: withGuidance(day.extraSession) } : {}),
+  }));
   const v131 = settings.revision === '13.1';
   const v81 = settings.revision === '8.1';
   const match = settings.matchWeeks.includes(week);
@@ -657,8 +673,8 @@ export function resolveMasterProgramPlan(basePlan: PlanDay[], settings: MasterPr
   return plan.map((day, index) => {
     const currentDate = new Date(timestamp(start) + index * DAY).toISOString().slice(0, 10);
     const readiness = settings.readiness?.find(item => item.date === currentDate)?.status;
-    return { ...applyMasterClearance(applyMasterReadiness(day, readiness), settings.clearance),
-      ...(day.extraSession ? { extraSession: applyMasterClearance(applyMasterReadiness(day.extraSession, readiness), settings.clearance) } : {}) };
+    const guarded = (workout: PlanDay) => withGuidance(applyMasterReadiness(workout, readiness));
+    return { ...guarded(day), ...(day.extraSession ? { extraSession: guarded(day.extraSession) } : {}) };
   });
 }
 

@@ -3,6 +3,7 @@ import { DEFAULT_PROFILE, NutritionPayloadSchema, ProfileSchema, SessionSchema }
 import { PerformanceDataSchema, emptyPerformance, type PerformanceData } from './performance-data.ts';
 import { ExtraActivitySchema, type ActivityRecord } from './activities.ts';
 import { defaultReminderState, isTrackable, ReminderSchema, ReminderEntrySchema, type ReminderState, type ReminderRecord, type ReminderEntryRecord } from './reminders.ts';
+import { recoverSetupProfile, recoveredPlanDetails, setupRecoveryChanges, type SetupRecoveryChange, type SetupRecoveryScope } from './setup-recovery.ts';
 
 export const STORAGE_KEY = 'setline.gym.v1';
 export const MAX_BACKUP_BYTES = 10 * 1024 * 1024;
@@ -17,6 +18,15 @@ export interface BackupPreview {
   reminders: number;
   jumpMeasurements: number;
   readinessCheckIns: number;
+}
+
+export interface SetupRecoveryPreview {
+  token: string;
+  scope: SetupRecoveryScope;
+  exportedAt: string | null;
+  changes: SetupRecoveryChange[];
+  plan: ReturnType<typeof recoveredPlanDetails>;
+  preserved: { workouts: number; activeWorkouts: number; nutrition: number; activities: number; jumpMeasurements: number; reminders: number };
 }
 
 function parseBackup(text: string) {
@@ -66,6 +76,12 @@ function version(value: unknown): value is number {
 }
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
+}
+function profileFingerprint(value: unknown): string {
+  // A normal record write can normalize object key order without changing a
+  // preference. Array order remains significant for schedules and exercises.
+  return JSON.stringify(value, (_key, nested) => object(nested)
+    ? Object.fromEntries(Object.entries(nested).sort(([left], [right]) => left.localeCompare(right))) : nested);
 }
 function validDate(value: unknown): value is string {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -156,14 +172,24 @@ export function createLocalClient(storage: StoragePort, initialProfile: unknown 
   // atomically with the state, so an older tab cannot save same-version records
   // over the restored data. Reloading creates a client for the new generation.
   let observedGeneration: string | null | undefined;
+  let observedExistingStore = false;
+  let observedAbsentStore = false;
+  let externalInitialization = false;
+  const setupReviews = new Map<string, { scope: SetupRecoveryScope; text: string; profile: string; profileVersion: number; generation: string | null }>();
   function read(defaultProfile: unknown = initialProfile): LocalState {
     let raw: string | null;
     try { raw = storage.getItem(STORAGE_KEY); }
     catch { throw new Error('Device storage is unavailable. Allow site storage in your browser, then retry.'); }
     if (raw === null) {
+      if (observedExistingStore) throw new Error('Saved data disappeared from this app address while it was open. Reload and review recovery options before saving; existing settings will not be replaced with defaults.');
+      observedAbsentStore = true;
       observedGeneration ??= null;
       return { schemaVersion: 1, profile: clone(ProfileSchema.parse(defaultProfile)), profileVersion: 0, sessions: [], nutrition: [], activities: [], reminders: (defaultProfile as { onboarding?: unknown })?.onboarding ? { items: [], entries: [] } : defaultReminderState() };
     }
+    // Presence matters even when validation fails: unreadable personal records
+    // must never turn into permission to write a default profile later.
+    if (observedAbsentStore && !observedExistingStore) externalInitialization = true;
+    observedExistingStore = true;
     try {
       const state = parseState(JSON.parse(raw));
       if (observedGeneration === undefined) observedGeneration = state.restoreGeneration ?? null;
@@ -173,7 +199,7 @@ export function createLocalClient(storage: StoragePort, initialProfile: unknown 
   }
   function write(state: LocalState) {
     const serialized = JSON.stringify(state);
-    try { storage.setItem(STORAGE_KEY, serialized); }
+    try { storage.setItem(STORAGE_KEY, serialized); observedExistingStore = true; }
     catch { throw new Error('Your data could not be saved. Device storage may be full or unavailable. Export a backup and free some space, then retry.'); }
   }
   function assertVersion(expected: unknown, actual: number) {
@@ -190,6 +216,7 @@ export function createLocalClient(storage: StoragePort, initialProfile: unknown 
         ? clone({ profile: state.profile, profileVersion: state.profileVersion, sessions: state.sessions, activities: state.activities })
         : clone({ records: state.nutrition, photoAnalysisReady: false });
     }
+    if (externalInitialization) throw new Error('Setline data was created in another tab while this installation was open. Reload before saving so its settings are not replaced with defaults.');
     if ((state.restoreGeneration ?? null) !== observedGeneration) throw new Error('Local data was restored in another tab. Reload the app before saving changes.');
     if (!object(payload)) throw new Error('The data to save is invalid.');
     let nextVersion: number;
@@ -224,17 +251,43 @@ export function createLocalClient(storage: StoragePort, initialProfile: unknown 
       state.reminders.entries = [{ entry, version: nextVersion }, ...state.reminders.entries.filter((item) => item.entry.id !== entry.id)];
     } else if (path === '/api/tracker' && payload.action === 'profile') {
       assertVersion(payload.expectedVersion, state.profileVersion);
+      if (Object.hasOwn(payload, 'checkpoint') && typeof payload.checkpoint !== 'boolean') {
+        throw new Error('Choose a valid recovery checkpoint option before saving this profile change.');
+      }
       const profile = ProfileSchema.safeParse(payload.profile);
       if (!profile.success) throw new Error('Enter a valid training plan and preferences.');
       nextVersion = state.profileVersion + 1;
       state.profile = profile.data;
       state.profileVersion = nextVersion;
+      if (payload.checkpoint === true) {
+        const previous = storage.getItem(STORAGE_KEY);
+        if (previous === null && observedExistingStore) {
+          throw new Error('Saved data disappeared before this change. Reload and review recovery options; no default profile was saved.');
+        }
+        let checkpointed = state;
+        if (previous !== null) {
+          // A critical profile change must not normalize historical records or
+          // erase compatible metadata that this settings screen does not own.
+          const raw: unknown = JSON.parse(previous);
+          const current = parseState(raw);
+          assertVersion(payload.expectedVersion, current.profileVersion);
+          if ((current.restoreGeneration ?? null) !== observedGeneration) {
+            throw new Error('Local data was restored in another tab. Reload the app before saving changes.');
+          }
+          checkpointed = { ...(raw as LocalState), profile: profile.data, profileVersion: nextVersion };
+        }
+        replaceWithSafetyCopy(checkpointed, { preserveLease: true, expectedPrevious: previous });
+        return { version: nextVersion };
+      }
     } else if (path === '/api/tracker' && payload.action === 'session') {
       const parsed = SessionSchema.safeParse(payload.session);
       if (!parsed.success) throw new Error('Enter valid workout values before saving.');
       const session = parsed.data;
       const existing = state.sessions.find((entry) => entry.session.id === session.id);
       assertVersion(payload.expectedVersion, existing?.version ?? 0);
+      if (existing && existing.session.status !== 'active' && session.status === 'active') {
+        throw new Error('A finished workout cannot be reopened as a new active session. Start a new workout; its completed history stays editable.');
+      }
       // One active workout at a time, matching the training UI's resume behavior.
       if (session.status === 'active' && state.sessions.some((entry) => entry.session.status === 'active' && entry.session.id !== session.id)) {
         throw new Error('Finish or discard your active workout before starting another one.');
@@ -307,12 +360,13 @@ export function createLocalClient(storage: StoragePort, initialProfile: unknown 
     const { restoreGeneration: _localGeneration, ...data } = read();
     return JSON.stringify({ app: 'Setline', version: 1, exportedAt: new Date().toISOString(), data }, null, 2);
   }
-  function importBackup(text: string) {
-    const { data: restored } = parseBackup(text);
-    restored.restoreGeneration = crypto.randomUUID();
+  function replaceWithSafetyCopy(restored: LocalState, options: { preserveLease?: boolean; expectedPrevious?: string | null } = {}) {
     // Save the exact prior bytes, including unreadable records, before replacing
     // anything. A quota failure aborts the restore instead of losing its fallback.
     const previous = storage.getItem(STORAGE_KEY);
+    if (options.expectedPrevious !== undefined && previous !== options.expectedPrevious) {
+      throw new Error('Your saved data changed before this operation. Review the change again; no records were replaced.');
+    }
     const previousSafetyCopy = storage.getItem(PRE_RESTORE_KEY);
     if (previous !== null) {
       try {
@@ -328,8 +382,64 @@ export function createLocalClient(storage: StoragePort, initialProfile: unknown 
       } catch { /* The current state remains intact; the fallback holds its bytes. */ }
       throw error;
     }
-    observedGeneration = restored.restoreGeneration;
+    if (!options.preserveLease) {
+      observedGeneration = restored.restoreGeneration ?? null;
+      observedAbsentStore = false;
+      externalInitialization = false;
+    }
   }
+  function importBackup(text: string) {
+    const { data: restored } = parseBackup(text);
+    restored.restoreGeneration = crypto.randomUUID();
+    replaceWithSafetyCopy(restored);
+  }
+
+  function setupRecoveryState(text: string, scope: SetupRecoveryScope) {
+    const { data: backup, exportedAt } = parseBackup(text);
+    const raw = storage.getItem(STORAGE_KEY);
+    if (raw === null) throw new Error('No existing setup is saved at this app address. Check the address on your original installation, or use full backup restore to bring its records here.');
+    observedExistingStore = true;
+    let current: unknown;
+    try { current = JSON.parse(raw); } catch { throw new Error('Current records are unreadable. Export a recovery copy before using full backup restore.'); }
+    if (!object(current) || current.schemaVersion !== 1 || !version(current.profileVersion)) throw new Error('Current records are not a supported Setline format. Export a recovery copy before using full backup restore.');
+    // Repair only selected profile fields, then validate every untouched record.
+    // An invalid history or an invalid unselected profile field fails closed.
+    const profile = recoverSetupProfile(current.profile, backup.profile, scope);
+    const state = parseState({ ...current, profile });
+    if (observedGeneration === undefined) observedGeneration = state.restoreGeneration ?? null;
+    if (observedGeneration !== undefined && (state.restoreGeneration ?? null) !== observedGeneration) throw new Error('Local data was restored in another tab. Reload the app before recovering settings.');
+    if (scope === 'training' && state.sessions.some(({ session }) => session.status === 'active')) throw new Error('Finish your active workout before recovering a training plan. Its saved prescription will not be replaced.');
+    return { state, current, profile, exportedAt, raw };
+  }
+
+  /** Review only; the token leases this exact profile/version without freezing later workout writes. */
+  function previewSetupRecovery(text: string, scope: SetupRecoveryScope): SetupRecoveryPreview {
+    const { state, current, profile, exportedAt } = setupRecoveryState(text, scope);
+    const token = crypto.randomUUID();
+    setupReviews.clear();
+    setupReviews.set(token, { scope, text, profile: profileFingerprint(current.profile), profileVersion: state.profileVersion, generation: state.restoreGeneration ?? null });
+    return { token, scope, exportedAt, changes: setupRecoveryChanges(current.profile, profile, scope), plan: recoveredPlanDetails(profile),
+      preserved: { workouts: state.sessions.length, activeWorkouts: state.sessions.filter(({ session }) => session.status === 'active').length,
+        nutrition: state.nutrition.length, activities: state.activities.length, jumpMeasurements: state.performance?.jumps.length ?? 0, reminders: state.reminders.items.length } };
+  }
+
+  /** Confirm one reviewed recovery. A safety-copy failure or stale review cannot partially replace data. */
+  function applySetupRecovery(token: string) {
+    const review = setupReviews.get(token);
+    if (!review) throw new Error('Review the backup again before recovering settings.');
+    const { state, current, profile, raw } = setupRecoveryState(review.text, review.scope);
+    if (state.profileVersion !== review.profileVersion || (state.restoreGeneration ?? null) !== review.generation || profileFingerprint(current.profile) !== review.profile) {
+      throw new Error('Your setup changed after this preview. Review the backup again; no settings or records were replaced.');
+    }
+    if (!setupRecoveryChanges(current.profile, profile, review.scope).length) { setupReviews.delete(token); return; }
+    // Validation is strict, but recovery changes the selected profile only.
+    // Preserve untouched record bytes/optional absences, including compatible
+    // metadata unknown to this screen, instead of normalizing all history.
+    replaceWithSafetyCopy({ ...current, profile, profileVersion: state.profileVersion + 1,
+      restoreGeneration: crypto.randomUUID() } as LocalState, { expectedPrevious: raw });
+    setupReviews.clear();
+  }
+  function cancelSetupRecovery(token: string) { setupReviews.delete(token); }
   function previousRestoreCopy(): { text: string; recovery: boolean; savedAt: string } | null {
     const text = storage.getItem(PRE_RESTORE_KEY);
     if (text === null) return null;
@@ -346,8 +456,8 @@ export function createLocalClient(storage: StoragePort, initialProfile: unknown 
   function exportRecovery() {
     return JSON.stringify({ app: 'Setline recovery', exportedAt: new Date().toISOString(), raw: storage.getItem(STORAGE_KEY) }, null, 2);
   }
-  function reset() { storage.removeItem(STORAGE_KEY); storage.removeItem(PRE_RESTORE_KEY); observedGeneration = null; }
-  return { request, exportBackup, importBackup, exportRecovery, previousRestoreCopy, hasPreviousRestoreCopy: () => storage.getItem(PRE_RESTORE_KEY) !== null, reset };
+  function reset() { storage.removeItem(STORAGE_KEY); storage.removeItem(PRE_RESTORE_KEY); observedGeneration = null; observedExistingStore = false; observedAbsentStore = false; externalInitialization = false; setupReviews.clear(); }
+  return { request, exportBackup, importBackup, exportRecovery, previousRestoreCopy, hasPreviousRestoreCopy: () => storage.getItem(PRE_RESTORE_KEY) !== null, previewSetupRecovery, applySetupRecovery, cancelSetupRecovery, reset };
 }
 
 let localBrowserClient: ReturnType<typeof createLocalClient> | undefined;
@@ -364,3 +474,6 @@ export function exportRecovery() { return browserClient().exportRecovery(); }
 export function previousRestoreCopy() { return browserClient().previousRestoreCopy(); }
 export function hasPreviousRestoreCopy() { return browserClient().hasPreviousRestoreCopy(); }
 export function resetLocalData() { return browserClient().reset(); }
+export function previewSetupRecovery(text: string, scope: SetupRecoveryScope) { return browserClient().previewSetupRecovery(text, scope); }
+export function applySetupRecovery(token: string) { return browserClient().applySetupRecovery(token); }
+export function cancelSetupRecovery(token: string) { return browserClient().cancelSetupRecovery(token); }

@@ -904,6 +904,9 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
   }).strict(),
   ProfileSchema = zObject({
     plan: ProfileWeeklyPlanSchema,
+    // User-reported guidance survives program changes. Old nested guidance is
+    // still read without silently rewriting a saved installation.
+    trainingGuidance: MasterProgramSettingsSchema.shape.clearance.optional(),
     sessionDrafts: zArray(SessionDraftSchema).max(1000).refine(drafts => new Set(drafts.map(draft => `${draft.date}:${draft.slot}`)).size === drafts.length, `Each day needs a unique session draft.`).optional(),
     timerSoundEnabled: zBoolean().optional(),
     timerSoundVolume: zNumber().finite().min(0).max(1).optional(),
@@ -946,6 +949,11 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     rir: optionalAmount(10),
     done: zBoolean(),
     measurementCm: optionalAmount(1e3).optional(),
+    // Additive provenance protects deliberately cleared drafts after refresh.
+    inputSources: zObject({
+      kg: zEnum(['manual', 'planned', 'history', 'last-set']).optional(),
+      reps: zEnum(['manual', 'planned', 'history', 'last-set']).optional(),
+    }).strict().optional(),
   }),
   SessionExerciseSchema = ExerciseSchema.extend({
     logs: zArray(SetLogSchema).min(1).max(30),
