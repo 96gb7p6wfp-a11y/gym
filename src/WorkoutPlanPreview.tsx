@@ -12,6 +12,9 @@ import type { StretchStep } from './stretch-routine';
 import { getQuickWarmupPresentation } from './session-preparation';
 import { masterJumpContacts } from './volleyball-master-plan';
 import { workoutTitle } from './presentation';
+import { previewRestLabel, PreviewSessionDetails } from './WorkoutPreview';
+import { getWorkoutPrescription, type WorkoutPrescription } from './training-prescription';
+import { WorkoutPrescriptionSummary } from './WorkoutPrescriptionSummary';
 import './workout-plan-preview.css';
 
 export interface WorkoutPlanPreviewProps {
@@ -24,10 +27,13 @@ export interface WorkoutPlanPreviewProps {
   onChange: (plan: PlanDay) => Promise<boolean | void> | boolean | void;
   onStart: () => void;
   previous?: (exercise: PlanExercise) => string | undefined;
+  prescription?: WorkoutPrescription;
+  onReviewProgram?: () => void;
+  onReviewReset?: () => void;
 }
 
 /** This editor only changes the selected day's plan. It never creates a session. */
-export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup, disabled = false, onChange, onStart, previous }: WorkoutPlanPreviewProps) {
+export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup, disabled = false, onChange, onStart, previous, prescription: suppliedPrescription, onReviewProgram, onReviewReset }: WorkoutPlanPreviewProps) {
   const [menuKey, setMenuKey] = useState<string | null>(null);
   const [guide, setGuide] = useState<PlanExercise | null>(null);
   const [editor, setEditor] = useState<PlanExercise | null>(null);
@@ -44,6 +50,7 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
   const replacement = plan.exercises.find(exercise => exercise.key === replaceKey);
   const purpose = getSessionPurpose(plan);
   const preparation = getQuickWarmupPresentation(plan);
+  const prescription = suppliedPrescription ?? getWorkoutPrescription({ plan });
   const workingExercises = plan.exercises.filter(exercise => exercise.optionalWork !== true);
   const optionalExercises = plan.exercises.filter(exercise => exercise.optionalWork === true);
   const workingSets = workingExercises.reduce((count, exercise) => count + exercise.sets, 0);
@@ -115,10 +122,12 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
         <DialogHeader className="plan-preview__header">
           <p className="eyebrow">Workout preview · {dayLabel}</p>
           <DialogTitle className="">{workoutTitle(plan)}</DialogTitle>
-          <DialogDescription className="">{purpose.subtitle}</DialogDescription>
+          <DialogDescription className="">{prescription.label === 'Preparation' ? prescription.objective : purpose.subtitle}</DialogDescription>
         </DialogHeader>
-        <div className="plan-preview__metadata"><div className="plan-preview__summary"><span><Clock3 size={15} aria-hidden="true" />{plan.durationRange ?? `About ${plan.minutes} min`}</span><span>{workingExercises.length} exercises · {workingSets} sets</span></div>
+        <div className="plan-preview__metadata"><div className="plan-preview__summary"><span><Clock3 size={15} aria-hidden="true" />{prescription.duration}</span><span>{workingExercises.length} exercises · {workingSets} sets</span></div>
         <p className="plan-preview__scope">For {dayLabel} only. Weekly plan unchanged.</p></div>
+        {onReviewReset && <button type="button" className="text-button" onClick={onReviewReset}>Review date-only reset</button>}
+        <WorkoutPrescriptionSummary prescription={prescription} onReviewProgram={onReviewProgram ? () => { onOpenChange(false); onReviewProgram(); } : undefined} />
         <details className="plan-preview__warmup">
           <summary><span><strong>Warm-up</strong><span>{preparation.duration} · {warmup.length} movements</span></span><ChevronRight size={19} aria-hidden="true" /></summary>
           <ol aria-label="Preview warm-up exercises">{warmup.map(step => <li key={step.key}><strong>{step.name}</strong><span>{step.target}</span><p>{step.cue}</p></li>)}</ol>
@@ -132,7 +141,12 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
               return <li key={exercise.key} className="plan-preview__exercise">
               <button type="button" className="plan-preview__exercise-main" aria-label={`Exercise details for ${exercise.name}`} aria-haspopup="dialog" onClick={event => { rowTrigger.current = event.currentTarget; setGuide(exercise); }}>
                 <span className="plan-preview__number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-                <span className="plan-preview__exercise-copy"><strong>{exercise.name}</strong><span>{exercise.benefit ?? findLibraryExercise(exercise)?.primaryBenefit ?? exercise.group}</span>{last && <span className="plan-preview__previous">Previous · {last}</span>}<span className="plan-preview__dose">{exercise.sets} × {exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.defaultKg != null ? ` · ${exercise.defaultKg} kg` : ''}<span>{exercise.superset ? `Superset ${exercise.superset.label} · ${exercise.superset.restAfterRound} sec after pair` : `${/^A[12].*complex pair/i.test(exercise.group) ? `${exercise.group} · ` : ''}${exercise.rest > 0 ? `${exercise.rest} sec rest` : 'No timed rest'}`}</span></span></span>
+                <span className="plan-preview__exercise-copy"><strong>{exercise.name}</strong><span className="plan-preview__dose">{exercise.sets} × {exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.defaultKg != null ? ` · ${exercise.defaultKg} kg` : ''} · {previewRestLabel(exercise)}</span>
+                  {exercise.superset ? <span className="plan-preview__pair">Superset {exercise.superset.label}</span>
+                    : /complex pair/i.test(exercise.group) && <span className="plan-preview__pair">{exercise.group}</span>}
+                  {exercise.equipmentLabel && <span className="plan-preview__equipment">{exercise.equipmentLabel}</span>}
+                  {last && <span className="plan-preview__previous">Previous · {last}</span>}
+                </span>
               </button>
               <button type="button" className="icon-button plan-preview__options" aria-label={`Options for ${exercise.name}`} aria-haspopup="dialog" disabled={locked} onClick={() => openOptions(exercise)}><MoreHorizontal size={22} aria-hidden="true" /></button>
             </li>;
@@ -185,6 +199,6 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
       </DialogContent>
     </Dialog>
     <ExerciseLibrarySheet open={open && libraryOpen} onOpenChange={setLibraryOpen} onSelect={item => void chooseExercise(item)} replacementFor={replacement} title={replaceKey ? 'Replace exercise' : 'Add exercise'} />
-    {guide && <ExerciseGuideSheet exercise={guide} open={open && Boolean(guide)} onOpenChange={next => { if (!next) setGuide(null); }} onCloseAutoFocus={event => { event.preventDefault(); rowTrigger.current?.focus({ preventScroll: true }); }} />}
+    {guide && <ExerciseGuideSheet exercise={guide} open={open && Boolean(guide)} onOpenChange={next => { if (!next) setGuide(null); }} onCloseAutoFocus={event => { event.preventDefault(); rowTrigger.current?.focus({ preventScroll: true }); }}><PreviewSessionDetails exercise={guide} /></ExerciseGuideSheet>}
   </>;
 }

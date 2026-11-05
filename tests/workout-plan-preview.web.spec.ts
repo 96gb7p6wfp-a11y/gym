@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession } from '../src/domain.js';
 import { findLibraryExercise, toPlanExercise } from '../src/exercise-library';
-import { openSection } from './helpers/navigation';
+import { settingsGroup, openSection } from './helpers/navigation';
 
 const STORE = 'setline.gym.v1';
 const DATE = '2026-10-19';
@@ -165,6 +165,7 @@ test('today-only drafts are included in a real backup and restore with existing 
   const saved = await state(page);
   await openSection(page, 'You');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await settingsGroup(page, 'Data & Backup');
   const settings = page.getByRole('dialog', { name: 'Your preferences', exact: true });
   const downloading = page.waitForEvent('download');
   await settings.getByRole('button', { name: 'Export backup', exact: true }).click();

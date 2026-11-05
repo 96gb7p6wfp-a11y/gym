@@ -1,0 +1,32 @@
+.workout-prescription { display:grid; gap:12px; min-width:0; color:var(--ink); }
+.workout-prescription__limitation { display:grid; gap:8px; padding:16px; border:1px solid var(--line); border-radius:18px; background:var(--surface-soft); }
+.workout-prescription__limitation > strong { font-size:15px; line-height:1.4; font-weight:650; }
+.workout-prescription__limitation > p { margin:0; color:var(--sub); font-size:13px; line-height:1.5; overflow-wrap:anywhere; }
+.workout-prescription__limitation .text-button { justify-self:start; gap:8px; min-height:44px; padding:8px 0; font-size:13px; }
+.workout-prescription__details { min-width:0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+.workout-prescription__details > summary { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:56px; padding:8px 0; list-style:none; color:var(--ink); font-size:15px; font-weight:600; cursor:pointer; }
+.workout-prescription__details > summary::-webkit-details-marker { display:none; }
+.workout-prescription__details > summary > span { display:grid; gap:4px; min-width:0; }
+.workout-prescription__details > summary small { color:var(--sub); font-size:12px; font-weight:400; line-height:1.4; }
+.workout-prescription__details > summary svg { flex-shrink:0; color:var(--sub); }
+.workout-prescription__details[open] > summary svg { transform:rotate(90deg); }
+.workout-prescription__facts { display:grid; gap:12px; margin:8px 0 16px; }
+.workout-prescription__facts > div { display:grid; grid-template-columns:88px minmax(0,1fr); gap:12px; font-size:13px; line-height:1.5; }
+.workout-prescription__facts dt { color:var(--sub); }
+.workout-prescription__facts dd { margin:0; color:var(--ink); overflow-wrap:anywhere; }
+.workout-prescription__facts dd > small { display:block; margin-top:4px; color:var(--sub); font-size:12px; line-height:1.5; }
+.workout-prescription__scope,.workout-prescription__missing { margin:0 0 16px; color:var(--sub); font-size:13px; line-height:1.5; overflow-wrap:anywhere; }
+.workout-prescription__reasons { display:grid; gap:12px; margin-bottom:16px; }
+.workout-prescription__reasons h4 { margin:0 0 4px; color:var(--ink); font-size:14px; line-height:1.4; font-weight:600; }
+.workout-prescription__reasons p { margin:0; color:var(--sub); font-size:13px; line-height:1.5; overflow-wrap:anywhere; }
+.workout-prescription__changes { margin-bottom:16px; border-top:1px solid var(--line); }
+.workout-prescription__changes > summary { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:44px; padding:8px 0; color:var(--ink); font-size:14px; cursor:pointer; }
+.workout-prescription__changes > summary > span { color:var(--sub); font-size:12px; }
+.workout-prescription__changes ul { display:grid; gap:12px; margin:4px 0 0; padding:0; list-style:none; }
+.workout-prescription__changes li { padding:12px; border-radius:12px; background:var(--surface-soft); }
+.workout-prescription__changes li > strong { display:block; margin-bottom:4px; font-size:14px; line-height:1.4; font-weight:600; }
+.workout-prescription__changes li > p { margin:4px 0 0; color:var(--sub); font-size:13px; line-height:1.5; overflow-wrap:anywhere; }
+.workout-prescription__changes li > p > span { display:inline-block; min-width:50px; margin-right:8px; color:var(--ink); }
+.workout-prescription summary:focus-visible,.workout-prescription button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:4px; }
+.workout-prescription--compact { margin:12px 0 16px; }
+@media(max-width:350px) { .workout-prescription__facts > div { grid-template-columns:72px minmax(0,1fr); gap:8px; } .workout-prescription__limitation { padding:12px; } }

@@ -104,6 +104,7 @@ for (const appearance of ['light', 'dark'] as const) {
     await expect(jump).toContainText('Your first jump.');
     await expect(jump).not.toContainText(/\d+(?:[.,]\d+)?\s*cm/);
     await expect(overview.getByRole('img')).toHaveCount(0);
+    await expect(overview.getByRole('region', { name: 'Progress summary', exact: true })).toHaveCount(0);
     const logJump = page.getByRole('button', { name: 'Log jump', exact: true });
     await expect(logJump).toHaveCount(1);
     await expectFirstScreenAction(page, logJump);

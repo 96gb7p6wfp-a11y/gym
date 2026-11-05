@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { acknowledgeProgramUpgrade } from './helpers/navigation';
 import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession, stopSessionTimers } from '../src/domain.js';
 import { createV81VolleyballMasterPlan } from '../src/volleyball-master-plan';
 
@@ -35,6 +36,7 @@ async function seedV81(page: Page, active = false) {
 }
 
 async function review(page: Page) {
+  await openPlan(page);
   await page.getByRole('button', { name: /^V13.1 is ready Review plan/ }).click();
   const sheet = page.getByRole('dialog', { name: 'Upgrade to V13.1', exact: true });
   await expect(sheet).toBeVisible();
@@ -42,6 +44,7 @@ async function review(page: Page) {
 }
 async function apply(page: Page) {
   const sheet = await review(page);
+  await acknowledgeProgramUpgrade(page);
   await sheet.getByRole('button', { name: 'Apply V13.1', exact: true }).click();
   await expect(sheet).not.toBeVisible();
   await expect.poll(async () => (await read(page)).profile.masterProgram.revision).toBe('13.1');
@@ -99,6 +102,7 @@ test('V13.1 can restore V8.1 and keeps the older personal program available', as
   const after = await read(page);
   expect(after.profile.plan).toEqual(before.profile.plan);
   expect(after.profile.masterProgram).toEqual(before.profile.masterProgram);
+  expect(after.profile.trainingGuidance).toEqual(before.profile.masterProgram.clearance);
   expect(after.profile.masterProgramBackup).toEqual(before.profile.masterProgramBackup);
   expect(after.sessions).toEqual(before.sessions);
 });

@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react';
 import { Check, ChevronDown, RefreshCw } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui';
 import { getQuickWarmup, getQuickWarmupCue, getQuickWarmupPresentation, getWarmupStepInfo, type WarmupPlan } from './session-preparation';
@@ -15,11 +16,21 @@ interface WarmupFlowProps {
   disabled?: boolean;
   onChange: (items: StretchStep[]) => void;
   onOverride: () => void;
+  onSkip: () => void;
   onStart: () => void;
 }
 
 /** Quick preparation is recommended, never a barrier to starting a session. */
-export function WarmupFlow({ open, onOpenChange, plan, items, override, disabled = false, onChange, onOverride, onStart }: WarmupFlowProps) {
+export function WarmupFlow({ open, onOpenChange, plan, items, override, disabled = false, onChange, onOverride, onSkip, onStart }: WarmupFlowProps) {
+  const changedControl = useRef<HTMLInputElement | null>(null);
+  useLayoutEffect(() => {
+    const control = changedControl.current;
+    if (disabled || !control) return;
+    // Saving briefly disables a controlled checkbox. Restore keyboard focus
+    // after that save, without taking focus from another deliberate action.
+    if (control.isConnected && document.activeElement === document.body) control.focus({ preventScroll: true });
+    changedControl.current = null;
+  }, [disabled]);
   const presentation = getQuickWarmupPresentation(plan);
   const quick = getQuickWarmup(plan, items);
   const quickKeys = new Set(quick.map(item => item.key));
@@ -29,13 +40,13 @@ export function WarmupFlow({ open, onOpenChange, plan, items, override, disabled
   function toggle(item: StretchStep, done: boolean) { onChange(items.map(step => step.key === item.key ? { ...step, done } : step)); }
   function renderStep(item: StretchStep, index: number, supplemental = false) {
     const information = getWarmupStepInfo(item, plan);
-    return <li key={item.key} className={item.done ? 'is-complete' : ''}>
-      <div className="warmup-flow__step-heading">
-        <label className="warmup-flow__check"><input type="checkbox" checked={item.done} disabled={disabled} aria-label={`Complete ${item.name} in ${supplemental ? 'full preparation' : 'warmup'}`} onChange={event => toggle(item, event.target.checked)} /><span aria-hidden="true">{item.done ? <Check size={16} /> : String(index + 1).padStart(2, '0')}</span></label>
-        <div><h3>{item.name}</h3><p className="warmup-flow__target">{item.target}</p></div>
-      </div>
+    return <li key={item.key} className={item.done ? 'is-complete' : ''} data-step={index + 1}>
+      <label className="warmup-flow__step-heading">
+        <span className="warmup-flow__check"><input type="checkbox" checked={item.done} disabled={disabled} aria-label={`Complete ${item.name} in ${supplemental ? 'full preparation' : 'warmup'}`} onChange={event => { if (document.activeElement === event.currentTarget) changedControl.current = event.currentTarget; toggle(item, event.target.checked); }} /><span aria-hidden="true">{item.done && <Check size={17} strokeWidth={2.5} />}</span></span>
+        <span className="warmup-flow__step-copy"><span className="warmup-flow__step-name" role="heading" aria-level={3}>{item.name}</span><span className="warmup-flow__target">{item.target}{item.done && <span className="warmup-flow__done">Done</span>}</span></span>
+      </label>
       <p className="warmup-flow__technique">{getQuickWarmupCue(item)}</p>
-      <details className="warmup-flow__details"><summary>Details<ChevronDown size={15} aria-hidden="true" /></summary>
+      <details className="warmup-flow__details"><summary aria-label={`Instructions for ${item.name}`}>Details<ChevronDown size={15} aria-hidden="true" /></summary>
         <p>{item.cue}</p>{information.followUp && <p>{information.followUp}</p>}
         {information.alternatives.length > 0 && <div className="warmup-flow__alternatives"><p>Need an alternative?</p>{information.alternatives.map(choice => <button key={choice.name} type="button" disabled={disabled} onClick={() => onChange(items.map(step => step.key === item.key ? { ...step, ...choice, done: false } : step))}><RefreshCw size={16} aria-hidden="true" /><span><strong>{choice.name}</strong><small>{choice.target}</small></span></button>)}</div>}
       </details>
@@ -48,8 +59,9 @@ export function WarmupFlow({ open, onOpenChange, plan, items, override, disabled
       {quick.length > 0 && <ol className="warmup-flow__steps" aria-label="Quick warm-up exercises">{quick.map((item, index) => renderStep(item, index))}</ol>}
       <p className="warmup-flow__ramp">{presentation.rampUp}</p>
       <div className="warmup-flow__progress" role="status" aria-label="Warm-up progress">{override ? 'Warmed up elsewhere' : quick.length === 0 ? 'No preparation checklist needed' : ready ? 'Quick prep complete' : `${completed} of ${quick.length} completed`}</div>
-      {extra.length > 0 && <details className="warmup-flow__full"><summary>Full preparation<small>{extra.length} more drills</small><ChevronDown size={16} aria-hidden="true" /></summary><p>Your saved routine, alongside the quick prep above. Use more preparation when needed.</p><ol className="warmup-flow__steps" aria-label="Additional preparation exercises">{extra.map((item, index) => renderStep(item, index, true))}</ol></details>}
-      <div className="warmup-flow__actions"><button type="button" className="btn full" disabled={disabled} onClick={onStart}>Start workout</button>{quick.length > 0 && <div className="warmup-flow__shortcuts"><button type="button" className="text-button" disabled={disabled || ready} onClick={() => onChange(items.map(item => quickKeys.has(item.key) ? { ...item, done: true } : item))}>{ready ? 'Warm-up complete' : 'Mark warm-up complete'}</button>{!override && <button type="button" className="text-button" disabled={disabled} onClick={onOverride}>Already warmed up</button>}</div>}</div>
+      {quick.length > 0 && <div className="warmup-flow__progress-track" aria-hidden="true"><span style={{ width: `${completed / quick.length * 100}%` }} /></div>}
+      {items.length > 0 && <details className="warmup-flow__full"><summary>Full preparation<small>{extra.length ? `${extra.length} more drills` : 'Saved routine'}</small><ChevronDown size={16} aria-hidden="true" /></summary><p>{extra.length ? 'Your saved routine, alongside the quick prep above. Use more preparation when needed.' : 'Your saved routine is shown above. Open a drill’s details for its full instructions.'}</p>{extra.length > 0 && <ol className="warmup-flow__steps" aria-label="Additional preparation exercises">{extra.map((item, index) => renderStep(item, index, true))}</ol>}{!override && <button type="button" className="text-button warmup-flow__elsewhere" disabled={disabled} onClick={onOverride}>I warmed up elsewhere</button>}</details>}
+      <div className="warmup-flow__actions"><button type="button" className="btn full" disabled={disabled} onClick={onStart}>Start workout</button>{quick.length > 0 && !ready && !override && <button type="button" className="text-button warmup-flow__skip" disabled={disabled} onClick={onSkip}>Skip warm-up</button>}</div>
     </DialogContent>
   </Dialog>;
 }

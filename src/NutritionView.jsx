@@ -86,7 +86,7 @@ async function resizeMealPhoto(e) {
     URL.revokeObjectURL(t);
   }
 }
-function NutritionView({ bodyWeight: bodyWeight, athleteMode = true, personalProgramTargets = true, dailyGuidance, nutritionProfile, onNutritionProfileChange, volleyballSchedule, onOpenRoutine, initialAction, onActionHandled }) {
+function NutritionView({ bodyWeight: bodyWeight, athleteMode = true, personalProgramTargets = true, dailyGuidance, nutritionProfile, onNutritionProfileChange, volleyballSchedule, onOpenRoutine, initialAction, onActionHandled, onWeightEntryClose }) {
   let [selectedDate, setSelectedDate] = React.useState(() =>
     berlinDate(),
   );
@@ -111,6 +111,7 @@ function NutritionView({ bodyWeight: bodyWeight, athleteMode = true, personalPro
   const quickSaving = React.useRef(false);
   let [weightOpen, setWeightOpen] = React.useState(!1);
   React.useEffect(() => { if (initialAction === `weight`) { setWeightOpen(true); onActionHandled?.(); } }, [initialAction, onActionHandled]);
+  React.useEffect(() => { if (initialAction === `profile`) { setProfileOpen(true); onActionHandled?.(); } }, [initialAction, onActionHandled]);
   let [targetsDraft, setTargetsDraft] = React.useState(
     DEFAULT_NUTRITION_TARGETS,
   );
@@ -334,6 +335,7 @@ function NutritionView({ bodyWeight: bodyWeight, athleteMode = true, personalPro
     setMealDraft({ ...mealDraft, foods: blank ? [structuredClone(food)] : [...mealDraft.foods, structuredClone(food)] });
   }
   async function saveWeight() {
+    let saved = false;
     setWeightError(``);
     const kg = weightInput.trim() === `` ? Number.NaN : Number(weightInput.replace(`,`, `.`));
     if (!Number.isFinite(kg) || kg < 20 || kg > 400) {
@@ -343,10 +345,11 @@ function NutritionView({ bodyWeight: bodyWeight, athleteMode = true, personalPro
     setSaving(!0);
     try {
       await saveNutritionRecord({ id: `weight-` + selectedDate, date: selectedDate, payload: { kind: `weight`, kg } }, todayWeightRecord?.version ?? 0);
-      setWeightInput(``);
+      setWeightInput(``); saved = true;
     } catch (error) {
       setWeightError(error instanceof Error ? error.message : `Couldn’t save.`);
     } finally { setSaving(!1); }
+    if (saved && onWeightEntryClose) { setWeightOpen(false); onWeightEntryClose(); }
   }
   async function applyEstimatedTargets(estimate) {
     let result = NutritionTargetsSchema.safeParse({ ...targets, calories: estimate.calories, protein: estimate.protein, carbs: estimate.carbs, fat: estimate.fat,
@@ -461,7 +464,7 @@ function NutritionView({ bodyWeight: bodyWeight, athleteMode = true, personalPro
           <details className="nutrition-calculator-disclosure"><summary>Personal calorie calculator</summary><NutritionCalculator profile={nutritionProfile} bodyWeight={bodyWeight} disabled={!loaded || saving || !onNutritionProfileChange} onProfileSave={onNutritionProfileChange} onApplyTargets={applyEstimatedTargets} /></details>
         </DialogContent>
       </Dialog>
-      <Dialog open={weightOpen} onOpenChange={setWeightOpen}>
+      <Dialog open={weightOpen} onOpenChange={open => { setWeightOpen(open); if (!open) onWeightEntryClose?.(); }}>
         <DialogContent className="app-dialog nutrition-dialog nutrition-native-sheet">
           <DialogHeader><DialogTitle>Weight check-in</DialogTitle><DialogDescription>{formatDate(selectedDate)} · Use similar conditions each time.</DialogDescription></DialogHeader>
           <label className="field-label">Body weight · kg<input type="text" inputMode="decimal" value={weightInput} placeholder={todayWeightRecord?.payload.kind === 'weight' ? String(todayWeightRecord.payload.kg) : bodyWeight == null ? '' : String(bodyWeight)} onChange={event => setWeightInput(event.target.value)} /></label>

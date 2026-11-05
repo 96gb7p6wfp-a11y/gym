@@ -21,13 +21,30 @@ export async function openDisclosure(page: Page, name: string) {
   if (!await summary.evaluate(element => element.closest('details')?.open ?? false)) await summary.click();
 }
 
-/** Use the explicit already-warm path when a test covers the main session.
- * Dedicated quick-prep tests cover direct start, individual and bulk completion. */
+/** Start optional preparation without inventing completed or elsewhere checks.
+ * Dedicated warm-up tests cover individual completion, skipping and provenance. */
 export async function finishWarmup(page: Page) {
   const warmup = page.getByRole('dialog', { name: 'Warm-up', exact: true });
   await expect(warmup).toBeVisible();
-  const elsewhere = warmup.getByRole('button', { name: 'Already warmed up', exact: true });
-  if (await elsewhere.count()) await elsewhere.click();
   await warmup.getByRole('button', { name: 'Start workout', exact: true }).click();
   await expect(warmup).not.toBeVisible();
+}
+
+/** Navigate the actual Settings grouping without changing any saved values. */
+export async function settingsGroup(page: Page, name: 'Training' | 'Appearance & Sound' | 'Data & Backup') {
+  const sheet = page.getByRole('dialog', { name: 'Your preferences', exact: true });
+  const group = sheet.getByRole('region', { name, exact: true });
+  if (!await group.isVisible()) {
+    const all = sheet.getByRole('button', { name: 'All settings', exact: true });
+    if (await all.isVisible()) await all.click();
+    await sheet.getByRole('navigation', { name: 'Settings groups', exact: true }).getByRole('button', { name, exact: true }).click();
+  }
+  return group;
+}
+
+/** Upgrades with unmappable personal edits require the same explicit review as the app. */
+export async function acknowledgeProgramUpgrade(page: Page) {
+  const review = page.getByRole('dialog', { name: 'Upgrade to V13.1', exact: true });
+  const choice = review.getByRole('checkbox', { name: 'Use V13.1 recommendations for unmapped edits', exact: true });
+  if (await choice.isVisible()) await choice.check();
 }

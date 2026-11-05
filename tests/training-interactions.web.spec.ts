@@ -232,10 +232,26 @@ test('keeps completion and undo readable after repeated iPhone taps and pointer 
   await next.hover();
   expect(await contrast(next)).toBeGreaterThan(4.5);
   await expect(next).toBeDisabled();
+  await expect(current(page).getByRole('textbox', { name: `${name} set 2 weight in kilograms`, exact: true })).toHaveValue('6');
+  await expect(current(page).getByRole('spinbutton', { name: `${name} set 2 reps`, exact: true })).toHaveValue('4');
   await current(page).getByRole('textbox', { name: `${name} set 2 weight in kilograms`, exact: true }).fill('6');
   await current(page).getByRole('spinbutton', { name: `${name} set 2 reps`, exact: true }).fill('4');
+  // Re-entering an unchanged suggestion emits no React change event. Review
+  // explicitly arms this set; automatic suggestions never arm completion.
+  await expect(next).toBeDisabled();
+  expect((await readExercise(page, name)).logs.map((log: { done: boolean }) => log.done)).toEqual([true, false, false, false]);
+  await current(page).getByRole('button', { name: `Ready for ${name} set 2`, exact: true }).tap();
+  await expect(next).toBeEnabled();
   await next.tap();
+  const recorded = await readExercise(page, name);
+  expect(recorded.logs.map((log: { done: boolean }) => log.done)).toEqual([true, true, false, false]);
+  expect(recorded.logs[1]).toMatchObject({ kg: 6, reps: 4, done: true });
+  await expect(page.locator('.rest-floating')).toHaveCount(1);
+  expect(await page.evaluate(() => JSON.parse(sessionStorage.getItem('setline.rest-owner.v16')!))).toMatchObject({
+    exerciseKey: recorded.key, setId: recorded.logs[1].id,
+  });
   const third = current(page).getByRole('button', { name: `Complete ${name} set 3`, exact: true });
+  await expect(third).toBeDisabled();
   expect(await contrast(third)).toBeGreaterThan(4.5);
   await current(page).getByRole('button', { name: `View ${name} set 1, complete`, exact: true }).click();
   expect(await contrast(current(page).getByRole('button', { name: `Undo ${name} set 1`, exact: true }))).toBeGreaterThan(4.5);

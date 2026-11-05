@@ -46,12 +46,14 @@ test('Progress leads with a truthful next step before the first recorded jump', 
   const before = await state(page);
   await page.getByRole('tab', { name: 'Progress', exact: true }).click();
   const overview = page.getByRole('region', { name: 'Progress overview', exact: true });
-  const summary = overview.getByRole('region', { name: 'Progress summary', exact: true });
-  await expect(summary).toHaveText('Your baseline starts here. Log a jump height, then repeat the same test.');
+  await expect(overview.getByRole('region', { name: 'Progress summary', exact: true })).toHaveCount(0);
+  const empty = overview.getByRole('region', { name: 'Jump performance', exact: true });
+  await expect(empty).toContainText('Your first jump.');
+  await expect(empty).toContainText('Enter reach and touch heights to calculate your jump.');
   const controls = overview.getByRole('group', { name: 'Chart metric', exact: true });
-  expect((await summary.boundingBox())!.y + (await summary.boundingBox())!.height)
-    .toBeLessThanOrEqual((await controls.boundingBox())!.y);
-  await expect(summary).not.toContainText(/improved|up \d|\+\d|%/);
+  expect((await controls.boundingBox())!.y + (await controls.boundingBox())!.height)
+    .toBeLessThanOrEqual((await empty.boundingBox())!.y);
+  await expect(empty).not.toContainText(/improved|up \d|\+\d|%/);
   await expect(overview.getByRole('button', { name: 'Log jump', exact: true })).toHaveCount(1);
   expect(await state(page), 'Reading coaching must not create performance records or edit the plan').toEqual(before);
 });
@@ -84,9 +86,7 @@ test('one calf gain does not become an overall improvement verdict', async ({ pa
   const before = await state(page);
   await page.getByRole('tab', { name: 'Progress', exact: true }).click();
   const summary = page.getByRole('region', { name: 'Progress summary', exact: true });
-  await expect(summary).toContainText('overall trends are still forming');
-  await expect(summary).toContainText('Track several key lifts');
-  await expect(summary).not.toContainText('Standing Calf Raise');
+  await expect(summary).toContainText('Standing Calf Raise');
   await expect(summary).not.toContainText(/overall (?:strength|fitness|performance) (?:is |has )?(?:up|improv)|jump is (?:up|improv)/i);
   expect(await state(page), 'An overall summary must not invent additional performance records').toEqual(before);
 });
@@ -97,8 +97,8 @@ test('an empty recovery day starts real stretches and persists them without crea
   await seed(page, { appearance: 'dark' });
   const before = await state(page);
   const cover = page.getByRole('region', { name: 'Your day', exact: true });
-  await expect(cover.locator('[aria-label="Today motivation"]')).toHaveText('Easy movement today, fresher legs for your next jump.');
-  await expect(cover.locator('[aria-label="Today motivation"]')).toBeVisible();
+  await expect(cover.locator('[aria-label="Session type"]')).toHaveText('Recovery day');
+  await expect(cover.locator('[aria-label="Session type"]')).toBeVisible();
   const start = cover.getByRole('button', { name: 'Start recovery', exact: true });
   await expect(start).toBeEnabled();
   await start.tap();
@@ -266,13 +266,17 @@ test('set encouragement acknowledges a logged set without interrupting the next 
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
   await finishWarmup(page);
   const current = page.getByRole('region', { name: 'Current exercise', exact: true });
-  const cue = current.getByRole('status', { name: 'Set focus', exact: true });
+  const notes = current.locator('.focused-training-notes');
+  await expect(notes).not.toHaveAttribute('open');
+  await notes.locator(':scope > summary').click();
+  const cue = notes.getByRole('status', { name: 'Set focus', exact: true });
   await expect(cue.getByText('Coach', { exact: true })).toBeVisible();
   await expect(cue).toContainText('Fast, fresh reps. Stop if height or speed drops.');
   await current.getByRole('textbox', { name: 'Medicine Ball Spike Slam set 1 weight in kilograms', exact: true }).fill('3');
   await current.getByRole('spinbutton', { name: 'Medicine Ball Spike Slam set 1 reps', exact: true }).fill('3');
   await current.getByRole('button', { name: 'Complete Medicine Ball Spike Slam set 1', exact: true }).tap();
   await expect(cue).toContainText('Set 1 of 3 logged. One step at a time.');
+  await expect(current.getByRole('status', { name: 'Set completion', exact: true })).toContainText('Medicine Ball Spike Slam · Set 1 recorded · 3 kg × 3');
   await expect(current.getByRole('button', { name: 'Complete Medicine Ball Spike Slam set 2', exact: true })).toBeDisabled();
   await expect(current.getByRole('button', { name: 'Ready for Medicine Ball Spike Slam set 2', exact: true })).toBeEnabled();
   await expect(page.getByRole('dialog')).toHaveCount(0);

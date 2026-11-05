@@ -87,6 +87,7 @@ test('school PE can record counted contacts independently from gym and volleybal
 test('jump test conditions are saved alongside reach and touch without adding workout history', async ({ page }) => {
   await seed(page);
   await page.getByRole('tab', { name: 'Progress', exact: true }).click();
+  await page.getByRole('group', { name: 'Chart metric', exact: true }).getByRole('button', { name: 'Jump', exact: true }).click();
   await page.getByRole('button', { name: 'Log jump', exact: true }).click();
   const entry = page.getByRole('dialog', { name: 'Log jump', exact: true });
   await entry.getByLabel('Standing reach in centimetres', { exact: true }).fill('235');

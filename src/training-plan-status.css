@@ -1,6 +1,6 @@
 .training-plan-status { padding: 12px 0; margin: 0 0 14px; border-bottom: 1px solid var(--line); min-width: 0; }
 .training-plan-status > div { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 14px; }
-.training-plan-status > div > span { color: var(--sub); font-size: 11px; }
-.training-plan-status strong { font-size: 12px; font-weight: 600; color: var(--ink); }
-.training-plan-status p { margin: 5px 0 0; color: var(--sub); font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
+.training-plan-status > div > span { color: var(--sub); font-size: 12px; }
+.training-plan-status strong { font-size: 13px; font-weight: 600; color: var(--ink); }
+.training-plan-status p { margin: 5px 0 0; color: var(--sub); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
 .training-plan-status__preview { font-style: italic; }

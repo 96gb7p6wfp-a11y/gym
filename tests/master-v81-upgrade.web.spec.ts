@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { acknowledgeProgramUpgrade } from './helpers/navigation';
 import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession, stopSessionTimers } from '../src/domain.js';
 import { findLibraryExercise, toPlanExercise } from '../src/exercise-library';
 import { defaultReminderState } from '../src/reminders';
@@ -67,6 +68,7 @@ async function reviewUpgrade(page: Page) {
 }
 async function applyUpgrade(page: Page) {
   const review = await reviewUpgrade(page);
+  await acknowledgeProgramUpgrade(page);
   await review.getByRole('button', { name: 'Apply V13.1', exact: true }).click();
   await expect(review).not.toBeVisible();
   await expect.poll(async () => (await read(page)).profile.masterProgram.revision).toBe('13.1');
@@ -89,15 +91,18 @@ test('the V13.1 schedule can be inspected and dismissed without changing a legac
   expect(await read(page)).toEqual(before);
 });
 
-test('Today exposes V13.1 directly and applying it shows the new Saturday workout without nested menus', async ({ page }) => {
+test('Training plan exposes V13.1 review and applying it shows the new Saturday workout', async ({ page }) => {
   await seedLegacy(page);
   const before = await read(page);
+  await expect(page.getByRole('button', { name: /^V13.1 is ready Review plan/ })).toHaveCount(0);
+  await openPlan(page);
   const action = page.getByRole('button', { name: /^V13.1 is ready Review plan/ });
   await expect(action).toBeVisible();
   await action.click();
   const review = page.getByRole('dialog', { name: 'Upgrade to V13.1', exact: true });
   await expect(review).toBeVisible();
   expect(await read(page)).toEqual(before);
+  await acknowledgeProgramUpgrade(page);
   await review.getByRole('button', { name: 'Apply V13.1', exact: true }).click();
   await expect(review).not.toBeVisible();
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
@@ -116,7 +121,7 @@ test('an older active workout clearly explains why it keeps its saved prescripti
   await expect(page.locator('.session-card h2')).toHaveText('My custom upper');
 });
 
-test('an athlete without an active program can start V13.1 this week from the visible Today action', async ({ page }) => {
+test('an athlete without an active program can start V13.1 this week from Training plan', async ({ page }) => {
   await seedLegacy(page);
   await page.evaluate(key => {
     const data = JSON.parse(localStorage.getItem(key)!);
@@ -125,6 +130,7 @@ test('an athlete without an active program can start V13.1 this week from the vi
   }, STORE);
   await page.reload();
   const before = await read(page);
+  await openPlan(page);
   await page.getByRole('button', { name: /^V13.1 is ready Review plan/ }).click();
   await expect(program(page).getByLabel('Start Monday', { exact: true })).toHaveValue('2026-10-26');
   await program(page).getByRole('button', { name: 'Use this plan', exact: true }).click();
@@ -173,6 +179,7 @@ test('the athlete can restore the previous customized program after upgrade with
   const after = await read(page);
   expect(after.profile.plan).toEqual(before.profile.plan);
   expect(after.profile.masterProgram).toEqual(before.profile.masterProgram);
+  expect(after.profile.trainingGuidance).toEqual(before.profile.masterProgram.clearance);
   expect(after.profile.masterMatchWeekend).toEqual(before.profile.masterMatchWeekend);
   expect(after.profile.customWorkouts).toEqual(before.profile.customWorkouts);
   expect(after.sessions).toEqual(before.sessions);

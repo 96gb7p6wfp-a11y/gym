@@ -1,4 +1,4 @@
-import { openDisclosure, openSection, finishWarmup } from './helpers/navigation';
+import { settingsGroup, openDisclosure, openSection, finishWarmup } from './helpers/navigation';
 import { readFile } from 'node:fs/promises';
 import { Encoder, Profile, type FileIdMesg, type SessionMesg } from '@garmin/fitsdk';
 import { expect, test, type Locator, type Page } from '@playwright/test';
@@ -166,6 +166,7 @@ async function waitForPersistedText(page: Page, text: string) {
 async function openPreferences(page: Page) {
   await selectTab(page, 'More');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await settingsGroup(page, 'Training');
   const dialog = page.getByRole('dialog', { name: 'Your preferences', exact: true });
   await expect(dialog).toBeVisible();
   return dialog;
@@ -493,6 +494,7 @@ test('logs and exports an extra activity offline without altering the recurring 
   await openActivities(page);
   await expect(page.getByRole('region', { name: 'Extra activities', exact: true })).toContainText('40 active kcal');
   const preferences = await openPreferences(page);
+  await settingsGroup(page, 'Data & Backup');
   const downloadPromise = page.waitForEvent('download');
   await preferences.getByRole('button', { name: 'Export backup', exact: true }).click();
   const backup = JSON.parse(await readFile((await (await downloadPromise).path())!, 'utf8'));
@@ -711,7 +713,8 @@ test('persists body weight and default rest preferences', async ({ page }) => {
   const preferences = await openPreferences(page);
   await preferences.getByLabel('Body weight · kg', { exact: true }).fill('62.5');
   await preferences.getByLabel('Default rest · seconds', { exact: true }).fill('120');
-  await preferences.getByRole('button', { name: 'Save preferences', exact: true }).click();
+  await preferences.getByRole('button', { name: 'Save training defaults', exact: true }).click();
+  await preferences.getByRole('button', { name: 'Close', exact: true }).click();
   await expect(preferences).not.toBeVisible();
   await selectTab(page, 'Workout');
   await openDisclosure(page, 'Session tools');
@@ -809,8 +812,10 @@ test('exports a portable backup, rejects invalid imports, and restores after a c
   let preferences = await openPreferences(page);
   await preferences.getByLabel('Body weight · kg', { exact: true }).fill('70');
   await preferences.getByLabel('Default rest · seconds', { exact: true }).fill('180');
-  await preferences.getByRole('button', { name: 'Save preferences', exact: true }).click();
+  await preferences.getByRole('button', { name: 'Save training defaults', exact: true }).click();
+  await preferences.getByRole('button', { name: 'Close', exact: true }).click();
   preferences = await openPreferences(page);
+  await settingsGroup(page, 'Data & Backup');
   const downloadPromise = page.waitForEvent('download');
   await preferences.getByRole('button', { name: 'Export backup', exact: true }).click();
   const download = await downloadPromise;
@@ -828,11 +833,15 @@ test('exports a portable backup, rejects invalid imports, and restores after a c
     name: 'invalid-backup.json', mimeType: 'application/json', buffer: Buffer.from('{"wrong":"format"}'),
   });
   await expect(preferences.getByRole('alert')).toHaveText('Choose a supported Setline backup.');
+  await settingsGroup(page, 'Training');
   await expect(preferences.getByLabel('Body weight · kg', { exact: true })).toHaveValue('70');
+  await settingsGroup(page, 'Data & Backup');
   page.once('dialog', (dialog) => dialog.dismiss());
   await preferences.getByRole('button', { name: 'Delete all local data', exact: true }).click();
   await expect(preferences).toBeVisible();
+  await settingsGroup(page, 'Training');
   await expect(preferences.getByLabel('Body weight · kg', { exact: true })).toHaveValue('70');
+  await settingsGroup(page, 'Data & Backup');
 
   page.once('dialog', (dialog) => dialog.accept());
   await Promise.all([
@@ -843,7 +852,9 @@ test('exports a portable backup, rejects invalid imports, and restores after a c
   expect(await page.evaluate(key => localStorage.getItem(key), STORE_KEY)).toBeNull();
   await page.getByRole('button', { name: 'Restore a backup', exact: true }).click();
   preferences = page.getByRole('dialog', { name: 'Your preferences', exact: true });
+  await settingsGroup(page, 'Training');
   await expect(preferences.getByLabel('Body weight · kg', { exact: true })).toHaveValue('');
+  await settingsGroup(page, 'Data & Backup');
   await preferences.getByLabel('Restore Setline backup', { exact: true }).setInputFiles({
     name: download.suggestedFilename(), mimeType: 'application/json', buffer: Buffer.from(backupText),
   });

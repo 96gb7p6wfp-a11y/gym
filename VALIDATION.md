@@ -1,5 +1,71 @@
 # Standalone app validation
 
+## Setline V18 — 5 November 2026
+
+Latest inspected main is V16 `dcc75aa`. The V18 feature branch preserves the
+unpublished V17 commits and adds personal-setup protection, reviewed partial
+recovery, compatible program upgrades, prescription explanations and atomic
+next-set suggestions. PR #5 was reviewed without merging or changing it.
+
+| Check | Actual result |
+| --- | --- |
+| `npm run typecheck` | Passed, including the final narrow-screen test |
+| `npm test` | 641 passed, no failures/skips |
+| `npm run build` | Passed; 26 precached app files; existing large-chunk advisory remains |
+| Final full browser run, 2 workers | 349 passed, 1 obsolete interaction timed out, 18.7 minutes |
+| Corrected interaction file rerun, 2 workers | 8 passed, 36.1 seconds; production code/build unchanged |
+| Scoped V18 / PWA browser run | 42 passed before the final storage race guard |
+| Recovery/checkpoint/storage/backup unit run | 89 passed, including six final concurrent-write regressions |
+| Local visual captures | 14 isolated light/dark/mobile screenshots inspected; no horizontal overflow |
+| Diff whitespace; capture-script syntax | Passed |
+| Lint | No repository lint script/configuration; not verified |
+
+All 350 distinct browser scenarios have passing evidence across the final full
+run and the corrected-file rerun, not one clean full-suite run. The old test
+re-entered already suggested values without a change event and incorrectly
+expected the next completion to be armed. The corrected test explicitly uses
+Ready and strengthens exact completed-set and single-timer assertions.
+
+The final full suite includes passing 1,000 / 5,000 / 10,000-set export/restore and
+interaction stress cases. Actual measurements and their limits are recorded in
+[V18 delivery notes](docs/SETLINE_V18_RELEASE.md). All data is isolated QA data.
+No iPhone profile or production record was accessed, restored or reset. Actual
+iOS keyboard, VoiceOver, Dynamic Type, background suspension, storage eviction
+and locked-screen audio remain physical-device checks. The V18 branch has not
+been merged or deployed to production in this task.
+
+## Setline V17 — 4 November 2026
+
+Baseline: V16 main `dcc75aa`. The V17 branch refines Progress navigation,
+warm-up, Focus, Quick Log, Today, workout preview and grouped settings. Storage
+keys/schema, completion transitions, backup format and training prescriptions
+are unchanged. All browser fixtures are isolated from real user installations.
+
+| Check | Actual result |
+| --- | --- |
+| `npm run typecheck` | Passed |
+| `npm test` | 550 passed, no failures/skips |
+| `npm run build` | Passed; existing bundle-size advisory remains |
+| Full browser run, 3 workers | 306 passed, 6 old UI expectations/navigation failures, 18.9 minutes |
+| Corrected UI / V17 rerun, 2 workers | 57 passed, 2.9 minutes |
+| Corrected 1,000 / 5,000 / 10,000-set stress run, 1 worker | 3 passed, 20.7 seconds |
+| Corrected offline activity export, 1 worker | 1 passed, 10.1 seconds |
+| `npm run lint` | Missing script/configuration; lint was not verified |
+| Diff whitespace and capture-script syntax | Passed |
+
+All 312 distinct browser scenarios have passing evidence across these runs;
+the full run itself was not a clean 312-test pass. The six failed old tests were
+adapted to the real new labels and Data & Backup navigation, preserving their
+original data and behavior assertions. No production source change was needed
+after that full run. The 32 new V17 browser cases passed in the full run and again
+in the final scoped run. Four new unit cases cover exercise input classification.
+
+See [V17 implementation and verification](docs/SETLINE_V17_RELEASE.md) for
+before/after differences, the full change scope, actual stress measurements,
+screen-capture reproduction and limitations. Physical iPhone Safari/PWA,
+VoiceOver, Dynamic Type, storage pressure and locked-screen audio remain
+unverified. V17 has not been pushed to main or deployed in this task.
+
 ## Setline V15 results and product review — 3 November 2026
 
 Built on `eb92334`, the deployed V14 main merge. No storage/schema migration,

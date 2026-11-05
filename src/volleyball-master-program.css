@@ -64,3 +64,17 @@
 .master-program__clearance textarea { resize:vertical; }
 .master-program__review-heading { font-size:16px; margin:18px 0 6px; }
 .master-readiness__move { min-height:44px; margin:0 0 10px; font-size:13px; }
+.master-program__save-status { margin:8px 0 0; }
+.master-program__customization-review { min-width:0; margin:8px 0 16px; padding:16px; border:1px solid var(--line); border-radius:18px; background:var(--surface-soft); }
+.master-program__customization-review h3 { margin:0 0 8px; color:var(--ink); font-size:16px; line-height:1.4; }
+.master-program__customization-review p { margin:8px 0; color:var(--sub); font-size:13px; line-height:1.5; overflow-wrap:anywhere; }
+.master-program__customization-review summary { gap:12px; min-height:48px; font-size:14px; line-height:1.4; }
+.master-program__customization-review summary > span { color:var(--sub); margin-left:auto; font-size:12px; }
+.master-program__customization-review ul { display:grid; gap:12px; list-style:none; margin:12px 0; padding:0; }
+.master-program__customization-review li > strong { font-size:13px; line-height:1.4; color:var(--ink); font-weight:600; }
+.master-program__customization-review li > p { margin:4px 0 0; }
+.master-program__upgrade-choice { display:flex; align-items:flex-start; gap:12px; min-height:48px; padding:12px 0; color:var(--ink); font-size:14px; line-height:1.5; cursor:pointer; }
+.master-program__upgrade-choice > input { flex-shrink:0; margin:2px 0 0; }
+.master-program__upgrade-choice:focus-within { outline:2px solid var(--accent); outline-offset:3px; border-radius:4px; }
+.master-program-upgrade-sheet .btn { min-height:52px; }
+@media(max-width:350px) { .master-program__customization-review { padding:12px; } }

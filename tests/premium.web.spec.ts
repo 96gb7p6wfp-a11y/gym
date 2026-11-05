@@ -63,9 +63,16 @@ test('completes a focused decimal set, preserves other sets and keeps actions ab
   await weight.fill('');
   await weight.pressSequentially('12,5');
   await exercise.getByRole('spinbutton', { name: `${MOVEMENT} set 1 reps`, exact: true }).fill('4');
+  const logsBefore = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!).sessions[0].session.exercises[0].logs, STORE);
   await exercise.getByRole('button', { name: `Complete ${MOVEMENT} set 1`, exact: true }).tap();
-  await expect(exercise.getByRole('textbox', { name: `${MOVEMENT} set 2 weight in kilograms`, exact: true })).toHaveValue('');
-  await expect(exercise.getByRole('spinbutton', { name: `${MOVEMENT} set 2 reps`, exact: true })).toHaveValue('');
+  await expect(exercise.getByRole('textbox', { name: `${MOVEMENT} set 2 weight in kilograms`, exact: true })).toHaveValue('12.5');
+  await expect(exercise.getByRole('spinbutton', { name: `${MOVEMENT} set 2 reps`, exact: true })).toHaveValue('4');
+  const logsAfter = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!).sessions[0].session.exercises[0].logs, STORE);
+  expect(logsAfter[0]).toEqual({ ...logsBefore[0], kg: 12.5, reps: 4, done: true,
+    inputSources: { kg: 'manual', reps: 'manual' } });
+  expect(logsAfter[1]).toEqual({ ...logsBefore[1], kg: 12.5, reps: 4,
+    inputSources: { kg: 'last-set', reps: 'last-set' } });
+  expect(logsAfter.slice(2)).toEqual(logsBefore.slice(2));
   await expect(page.locator('.rest-floating')).toBeVisible();
   const complete = exercise.getByRole('button', { name: `Complete ${MOVEMENT} set 2`, exact: true });
   await expect(complete).toBeDisabled();
@@ -142,13 +149,15 @@ test('reuses recent meals and saved foods as new records without changing the or
 test('offers a one-tap progress check-in and charts only recorded body weights', async ({ page }) => {
   await tab(page, 'Progress');
   await expect(page.getByRole('img', { name: /^Body weight trend:/ })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Log weight', exact: true }).click();
+  await page.getByRole('button', { name: 'Body weight', exact: true }).click();
+  await page.getByRole('button', { name: 'Log body weight', exact: true }).click();
   let check = page.getByRole('dialog', { name: 'Weight check-in', exact: true });
   await expect(check).toBeVisible();
   await check.getByLabel('Body weight · kg', { exact: true }).fill('64.2');
   await check.getByRole('button', { name: 'Save weight', exact: true }).click();
-  await expect(check.locator('.nutrition-weight-average')).toContainText('64.2 kg');
-  await check.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(check).not.toBeVisible();
+  await expect(page.getByRole('region', { name: 'Body weight trend', exact: true })).toContainText('64.2');
+  await tab(page, 'Nutrition');
   await page.getByLabel('Nutrition date', { exact: true }).fill('2026-10-07');
   await openDisclosure(page, 'Nutrition options');
   await page.getByRole('button', { name: /^Weight check-in/ }).click();

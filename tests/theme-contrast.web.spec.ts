@@ -142,7 +142,10 @@ for (const appearance of ['light', 'dark'] as const) {
     await expect(next).toBeDisabled();
     await current.getByRole('button', { name: 'Ready for Medicine Ball Spike Slam set 2', exact: true }).click();
     await expectReadable(next);
-    await expect(current.getByRole('textbox', { name: 'Medicine Ball Spike Slam set 2 weight in kilograms', exact: true })).toHaveValue('');
+    await expect(current.getByRole('textbox', { name: 'Medicine Ball Spike Slam set 2 weight in kilograms', exact: true })).toHaveValue('12.5');
+    await expect(current.getByRole('spinbutton', { name: 'Medicine Ball Spike Slam set 2 reps', exact: true })).toHaveValue('3');
+    expect((await readSession(page)).exercises[0].logs[1]).toMatchObject({ kg: 12.5, reps: 3, done: false,
+      inputSources: { kg: 'last-set', reps: 'last-set' } });
     await expectReadable(page.locator('.rest-floating > span, .rest-floating > strong, .rest-floating > button'));
 
     await page.getByRole('tab', { name: 'You', exact: true }).click();

@@ -74,12 +74,12 @@ test('quick preparation is optional and the main session starts only on the expl
   expect(saved.warmupStatus).toBe('not-recorded');
 });
 
-test('one-tap completion checks only the quick selection and survives refresh without creating history', async ({ page }) => {
+test('individual completion checks only performed quick drills and survives refresh without creating history', async ({ page }) => {
   await seed(page);
   const original = await read(page);
   await openPreparation(page);
   const quickCount = await rows(page).count();
-  await preparation(page).getByRole('button', { name: 'Mark warm-up complete', exact: true }).click();
+  for (const check of await rows(page).getByRole('checkbox').all()) await check.check();
   for (const check of await rows(page).getByRole('checkbox').all()) await expect(check).toBeChecked();
   const draft = (await read(page)).profile.sessionDrafts[0];
   expect(draft.plan.warmup.filter((step: { done: boolean }) => step.done)).toHaveLength(quickCount);
@@ -104,14 +104,15 @@ test('one-tap completion checks only the quick selection and survives refresh wi
   expect((await read(page)).sessions[0].session.warmupStatus).toBe('prepared');
 });
 
-test('recovery remains gentle and Already warmed up never fabricates checked steps', async ({ page }) => {
+test('recovery remains gentle and explicit preparation elsewhere never fabricates checked steps', async ({ page }) => {
   await seed(page, 'recovery');
   await page.getByRole('button', { name: 'Start recovery', exact: true }).click();
   await expect(preparation(page)).toBeVisible();
   expect(await rows(page).count()).toBeLessThanOrEqual(3);
   await expect(preparation(page).getByRole('list', { name: 'Quick warm-up exercises', exact: true })).not.toContainText(/Pogo|Jump Ramp-Up/);
   await expect(start(page)).toBeEnabled();
-  await preparation(page).getByRole('button', { name: 'Already warmed up', exact: true }).click();
+  await preparation(page).locator('.warmup-flow__full > summary').click();
+  await preparation(page).getByRole('button', { name: 'I warmed up elsewhere', exact: true }).click();
   expect((await read(page)).sessions).toEqual([]);
   await start(page).click();
   await expect(preparation(page)).not.toBeVisible();

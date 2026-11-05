@@ -5,6 +5,30 @@ hosted Setline app's delivered React code, styles, and visual reference. The app
 runs on its own: no iframe, sign-in service, old website, external workout API,
 or native iPhone signing is required.
 
+## V18 — Personal setup recovery
+
+V18 protects settings and plan changes, explains reduced prescriptions and adds
+atomic next-set weight/rep suggestions to the existing Focus and Quick Log.
+Settings offers reviewed recovery of settings or a training plan from a validated
+backup, preserving current training records. Critical changes save a local safety
+copy first. Medical guidance remains explicitly user-controlled.
+
+The existing storage key and backup format remain compatible; no automatic reset
+or destructive migration is required. Separate website origins have separate
+browser data. The app cannot read another domain's or an iPhone's stored profile.
+See the [V18 implementation and verification](docs/SETLINE_V18_RELEASE.md) and
+[training-template review](docs/SETLINE_V18_TRAINING_REVIEW.md). These describe the
+feature branch, not a production deployment.
+
+## V17 — Calm Performance
+
+V17 refines the existing Setline Soft interface around faster workout logging:
+clearer Progress actions, two-level warm-up actions, quieter Focus controls,
+exercise-specific Quick Log inputs, compact previews and grouped settings.
+The forest/sage palette and existing training features remain in place.
+See the [V17 implementation notes](docs/SETLINE_V17_RELEASE.md) for the exact
+changes, preservation boundaries and device-verification limits.
+
 ## Setline Soft design
 
 The latest design follows the user’s five visual references: rounded native controls,
@@ -61,29 +85,33 @@ PWA identity are unchanged. No migration or reset is needed.
   rest timer, notes, intensity and calorie estimates/watch calories.
   Complex pairs alternate by round in one view while keeping prescribed rest.
   **[Volleyball Performance Master Plan V13.1](docs/VOLLEYBALL_MASTER_PLAN.md)**
-  is the current opt-in recommendation: review and apply it from Today, Train or
-  Training plan. It preserves the running cycle, V8.1 restore version and records.
+  is the current opt-in recommendation: review and apply it from Train or
+  You → Training plan. It preserves the running cycle, V8.1 restore version and records.
   Thursday supersets retain unequal set counts; Saturday Lower B can explicitly
   move to Sunday once, while Sunday matches take priority. Clearance and readiness
   adapt future preparation without rewriting active or historical workouts.
   Today → View workout opens the complete date-specific plan without starting a
   timer or writing history. Its exercise options edit that date only; the weekly
   plan remains separate. Start workout opens compact, session-specific quick prep
-  (usually 3–5 minutes) with one-tap completion or Already warmed up. Start workout
-  stays available without checklist gates. Specific lifting/jump preparation follows
+  (usually 3–5 minutes) with individual drill checkboxes, a primary **Start workout**
+  and secondary **Skip warm-up**. **I warmed up elsewhere** is available under
+  **Full preparation**. Starting does not mark unchecked drills complete.
+  Start workout stays available without checklist gates. Specific lifting/jump preparation follows
   when needed; full saved preparation remains available. Checks survive refresh
   and are saved honestly with the session, including unrecorded preparation.
   Rest alerts use a local two-tone chime, absolute deadlines and ±15-second controls.
-  Settings → Rest timer has Timer sounds, alert volume and Test sound. The same
+  Settings → Appearance & Sound has Timer sounds, alert volume and Test sound. The same
   local double-beep is used for the test and real alerts, with gesture initialization
   and bounded foreground audio recovery. Only the listener can confirm audibility.
   Locked/background iPhone playback is not promised; overdue rests update silently
   on return. See [the audio findings and exact iPhone verification steps](docs/AUDIO_AND_QUICK_PREP_VERIFICATION.md).
   Short timed movements have a per-set countdown with quick duration adjustment,
   pause/resume/reset and explicit completion; longer activities retain manual minutes.
-- **Progress:** an overview with one selected Jump / Weight / Strength chart with real dated trends, weekly body-weight
+- **Progress:** an overview with one selected Jump / Body weight / Strength chart with real dated trends, weekly body-weight
   averages, comparable strength and recovery-aware training cadence. Detailed charts,
   personal bests, History with editing/deletion/restoration, and weekly reports remain available.
+  Empty Strength offers a strength-workout action; **Log body weight** opens the
+  separate body-weight entry and returns to the originating Progress view on save or cancel.
 - **Nutrition:** calories and protein remaining, quick multi-food meals, recent
   meals, saved foods, daily weight entries and targets.
   Daily targets offers a separate, confirmed V13.1 starting estimate of 3,050 kcal,
@@ -92,10 +120,12 @@ PWA identity are unchanged. No migration or reset is needed.
 - **Daily nutrition estimate:** editable age, height, body weight, activity and
   surplus calculate a gradual weight-gain starting target. Calculation details
   and daily targets save separately; existing meals, weight logs and chosen
-  targets are preserved until explicitly changed. The confirmed new-install
-  profile is 18, male, 180 cm and 64 kg, with four gym and two volleyball sessions.
-- **Volleyball schedule:** Tuesday and Friday, 20:00–22:00 Europe/Berlin, with
-  editable times and short meal guidance that follows the selected date.
+  targets are preserved until explicitly changed. A genuinely new installation
+  starts with unknown body weight, neutral preferences and optional setup; it does
+  not inherit the owner's age, height, nutrition details or volleyball schedule.
+- **Volleyball schedule:** established personal plans retain their saved schedule,
+  including Tuesday/Friday sessions where configured, with editable times and
+  short meal guidance that follows the selected date.
 - **Routine:** supplement and medication instructions in You, with separate
   Taken/Later/Undo records for each date. Saving a meal prompts relevant pending
   reminders without marking a dose taken. Confirmed clock reminders show a cue
@@ -103,8 +133,12 @@ PWA identity are unchanged. No migration or reset is needed.
   preserve older records. Reminders, history and settings are included in backups.
 - **Training plan:** in You or via Today/Train; edit days and movements,
   sets/targets/rest, logging mode and preparation.
-- **Settings:** system/light/dark appearance, body weight, default rest, home-screen installation, validated backup
-  export/import, recovery export and confirmed local-data reset.
+- **Settings:** grouped into **Training**, **Appearance & Sound** and **Data & Backup**.
+  Body weight/default rest use **Save training defaults**; mode, appearance and
+  sound controls label their automatic saving separately. Existing home-screen
+  installation, validated backup export/import, recovery export and confirmed
+  local-data reset remain available. App-version details live under Data & Backup
+  → App & training plan.
 - **Extra activities:** dated runs, rides, walks, swimming and custom activities
   outside the recurring plan. Log distance, duration and effort, preview active
   calories, edit/delete/restore and include them in History and weekly Progress.
@@ -137,8 +171,9 @@ separator while typing, and save the fractional value. Invalid entries cannot
 reuse an old weight or complete a set. Zero and an empty input remain distinct.
 
 The nutrition calculator uses Mifflin–St Jeor resting energy × usual activity +
-an editable surplus, rounded to 100 kcal. The initial personal estimate is about
-3,000 kcal, 128 g protein, 80 g fat and 442 g carbs daily. It includes habitual
+an editable surplus, rounded to 100 kcal. Calculations require the user's own
+confirmed inputs; new installations do not receive a personal calorie estimate.
+The calculation includes habitual
 training; imported or logged activity calories are not added again. Protein uses
 2 g/kg, fat approximately 24% of energy, and carbs the remainder. These are
 adjustable adult starting estimates. Compare weekly average morning weights over
@@ -260,7 +295,8 @@ Browser storage quotas/private browsing rules still apply; save failures are sho
 rather than silently reported as saved.
 
 Logs previously saved by the original site's cloud account are not automatically
-copied. This app begins with the original training plan and an empty personal log.
+copied. Established local installations retain their saved plans and records;
+new installations start with neutral setup and no synthetic workout history.
 
 ## Verify
 
@@ -281,7 +317,10 @@ See `VALIDATION.md` for the performed checks and limitations.
 
 `src/App.jsx` coordinates the four destinations and preserves the original workout
 mutations. `TodayView.jsx`, `FocusedWorkout.tsx` and `ProgressOverview.tsx` provide
-the focused views. `components/design.tsx`, `native-system.css`, `native-shell.css`
+the focused views. `QuickWorkoutLog.tsx` shares the active session;
+`exercise-input.ts` derives field presentation from saved logging metadata.
+`SettingsExperience.tsx` groups existing controls without owning persistence.
+`components/design.tsx`, `native-system.css`, `native-shell.css`
 and the screen styles provide the shared visual system; see the
 [current design system](docs/SETLINE_SOFT_DESIGN.md).
 `NutritionView.jsx` and `domain.js` retain the existing nutrition and training rules.

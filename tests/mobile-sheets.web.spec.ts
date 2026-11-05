@@ -1,4 +1,4 @@
-import { openSection } from './helpers/navigation';
+import { settingsGroup, openSection } from './helpers/navigation';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 async function safeAreas(page: Page) {
@@ -51,6 +51,7 @@ test('sheets follow visual viewport panning without losing the close control or 
   await safeAreas(page);
   await openSection(page, 'You');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await settingsGroup(page, 'Training');
   const settings = page.getByRole('dialog', { name: 'Your preferences', exact: true });
   await settings.getByLabel('Body weight · kg', { exact: true }).focus();
   await visibleViewport(page, 350, 75, 'scroll');
@@ -76,6 +77,7 @@ test('short-phone and landscape sheets resize without the Visual Viewport API', 
   await safeAreas(page);
   await openSection(page, 'You');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await settingsGroup(page, 'Training');
   const settings = page.getByRole('dialog', { name: 'Your preferences', exact: true });
   for (const viewport of [{ width: 320, height: 568 }, { width: 320, height: 390 }, { width: 844, height: 390 }]) {
     await page.setViewportSize(viewport);

@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession, stopSessionTimers } from '../src/domain.js';
 import { defaultReminderState } from '../src/reminders';
-import { finishWarmup, openSection } from './helpers/navigation';
+import { settingsGroup, finishWarmup, openSection } from './helpers/navigation';
 
 const STORE = 'setline.gym.v1';
 const DATE = '2026-11-02';
@@ -22,6 +22,7 @@ async function next(page: Page) {
 async function settings(page: Page) {
   await openSection(page, 'You');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await settingsGroup(page, 'Training');
   return page.getByRole('dialog', { name: 'Your preferences', exact: true });
 }
 
@@ -74,6 +75,7 @@ test('fresh visitors remain neutral through refresh and can skip without receivi
   await expect(page.locator('.onboarding-dialog')).toHaveCount(0);
 
   const preferences = await settings(page);
+  await settingsGroup(page, 'Training');
   await expect(preferences.getByLabel('Body weight · kg', { exact: true })).toHaveValue('');
   await preferences.getByRole('button', { name: 'Close', exact: true }).click();
   await openSection(page, 'Nutrition');
