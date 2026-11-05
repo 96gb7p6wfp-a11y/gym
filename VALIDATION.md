@@ -1,5 +1,39 @@
 # Standalone app validation
 
+## Setline V18 — 5 November 2026
+
+Latest inspected main is V16 `dcc75aa`. The V18 feature branch preserves the
+unpublished V17 commits and adds personal-setup protection, reviewed partial
+recovery, compatible program upgrades, prescription explanations and atomic
+next-set suggestions. PR #5 was reviewed without merging or changing it.
+
+| Check | Actual result |
+| --- | --- |
+| `npm run typecheck` | Passed, including the final narrow-screen test |
+| `npm test` | 641 passed, no failures/skips |
+| `npm run build` | Passed; 26 precached app files; existing large-chunk advisory remains |
+| Final full browser run, 2 workers | 349 passed, 1 obsolete interaction timed out, 18.7 minutes |
+| Corrected interaction file rerun, 2 workers | 8 passed, 36.1 seconds; production code/build unchanged |
+| Scoped V18 / PWA browser run | 42 passed before the final storage race guard |
+| Recovery/checkpoint/storage/backup unit run | 89 passed, including six final concurrent-write regressions |
+| Local visual captures | 14 isolated light/dark/mobile screenshots inspected; no horizontal overflow |
+| Diff whitespace; capture-script syntax | Passed |
+| Lint | No repository lint script/configuration; not verified |
+
+All 350 distinct browser scenarios have passing evidence across the final full
+run and the corrected-file rerun, not one clean full-suite run. The old test
+re-entered already suggested values without a change event and incorrectly
+expected the next completion to be armed. The corrected test explicitly uses
+Ready and strengthens exact completed-set and single-timer assertions.
+
+The final full suite includes passing 1,000 / 5,000 / 10,000-set export/restore and
+interaction stress cases. Actual measurements and their limits are recorded in
+[V18 delivery notes](docs/SETLINE_V18_RELEASE.md). All data is isolated QA data.
+No iPhone profile or production record was accessed, restored or reset. Actual
+iOS keyboard, VoiceOver, Dynamic Type, background suspension, storage eviction
+and locked-screen audio remain physical-device checks. The V18 branch has not
+been merged or deployed to production in this task.
+
 ## Setline V17 — 4 November 2026
 
 Baseline: V16 main `dcc75aa`. The V17 branch refines Progress navigation,

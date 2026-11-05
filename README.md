@@ -5,6 +5,21 @@ hosted Setline app's delivered React code, styles, and visual reference. The app
 runs on its own: no iframe, sign-in service, old website, external workout API,
 or native iPhone signing is required.
 
+## V18 — Personal setup recovery
+
+V18 protects settings and plan changes, explains reduced prescriptions and adds
+atomic next-set weight/rep suggestions to the existing Focus and Quick Log.
+Settings offers reviewed recovery of settings or a training plan from a validated
+backup, preserving current training records. Critical changes save a local safety
+copy first. Medical guidance remains explicitly user-controlled.
+
+The existing storage key and backup format remain compatible; no automatic reset
+or destructive migration is required. Separate website origins have separate
+browser data. The app cannot read another domain's or an iPhone's stored profile.
+See the [V18 implementation and verification](docs/SETLINE_V18_RELEASE.md) and
+[training-template review](docs/SETLINE_V18_TRAINING_REVIEW.md). These describe the
+feature branch, not a production deployment.
+
 ## V17 — Calm Performance
 
 V17 refines the existing Setline Soft interface around faster workout logging:
