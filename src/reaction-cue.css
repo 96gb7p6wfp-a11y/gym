@@ -1,0 +1,10 @@
+.reaction-cue { display:grid; gap:12px; min-width:0; margin-block:16px; padding:16px; border:1px solid var(--line); border-radius:18px; background:var(--surface-soft); }
+.reaction-cue h3,.reaction-cue p { margin:0; }
+.reaction-cue h3 { font-size:16px; line-height:1.4; }
+.reaction-cue > p { color:var(--sub); font-size:13px; line-height:1.5; }
+.reaction-cue__direction { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:56px; }
+.reaction-cue__direction strong { font-size:32px; line-height:1.2; color:var(--ink); }
+.reaction-cue__direction span { color:var(--sub); font-size:12px; }
+.reaction-cue__speech { display:flex; align-items:center; gap:12px; min-height:44px; font-size:14px; color:var(--ink); }
+.reaction-cue__speech input { width:20px; height:20px; accent-color:var(--accent); }
+.reaction-cue button:focus-visible,.reaction-cue input:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }

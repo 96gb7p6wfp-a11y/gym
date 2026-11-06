@@ -221,13 +221,22 @@ family('Power', 'Horizontal push', 'Explosive pushing power', 'Fast upper-body f
   ['explosive-push-up', 'Explosive Push-up', 'Chest|Triceps|Core', 'Bodyweight', { aliases: ['Plyometric Push-up'], mode: 'bodyweight', difficulty: 'Intermediate', recommendedSets: 2, substitutions: ['chest-pass', 'push-up'], recommendedReps: '3 reps', rest: 90, cues: ['Drive up as fast as possible; no clap is needed.', 'Land with soft elbows and reset.'] }],
 ]);
 family('Speed', 'Acceleration', 'First-step speed and rhythm', 'Faster court movement', [
-  ['acceleration-sprint', '10 m Acceleration', 'Glutes|Quads|Calves', 'Open space', { difficulty: 'Intermediate', recommendedReps: '3 sec', substitutions: ['sled-push', 'a-skip'], cues: ['Push the ground away.', 'Recover fully between fast efforts.'] }],
+  ['acceleration-sprint', '10 m Acceleration', 'Glutes|Quads|Calves', 'Open space', { aliases: ['10 m Acceleration Sprint'], mode: 'bodyweight', quantityUnit: 'm', difficulty: 'Intermediate', recommendedReps: '10 m', substitutions: ['acceleration-sprint-5m'], cues: ['Use a clear, non-slip lane with extra room to decelerate; never sprint between machines.', 'Accelerate for the marked 10 metres, slow down safely and recover fully.'], mistakes: ['Starting without checking the entire lane and stopping space.', 'Inventing a time or continuing after speed or control falls.'], precautions: ['Move this block to a suitable hall or outdoor space, or omit it, if a safe lane is unavailable. Times are optional and must be actually measured.'] }],
+  ['acceleration-sprint-5m', '5 m Acceleration', 'Glutes|Quads|Calves', 'Open space', { aliases: ['5 m Acceleration Sprint'], mode: 'bodyweight', quantityUnit: 'm', difficulty: 'Intermediate', recommendedReps: '5 m', substitutions: ['acceleration-sprint'], cues: ['Mark a clear 5-metre lane with enough unobstructed room to decelerate.', 'Push the ground away, accelerate with control and reset fully between efforts.'], mistakes: ['Sprinting between gym machines or people.', 'Comparing hand-timed efforts with a different timing method.'], precautions: ['Use a suitable hall or outdoor space, or omit this block when the gym lane is unsafe. Record only measured times.'] }],
   ['lateral-shuffle', 'Lateral Shuffle', 'Glutes|Quads|Calves', 'Open space', { recommendedReps: '5–8 sec', substitutions: ['crossover-step', 'lateral-hop'], primaryBenefit: 'Quick lateral court positioning' }],
   ['crossover-step', 'Crossover Step Drill', 'Glutes|Quads|Calves', 'Open space', { recommendedReps: '5–8 sec', substitutions: ['lateral-shuffle'], primaryBenefit: 'Covering court distance efficiently' }],
   ['a-skip', 'A-Skip', 'Hip flexors|Calves|Core', 'Open space', { recommendedReps: '10 sec', substitutions: ['acceleration-sprint', 'band-hip-flexion'], primaryBenefit: 'Knee-drive rhythm and foot placement' }],
   ['sled-push', 'Light Sled Push', 'Glutes|Quads|Calves', 'Sled', { mode: 'weight', recommendedReps: '5–8 sec', substitutions: ['acceleration-sprint'], primaryBenefit: 'Acceleration force with a forward lean' }],
   ['penultimate-step', 'Penultimate Step Drill', 'Quads|Glutes|Calves', 'Bodyweight', { mode: 'bodyweight', recommendedReps: '3 reps', legacyKeys: ['penultimate-step'], substitutions: ['arm-swing-jump', 'approach-jump'], primaryBenefit: 'Efficient final steps into a volleyball jump' }],
 ], { mode: 'timed', recommendedSets: 3, rest: 90, goals: ['Speed', 'Volleyball'], cues: ['Move fast with clean foot placement.', 'Rest fully before speed drops.'], mistakes: ['Turning speed work into conditioning.', 'Rushing changes of direction.'] });
+
+family('Speed', 'Defensive change of direction', 'Lateral movement and first-step acceleration', 'Volleyball defensive positioning and response', [
+  ['lateral-shuffle-plant-accelerate', 'Lateral Shuffle → Plant → Accelerate', 'Glutes|Quads|Calves', 'Open space', { aliases: ['Lateral Shuffle, Plant and Accelerate'], mode: 'bodyweight', perSide: true, recommendedSets: 3, recommendedReps: '2 reps', rest: 90, substitutions: ['lateral-shuffle'], cues: ['Shuffle 2–3 metres in a clear, non-slip area, then make a balanced plant.', 'Accelerate 3–5 metres with clear deceleration space; recover before changing sides.'], mistakes: ['Cutting hard around machines, people or slippery flooring.', 'Continuing when knee control or movement speed deteriorates.'], precautions: ['Move to a suitable sports hall or outdoor area, or omit the block if the space is unsuitable. Stop for pain or unstable plants.'] }],
+  ['split-step-reaction', 'Split-Step Reaction Drill', 'Glutes|Quads|Calves|Core', 'Open space', { aliases: ['Split Step Reaction Drill'], mode: 'bodyweight', recommendedSets: 3, recommendedReps: '4 reactions', rest: 60, substitutions: ['lateral-shuffle'], cues: ['Use a clear, non-slip area and a small balanced split step.', 'React to an unpredictable left or right cue, move under control and reset.'], mistakes: ['Guessing a fixed left-right pattern instead of reacting.', 'Making large jumps or rushed cuts near obstacles.'], precautions: ['A partner or optional randomized audio cue can supply direction. Audio cues do not measure reaction time.'] }],
+], { mode: 'bodyweight', goals: ['Speed', 'Volleyball'] });
+family('Speed', 'Approach coordination', 'Arm-swing and plant coordination', 'Low-fatigue volleyball approach timing', [
+  ['arm-swing-drill', 'Arm-Swing Timing Drill', 'Shoulders|Core|Legs', 'Bodyweight', { mode: 'bodyweight', recommendedSets: 2, recommendedReps: '5 reps', rest: 30, substitutions: ['slow-approach-rhythm', 'penultimate-step'], cues: ['Coordinate a relaxed arm swing with a comfortable plant and trunk position.', 'Stay grounded for home rehearsal, reset and repeat without chasing maximal height.'], mistakes: ['Adding maximal indoor jumps to a timing drill.', 'Rushing repetitions before foot and arm timing is coordinated.'], precautions: ['Use a clear area. Skip this optional routine when volleyball practice already included the same technical work.'] }],
+]);
 
 family('Mobility', 'Ankle mobility', 'Ankle range for controlled takeoff', 'Comfortable squat and landing positions', [
   ['ankle-knee-to-wall', 'Ankle Knee-to-Wall', 'Calves|Ankles', 'Wall', { legacyKeys: ['ankle-wall'], substitutions: ['soleus-stretch'], cues: ['Keep the heel down.', 'Track the knee over the toes.'] }],
@@ -348,6 +357,15 @@ family('Stability', 'Calf isometric', 'Calf capacity and controlled force produc
     precautions: ['Choose a comfortable effort and position; stop if calf or tendon pain worsens.'],
   }],
 ]);
+family('Stability', 'Standing calf isometric', 'Steady calf and ankle force capacity', 'Controlled ankle support for court movement', [
+  ['standing-calf-isometric', 'Standing Calf Isometric Hold', 'Calves', 'Support|Machine|Dumbbell', { mode: 'timed', recommendedSets: 2, recommendedReps: '30 sec', rest: 90, substitutions: ['standing-calf-raise', 'bent-knee-calf-isometric'], cues: ['Use a stable support and rise to a comfortable mid-range heel position.', 'Hold steady for the prescribed seconds, keep breathing and lower under control.'], mistakes: ['Bouncing or letting the heels drift throughout the hold.', 'Holding the breath or continuing through worsening tendon pain.'], precautions: ['Use a comfortable effort. Optional added load is recorded separately from the hold duration; stop for sharp pain.'] }],
+]);
+family('Core', 'Timed anti-lateral flexion', 'Trunk control under unilateral load', 'Steady posture and grip without leaning', [
+  ['suitcase-static-hold', 'DB Suitcase Carry / Static Hold', 'Core|Forearms|Glutes', 'Dumbbell|Kettlebell', { aliases: ['Dumbbell Suitcase Hold', 'DB Suitcase Static Hold'], mode: 'timed', perSide: true, recommendedSets: 2, recommendedReps: '30 sec', rest: 60, substitutions: ['side-plank', 'suitcase-carry'], cues: ['Stand tall holding one dumbbell, or walk slowly in a clear area when prescribed.', 'Keep ribs over the pelvis, avoid leaning and match the prescribed seconds on both sides.'], mistakes: ['Recording a 30-second hold as 30 repetitions or metres.', 'Holding the breath or continuing when posture or grip slips.'], precautions: ['The V9 prescription is timed. Record optional external load separately; stop if posture or symptoms worsen.'] }],
+]);
+family('Stability', 'Shoulder isometric rotation', 'Rotator-cuff isometric control', 'Controlled shoulder capacity around volleyball', [
+  ['external-rotation-isometric', 'Cable External-Rotation Isometric', 'Shoulders', 'Cable|Band', { aliases: ['Cable External Rotation Isometric'], mode: 'timed', perSide: true, recommendedSets: 2, recommendedReps: '20 sec', rest: 60, substitutions: ['external-rotation', 'side-lying-external-rotation'], cues: ['Keep the elbow supported near your side and hold light outward cable tension.', 'Maintain a comfortable shoulder position and breathe through the prescribed seconds.'], mistakes: ['Rotating the torso or shrugging to hold excessive resistance.', 'Treating controlled cuff work as a maximal lift.'], precautions: ['Use moderate, controlled effort; reduce resistance or stop for increasing shoulder pain.'] }],
+]);
 family('Stability', 'Single-leg isometric', 'Unilateral isometric force capacity', 'Controlled trunk and lower-body stability', [
   ['split-squat-isometric', 'Split-Squat Isometric', 'Quads|Glutes|Core', 'Bodyweight|Support', {
     mode: 'timed', perSide: true, recommendedSets: 2, recommendedReps: '25–35 sec', rest: 60,
@@ -367,14 +385,17 @@ family('Hypertrophy', 'Elbow extension', 'Triceps muscle development', 'Controll
   }],
 ]);
 const masterAliases: Record<string, string[]> = {
-  'pull-up': ['Pull-Up / Assisted Pull-Up'], 'arm-swing-jump': ['CMJ with Arm Swing'],
+  'pull-up': ['Pull-Up / Assisted Pull-Up', 'Pull-ups / Assisted Pull-ups'], 'arm-swing-jump': ['CMJ with Arm Swing'],
   'landmine-press': ['Half-Kneeling Landmine Press'], 'low-hurdle-hop': ['Hurdle Hops', 'Low Hurdle Hops'],
-  'approach-jump': ['Max Approach Jump', 'Maximal Approach Jump'],
+  'approach-jump': ['Max Approach Jump', 'Maximal Approach Jump', 'Maximal Three-Step Approach Jump'],
   'ab-wheel': ['Ab Wheel'], 'lateral-band-walk': ['Mini-Band Lateral Walk'],
   'incline-machine-press': ['Incline Machine Chest Press', 'Low-incline Chest Press'],
   'biceps-curl': ['Dumbbell Biceps Curl'], 'slow-approach-rhythm': ['Slow L-R-L Approach Rhythm', 'Controlled Approach Footwork'],
   'short-foot': ['Short-Foot Hold'], 'pogo-jump': ['Light Pogos'],
-  'spike-slam': ['Light Medicine Ball Spike Slam'], 'band-pull-apart': ['Light Shoulder Activation'],
+  'spike-slam': ['Light Medicine Ball Spike Slam', 'Medicine-Ball Overhead Spike-Pattern Slam'], 'band-pull-apart': ['Light Shoulder Activation'],
+  'rotational-throw': ['Medicine-Ball Rotational Wall Throw', 'Medicine Ball Rotational Wall Throw'],
+  'single-arm-neutral-db-press': ['Single-Arm DB Shoulder Press'],
+  'pallof-isometric-hold': ['Pallof Isometric Hold'],
 };
 for (const item of catalogue) if (masterAliases[item.id]) item.aliases = [...(item.aliases ?? []), ...masterAliases[item.id]];
 for (const item of catalogue) {

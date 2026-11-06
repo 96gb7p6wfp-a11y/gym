@@ -19,7 +19,7 @@ test('previous metrics use the actual exercise type, unit and side configuration
   assert.equal(formatPreviousSet({ mode: 'weight' }, metric), '60 kg × 8');
   assert.equal(formatPreviousSet({ mode: 'weight', perSide: true }, { ...metric, kg: 20 }), '20 kg × 8 per side');
   assert.equal(formatPreviousSet({ mode: 'timed' }, { ...metric, kg: null }), '45 sec');
-  assert.equal(formatPreviousSet({ mode: 'timed', perSide: true }, { ...metric, seconds: 30 }), '30 sec per side');
+  assert.equal(formatPreviousSet({ mode: 'timed', perSide: true }, { ...metric, seconds: 30 }), '60 kg · 30 sec per side');
   assert.equal(formatPreviousSet({ mode: 'bodyweight' }, { ...metric, kg: null, reps: 12 }), '12 reps');
   assert.equal(formatPreviousSet({ mode: 'bodyweight' }, { ...metric, kg: 0, reps: 12 }), '12 reps');
   assert.equal(formatPreviousSet({ mode: 'bodyweight' }, { ...metric, kg: 12.5, reps: 12 }), '12.5 kg × 12');

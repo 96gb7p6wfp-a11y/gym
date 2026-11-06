@@ -7,13 +7,25 @@ export type SessionPurpose = {
   fatigue: string;
 };
 
-type PurposePlan = { name?: string; kind?: string; goal?: string; programRevision?: '8.1' | '13.1'; exercises?: { name?: string; group?: string }[] };
+type PurposePlan = { name?: string; kind?: string; goal?: string; programRevision?: '8.1' | '13.1' | '9'; programSessionId?: string; subtitle?: string; exercises?: { name?: string; group?: string }[] };
 type IntentExercise = { name?: string; group?: string; category?: string; goal?: string; mode?: string };
 
 export function getSessionPurpose(plan: PurposePlan, _dayIndex?: number): SessionPurpose {
   const name = plan.name ?? 'Workout';
   const normalized = name.toLowerCase();
   const goal = plan.goal;
+  if (plan.programRevision === '9') {
+    const purpose: Record<string, [string, string]> = {
+      'v9-upper-a': ['Spike power + upper-body strength', 'Fast throws · demanding, controlled strength'],
+      'v9-speed-lower-a': ['Acceleration + maximal jump + heavy strength', 'Four stages · fresh power before challenging lifting'],
+      'v9-agility-upper-b': ['Defensive quickness + upper-body development', 'Clear-space agility · controlled upper-body work'],
+      'v9-lower-b': ['Speed + Lower-Body Strength', 'Complete Lower B · check Friday fatigue first'],
+      'v9-match-primer': ['Pre-match preparation · optional', 'No heavy lifting or maximal jumps · full rest is valid'],
+      'v9-approach-technique': ['Approach rhythm + coordination', 'Optional footwork · no maximal indoor jumps'],
+    };
+    const entry = purpose[plan.programSessionId ?? ''];
+    if (entry) return { title: name, subtitle: plan.subtitle ?? entry[0], focus: entry[1], intensity: plan.programSessionId === 'v9-match-primer' ? 'Easy preparation' : 'Exercise-specific effort', fatigue: 'Follow your recorded guidance and readiness; stop relevant work for pain or declining control.' };
+  }
   if (plan.programRevision === '13.1') {
     if (/approach power.*upper a/i.test(name)) return { title: name, subtitle: 'Approach Power + Upper-body Strength', focus: 'Quality takeoffs · strong pulling and pressing', intensity: 'Power + muscle', fatigue: 'Adjust jumping around matches and readiness' };
     if (/lower strength.*reactive power/i.test(name)) return { title: name, subtitle: 'Maximum Force + Quality CMJs', focus: 'Fresh CMJs, then strength · no complex circuit', intensity: 'Controlled strength', fatigue: 'Full recovery · no extra plyometrics' };

@@ -18,8 +18,9 @@ import { CompletionIntentGate, type CompletionIntent } from './set-completion';
 import { formatPreviousSet } from './previous-performance';
 import { QuickWorkoutLog } from './QuickWorkoutLog';
 import { EquipmentLabelEditor } from './EquipmentLabel';
-import { exerciseInputKind, hasRecordedLoad } from './exercise-input';
+import { exerciseInputKind, hasRecordedLoad, measuredSprintSeconds } from './exercise-input';
 import { lastSetSuggestion, type SetInputSources } from './set-autofill';
+import { ReactionCue } from './ReactionCue';
 
 export interface FocusedSetLog {
   id: string;
@@ -48,7 +49,11 @@ export interface FocusedExercise {
   timerSetId?: string | null;
   exerciseId?: string;
   targetRpe?: number;
+  targetRir?: number;
   quantityUnit?: 'm';
+  prescribedDistanceM?: number;
+  section?: string;
+  restRange?: string;
   benefit?: string;
   superset?: SupersetLink;
   preparationOnly?: boolean;
@@ -204,7 +209,9 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
   const nextExercise = exercises.find(entry => entry.key === anticipated?.exerciseKey);
   const equipmentExercise = exercises.find(entry => entry.key === equipmentTarget);
   const inputKind = exerciseInputKind(exercise);
-  const showWeight = inputKind === 'weight' || (inputKind === 'bodyweight'
+  const optionalLoad = inputKind === 'bodyweight' || inputKind === 'duration'
+    || (inputKind === 'distance' && (bodyweightLoadShown.has(exercise.key) || hasRecordedLoad(exercise.logs)));
+  const showWeight = inputKind === 'weight' || (optionalLoad
     && (bodyweightLoadShown.has(exercise.key) || hasRecordedLoad(exercise.logs)));
 
   function pauseMovementTimer() {
@@ -237,7 +244,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
   function editSet(patch: Partial<FocusedSetLog>) {
     // Keep a revealed field mounted when a positive load is cleared or invalid.
     // Unmounting DecimalWeightInput would discard its visible draft and guard.
-    if (inputKind === 'bodyweight' && Object.hasOwn(patch, 'kg')) revealAddedLoad();
+    if (optionalLoad && Object.hasOwn(patch, 'kg')) revealAddedLoad();
     // An actual input/stepper/reuse action deliberately selects this set.
     // Automatic selection and parent rerenders never call this function.
     armSet(exercise.key, log.id);
@@ -291,6 +298,19 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
     armSet(key, id);
   }
 
+  const weightField = showWeight && <div className="focused-set-field">
+    <span>{optionalLoad ? 'Added weight' : 'Weight'} <small>kg</small></span>
+    <div className="focused-number-stepper"><DecimalWeightInput key={reuseRevision} value={log.kg} placeholder={inputKind === 'bodyweight' ? 'BW' : '0'}
+      label={`${exercise.name} set ${setIndex + 1} weight in kilograms`}
+      onValidityChange={valid => valid ? invalidWeightInputs.current.delete(log.id) : invalidWeightInputs.current.add(log.id)}
+      onChange={(kg, valid) => editSet({ kg, ...(!valid ? { done: false } : {}) })} />
+      <div className="focused-number-stepper__actions">
+        <button type="button" aria-label={`Decrease ${exercise.name} weight by ${weightStep} kg`} onClick={() => editSet({ kg: Math.max(0, Math.round(((log.kg ?? 0) - weightStep) * 10) / 10) })}><Minus size={18} aria-hidden="true" /></button>
+        <button type="button" aria-label={`Increase ${exercise.name} weight by ${weightStep} kg`} onClick={() => editSet({ kg: Math.min(2000, Math.round(((log.kg ?? 0) + weightStep) * 10) / 10) })}><Plus size={18} aria-hidden="true" /></button>
+      </div>
+    </div>
+  </div>;
+
   return (
     <div className="focused-workout" data-session-id={sessionId}>
       <div className="workout-layout-switch" role="group" aria-label="Workout logging layout">
@@ -319,6 +339,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
           </div>
         </div>
         <div className="focused-exercise-title"><h2 className="focused-exercise__name">{exercise.name}</h2></div>
+        {exercise.section && <p className="small-note" aria-label="Workout section">{exercise.section}</p>}
         {athleteMode && pair && pairedSet && <div className="focused-pair" role="group" aria-label={`${pair.kind === 'superset' ? 'Superset' : 'Complex pair'} ${pair.label}`}>
           <div className="focused-pair__heading">
             <span>{pair.kind === 'superset' ? 'Superset' : 'Complex'} {pair.label}</span><strong>Round {setIndex + 1} <span>of {rounds}</span></strong>
@@ -333,7 +354,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
               <span className="focused-pair__state">{entry.key === exercise.key ? 'Now' : roundLog?.done ? 'Done' : 'Next'}</span>
             </button>;
           })}</div>
-          <p>{pair.kind === 'superset' ? `Move to the partner, then rest ${pair.restAfterRound} sec after the pair. Rest longer if needed.` : exercise.rest > 0 ? `${exercise.rest % 60 === 0 ? `${exercise.rest / 60} min` : `${exercise.rest} sec`} rest between steps` : 'Follow your planned rest'}</p>
+          <p>{pair.kind === 'superset' ? `Move to the partner, then rest ${pair.restAfterRound} sec after the pair. Rest longer if needed.` : exercise.restRange ? `${exercise.restRange} rest before ${exercise.key === pair.first.key ? pair.second.name : setIndex + 1 < rounds ? 'the next round' : 'the next movement'}` : exercise.rest > 0 ? `${exercise.rest % 60 === 0 ? `${exercise.rest / 60} min` : `${exercise.rest} sec`} rest between steps` : 'Follow your planned rest'}</p>
         </div>}
         {athleteMode && pair?.kind === 'superset' && !pairedSet && <p className="small-note">Extra standalone set · keep your normal rest.</p>}
         {allSetsOpen ? (
@@ -343,11 +364,11 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
             <div className="focused-working-set">
               <div className="focused-exercise__set-heading">
                 <div className="focused-exercise__set-position"><strong>Set {setIndex + 1} <span>of {exercise.logs.length}</span></strong>
-                  <span className="focused-exercise__target">{exercise.target}{exercise.perSide ? ' / side' : ''}{athleteMode && exercise.targetRpe ? ` · RPE ${exercise.targetRpe}` : ''}</span>
+                  <span className="focused-exercise__target">{exercise.target}{exercise.perSide ? ' / side' : ''}{athleteMode && exercise.targetRir != null ? ` · RIR ${exercise.targetRir}` : athleteMode && exercise.targetRpe ? ` · RPE ${exercise.targetRpe}` : ''}</span>
                 </div>
                 {(previousMetric || reuse || canCopyLast) && <div className="focused-set-reference">
                   {previousMetric && <span className="focused-exercise__previous">Previous <b>{previousMetric}</b></span>}
-                  {reuse && <button type="button" className="focused-reuse" aria-label={`Reuse previous ${exercise.name} set ${setIndex + 1} weights and reps`}
+                  {reuse && <button type="button" className="focused-reuse" aria-label={`Reuse previous ${exercise.name} set ${setIndex + 1} ${inputKind === 'distance' ? 'distance' : 'weights and reps'}`}
                     title={`Previous workout · ${reuse.date}`}
                     onClick={() => {
                       invalidWeightInputs.current.delete(log.id);
@@ -364,29 +385,17 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                     }}><RotateCcw size={15} aria-hidden="true" />Use last set</button>}
                 </div>}
               </div>
-              {exercise.mode === 'timed' ? <TimedSetControls key={`${exercise.key}-${log.id}`} setId={log.id}
+              {exercise.mode === 'timed' ? <><TimedSetControls key={`${exercise.key}-${log.id}`} setId={log.id}
                 seconds={log.seconds} target={exercise.target} exerciseKey={exercise.key} exerciseName={exercise.name}
                 elapsedMs={exercise.elapsedMs} runningSince={exercise.runningSince} timerSetId={exercise.timerSetId ?? null}
                 now={now} editing={editing} setNumber={setIndex + 1} done={log.done} prefill={completionReady}
                 onInteraction={() => armSet(exercise.key, log.id)}
-                onSecondsChange={seconds => onSet(exercise.key, log.id, { seconds })} onTimer={onTimer} /> :
+                onSecondsChange={seconds => onSet(exercise.key, log.id, { seconds })} onTimer={onTimer} />
+                {weightField && <div className="focused-set-controls">{weightField}</div>}</> :
               <div className="focused-set-controls" key={`${exercise.key}-${log.id}`}>
-                {showWeight && (
-                  <div className="focused-set-field">
-                    <span>{exercise.mode === 'bodyweight' ? 'Added weight' : 'Weight'} <small>kg</small></span>
-                    <div className="focused-number-stepper"><DecimalWeightInput key={reuseRevision} value={log.kg} placeholder={exercise.mode === 'bodyweight' ? 'BW' : '0'}
-                      label={`${exercise.name} set ${setIndex + 1} weight in kilograms`}
-                      onValidityChange={(valid) => valid ? invalidWeightInputs.current.delete(log.id) : invalidWeightInputs.current.add(log.id)}
-                      onChange={(kg, valid) => editSet({ kg, ...(!valid ? { done: false } : {}) })} />
-                      <div className="focused-number-stepper__actions">
-                        <button type="button" aria-label={`Decrease ${exercise.name} weight by ${weightStep} kg`} onClick={() => editSet({ kg: Math.max(0, Math.round(((log.kg ?? 0) - weightStep) * 10) / 10) })}><Minus size={18} aria-hidden="true" /></button>
-                        <button type="button" aria-label={`Increase ${exercise.name} weight by ${weightStep} kg`} onClick={() => editSet({ kg: Math.min(2000, Math.round(((log.kg ?? 0) + weightStep) * 10) / 10) })}><Plus size={18} aria-hidden="true" /></button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {weightField}
                 <div className="focused-set-field">
-                  <span>{exercise.quantityUnit === 'm' ? 'Distance · m / side' : 'Reps'}</span>
+                  <span>{exercise.quantityUnit === 'm' ? `Distance · m${exercise.perSide ? ' / side' : ''}` : 'Reps'}</span>
                   <div className="focused-number-stepper"><input className="set-input" type="number" min="0"
                     max={1000} step="1" inputMode="numeric"
                     placeholder={exercise.target.match(/\d+/)?.[0] ?? '0'}
@@ -422,9 +431,9 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
               {!editing && setFeedback && <p className="focused-completion-receipt" role="status" aria-label="Set completion" aria-atomic="true">
                 <Check size={16} aria-hidden="true" /><span>{setFeedback.receipt}</span>
               </p>}
-              {inputKind === 'bodyweight' && !showWeight && <button type="button" className="focused-load-toggle text-button"
+              {optionalLoad && !showWeight && <button type="button" className="focused-load-toggle text-button"
                 aria-label={`Add weight to ${exercise.name}`} onClick={revealAddedLoad}>Add weight · optional</button>}
-              {athleteMode && !log.done && exercise.mode !== 'timed' && <div className="focused-rir" role="group" aria-label="Quick reps in reserve">
+              {athleteMode && !log.done && exercise.mode !== 'timed' && inputKind !== 'distance' && <div className="focused-rir" role="group" aria-label="Quick reps in reserve">
                 <span>Reps in reserve · optional <button type="button" className="focused-rir-clear" aria-label="Clear reps in reserve" aria-pressed={log.rir == null} onClick={() => editSet({ rir: null })}>Clear</button></span>
                 <div>{[0, 1, 2, 3, 4, 5].map(rir => <button key={rir} type="button" aria-label={`${rir} reps in reserve`} aria-pressed={log.rir === rir}
                   onClick={() => editSet({ rir })}>{rir}</button>)}
@@ -443,17 +452,25 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
             <ExerciseGuide exercise={exercise} key={exercise.key} />
             <details className="focused-training-notes">
               <summary><span>Training notes</span><small>{exercise.equipmentLabel ?? 'Equipment & guidance'}</small><ChevronRight size={16} aria-hidden="true" /></summary>
-              {!exercise.measurement && exercise.mode !== 'timed' && onEquipmentChange && <button type="button" className="focused-equipment-label text-button"
+              {!exercise.measurement && exercise.mode !== 'timed' && inputKind !== 'distance' && onEquipmentChange && <button type="button" className="focused-equipment-label text-button"
                 aria-label={`Equipment for ${exercise.name}`} onClick={() => setEquipmentTarget(exercise.key)}>{exercise.equipmentLabel ?? 'Add equipment label'}</button>}
               {!onEquipmentChange && exercise.equipmentLabel && <p className="small-note">{exercise.equipmentLabel}</p>}
               {(exercise.benefit || libraryExercise) && <p className="focused-exercise-benefit">{exercise.benefit ?? libraryExercise?.primaryBenefit}</p>}
+              {exercise.restRange && <p className="small-note">Prescribed rest · {exercise.restRange}. The rest timer starts at {exercise.rest} sec and remains adjustable.</p>}
+              {inputKind === 'distance' && exercise.prescribedDistanceM != null && <label className="field-label">Measured sprint time · optional
+                <input className="set-input" type="number" min="0" max="86400" step="0.01" inputMode="decimal"
+                  aria-label={`${exercise.name} set ${setIndex + 1} measured sprint seconds`} value={log.seconds ?? ''} placeholder="Not measured"
+                  onChange={event => editSet({ seconds: measuredSprintSeconds(event.target.value) })} />
+                <span className="small-note">Only enter an actual measured time. Use Sprint tests to keep the timing method with a comparable result.</span>
+              </label>}
+              {exercise.exerciseId === 'split-step-reaction' && <ReactionCue key={exercise.key} />}
               {!editing && <p className="focused-set-encouragement" role="status" aria-label="Set focus" aria-atomic="true"
                 data-feedback={setFeedback ? 'complete' : 'ready'}>
                 <span key={setFeedback?.id ?? `${exercise.key}-focus`}><strong>{setFeedback ? <Check className="focused-set-receipt" size={16} aria-hidden="true" /> : 'Coach'}</strong>{' · '}{setFeedback?.text ?? qualityCue}</span>
               </p>}
               {reuse && <p className="small-note">Previous workout · {reuse.date}. Reuse copies a draft for this set; it does not record today's work.</p>}
             </details>
-            {(!log.done || !athleteMode) && <details className="focused-effort"><summary>{athleteMode ? 'Effort' : 'Effort & advanced'} <span>{log.rir == null ? 'Optional' : `${log.rir} reps in reserve`}</span></summary>
+            {inputKind !== 'distance' && (!log.done || !athleteMode) && <details className="focused-effort"><summary>{athleteMode ? 'Effort' : 'Effort & advanced'} <span>{log.rir == null ? 'Optional' : `${log.rir} reps in reserve`}</span></summary>
               {!log.done && <label className="field-label">Reps in reserve<input type="number" min="0" max="10" step="1" inputMode="numeric" aria-label={`${exercise.name} set ${setIndex + 1} reps in reserve`} value={log.rir ?? ''} onChange={event => editSet({ rir: event.target.value === '' ? null : Math.min(10, Math.max(0, Number(event.target.value))) })} /></label>}
               <p className="small-note">RIR: How many more reps you could complete.</p>
               {!athleteMode && <><p className="small-note">RPE: How hard the effort felt.{exercise.targetRpe ? ` Planned effort: ${exercise.targetRpe}.` : ''}</p>

@@ -5,6 +5,26 @@ hosted Setline app's delivered React code, styles, and visual reference. The app
 runs on its own: no iframe, sign-in service, old website, external workout API,
 or native iPhone signing is required.
 
+## Volleyball Performance Plan V9 — opt-in training prescription
+
+V9 is a new training-plan revision; the application remains Setline V18.
+In **You → Training plan**, choose **Upgrade Training Plan to V9**, then
+**Review Weekly Schedule**. Review the saved edits before selecting
+**Apply V9 to Future Workouts**.
+Installing an app update does not select or replace a personal training plan.
+
+The normal week contains Upper A, Speed + Jump + Heavy Lower A, Agility + Upper B,
+and the complete eleven-exercise Saturday **Lower B — Full Strength**. A confirmed
+Sunday match selects a separate 10–15-minute Saturday Primer. Readiness,
+individual guidance and reduced-load weeks can modify the recommendation; the
+full base prescription remains available to preview. Sprint distances, timed
+holds and linked strength–power rounds use their appropriate logging controls.
+
+The upgrade reviews future date edits and archives the prior prescription.
+Existing settings, history, active workout snapshots, recorded weights and
+nutrition stay separate from the new recommendation. V13.1 and earlier program
+compatibility remain available. See the [V9 program and upgrade details](docs/VOLLEYBALL_PERFORMANCE_PLAN_V9.md).
+
 ## V18 — Personal setup recovery
 
 V18 protects settings and plan changes, explains reduced prescriptions and adds
@@ -48,14 +68,15 @@ PWA identity are unchanged. No migration or reset is needed.
 
 ## Features
 
-- **8-week volleyball-first plan:** in You → Training plan, open
-  **Programme & customization**, choose a start Monday, mark Sunday match weeks,
-  then tap **Use this plan**. The prior weekly plan is
-  kept for restoration. Match weeks use Saturday's short primer; other weeks use
-  Reactive + Hard Lower B. Week 4 deload and week 8 peak/retest adjust new session
-  doses. Date-specific readiness moderates jumping; Saturday requires a check.
-  Running and school PE remain scheduled cues until you log them. Optional arms
-  and Tuesday pogos start off. [Plan details](docs/VOLLEYBALL_MASTER_PLAN.md).
+- **8-week volleyball program management:** V9 is an explicit training-plan
+  upgrade, with reviewed weekly prescriptions and future date edits. Week 4
+  deload and week 8 evaluation reduce demanding work; date-specific readiness
+  and recorded guidance remain separate from the saved base plan. Confirmed
+  Sunday match weeks select Saturday's short Primer; no-match weeks retain
+  full Lower B. Planned volleyball and school PE are not completed records.
+  Earlier saved programs retain their own prescriptions and optional-work
+  settings until explicitly changed. [V9 details](docs/VOLLEYBALL_PERFORMANCE_PLAN_V9.md) ·
+  [Earlier program details](docs/VOLLEYBALL_MASTER_PLAN.md).
 - **Personal training:** purpose-led strength and power sessions around Tuesday/Friday
   volleyball, with fast controls, quiet exercise intent and deliberate light/dark modes.
 - **Exercise library:** 158 local movements, search-first selection and optional muscle,
@@ -85,10 +106,10 @@ PWA identity are unchanged. No migration or reset is needed.
   rest timer, notes, intensity and calorie estimates/watch calories.
   Complex pairs alternate by round in one view while keeping prescribed rest.
   **[Volleyball Performance Master Plan V13.1](docs/VOLLEYBALL_MASTER_PLAN.md)**
-  is the current opt-in recommendation: review and apply it from Train or
-  You → Training plan. It preserves the running cycle, V8.1 restore version and records.
-  Thursday supersets retain unequal set counts; Saturday Lower B can explicitly
-  move to Sunday once, while Sunday matches take priority. Clearance and readiness
+  remains supported for existing installations and archived restoration; V9
+  replaces future prescriptions only after explicit review and approval.
+  V13.1's Thursday supersets retain unequal set counts; its Saturday Lower B can
+  explicitly move to Sunday once, while Sunday matches take priority. Clearance and readiness
   adapt future preparation without rewriting active or historical workouts.
   Today → View workout opens the complete date-specific plan without starting a
   timer or writing history. Its exercise options edit that date only; the weekly

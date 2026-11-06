@@ -12,7 +12,7 @@ export function effectiveTrainingGuidance(profile: TrainingGuidanceProfile): Tra
     // V13.1 already treats absent guidance as unknown. Preserve that effective
     // status when the athlete explicitly changes programs, without introducing
     // medical settings to legacy or general-fitness installations.
-    ?? (profile.masterProgram?.revision === '13.1' ? { impact: 'unknown', heavyLifting: 'unknown' } : undefined);
+    ?? (['13.1', '9'].includes(profile.masterProgram?.revision ?? '') ? { impact: 'unknown', heavyLifting: 'unknown' } : undefined);
 }
 
 /** A program version uses the user's current guidance, not an old backup's flags. */

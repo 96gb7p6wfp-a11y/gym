@@ -5,6 +5,7 @@ export interface GuideExercise {
   cue?: string;
   group?: string;
   target?: string;
+  preparationOnly?: boolean;
 }
 
 export type LoadingCategory = 'strength' | 'control' | 'power' | 'core' | 'carry' | 'preparation' | 'recovery' | 'general';
@@ -582,7 +583,7 @@ register(['Split-squat Jump'], [
   'Settle and reset before each rep; complete the same low-volume target on both legs.'
 ], 'A coordinated front-leg push with the hips and trunk controlling the landing.', [
   'Adding load before landings are controlled.', 'Chasing more contacts when height or balance falls.'
-], 'This is optional work, not a fatigue test. Keep it to the planned two reps per leg and stop for pain, unstable landings or lost coordination.');
+], 'Follow the saved low-volume prescription per leg; do not add contacts automatically. Stop for pain, unstable landings or lost coordination.');
 
 register(['Plyometric Push-up', 'Explosive Push-up'], [
   'Use a stable push-up setup with hands under or slightly wider than the shoulders and trunk braced.',
@@ -647,6 +648,195 @@ register(['Trap Bar Deadlift'], [
 ], 'Glutes, thighs and trunk sharing the work, with a steady back position.', [
   'Increasing load before setup and movement are consistently controlled.', 'Adding this lift on top of Leg Press instead of replacing it.'
 ], 'Ask a qualified coach to check technique if unfamiliar. Practice with the empty 20 kg bar first; only after consistent movement quality should 3 × 4–6 replace Leg Press. No trap-bar jumps are required.');
+
+// V9 adds explicit speed, agility and timed stability work. These instructions
+// explain the saved prescription; they never insert sets or fabricate timings.
+register(['5 m Acceleration', '5 m Acceleration Sprint', '10 m Acceleration', '10 m Acceleration Sprint'], [
+  'Mark the prescribed distance on a clear, non-slip lane with extra unobstructed space to decelerate.',
+  'Start in a balanced forward-ready position and push the ground away through the first few steps.',
+  'Accelerate through the marked distance, slow down safely and recover fully before the next effort.'
+], 'A coordinated first-step drive with clean foot contacts, rather than exhaustion.', [
+  'Sprinting between gym machines, people or other obstacles.', 'Rushing the next effort or comparing times taken with different methods.'
+], 'If the gym has no safe lane and stopping space, move the block to a suitable hall or outdoor area, or omit it. Record elapsed time only when actually measured; never infer a sprint result from the planned distance.');
+
+register(['Lateral Shuffle → Plant → Accelerate', 'Lateral Shuffle, Plant and Accelerate'], [
+  'Use a clear non-slip area and shuffle approximately 2–3 metres without crossing the feet.',
+  'Plant under control with the knee following the foot, then accelerate approximately 3–5 metres.',
+  'Decelerate with room to spare, reset and complete the saved dose on both sides.'
+], 'A balanced lateral push, stable plant and controlled first acceleration steps.', [
+  'Making aggressive cuts around machines or on slippery flooring.', 'Letting the knee collapse or continuing when foot placement becomes unstable.'
+], 'Use a suitable court, hall or outdoor area with stopping space. Omit or reduce the block if a safe area is unavailable or pain, tendon symptoms or unstable plants appear.');
+
+register(['Split-Step Reaction Drill', 'Split Step Reaction Drill'], [
+  'Stand in a balanced ready position in a clear, non-slip area.',
+  'Make a small split step and respond to an unpredictable left or right cue with controlled footwork.',
+  'Return to a balanced start and reset before the next saved reaction.'
+], 'A brief ready movement followed by a clean directional response, without large jumps.', [
+  'Following a predictable alternating pattern instead of reacting.', 'Rushing into obstacles or treating every response as an uncontrolled maximal cut.'
+], 'Use a partner or optional randomized audio cues. A cue is only a direction aid, not a measured reaction-time test. Keep the area clear and stop for pain or loss of control.');
+
+register(['Standing Calf Isometric Hold'], [
+  'Use a stable support and rise to a comfortable mid-range heel position with the knees softly straight.',
+  'Hold the heel position steady for the prescribed seconds while breathing normally.',
+  'Lower under control and rest before repeating.'
+], 'A steady calf contraction and controlled forefoot pressure without sharp tendon pain.', [
+  'Bouncing or allowing the heels to drift through the hold.', 'Holding the breath or using more load than posture allows.'
+], 'Choose a comfortable effort and record any external load separately from duration. Stop for sharp pain, worsening Achilles symptoms or loss of ankle control.');
+
+register(['DB Suitcase Carry / Static Hold', 'Dumbbell Suitcase Hold', 'DB Suitcase Static Hold'], [
+  'Stand tall with one dumbbell beside the body and ribs stacked over the pelvis.',
+  'Hold still, or walk slowly in a clear area if prescribed, without leaning toward or away from the load.',
+  'Keep breathing and match the saved duration on both sides.'
+], 'The sides of the trunk and grip resisting a sideways pull while posture stays steady.', [
+  'Recording a 30-second hold as 30 repetitions or metres.', 'Leaning, shrugging or continuing after posture or grip slips.'
+], 'The V9 prescription uses seconds. Record optional external load separately, keep breathing and stop for increasing pain or loss of control. A static hold is valid when no safe walking area is available.');
+
+register(['Cable External-Rotation Isometric', 'Cable External Rotation Isometric'], [
+  'Set light outward cable or band tension with the elbow supported close to the ribs.',
+  'Hold a comfortable shoulder position without turning the trunk or shrugging.',
+  'Breathe through the prescribed seconds, release smoothly and switch sides.'
+], 'Moderate, controlled tension around the shoulder rotators, without a joint pinch.', [
+  'Using excessive resistance and rotating the torso to maintain the hold.', 'Treating cuff preparation as maximal strength work or holding the breath.'
+], 'Use moderate controlled effort. Reduce resistance or stop for increasing shoulder pain; the aim is a steady hold rather than maximal loading.');
+
+register(['Pull-ups / Assisted Pull-ups', 'Pull-Up / Assisted Pull-Up', 'Pull-up'], [
+  'Choose a comfortable grip and enough assistance to keep the prescribed repetitions controlled.',
+  'Start with a steady trunk, draw the elbows down and pull through a comfortable range without swinging.',
+  'Lower under control and reset before the next repetition.'
+], 'Back and elbow-flexor effort with controlled shoulder-blade movement.', [
+  'Kicking or swinging to complete the last repetitions.', 'Comparing added-load and assisted-machine numbers as the same loading configuration.'
+], 'Keep the assistance or added-load setup identifiable for comparison. Leave the saved RIR and stop for shoulder or elbow pain; assistance is not body weight lifted.');
+
+register(['Incline Machine Chest Press', 'Incline Machine Press', 'Low-Incline Chest Press', 'Low-Incline Machine Press'], [
+  'Adjust the seat and handles for a comfortable incline pressing path, with the upper back supported.',
+  'Lower under control, then press strongly without lifting the back or shrugging.',
+  'Return through the same comfortable range while keeping the saved repetitions in reserve.'
+], 'Chest, shoulders and triceps sharing the press without a shoulder pinch.', [
+  'Arching or sliding away from the support to move more weight.', 'Forcing a deep range that changes shoulder comfort or control.'
+], 'Use the same machine setup for strength comparisons. Build with lighter sets before demanding work; progress only when all working sets meet the saved rep and RIR targets.');
+
+register(['Single-Arm DB Shoulder Press'], [
+  'Hold one dumbbell in a comfortable grip and set the trunk tall with ribs over the pelvis.',
+  'Press through a comfortable overhead range without leaning or rotating.',
+  'Lower under control and match the saved dose on the other side.'
+], 'Shoulder and triceps effort with the trunk resisting unwanted side bend.', [
+  'Leaning back or rotating to finish the press.', 'Using a painful overhead range or adding unmatched repetitions on one side.'
+], 'Keep approximately the saved 2 RIR. Record the working dumbbell weight, not both arms combined; reduce load or range if shoulder comfort changes.');
+
+register(['Leg Press'], [
+  'Set a stable foot position and keep the pelvis and upper back supported by the machine.',
+  'Lower with control only as far as the hips and knees remain comfortable and supported.',
+  'Press through the whole foot with strong intent, without locking the knees hard.'
+], 'Quads and glutes producing force while the torso remains supported.', [
+  'Lowering until the pelvis rolls away from the pad.', 'Bouncing out of the bottom or shortening every rep to move more weight.'
+], 'Use lighter ramp-up sets before working sets and set the machine safeties. Compare the same machine and configuration; stop for increasing joint pain.');
+
+register(['Smith Bulgarian Split Squat', 'Smith Machine Bulgarian Split Squat'], [
+  'Set the Smith safeties and use a low stable rear-foot support with a balanced front-foot position.',
+  'Lower under control, keeping most pressure through the front leg and the knee following the foot.',
+  'Drive up without pushing off the rear foot, then match the saved dose on both sides.'
+], 'Front-leg quadriceps and glute effort with steady hips and trunk.', [
+  'Using a high rear support or pushing off the rear leg.', 'Chasing load while knee control or balance deteriorates.'
+], 'Rehearse lightly first, use the machine safeties and leave the saved RIR. Reduce range or stop for pain or unstable movement.');
+
+register(['Hip Thrust Machine'], [
+  'Adjust the pad and foot position so the hips can move comfortably with stable feet.',
+  'Brace lightly and extend the hips through the glutes without arching the lower back.',
+  'Pause under control, then lower smoothly before the next repetition.'
+], 'Glute effort through hip extension with the ribs and pelvis controlled.', [
+  'Finishing by overextending the lower back.', 'Bouncing off the bottom or letting the feet lose contact.'
+], 'Use easy rehearsal sets before demanding loading, keep breathing and follow the saved RIR. Stop for increasing back or hip pain.');
+
+register(['Seated Calf Raise'], [
+  'Set the thigh pad comfortably with bent knees and the forefeet securely supported.',
+  'Lower the heels slowly through a comfortable range, then rise without bouncing.',
+  'Pause briefly with steady ankle alignment before the next controlled repetition.'
+], 'Bent-knee calf effort, especially through the soleus, without sharp tendon pain.', [
+  'Bouncing rapidly through the bottom position.', 'Rolling the ankles outward or shortening the range as fatigue rises.'
+], 'Build load gradually and keep the saved repetitions in reserve. Stop or reduce the range if calf or Achilles symptoms worsen.');
+
+register(['Arm-Swing Timing Drill'], [
+  'Stand in a clear area and coordinate a relaxed backward arm swing with a small controlled lowering.',
+  'Swing the arms forward and up as you extend, keeping the feet grounded for the home rehearsal.',
+  'Reset and repeat the saved low-fatigue dose rather than chasing height.'
+], 'Coordinated trunk, leg extension and arm timing without a hard jump.', [
+  'Adding maximal indoor jumps to a timing drill.', 'Rushing repetitions before the arm and foot rhythm is coordinated.'
+], 'Use this as technique practice, not a fatigue circuit. Keep ceilings, obstacles and flooring clear; omit extra work when practice already included the same drill.');
+
+register(['Full Approach Rehearsal'], [
+  'Use a clear area and rehearse your familiar three-step takeoff pattern at submaximal speed.',
+  'Link the penultimate step, plant and arm swing smoothly, staying grounded when practising at home.',
+  'Reset fully before each of the saved rehearsals.'
+], 'A coordinated approach rhythm and balanced plant, rather than fatigue or maximal height.', [
+  'Turning a short technique rehearsal into maximal jumping.', 'Practising fast approaches near furniture, machines or slippery flooring.'
+], 'A home rehearsal does not require takeoff. Use an appropriate court for any submaximal jump; skip optional technique if practice already covered it.');
+
+register(['Ankle and Hip Mobility'], [
+  'Start with comfortable supported ankle rocks, keeping the heel down.',
+  'Move the hips gently through a comfortable range without forcing the knees or lower back.',
+  'Keep breathing easily and finish within the saved preparation time.'
+], 'Comfortable ankle and hip movement without increasing fatigue.', [
+  'Forcing a painful end range or bouncing into a stretch.', 'Turning short match preparation into demanding conditioning.'
+], 'Keep the effort easy and stop movements that increase pain. The primer dose is enough; extra mobility is optional, not another mandatory workout.');
+
+register(['Volleyball match'], [
+  'Prepare with your team in an appropriate court area before competition.',
+  'Follow the match and coaching demands while adjusting relevant painful or unstable work.',
+  'Afterward record actual duration, exertion and jump exposure if known.'
+], 'Variable competition effort; playing time and recorded exposure determine the actual workload.', [
+  'Automatically recording a planned match as completed.', 'Treating missing jump counts or match time as measured zero.'
+], 'A scheduled match does not establish actual minutes or contacts. Do not add a gym workout or maximal jump session to make up for uncertain playing time.');
+
+register(['Bodyweight Squat + Hinge'], [
+  'Rehearse comfortable bodyweight squats with the whole foot planted and knees tracking over the toes.',
+  'Then soften the knees and send the hips back through an unloaded hinge, without rounding the back.',
+  'Keep the saved short dose smooth and easy before adding load at the actual lift.'
+], 'Comfortable movement through quads, hips and hamstrings without fatigue.', [
+  'Forcing squat depth or rounding through the hinge.', 'Turning a light rehearsal into challenging working sets.'
+], 'Use a comfortable range with no added load. Stop increasing pain; specific lighter loading sets follow only at the prescribed lift and within your guidance.');
+
+register(['Light Throwing Rehearsal'], [
+  'Check an approved, clear throwing area and choose a light ball designed for the intended task.',
+  'Rehearse the path of the prescribed throw or two-handed overhead slam at easy speed.',
+  'Reset fully and build speed gradually only while coordination and comfort remain steady.'
+], 'A coordinated shoulder and trunk movement, rather than fatigue or maximal loading.', [
+  'Starting with a heavy ball or rushing repeated throws.', 'Restoring ballistic work that was removed from the current prescription.'
+], 'Use only when the throw remains prescribed within your recorded guidance. Keep the short rehearsal easy and stop for increasing shoulder or trunk symptoms.');
+
+register(['Easy Defensive Footwork'], [
+  'Check a clear non-slip area with no machines, people or obstacles in the movement path.',
+  'Rehearse short shuffles and balanced plants slowly, keeping the knees aligned with the feet.',
+  'Reset between movements and build speed only later if the main session still prescribes it.'
+], 'Easy coordinated steps and balanced plants without significant fatigue.', [
+  'Making aggressive cuts before warming up.', 'Using a slippery or obstructed area just to finish the drill.'
+], 'Keep this rehearsal easy. Move to a suitable location or omit faster agility work if the space is unsafe, and stop for painful or unstable movement.');
+
+const v9TechniqueAliases: Record<string, string> = {
+  'Medicine-Ball Overhead Spike-Pattern Slam': 'Medicine Ball Spike Slam',
+  'Medicine-Ball Rotational Wall Throw': 'Medicine Ball Rotational Throw',
+  'Medicine Ball Rotational Wall Throw': 'Medicine Ball Rotational Throw',
+  'Maximal Three-Step Approach Jump': 'Approach Jump',
+  'Low Drop Jump, 15–20 cm': 'Drop Jump',
+  'Low Drop Jump (15–20 cm)': 'Drop Jump',
+  'CMJ with Arm Swing': 'Arm-Swing Jump',
+  'Pallof Isometric Hold': 'Pallof Press Isometric Hold',
+  'Three-Step L-R-L Rhythm': 'Slow L-R-L Rhythm',
+  'Penultimate-Step + Plant Rehearsal': 'Penultimate Step Drill',
+  'Controlled Approach Footwork': 'Slow L-R-L Rhythm',
+  'Easy Dynamic Movement': 'Light Dynamic Mobility',
+  'Light Shoulder Activation': 'Wall Slide',
+  'Relaxed Walking': 'Easy walk',
+  'Easy Upper-Body Movement': 'Easy Walk + Arm Swing',
+  'Easy Walk or Bike': 'Easy Walk + Arm Swing',
+  'Light External Rotation': 'Cable External Rotation',
+  'Dynamic Hip Mobility': '90/90 Hip Switch',
+  'Landing + Progressive Jump Preparation': 'Jump Ramp-Up',
+  'Easy Walk + Comfortable Mobility': 'Easy Walk + Breathing',
+};
+for (const [name, source] of Object.entries(v9TechniqueAliases)) {
+  const technique = techniques.get(normalizedName(source));
+  if (technique) techniques.set(normalizedName(name), technique);
+}
 
 type LoadingAdvice = Omit<ExerciseLoadingGuidance, 'target'>;
 const loadingAdvice = new Map<string, LoadingAdvice>();
@@ -772,10 +962,71 @@ registerLoading(['Trap Bar Deadlift'], {
   progression: 'Once proficient, use 3 × 4–6 in place of Leg Press, never in addition to it. Do not automatically increase weight or prescribe trap-bar jumps.',
 });
 
+registerLoading(['5 m Acceleration', '5 m Acceleration Sprint', '10 m Acceleration', '10 m Acceleration Sprint'], {
+  category: 'power', label: 'Distance and speed quality',
+  advice: 'Follow the saved distance in metres and recover fully. Use an unobstructed lane with safe deceleration space; move the block to a suitable location or omit it if unavailable. Elapsed time is optional and must be actually measured with a consistent method.',
+});
+registerLoading(['Lateral Shuffle → Plant → Accelerate', 'Lateral Shuffle, Plant and Accelerate', 'Split-Step Reaction Drill', 'Split Step Reaction Drill'], {
+  category: 'power', label: 'Quality footwork before fatigue',
+  advice: 'Keep the prescribed short reactions and full rest in a clear, non-slip area. Stop for pain, unstable plants or declining control. Direction cues aid practice; they do not establish measured reaction speed.',
+});
+registerLoading(['Standing Calf Isometric Hold', 'Cable External-Rotation Isometric', 'Cable External Rotation Isometric', 'Pallof Isometric Hold'], {
+  category: 'core', label: 'Timed control and breathing',
+  advice: 'Hold for the saved seconds with steady posture and normal breathing. Use controlled, comfortable resistance; duration and optional external load are separate. Stop for increasing pain or lost control.',
+});
+registerLoading(['DB Suitcase Carry / Static Hold', 'Dumbbell Suitcase Hold', 'DB Suitcase Static Hold'], {
+  category: 'carry', label: 'Time with steady posture',
+  advice: 'Use the saved seconds per side, not a repetition or distance target. Record the working dumbbell separately, keep the trunk tall and breathe normally. End the hold if grip or posture slips.',
+});
+registerLoading(['Pull-ups / Assisted Pull-ups', 'Pull-Up / Assisted Pull-Up', 'Pull-up'], {
+  category: 'control', label: 'Clean pulling with saved effort',
+  advice: 'Use assistance or added load that allows the saved rep target with the prescribed RIR. Keep the same setup for comparisons and avoid swinging.',
+  progression: 'Only consider a small added-load increase or less assistance after every working set reaches the top of the saved rep range at the prescribed RIR with consistent technique.',
+});
+registerLoading(['Incline Machine Chest Press', 'Incline Machine Press', 'Low-Incline Chest Press', 'Low-Incline Machine Press', 'Leg Press', 'Smith Bulgarian Split Squat', 'Smith Machine Bulgarian Split Squat', 'Hip Thrust Machine', 'Seated Calf Raise'], {
+  category: 'control', label: 'Demanding, controlled working sets',
+  advice: 'Use the saved sets, repetitions and RIR; warm up with lighter loading first. Keep the same equipment and movement setup for comparisons, with no automatic increase.',
+  progression: 'Increase only after every working set reaches the top of the prescribed rep range at the saved RIR with consistent technique. Choose the smallest practical equipment increment.',
+});
+registerLoading(['Single-Arm DB Shoulder Press'], {
+  category: 'control', label: 'Controlled single-arm strength',
+  advice: 'Keep approximately the saved 2 RIR and match controlled repetitions on both sides. Record the working dumbbell, keep the ribs steady and stop for increasing shoulder pain.',
+  progression: 'Consider the smallest load increase only when every working set meets the saved rep and RIR targets with consistent technique.',
+});
+registerLoading(['Arm-Swing Timing Drill', 'Full Approach Rehearsal'], {
+  category: 'preparation', label: 'Coordination without fatigue',
+  advice: 'Follow the saved short technique dose at submaximal speed. A home rehearsal can stay grounded; do not add maximal indoor jumps. Skip this optional routine if volleyball practice already included it.',
+});
+registerLoading(['Easy Defensive Footwork', 'Bodyweight Squat + Hinge', 'Light Throwing Rehearsal', 'Light External Rotation'], {
+  category: 'preparation', label: 'Rehearse without fatigue',
+  advice: 'Keep the saved short preparation easy and controlled. Use the cleared space and movements remaining in the prescription; gradual rehearsal does not add working sets or measured performance results.',
+});
+registerLoading(['Ankle and Hip Mobility'], {
+  category: 'preparation', label: 'Easy mobility',
+  advice: 'Use the saved short duration and comfortable movement. Do not force a range or turn pre-match preparation into a fatiguing session.',
+});
+registerLoading(['Volleyball match'], {
+  category: 'power', label: 'Actual match exposure',
+  advice: 'Playing time, effort and jump exposure vary. Record what actually happened; a planned duration or missing count is not a measured result.',
+});
+for (const [name, source] of Object.entries(v9TechniqueAliases)) {
+  if (loadingAdvice.has(normalizedName(name))) continue;
+  const advice = loadingAdvice.get(normalizedName(source));
+  if (advice) loadingAdvice.set(normalizedName(name), advice);
+}
+
 /** Use the current name and target, never a retained key or a blanket heavy/low-rep rule. */
 export function getExerciseLoadingGuidance(exercise: GuideExercise): ExerciseLoadingGuidance {
-  const saved = loadingAdvice.get(normalizedName(exercise.name));
   const target = exercise.target?.trim() || undefined;
+  if (exercise.preparationOnly) return {
+    category: 'preparation', label: 'Easy preparation within your guidance', target,
+    advice: 'Keep this saved preparation dose easy and controlled, with normal breathing. Do not add heavy straining, maximal jumps or ballistic work removed by your recorded guidance.',
+  };
+  if (exercise.mode === 'timed' && /^(?:5|10) m acceleration(?: sprint)?$/i.test(exercise.name.trim())) return {
+    category: 'power', label: 'Saved timed drill', target,
+    advice: 'This older record uses its saved duration. It does not establish a measured 5 m or 10 m sprint result. Keep the original log; V9 distance work and separately measured sprint tests use their own units and timing methods.',
+  };
+  const saved = loadingAdvice.get(normalizedName(exercise.name));
   // A custom timed version of a lift needs duration advice, not rep-range progression.
   if (exercise.mode === 'timed' && saved && ['strength', 'control'].includes(saved.category)) {
     return {

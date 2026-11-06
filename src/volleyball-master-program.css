@@ -78,3 +78,5 @@
 .master-program__upgrade-choice:focus-within { outline:2px solid var(--accent); outline-offset:3px; border-radius:4px; }
 .master-program-upgrade-sheet .btn { min-height:52px; }
 @media(max-width:350px) { .master-program__customization-review { padding:12px; } }
+.master-program__matches label>small { font-size:11px; color:var(--sub); line-height:1.35; }
+.master-program__preview .master-program__section { color:var(--accent); font-weight:600; font-size:12px; }

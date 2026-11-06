@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { requestLocal } from './storage';
-import { PerformanceDataSchema, type JumpEntry, type PerformanceData, type PerformancePayload, type ReadinessEntry } from './performance-data';
+import { PerformanceDataSchema, type JumpEntry, type PerformanceData, type PerformancePayload, type ReadinessEntry, type SprintEntry } from './performance-data';
 
 export function usePerformanceData(enabled: boolean) {
   const [data, setData] = useState<PerformancePayload | undefined>();
@@ -11,7 +11,8 @@ export function usePerformanceData(enabled: boolean) {
   const load = useCallback(async () => {
     try {
       const saved = await requestLocal('/api/performance') as unknown as PerformancePayload;
-      const parsed = PerformanceDataSchema.parse({ jumps: saved.jumps, readiness: saved.readiness });
+      const { version: _version, ...fields } = saved;
+      const parsed = PerformanceDataSchema.parse(fields);
       latest.current = { ...parsed, version: saved.version };
       setData(latest.current); setError('');
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Performance records could not load.'); }
@@ -22,10 +23,10 @@ export function usePerformanceData(enabled: boolean) {
     if (writing.current) throw new Error('Wait for your last change to save.');
     writing.current = true; setSaving(true);
     try {
-      const { version, jumps, readiness } = latest.current;
+      const { version, ...fields } = latest.current;
       // The transport version is not a performance field. Keep it out of the
       // strict data schema and out of transforms that spread their input.
-      const next = PerformanceDataSchema.parse(change({ jumps, readiness }));
+      const next = PerformanceDataSchema.parse(change(fields));
       const result = await requestLocal('/api/performance', { action: 'save', expectedVersion: version, ...next });
       latest.current = { ...next, version: result.version as number };
       setData(latest.current); setError('');
@@ -42,6 +43,12 @@ export function usePerformanceData(enabled: boolean) {
       return { ...current, jumps: [...current.jumps.filter(jump => !ids.has(jump.id)), ...entries] };
     }),
     deleteJump: (id: string) => save(current => ({ ...current, jumps: current.jumps.filter(jump => jump.id !== id) })),
-    saveReadiness: (entry: ReadinessEntry) => save(current => ({ ...current, readiness: [...current.readiness.filter(row => row.date !== entry.date), entry] })),
+    saveReadiness: (entry: ReadinessEntry) => save(current => {
+      const existing = current.readiness.find(row => row.date === entry.date);
+      const next = { ...entry, ...(entry.joints === undefined && existing?.joints ? { joints: existing.joints } : {}) };
+      return { ...current, readiness: [...current.readiness.filter(row => row.date !== entry.date), next] };
+    }),
+    saveSprint: (entry: SprintEntry) => save(current => ({ ...current, sprints: [...(current.sprints ?? []).filter(row => row.id !== entry.id), entry] })),
+    deleteSprint: (id: string) => save(current => ({ ...current, sprints: (current.sprints ?? []).filter(row => row.id !== id) })),
   };
 }

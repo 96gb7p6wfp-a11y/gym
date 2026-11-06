@@ -91,14 +91,17 @@ test('the V13.1 schedule can be inspected and dismissed without changing a legac
   expect(await read(page)).toEqual(before);
 });
 
-test('Training plan exposes V13.1 review and applying it shows the new Saturday workout', async ({ page }) => {
+test('Training plan offers V9 while retaining an explicit V13.1 upgrade and its Saturday prescription', async ({ page }) => {
   await seedLegacy(page);
   const before = await read(page);
-  await expect(page.getByRole('button', { name: /^V13.1 is ready Review plan/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Volleyball Performance Plan V9 is available Review plan/ })).toHaveCount(0);
   await openPlan(page);
-  const action = page.getByRole('button', { name: /^V13.1 is ready Review plan/ });
-  await expect(action).toBeVisible();
-  await action.click();
+  const offer = page.getByRole('button', { name: /^Volleyball Performance Plan V9 is available Review plan/ });
+  await expect(offer).toBeVisible();
+  expect(await read(page)).toEqual(before);
+  const legacyUpgrade = program(page).getByRole('button', { name: 'Upgrade to V13.1', exact: true });
+  await expect(legacyUpgrade).toBeVisible();
+  await legacyUpgrade.click();
   const review = page.getByRole('dialog', { name: 'Upgrade to V13.1', exact: true });
   await expect(review).toBeVisible();
   expect(await read(page)).toEqual(before);
@@ -106,7 +109,8 @@ test('Training plan exposes V13.1 review and applying it shows the new Saturday 
   await review.getByRole('button', { name: 'Apply V13.1', exact: true }).click();
   await expect(review).not.toBeVisible();
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
-  await expect(page.getByRole('button', { name: /^V13.1 is ready/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Volleyball Performance Plan V9 is available Review plan/ })).toBeVisible();
+  expect((await read(page)).profile.masterProgram.revision).toBe('13.1');
   await page.getByRole('button', { name: 'Next week', exact: true }).click();
   await page.getByRole('button', { name: /^Sat / }).click();
   await expect(page.locator('.session-card h2')).toHaveText('Lower Strength B');
@@ -131,7 +135,9 @@ test('an athlete without an active program can start V13.1 this week from Traini
   await page.reload();
   const before = await read(page);
   await openPlan(page);
-  await page.getByRole('button', { name: /^V13.1 is ready Review plan/ }).click();
+  // Opening Training plan already exposes the optional V13.1 setup. Do not
+  // activate the separate V9 proposal merely to reach legacy program settings.
+  await expect(page.getByRole('button', { name: /^Volleyball Performance Plan V9 is available Review plan/ })).toBeVisible();
   await expect(program(page).getByLabel('Start Monday', { exact: true })).toHaveValue('2026-10-26');
   await program(page).getByRole('button', { name: 'Use this plan', exact: true }).click();
   await expect.poll(async () => (await read(page)).profile.masterProgram.revision).toBe('13.1');

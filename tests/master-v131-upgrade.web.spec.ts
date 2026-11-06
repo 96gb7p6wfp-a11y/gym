@@ -37,7 +37,9 @@ async function seedV81(page: Page, active = false) {
 
 async function review(page: Page) {
   await openPlan(page);
-  await page.getByRole('button', { name: /^V13.1 is ready Review plan/ }).click();
+  // V9 is the primary offer; archived-program coverage deliberately selects
+  // the still-supported V13.1 upgrade from the existing program controls.
+  await program(page).getByRole('button', { name: 'Upgrade to V13.1', exact: true }).click();
   const sheet = page.getByRole('dialog', { name: 'Upgrade to V13.1', exact: true });
   await expect(sheet).toBeVisible();
   return sheet;
