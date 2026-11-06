@@ -2,7 +2,7 @@ import { SettingsExperience } from './SettingsExperience';
 import { rebaseObjectChanges } from './profile-updates';
 import { markSetInput, carryForwardAfterCompletion } from './set-autofill';
 import { effectiveTrainingGuidance, effectiveMasterProgram } from './training-guidance';
-import { getWorkoutPrescription } from './training-prescription';
+import { getWorkoutPrescription, isGentleV9MatchPrimer } from './training-prescription';
 import { WorkoutPrescriptionSummary } from './WorkoutPrescriptionSummary';
 import { SetupRecovery } from './SetupRecovery';
 import { TrainingGuidanceForm } from './TrainingGuidanceForm';
@@ -761,23 +761,35 @@ function GymApp({
       toast.error('Add an exercise to this day before starting.'); return;
     }
     const plan = { ...context.plan, warmup: preparationFor(context.plan, 'warmup').map(step => ({ ...step, done: context.warmupIsCurrent ? step.done : false })) };
+    // The gentle primer is already preparation. Reuse the same guarded session
+    // transaction without an empty extra warm-up screen or invented checkmarks.
+    if (isGentleV9MatchPrimer(plan) && plan.warmup.length === 0) {
+      setPreviewContext(null);
+      return startMainWorkout({}, { context, plan, items: [], draft: context.draft ?? {
+        date: context.date, slot: context.slot, plan, customized: false, warmupOverride: false,
+      } });
+    }
     if (context.protectedDraft) setProtectedPreparation({ date: context.date, slot: context.slot, plan, customized: false, warmupOverride: false });
     else if (!(await saveDayDraft(plan, { date: context.date, slot: context.slot,
       override: context.warmupIsCurrent && context.draft.warmupOverride === true }))) return;
     setPreviewContext(null);
     setWarmupContext({ date: context.date, day: context.day, slot: context.slot, protectedDraft: context.protectedDraft });
   }
-  async function startMainWorkout(options = {}) {
+  async function startMainWorkout(options = {}, prepared = null) {
     void restAudio.unlock();
-    if (!warmupContext || !preparationDraft || activeSession || startingMainRef.current || profileSaving) return;
+    const context = prepared?.context ?? warmupContext;
+    const draft = prepared?.draft ?? preparationDraft;
+    const plan = prepared?.plan ?? warmupPlan;
+    const items = prepared?.items ?? gateWarmupItems;
+    if (!context || !draft || activeSession || startingMainRef.current || profileSaving) return;
     startingMainRef.current = true;
     try {
       if (!(await flushPendingWrites()) || sessionsRef.current.some(session => session.status === 'active')) return;
-      const session = createSession({ ...warmupPlan, cooldown: preparationFor(warmupPlan, 'cooldown') },
-        warmupContext.day, warmupContext.date, profile, sessionsRef.current);
-      session.warmup = gateWarmupItems.map(step => ({ ...step }));
-      const quickSteps = getQuickWarmup(warmupPlan, gateWarmupItems);
-      session.warmupOverride = options.skipWarmup === true ? false : preparationDraft.warmupOverride === true;
+      const session = createSession({ ...plan, cooldown: preparationFor(plan, 'cooldown') },
+        context.day, context.date, profile, sessionsRef.current);
+      session.warmup = items.map(step => ({ ...step }));
+      const quickSteps = getQuickWarmup(plan, items);
+      session.warmupOverride = options.skipWarmup === true ? false : draft.warmupOverride === true;
       session.warmupStatus = getPreparationStatus(quickSteps, session.warmupOverride);
       if (session.warmupStatus !== 'not-recorded') session.warmupCompletedAt = Date.now();
       // A weight deliberately planned for this date takes precedence over the
@@ -788,12 +800,12 @@ function GymApp({
       queueSession(SessionSchema.parse(session), true);
       if (!(await flushPendingWrites())) return;
       // Keep the date-specific prescription, but do not reuse this warm-up for another session.
-      const next = resetDraftPreparation(preparationDraft);
-      if (warmupContext.protectedDraft) setProtectedPreparation(null);
+      const next = resetDraftPreparation(draft);
+      if (context.protectedDraft) setProtectedPreparation(null);
       else if (next.customized === false) {
         await saveProfile({ ...profile, sessionDrafts: (profile.sessionDrafts ?? []).filter(draft => draft.date !== next.date || draft.slot !== next.slot) }, { notify: false });
       } else await saveDayDraft(next.plan, { date: next.date, slot: next.slot });
-      selectTrainingDate(warmupContext.date);
+      selectTrainingDate(context.date);
       setWarmupContext(null); setTab('train'); setEditingHistoryId(null);
     } finally { startingMainRef.current = false; }
   }

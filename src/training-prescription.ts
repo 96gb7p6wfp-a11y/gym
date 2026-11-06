@@ -1,11 +1,12 @@
 import { getMasterProgramWeek, masterWeekStart, type MasterProgramSettings } from './volleyball-master-plan.ts';
 import { findLibraryExercise } from './exercise-library.ts';
+import { v9ExplosiveExercise } from './volleyball-v9-plan.ts';
 import type { TrainingGuidance } from './training-guidance.ts';
 import type { PlanDay, PlanExercise } from './workout-customization';
 
 export type PrescriptionSource = 'weekly' | 'today-edit' | 'snapshot';
 export type WorkoutPrescriptionPlan = Pick<PlanDay, 'name' | 'kind' | 'exercises'>
-  & Partial<Pick<PlanDay, 'goal' | 'minutes' | 'durationRange' | 'programRevision'>> & { plannedMinutes?: number };
+  & Partial<Pick<PlanDay, 'goal' | 'minutes' | 'durationRange' | 'programRevision' | 'programSessionId'>> & { plannedMinutes?: number };
 export interface PrescriptionReason { code: string; title: string; detail: string; }
 export interface PrescriptionChange {
   key: string; name: string; kind: 'added' | 'removed' | 'changed'; before: string; after: string;
@@ -74,6 +75,15 @@ function doseWeight(plan: WorkoutPrescriptionPlan): number {
     sum + exercise.sets * (45 + Math.min(600, exercise.superset?.restAfterRound ?? exercise.rest)), 0);
 }
 
+/** A stable identity alone never makes added heavy or explosive work gentle. */
+export function isGentleV9MatchPrimer(plan: WorkoutPrescriptionPlan): boolean {
+  return plan.programRevision === '9' && plan.programSessionId === 'v9-match-primer'
+    && plan.kind === 'strength' && plan.exercises.length > 0 && plan.exercises.every(exercise =>
+      exercise.mode !== 'weight' && !explosiveExercise(exercise) && !v9ExplosiveExercise(exercise)
+      && !(exercise.defaultKg != null && exercise.defaultKg > 0) && (exercise.targetRpe ?? 5) <= 6
+      && (exercise.targetRir == null || exercise.targetRir >= 4));
+}
+
 /** Presentation derived from explicit plan metadata; never rewrites a prescription. */
 export function getWorkoutPrescription({ plan, originalPlan, settings, guidance, date, source = 'weekly' }: {
   plan: WorkoutPrescriptionPlan; originalPlan?: WorkoutPrescriptionPlan;
@@ -131,14 +141,18 @@ export function getWorkoutPrescription({ plan, originalPlan, settings, guidance,
   const workingSets = working.reduce((sum, exercise) => sum + exercise.sets, 0);
   const livePower = working.some(exercise => !exercise.preparationOnly && explosiveExercise(exercise));
   const mixedPreparation = preparationStrength && livePower;
-  const light = allPreparation || (preparationStrength && !mixedPreparation) || plan.kind === 'recovery' || readiness === 'red'
+  // Session identity survives title edits, but cannot make a customized heavy or
+  // explosive workout into an easy primer. Include optional work in this guard.
+  const matchPrimer = isGentleV9MatchPrimer(plan);
+  const light = matchPrimer || allPreparation || (preparationStrength && !mixedPreparation) || plan.kind === 'recovery' || readiness === 'red'
     || (currentContext && plan.kind === 'strength' && (readiness === 'yellow' || week === 4 || week === 8));
   const demanding = !light && plan.kind === 'strength' && working.some(exercise => (exercise.targetRpe ?? 0) >= 8);
   const difficulty = light ? 'light' : demanding ? 'demanding' : 'moderate';
   const preparation = allPreparation || (preparationStrength && !mixedPreparation);
-  const label = mixedPreparation ? 'Power + preparation' : preparation ? 'Preparation' : plan.kind === 'recovery' ? 'Recovery' : light ? 'Light' : demanding ? 'Demanding' : 'Moderate';
+  const label = matchPrimer ? 'Light primer' : mixedPreparation ? 'Power + preparation' : preparation ? 'Preparation' : plan.kind === 'recovery' ? 'Recovery' : light ? 'Light' : demanding ? 'Demanding' : 'Moderate';
   const explosive = working.some(explosiveExercise);
-  const objective = mixedPreparation ? 'High-quality jumping within your impact guidance, with easy strength preparation'
+  const objective = matchPrimer ? 'Brief, easy movement preparation to stay fresh for the match; full rest is also valid'
+    : mixedPreparation ? 'High-quality jumping within your impact guidance, with easy strength preparation'
     : preparation ? 'Easy movement preparation within your recorded guidance'
     : plan.kind === 'recovery' ? 'Restore comfortable movement with minimal training fatigue'
       : plan.kind === 'sport' ? 'Sport practice or competition; record actual exposure'
@@ -146,12 +160,14 @@ export function getWorkoutPrescription({ plan, originalPlan, settings, guidance,
           : plan.goal === 'hypertrophy' ? 'Productive muscle-building sets with progressive overload'
             : 'Develop force production with controlled, challenging working sets';
   const rpes = [...new Set(working.flatMap(exercise => exercise.targetRpe == null ? [] : [exercise.targetRpe]))].sort((a, b) => a - b);
-  const intensity = mixedPreparation ? 'Jumps: fast, fresh attempts with full prescribed rest, within your recorded impact guidance. Strength work: easy preparation at RPE 5 where prescribed, with no heavy straining.'
+  const intensity = matchPrimer ? 'Easy, comfortable movement within your recorded guidance. No heavy lifting or maximal jumps; stop before fatigue.'
+    : mixedPreparation ? 'Jumps: fast, fresh attempts with full prescribed rest, within your recorded impact guidance. Strength work: easy preparation at RPE 5 where prescribed, with no heavy straining.'
     : preparation ? 'Easy preparation · RPE 5 where prescribed; no heavy straining. Follow your recorded guidance.'
     : plan.kind === 'recovery' ? 'Comfortable, pain-free movement; stop before fatigue.'
       : plan.kind === 'sport' ? 'Intensity varies with practice and playing time. Log actual exertion and jump contacts.'
         : `${explosive || plan.goal === 'power' ? 'Power: fast, fresh repetitions and full prescribed rest; stop when quality falls. ' : ''}${rpes.length ? `Strength effort: exercise-specific RPE ${rpes[0]}${rpes.length > 1 ? `–${rpes.at(-1)}` : ''}; use each exercise’s target.` : 'Use the saved exercise targets; no effort target has been invented.'} No automatic training to failure.`;
-  const progression = preparation ? 'Keep preparation easy. Review recorded impact/lifting guidance before progressing; changing a setting never rewrites this saved workout.'
+  const progression = matchPrimer ? 'Keep preparation brief and easy. Do not add load, jumps or catch-up work; record only what you actually performed.'
+    : preparation ? 'Keep preparation easy. Review recorded impact/lifting guidance before progressing; changing a setting never rewrites this saved workout.'
     : plan.kind === 'recovery' || plan.kind === 'sport' ? 'Record what you actually did. Missed sessions do not create training debt or automatic catch-up work.'
       : `${explosive ? 'For jumps, compare the same protocol and stop at the prescribed high-quality contacts. ' : ''}For strength, meet the rep target at the prescribed effort with the same equipment before choosing a small load increase. Missing logs do not justify added volume.`;
 

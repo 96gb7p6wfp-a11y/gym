@@ -13,7 +13,7 @@ import { getQuickWarmupPresentation } from './session-preparation';
 import { masterJumpContacts } from './volleyball-master-plan';
 import { workoutTitle } from './presentation';
 import { previewRestLabel, PreviewSessionDetails } from './WorkoutPreview';
-import { getWorkoutPrescription, type WorkoutPrescription } from './training-prescription';
+import { getWorkoutPrescription, isGentleV9MatchPrimer, type WorkoutPrescription } from './training-prescription';
 import { WorkoutPrescriptionSummary } from './WorkoutPrescriptionSummary';
 import { findComplexPair } from './training-flow';
 import './workout-plan-preview.css';
@@ -188,7 +188,7 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
         <div className="plan-preview__start">
           {error && <p className="plan-preview__error" role="alert">{error}</p>}
           <button type="button" className="btn full" disabled={locked || (!plan.exercises.some(exercise => !exercise.optionalWork) && plan.kind !== 'recovery')} onClick={() => { onOpenChange(false); onStart(); }}>{viewingBase ? 'Start recommended workout' : 'Start workout'}</button>
-          <span>{viewingBase ? `Starts ${plan.name} with today’s recorded guidance and readiness.` : 'Warm up first. Your workout starts when you’re ready.'}</span>
+          <span>{viewingBase ? `Starts ${plan.name} with today’s recorded guidance and readiness.` : isGentleV9MatchPrimer(plan) ? 'The primer is your preparation. Record only what you perform.' : 'Warm up first. Your workout starts when you’re ready.'}</span>
         </div>
       </DialogContent>
     </Dialog>
