@@ -41,14 +41,35 @@ export const ReadinessEntrySchema = z.object({
   date: DateSchema,
   energy: z.enum(['low', 'normal', 'high']),
   soreness: z.enum(['low', 'moderate', 'high']),
+  // A missing joint observation stays unknown; it is not a pain-free result.
+  joints: z.object({
+    knee: z.enum(['comfortable', 'sore', 'pain']).optional(),
+    achilles: z.enum(['comfortable', 'sore', 'pain']).optional(),
+    shoulder: z.enum(['comfortable', 'sore', 'pain']).optional(),
+  }).strict().optional(),
+}).strict();
+
+/** An actual timed attempt. Workout sprint prescriptions never create results. */
+export const SprintEntrySchema = z.object({
+  id: z.string().uuid(),
+  date: DateSchema,
+  distanceM: z.union([z.literal(5), z.literal(10)]),
+  seconds: z.number().finite().gt(0).max(120),
+  timingMethod: z.enum(['manual', 'video', 'electronic']),
+  protocol: z.string().trim().min(5, 'Describe the start and timing protocol.').max(300),
+  conditions: z.string().trim().max(300).optional(),
+  notes: z.string().max(500).optional(),
 }).strict();
 
 export const PerformanceDataSchema = z.object({
   jumps: z.array(JumpEntrySchema).max(10000),
   readiness: z.array(ReadinessEntrySchema).max(10000),
+  // Optional so existing stored objects and version-one backups stay intact.
+  sprints: z.array(SprintEntrySchema).max(10000).optional(),
 }).strict().superRefine((data, context) => {
   if (new Set(data.jumps.map((jump) => jump.id)).size !== data.jumps.length
-    || new Set(data.readiness.map((entry) => entry.id)).size !== data.readiness.length) {
+    || new Set(data.readiness.map((entry) => entry.id)).size !== data.readiness.length
+    || new Set((data.sprints ?? []).map((entry) => entry.id)).size !== (data.sprints ?? []).length) {
     context.addIssue({ code: 'custom', message: 'Performance records need unique identifiers.' });
   }
   if (new Set(data.readiness.map((entry) => entry.date)).size !== data.readiness.length) {
@@ -58,6 +79,7 @@ export const PerformanceDataSchema = z.object({
 
 export type JumpEntry = z.infer<typeof JumpEntrySchema>;
 export type ReadinessEntry = z.infer<typeof ReadinessEntrySchema>;
+export type SprintEntry = z.infer<typeof SprintEntrySchema>;
 export type PerformanceData = z.infer<typeof PerformanceDataSchema>;
 export type PerformancePayload = PerformanceData & { version: number };
 

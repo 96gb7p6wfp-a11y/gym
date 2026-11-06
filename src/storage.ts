@@ -222,8 +222,17 @@ export function createLocalClient(storage: StoragePort, initialProfile: unknown 
     let nextVersion: number;
     if (path === '/api/performance' && payload.action === 'save') {
       assertVersion(payload.expectedVersion, state.performanceVersion ?? 0);
-      const parsed = PerformanceDataSchema.safeParse({ jumps: payload.jumps, readiness: payload.readiness });
-      if (!parsed.success) throw new Error('Enter valid jump measurements and readiness check-ins before saving.');
+      const sprints = payload.sprints === undefined ? state.performance?.sprints : payload.sprints;
+      const readiness = Array.isArray(payload.readiness) ? payload.readiness.map(entry => {
+        if (!object(entry) || entry.joints !== undefined) return entry;
+        const current = state.performance?.readiness.find(row => row.date === entry.date);
+        return current?.joints ? { ...entry, joints: current.joints } : entry;
+      }) : payload.readiness;
+      // An older jump/readiness screen cannot erase measured sprint results it
+      // does not know about. Explicit arrays still support edits and deletion.
+      const parsed = PerformanceDataSchema.safeParse({ jumps: payload.jumps, readiness,
+        ...(sprints !== undefined ? { sprints } : {}) });
+      if (!parsed.success) throw new Error('Enter valid jump or sprint measurements and readiness check-ins before saving.');
       nextVersion = (state.performanceVersion ?? 0) + 1;
       state.performance = parsed.data;
       state.performanceVersion = nextVersion;
