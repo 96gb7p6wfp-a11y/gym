@@ -130,7 +130,7 @@ test('reaction cues start only by request and never complete or modify a workout
   const record = (await read(page)).sessions.find((row: { session: { id: string } }) => row.session.id === active.id);
   expect(record.session.exercises[0].logs.map((log: { done: boolean }) => log.done)).toEqual([false, false, false]);
   expect(record.session.exercises[0].logs.map((log: { reps: number | null }) => log.reps)).toEqual([4, 4, 4]);
-  expect(record.session.exercises[0].logs.every((log: {inputSources?: {reps?: string}}) => log.inputSources?.reps === 'planned')).toBe(true);
+  expect(record.session.exercises[0].logs.every((log: {inputSources?: {reps?: string}}) => log.inputSources?.reps === 'default')).toBe(true);
   await page.getByRole('button', { name: 'Quick Log', exact: true }).click();
   const quick = page.getByRole('region', { name: 'Quick log Split-Step Reaction Drill', exact: true });
   await quick.locator('.quick-exercise__effort > summary').click();
