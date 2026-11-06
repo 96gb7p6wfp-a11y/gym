@@ -1,6 +1,9 @@
 # Volleyball Performance Plan V9
 
-V9 is an opt-in athletic prescription within Setline V18. Its revision number is
+V9 is an opt-in athletic prescription within Setline V18. The current
+[personal coach update](PERSONAL_COACH_UPDATE.md) uses daily readiness and actual
+Sunday match dates by default, with optional periodization in advanced settings.
+Its revision number is
 independent of the application version and does not downgrade V13.1 records.
 
 ## Why Saturday could show five exercises
@@ -52,13 +55,15 @@ device speech; it does not measure reaction time or complete training records.
 
 V9 uses stable `programSessionId` identities for Lower B, Primer, match and the
 other templates. Display names do not choose a match branch. A Sunday match
-requires an explicitly selected match week for the actual cycle date. Its start
-time remains unset until entered; a time alone does not confirm a match.
+requires an explicitly scheduled actual Sunday date. Legacy confirmed week
+selections map only to their original dates. Its start time remains unset until
+entered; a time alone does not confirm a match.
 
 The resolver retains the full base and derives guidance, readiness and phase
-changes separately. Green keeps the full permitted dose; Yellow reduces or
-omits demanding acceleration/jumping and selected hard strength; Red offers a
-clearly modified recovery recommendation. Week 4 and week 8 reduce volume.
+changes separately. Great/Normal keep the full permitted dose; Tired reduces or
+omits demanding acceleration/jumping and selected hard strength; Poor offers a
+clearly modified recovery recommendation. Reduced/evaluation phases are explicit
+choices; a legacy week-four/eight number no longer reduces V9 by default.
 Recorded guidance remains user-controlled; selecting V9 never grants clearance.
 Missing sleep, sport or symptom data is unknown, not evidence of recovery.
 
