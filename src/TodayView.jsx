@@ -18,6 +18,8 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
   const shownPlan = active ? session : completed ?? plan;
   const title = workoutTitle(shownPlan);
   const sessionLabel = active ? 'Session in progress' : completed ? 'Workout recorded'
+    : shownPlan.programSessionId === 'v9-match-primer' ? 'Pre-match primer'
+    : shownPlan.programRevision === '9' && /^modified/i.test(shownPlan.name) ? 'Modified session'
     : shownPlan.kind === 'recovery' ? 'Recovery day' : /match/i.test(shownPlan.name) ? 'Match day'
       : shownPlan.kind === 'sport' ? (/volleyball/i.test(shownPlan.name) ? 'On-court session' : 'Sport session') : 'Strength session';
   const purpose = getSessionPurpose(shownPlan, (day.getDay() + 6) % 7);
@@ -57,7 +59,7 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
     : completed ? `${completedMinutes} min · ${completed.kind === 'recovery' ? 'recovery recorded' : completed.kind === 'sport' ? 'training recorded' : `${setCount} completed sets`}`
       : plan.kind === 'sport' ? /match/i.test(plan.name) ? `Match · ${plan.startTime ?? 'time not set'} · log actual duration`
         : `${volleyballSchedule.startTime}–${volleyballSchedule.endTime} · Berlin time`
-        : `${prescription?.duration ?? plan.durationRange ?? `${plan.minutes} min`}${plan.kind === 'recovery' ? ' · mobility & stretching' : ` · ${plan.exercises.filter(exercise => !exercise.optionalWork).length} exercises`}`;
+        : `${prescription?.duration ?? plan.durationRange ?? `${plan.minutes} min`}${plan.kind === 'recovery' ? ' · mobility & stretching' : ` · ${plan.exercises.filter(exercise => !exercise.optionalWork).length} exercises`}${plan.programRevision === '9' && plan.kind === 'strength' ? ` · ${plan.exercises.filter(exercise => !exercise.optionalWork).reduce((sum, exercise) => sum + exercise.sets, 0)} planned sets` : ''}`;
   const remainingCalories = targets?.calories == null ? null : Math.max(0, Math.round(targets.calories - totals.calories));
   const fuelDetail = remainingCalories === null ? 'Meals & daily targets'
     : `${remainingCalories.toLocaleString('en-GB')} kcal remaining · ${Math.round(totals.protein)}${targets.protein ? ` / ${Math.round(targets.protein)}` : ''} g protein`;

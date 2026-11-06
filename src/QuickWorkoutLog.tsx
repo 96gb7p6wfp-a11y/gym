@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { Fragment, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { DecimalWeightInput } from './DecimalWeightInput';
@@ -7,8 +7,10 @@ import { formatPreviousSet } from './previous-performance';
 import { TimedSetControls } from './TimedSetControls';
 import type { TimedSetAction } from './timed-sets';
 import type { FocusedExercise, FocusedSetLog } from './FocusedWorkout';
-import { exerciseInputKind, hasRecordedLoad, measurementInputLabel } from './exercise-input';
+import { exerciseInputKind, hasRecordedLoad, measuredSprintSeconds, measurementInputLabel } from './exercise-input';
 import { lastSetSuggestion } from './set-autofill';
+import { findTrainingPair } from './training-flow';
+import { ReactionCue } from './ReactionCue';
 import './quick-workout-log.css';
 
 interface QuickWorkoutLogProps {
@@ -48,7 +50,7 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
   const metric = formatPreviousSet(exercise, previous);
   const kind = exerciseInputKind(exercise);
   const timed = kind === 'duration';
-  const optionalLoad = kind === 'bodyweight' || timed;
+  const optionalLoad = kind === 'bodyweight' || timed || (kind === 'distance' && showLoad);
   const inMinutes = /\bmin(?:ute)?s?\b/i.test(exercise.target);
   const name = `${exercise.name} set ${index + 1}`;
   const ready = gate.isArmed(target);
@@ -87,7 +89,7 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
       if (optionalLoad) onLoadInteraction();
       edit({ kg, ...(!valid ? { done: false } : {}) });
     }} />;
-  const singleQuantity = kind === 'bodyweight' && !showLoad || timed && !showLoad;
+  const singleQuantity = (kind === 'bodyweight' || kind === 'distance' || timed) && !showLoad;
 
   return <div className={`quick-set${timed ? ' quick-set--timed' : ''}${singleQuantity ? ' quick-set--single' : ''}${log.done ? ' is-complete' : ''}`} role="group" aria-label={`Quick log ${name}`}>
     <span className="quick-set__number" aria-label={`Set ${index + 1}`}>{index + 1}</span>
@@ -131,6 +133,12 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
         label={`${name} timer duration`} onInteraction={arm}
         onSecondsChange={seconds => onSet(exercise.key, log.id, { seconds })} onTimer={onTimer} />
     </details>}
+    {kind === 'distance' && exercise.prescribedDistanceM != null && <details className="quick-set__timer"><summary>Set {index + 1} measured time · optional</summary>
+      <label className="field-label">Measured sprint seconds<input className="set-input" type="number" min="0" max="86400" step="0.01" inputMode="decimal"
+        aria-label={`${name} measured sprint seconds`} value={log.seconds ?? ''} placeholder="Not measured"
+        onChange={event => edit({ seconds: measuredSprintSeconds(event.target.value) })} /></label>
+      <p className="small-note">Only enter a measured time. Sprint tests keep timing methods separate for comparisons.</p>
+    </details>}
   </div>;
 }
 
@@ -138,12 +146,12 @@ function QuickExercise(props: QuickWorkoutLogProps & { exercise: FocusedExercise
   const { sessionId, exercise, previous, onSet, onSelect, onEquipment, athleteMode } = props;
   const kind = exerciseInputKind(exercise);
   const timed = kind === 'duration';
-  const optionalLoad = kind === 'bodyweight' || timed;
   const recordedLoad = hasRecordedLoad(exercise.logs);
   const [loadOpen, setLoadOpen] = useState(() => recordedLoad);
+  const optionalLoad = kind === 'bodyweight' || timed || (kind === 'distance' && (recordedLoad || loadOpen));
   const invalidLoads = useRef(new Set<string>());
   const showLoad = optionalLoad && (loadOpen || recordedLoad);
-  const singleQuantity = optionalLoad && !showLoad;
+  const singleQuantity = (optionalLoad || kind === 'distance') && !showLoad;
   const prior = previous(exercise)?.exercise;
   const inMinutes = /\bmin(?:ute)?s?\b/i.test(exercise.target);
   const quantityLabel = timed ? inMinutes ? 'Minutes' : 'Seconds' : exercise.quantityUnit === 'm' ? 'Metres' : 'Reps';
@@ -172,12 +180,15 @@ function QuickExercise(props: QuickWorkoutLogProps & { exercise: FocusedExercise
       {optionalLoad && !recordedLoad && <button type="button" className="text-button quick-exercise__load" aria-label={`${showLoad ? 'Hide' : 'Add'} load for ${exercise.name}`}
         aria-expanded={showLoad} onClick={toggleLoad}>{showLoad ? 'Hide added load' : 'Add load · kg'}</button>}
       {optionalLoad && <p>Added weight is optional. Existing recorded load stays visible; opening or hiding fields never changes it.</p>}
-      {onEquipment && kind !== 'measurement' && <button type="button" className="text-button" onClick={() => onEquipment(exercise.key)} aria-label={`Equipment for ${exercise.name}`}>{exercise.equipmentLabel ? 'Edit equipment label' : 'Add equipment label'}</button>}
-      <p>RIR: How many more reps you could complete. RPE: How hard the effort felt.</p>
-      {exercise.logs.map((log, index) => <label key={log.id}>Set {index + 1} · RIR<input type="number" min="0" max="10" step="1" inputMode="numeric"
+      {exercise.restRange && <p>Prescribed rest · {exercise.restRange}. Timer starts at {exercise.rest} sec and stays adjustable.</p>}
+      {exercise.targetRir != null && <p>Planned effort · RIR {exercise.targetRir}. Recorded effort remains optional.</p>}
+      {onEquipment && kind !== 'measurement' && kind !== 'distance' && <button type="button" className="text-button" onClick={() => onEquipment(exercise.key)} aria-label={`Equipment for ${exercise.name}`}>{exercise.equipmentLabel ? 'Edit equipment label' : 'Add equipment label'}</button>}
+      {kind !== 'distance' && <p>RIR: How many more reps you could complete. RPE: How hard the effort felt.</p>}
+      {kind !== 'distance' && exercise.logs.map((log, index) => <label key={log.id}>Set {index + 1} · RIR<input type="number" min="0" max="10" step="1" inputMode="numeric"
         aria-label={`${exercise.name} set ${index + 1} reps in reserve`} value={log.rir ?? ''}
         onChange={event => { onSelect(exercise.key, log.id); onSet(exercise.key, log.id, { rir: numberInput(event.target.value, 10) }); }} /></label>)}
       {!athleteMode && <p>Primer: A short preparation session before a demanding activity. Complex Pair: Two linked exercises performed in a prescribed sequence.</p>}
+      {exercise.exerciseId === 'split-step-reaction' && <ReactionCue key={exercise.key} />}
     </details>
   </section>;
 }
@@ -189,6 +200,15 @@ export function QuickWorkoutLog(props: QuickWorkoutLogProps) {
     <div className="quick-workout__intro"><p>All working sets. Tap a value to edit.</p>
       {onUndoLast && <button type="button" className="text-button" disabled={!canUndoLast} onClick={onUndoLast}>Undo last set</button>}
     </div>
-    {exercises.map(exercise => <QuickExercise key={`${sessionId}-${exercise.key}`} {...props} exercise={exercise} />)}
+    {exercises.map((exercise, index) => {
+      const pair = exercise.section ? findTrainingPair(exercises, exercise.key) : null;
+      return <Fragment key={`${sessionId}-${exercise.key}`}>
+        {exercise.section && exercise.section !== exercises[index - 1]?.section && <h3 className="eyebrow">{exercise.section}</h3>}
+        {pair?.kind === 'complex' && pair.first.key === exercise.key && <p className="small-note" role="note" aria-label={`Complex pair ${pair.label} sequence`}>
+          {pair.pairedRounds} rounds: {pair.first.name} → rest {pair.first.restRange ?? `${pair.first.rest ?? 0} sec`} → {pair.second.name} → rest {pair.second.restRange ?? `${pair.second.rest ?? 0} sec`} → repeat. Alternate one set of each movement; these are the complete working sets, not additional sets.
+        </p>}
+        <QuickExercise {...props} exercise={exercise} />
+      </Fragment>;
+    })}
   </section>;
 }

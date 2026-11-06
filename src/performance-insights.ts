@@ -9,7 +9,7 @@ import { reportWeekStart, shiftReportDate, type ReportNutritionRecord, type Repo
 
 type LoggedExercise = ReportSession['exercises'][number];
 type LoggedSet = LoggedExercise['logs'][number];
-export type ProgressionExercise = Pick<LoggedExercise, 'key' | 'name' | 'group' | 'target' | 'mode'> & Partial<Pick<LoggedExercise, 'measurement' | 'quantityUnit' | 'targetRpe' | 'perSide'>> & { exerciseId?: string; equipmentLabel?: string; preparationOnly?: boolean; sets?: number };
+export type ProgressionExercise = Pick<LoggedExercise, 'key' | 'name' | 'group' | 'target' | 'mode'> & Partial<Pick<LoggedExercise, 'measurement' | 'quantityUnit' | 'targetRpe' | 'perSide'>> & { exerciseId?: string; equipmentLabel?: string; preparationOnly?: boolean; sets?: number; targetRir?: number; prescribedDistanceM?: number };
 export interface ProgressionRecommendation {
   kind: 'load' | 'reps' | 'hold' | 'reduce' | 'quality' | 'baseline';
   title: string;
@@ -118,6 +118,9 @@ export function getProgressionRecommendation(exercise: ProgressionExercise, sess
   const previous = history.at(-2)?.exercise;
   const intent = exerciseIntent(exercise);
   const base = { intent };
+  if (exercise.prescribedDistanceM != null) return { ...base, kind: 'quality', title: 'Acceleration quality',
+    cue: 'Use a clear lane with deceleration space. Reset fully, keep short efforts fast and stop if control or speed deteriorates.',
+    reason: 'Planned distance is not a measured sprint result. Record a time only when actually measured; compare the same distance, timing method and protocol.' };
   if (exercise.preparationOnly) return { ...base, kind: 'quality', title: 'Easy preparation only', cue: 'Follow your individual clearance guidance. Use comfortable unloaded or light rehearsal; do not chase load or jump height.', reason: 'This preparation alternative is not a heavy-lifting or maximal-impact recommendation.' };
   if (context.lowFatigueSession || (exercise.targetRpe != null && exercise.targetRpe <= 6)) return { ...base, kind: 'quality', title: 'Keep this easy', cue: 'Follow the planned effort. Keep plenty in reserve; do not add load or sets today.', reason: 'Primer or reduced-readiness work prioritizes freshness over overload.' };
   if (exercise.quantityUnit) return { ...base, kind: 'quality', title: 'Distance + posture', cue: 'Use the planned metres per side. Stay tall; do not chase reps or extra load.', reason: 'Carry distance is not a repetition or a 1RM test.' };
@@ -156,7 +159,8 @@ export function getProgressionRecommendation(exercise: ProgressionExercise, sess
     kg: best.kg ?? undefined, reps: Math.max(range[0], Math.min(range[1], best.reps!)), reason: 'Volleyball is within 24 hours; avoid chasing lower-body fatigue.',
   };
   const recent = history.slice(-2);
-  const fullUpperRange = recent.length === 2 && recent.every(item => item.exercise.logs.length >= (exercise.sets ?? 1) && item.exercise.logs.every(log => log.done && log.kg === best.kg && positive(log.reps) && log.reps >= range[1] && log.rir !== null && log.rir >= 2));
+  const requiredRir = Math.max(1, Math.floor(exercise.targetRir ?? 2));
+  const fullUpperRange = recent.length === 2 && recent.every(item => item.exercise.logs.length >= (exercise.sets ?? 1) && item.exercise.logs.every(log => log.done && log.kg === best.kg && positive(log.reps) && log.reps >= range[1] && log.rir !== null && log.rir >= requiredRir));
   if (fullUpperRange && exercise.mode === 'weight' && positive(best.kg)) {
     const increment = context.loadIncrementKg ?? 0.5;
     if (positive(increment)) {
@@ -164,7 +168,7 @@ export function getProgressionRecommendation(exercise: ProgressionExercise, sess
       const increase = round(best.kg + desired, 3);
       if (increase <= best.kg * 1.05 + 0.0001) return {
         ...base, previous: previousLabel, kind: 'load', title: `${number(increase)} kg × ${range[0]}`, kg: increase, reps: range[0],
-        cue: 'Small load increase. Start at the bottom of your rep range.', reason: 'All sets reached the top of the range with 2+ reps in reserve in two sessions.',
+        cue: 'Choose the smallest practical increment available on this equipment. Start at the bottom of your rep range; applying a suggestion is always optional.', reason: requiredRir === 2 ? 'All sets reached the top of the range with 2+ reps in reserve in two sessions.' : `All planned sets reached the top of the range with at least ${requiredRir} rep in reserve in two comparable sessions.`,
       };
     }
   }

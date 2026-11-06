@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
-import { MasterProgramSettingsSchema, createRecommendedMasterPlan, createVolleyballMasterPlan, getMasterProgramPhase, getMasterProgramWeek, resolveMasterProgramPlan, type MasterProgramSettings, type MasterReadiness } from './volleyball-master-plan';
+import { MasterProgramSettingsSchema, createRecommendedMasterPlan, getMasterProgramPhase, getMasterProgramWeek, resolveMasterProgramPlan, type MasterProgramSettings, type MasterReadiness } from './volleyball-master-plan';
 import type { PlanDay } from './workout-customization';
 import { berlinDate } from './calendar-date';
 import { trainingPlanVersion } from './training-plan-status';
@@ -10,6 +10,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import './volleyball-master-program.css';
 
 const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+function sundayDate(startDate: string, week: number): string {
+  const date = new Date(`${startDate}T12:00:00Z`);
+  if (!Number.isFinite(date.getTime())) return 'Choose a start Monday';
+  date.setUTCDate(date.getUTCDate() + (week - 1) * 7 + 6);
+  return date.toISOString().slice(0, 10);
+}
 const newSettings = (startDate: string, guidance?: TrainingGuidance): MasterProgramSettings => ({
   version: 1, revision: '13.1', startDate, matchWeeks: [], ...(guidance ? { clearance: structuredClone(guidance) } : {}),
 });
@@ -42,26 +48,28 @@ function UpgradeCustomizationReview({ review, acknowledged, onAcknowledge, disab
 }
 
 function ProgramPreview({ settings, date, basePlan, matchWeekend, baseline = false }: { settings: MasterProgramSettings; date: string; basePlan?: PlanDay[]; matchWeekend?: PlanDay[]; baseline?: boolean }) {
-  const previewDate = getMasterProgramWeek(settings.startDate, date) ? date : settings.startDate;
-  const week = getMasterProgramWeek(settings.startDate, previewDate)!;
-  const match = settings.matchWeeks.includes(week);
-  const plan = baseline ? createVolleyballMasterPlan(match) : resolveMasterProgramPlan(basePlan ?? createRecommendedMasterPlan(settings), settings, previewDate, matchWeekend);
+  const selectedWeek = getMasterProgramWeek(settings.startDate, date);
+  const continuingV9 = settings.revision === '9' && date >= settings.startDate && !selectedWeek;
+  const previewDate = selectedWeek || continuingV9 ? date : settings.startDate;
+  const week = getMasterProgramWeek(settings.startDate, previewDate);
+  const match = week !== null && settings.matchWeeks.includes(week);
+  const plan = baseline ? createRecommendedMasterPlan(settings, match) : resolveMasterProgramPlan(basePlan ?? createRecommendedMasterPlan(settings), settings, previewDate, matchWeekend);
   return <div className="master-program__preview" aria-label="Program schedule preview">
-    <p className="master-program__preview-phase">{baseline ? 'Base prescription · ' : `Week ${week} · ${getMasterProgramPhase(week)} · `}{match ? 'Sunday match' : 'No Sunday match'}</p>
+    <p className="master-program__preview-phase">{baseline ? 'Base prescription · ' : week ? `Week ${week} · ${getMasterProgramPhase(week)} · ` : 'Base week continues · '}{match ? 'Sunday match' : 'No Sunday match'}</p>
     {baseline && <p className="small-note">This is the recommended baseline, not medical clearance. Actual sessions adapt to your recorded guidance, week and readiness. Unknown impact or lifting clearance keeps preparation conservative.</p>}
     <ol>{plan.map((day, index) => {
       const required = day.exercises.filter(exercise => exercise.optionalWork !== true);
       const optional = day.exercises.length - required.length;
       return <li key={index}><span>{weekdays[index]}</span><details className="master-program__preview-day">
         <summary><span><strong>{day.name}</strong><small>{day.kind === 'sport' ? day.name === 'Match' || day.name === 'Volleyball Match' ? `${day.startTime ? `${day.startTime} · Berlin` : 'Time not set'} · record actual duration` : '20:00–22:00 · Berlin' : day.durationRange ?? `${day.minutes} min`}{day.kind === 'strength' ? ` · ${required.length} movements${optional ? ` + ${optional} optional` : ''}` : ''}</small>{!!settings.revision && index === 4 && <small>School PE · about 2 h · log actual activity once</small>}</span></summary>
-        {day.exercises.length > 0 ? <ul>{day.exercises.map(exercise => <li key={exercise.key}><div><strong>{exercise.name}{exercise.optionalWork ? ' · optional' : ''}</strong><small>{exercise.sets} × {exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.rest ? ` · ${exercise.rest} sec rest` : ''}</small>{exercise.benefit && <small>{exercise.benefit}</small>}</div></li>)}</ul> : <p className="small-note">Rest, an easy walk or gentle mobility. Nothing to make up.</p>}
+        {day.exercises.length > 0 ? <ul>{day.exercises.map((exercise, exerciseIndex) => <li key={exercise.key}><div>{exercise.section && exercise.section !== day.exercises[exerciseIndex - 1]?.section && <small className="master-program__section">{exercise.section}</small>}<strong>{exercise.name}{exercise.optionalWork ? ' · optional' : ''}</strong><small>{exercise.sets} × {exercise.target}{exercise.perSide ? ' / side' : ''}{exercise.restRange ? ` · ${exercise.restRange} rest` : exercise.rest ? ` · ${exercise.rest} sec rest` : ''}{exercise.targetRir != null ? ` · RIR ${exercise.targetRir}` : ''}</small>{exercise.benefit && <small>{exercise.benefit}</small>}</div></li>)}</ul> : <p className="small-note">Rest, an easy walk or gentle mobility. Nothing to make up.</p>}
         {day.extraSession && <p className="small-note">Optional · {day.extraSession.name} · {day.extraSession.durationRange ?? `${day.extraSession.minutes} min`}</p>}
       </details></li>;
     })}</ol>
   </div>;
 }
 
-export function VolleyballMasterProgram({ settings, guidance, defaultStartDate, selectedDate, today = berlinDate(), basePlan, matchWeekend, onSave, onUpgrade, upgradeReview, upgradePreview, onRestorePrevious, hasPreviousPlan = false, disabled = false, upgradeOpen, onUpgradeOpenChange }: {
+export function VolleyballMasterProgram({ settings, guidance, defaultStartDate, selectedDate, today = berlinDate(), basePlan, matchWeekend, onSave, onUpgrade, upgradeReview, upgradePreview, onRestorePrevious, hasPreviousPlan = false, disabled = false, upgradeOpen, onUpgradeOpenChange, onReviewV9 }: {
   settings?: MasterProgramSettings; defaultStartDate: string; selectedDate: string; today?: string;
   guidance?: TrainingGuidance;
   basePlan?: PlanDay[]; matchWeekend?: PlanDay[];
@@ -71,6 +79,7 @@ export function VolleyballMasterProgram({ settings, guidance, defaultStartDate, 
   upgradePreview?: { plan: PlanDay[]; matchWeekend?: PlanDay[] };
   hasPreviousPlan?: boolean; disabled?: boolean;
   upgradeOpen?: boolean; onUpgradeOpenChange?: (open: boolean) => void;
+  onReviewV9?: () => void;
 }) {
   const [draft, setDraft] = useState<MasterProgramSettings>(() => structuredClone(settings ?? newSettings(defaultStartDate, guidance)));
   const savedDraft = JSON.stringify({ active: Boolean(settings), settings: settings ?? newSettings(defaultStartDate, guidance) });
@@ -94,7 +103,8 @@ export function VolleyballMasterProgram({ settings, guidance, defaultStartDate, 
   }, [savedDraft]);
   useEffect(() => { if (upgrade) setUseRecommendations(false); }, [upgrade]);
   const week = settings && getMasterProgramWeek(settings.startDate, today);
-  const legacy = !!settings && settings.revision !== '13.1';
+  const v9 = settings?.revision === '9';
+  const legacy = !!settings && settings.revision !== '13.1' && settings.revision !== '9';
   const complete = !!settings && today >= settings.startDate && !week;
   const locked = disabled || busy;
   const reviewSettings = settings ? { ...settings, revision: '13.1' as const } : newSettings(defaultStartDate, guidance);
@@ -130,7 +140,7 @@ export function VolleyballMasterProgram({ settings, guidance, defaultStartDate, 
     catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not restore the previous program.'); }
     finally { setBusy(false); }
   }
-  const optionalOptions = draft.revision === '13.1' ? [
+  const optionalOptions = draft.revision === '9' ? [] : draft.revision === '13.1' ? [
     ['easyRun', 'Optional easy running reminder'],
   ] as const : draft.revision === '8.1' ? [
     ['thursdayPlyoPushup', 'Thursday · plyometric push-ups'],
@@ -145,30 +155,32 @@ export function VolleyballMasterProgram({ settings, guidance, defaultStartDate, 
   ] as const;
   const savedPlanButton = <button className="text-button" type="button" disabled={locked} onClick={() => setRestore(true)}>Return to saved plan</button>;
   return <section className="master-program" aria-label="8-week volleyball-first program">
-    <div className="master-program__heading"><div><p className="eyebrow">{settings ? 'SAVED TRAINING PROGRAM' : 'RECOMMENDED PERFORMANCE PLAN'}</p><h2>Volleyball Performance Master Plan{settings ? settings.revision ? ` ${trainingPlanVersion(settings)}` : ' · Original' : ' V13.1'}</h2></div><span>{week ? `Week ${week} · ${getMasterProgramPhase(week)}` : settings ? today < settings.startDate ? `Starts ${settings.startDate}` : 'Block complete' : 'Ready when you are'}</span></div>
-    <p className="master-program__purpose">Jump Higher · Hit Harder · Build Muscle</p>
+    <div className="master-program__heading"><div><p className="eyebrow">{settings ? 'SAVED TRAINING PROGRAM' : 'RECOMMENDED PERFORMANCE PLAN'}</p><h2>{v9 ? 'Volleyball Performance Plan V9' : <>Volleyball Performance Master Plan{settings ? settings.revision ? ` ${trainingPlanVersion(settings)}` : ' · Original' : ' V13.1'}</>}</h2></div><span>{week ? `Week ${week} · ${getMasterProgramPhase(week)}` : settings ? today < settings.startDate ? `Starts ${settings.startDate}` : v9 ? 'Base week continues' : 'Block complete' : 'Ready when you are'}</span></div>
+    <p className="master-program__purpose">{v9 ? 'Collegiate-Style Performance · App stays Setline V18' : 'Jump Higher · Hit Harder · Build Muscle'}</p>
+    {!v9 && onReviewV9 && <div className="master-program__upgrade master-program__v9-offer"><p>Review the complete V9 prescription and upcoming date edits before changing your training plan.</p><button type="button" className="btn full" disabled={locked} onClick={onReviewV9}>Upgrade Training Plan to V9</button></div>}
+    {v9 && onReviewV9 && <button type="button" className="text-button" disabled={locked} onClick={onReviewV9}>Review upcoming V9 workouts</button>}
     {legacy && onUpgrade && <div className="master-program__upgrade"><p>Your current block continues unchanged. Review V13.1 before applying it.</p><button type="button" className="btn full" disabled={locked} onClick={() => { setError(''); setUpgrade(true); }}>Upgrade to V13.1</button></div>}
     <details className="master-program__preview-disclosure"><summary>{legacy ? 'Current program preview' : 'Program preview'}</summary>{previewValid ? <ProgramPreview settings={draft} date={selectedDate} basePlan={settings ? basePlan : undefined} matchWeekend={settings ? matchWeekend : undefined} baseline={!settings} /> : <p className="small-note">Choose a valid Monday to preview this block.</p>}</details>
     <details className="master-program__config" open={!settings}>
       <summary>{settings ? 'Schedule & options' : 'Set up your block'}</summary>
       <label className="field-label">Start Monday<input type="date" value={draft.startDate} disabled={locked} onChange={event => setDraft({ ...draft, startDate: event.target.value })} /></label>
-      <fieldset className="master-program__matches" disabled={locked}><legend>Sunday match weeks</legend><p>{draft.revision === '13.1' ? 'No match: Lower Strength B Saturday when recovered, recovery Sunday. Match: optional Saturday preparation, Sunday competition.' : draft.revision === '8.1' ? 'Your saved V8.1 weekend stays: recovery Saturday, Heavy Lower B Sunday.' : 'Your saved weekend schedule stays until you choose Upgrade to V13.1.'}</p>
-        <div>{Array.from({ length: 8 }, (_, index) => index + 1).map(value => <label key={value}><input type="checkbox" checked={draft.matchWeeks.includes(value)} onChange={event => setDraft({ ...draft,
+      <fieldset className="master-program__matches" disabled={locked}><legend>Sunday match weeks</legend><p>{draft.revision === '9' ? 'Confirm the actual Sunday date. No match: full Saturday Lower B when readiness and guidance allow. Confirmed match: a separate short Saturday primer. Match time may remain unset.' : draft.revision === '13.1' ? 'No match: Lower Strength B Saturday when recovered, recovery Sunday. Match: optional Saturday preparation, Sunday competition.' : draft.revision === '8.1' ? 'Your saved V8.1 weekend stays: recovery Saturday, Heavy Lower B Sunday.' : 'Your saved weekend schedule stays until you choose Upgrade to V13.1.'}</p>
+        <div>{Array.from({ length: 8 }, (_, index) => index + 1).map(value => <label key={value}><input type="checkbox" aria-label={`Week ${value}`} checked={draft.matchWeeks.includes(value)} onChange={event => setDraft({ ...draft,
           matchWeeks: event.target.checked ? [...draft.matchWeeks, value].sort((a, b) => a - b) : draft.matchWeeks.filter(item => item !== value),
           matchTimes: event.target.checked ? draft.matchTimes : draft.matchTimes?.filter(item => item.week !== value),
-        })} /><span>Week {value}</span></label>)}</div>
+        })} /><span>Week {value}</span>{draft.revision === '9' && <small>{sundayDate(draft.startDate, value)}</small>}</label>)}</div>
       </fieldset>
-      {draft.revision === '13.1' && <label className="master-program__prior-match"><input type="checkbox" disabled={locked} checked={draft.previousSundayMatch ?? false} onChange={event => setDraft({ ...draft, previousSundayMatch: event.target.checked })} /><span>Match on the Sunday before this block</span></label>}
-      {draft.revision === '13.1' && <details className="master-program__clearance"><summary>Impact & lifting guidance</summary>
+      {(draft.revision === '13.1' || draft.revision === '9') && <label className="master-program__prior-match"><input type="checkbox" disabled={locked} checked={draft.previousSundayMatch ?? false} onChange={event => setDraft({ ...draft, previousSundayMatch: event.target.checked })} /><span>Match on the Sunday before this block</span></label>}
+      {(draft.revision === '13.1' || draft.revision === '9') && <details className="master-program__clearance"><summary>Impact & lifting guidance</summary>
         <p className="small-note">Unknown clearance keeps preparation conservative. Individual clinician restrictions take priority; ask for guidance before increasing impact or heavy straining.</p>
         {([['impact', 'Impact clearance'], ['heavyLifting', 'Heavy lifting clearance']] as const).map(([key, label]) => <label className="field-label" key={key}>{label}<select aria-label={label} disabled={locked} value={draft.clearance?.[key] ?? 'unknown'} onChange={event => setDraft({ ...draft, clearance: { impact: 'unknown', heavyLifting: 'unknown', ...draft.clearance, [key]: event.target.value as 'unknown' | 'cleared' | 'restricted' } })}><option value="unknown">Unknown / awaiting guidance</option><option value="cleared">Cleared within my guidance</option><option value="restricted">Restricted</option></select></label>)}
         <label className="field-label">Personal guidance note<textarea aria-label="Personal guidance note" rows={3} maxLength={500} disabled={locked} value={draft.clearance?.note ?? ''} placeholder="Optional restrictions or preparation instructions" onChange={event => setDraft({ ...draft, clearance: { impact: 'unknown', heavyLifting: 'unknown', ...draft.clearance, note: event.target.value } })} /></label>
         <p className="small-note">Kept when changing programs and included in your backups. Unconfirmed or restricted lifting means easy preparation; unconfirmed or restricted impact removes maximal jumps. Changes apply to future workouts. This is your reported status, not medical approval from Setline.</p>
       </details>}
       {draft.matchWeeks.length > 0 && <details className="master-program__match-times"><summary>Match times (optional)</summary><p className="small-note">Leave blank if unknown. Times use Europe/Berlin.</p>{draft.matchWeeks.map(value => <label className="field-label" key={value}>Week {value} match time<input type="time" disabled={locked} value={draft.matchTimes?.find(item => item.week === value)?.startTime ?? ''} onChange={event => setDraft({ ...draft, matchTimes: [...(draft.matchTimes ?? []).filter(item => item.week !== value), ...(event.target.value ? [{ week: value, startTime: event.target.value }] : [])].sort((a, b) => a.week - b.week) })} /></label>)}</details>}
-      <details><summary>Optional work</summary><div className="master-program__optional">
+      {draft.revision !== '9' && <details><summary>Optional work</summary><div className="master-program__optional">
         {optionalOptions.map(([key, label]) => <label key={key}><input type="checkbox" disabled={locked} checked={draft.optional?.[key] ?? false} onChange={event => setDraft({ ...draft, optional: { mondayArms: false, thursdayArms: false, tuesdayPogos: false, ...draft.optional, [key]: event.target.checked } })} />{label}</label>)}
-        <p>Off by default. Add only when time, movement quality and recovery allow.</p></div></details>
+        <p>Off by default. Add only when time, movement quality and recovery allow.</p></div></details>}
       <button className="btn full" type="button" disabled={locked} onClick={() => settings && draft.startDate !== settings.startDate ? setChangedStart(draft) : void save(draft)}>{busy ? 'Saving…' : settings ? 'Save program' : 'Use this plan'}</button>
       <p className="small-note master-program__save-status" role="status" aria-label="Program changes">{draftDirty ? 'Program changes are not saved yet.' : 'Program settings are up to date.'}</p>
       {!settings && <p className="small-note">Your current weekly plan is kept so you can return to it. History stays unchanged. No Sunday match is assumed.</p>}
@@ -177,10 +189,10 @@ export function VolleyballMasterProgram({ settings, guidance, defaultStartDate, 
     <details className="master-program__rules"><summary>Training rules & retest</summary>
       <h3>Jump quality first</h3><p>FAST → LONG PENULTIMATE → QUICK PLANT → ARMS → UP. Stop or reduce explosive work if height, control or landing quality falls. Contacts are a ceiling, not a target to force.</p>
       <h3>Build · deload · retest</h3><p>Weeks 1–3: build quality. Week 4: reduce demanding sets and jump contacts. Weeks 5–7: return to base volume. Week 8: reduce strength volume and test fresh; no extra full-volume jump workout.</p>
-      <h3>Progress without grinding</h3><p>Hack Squat 4 × 4–6: keep the load until all four sets reach six clean reps with about two reps left. Then consider the smallest practical increase, often 2.5–5%. Suggestions never change your weight automatically. Jump contacts and box heights never rise automatically.</p>
-      <h3>Readiness</h3><p>{settings?.revision === '8.1' ? 'Your V8.1 lower-body checks remain Wednesday and non-match Sunday.' : 'Check Monday, Wednesday and Saturday Lower B; a moved lower session is checked on Sunday.'} Green: recovered, controlled movement. Yellow: reduce jumps and selected hard sets. Red: stop painful or unstable work and choose suitable recovery. A jump-height drop can be a fatigue signal, not a diagnosis.</p><p>Friday PE and volleyball count toward recovery. Moving Saturday Lower B to Sunday always needs confirmation, and a Sunday match takes priority. Persistent or worsening symptoms need professional assessment.</p>
-      <h3>Thursday paired work</h3><p>Two rounds pair Cable Lateral Raise with Reverse Pec Deck; the third reverse-fly set remains separate. Three rounds pair Incline Dumbbell Curl with Rope Triceps Extension. Rest 60–90 seconds after each pair, or longer if quality drops. The whole workout is not a circuit.</p>
-      <h3>Week 8 retest</h3><p>Standing reach · standing vertical · approach touch and vertical · weekly body-weight trend · Hack Squat · pull-ups. Record actual dated measurements in Progress and lift performance in Train.</p><p>Approximate reference only: reach 235 cm, standing touch ~310 cm, approach touch 315–317 cm. These suggest ~75 cm and ~80–82 cm verticals; they are never saved as test results.</p>
+      <h3>Progress without grinding</h3><p>{v9 ? 'Meet the top of the rep range in every working set at the prescribed RIR with sound technique before considering the smallest practical load increase. Wednesday has three Hack Squat working sets in the complex, not a second three-set block afterward.' : 'Hack Squat 4 × 4–6: keep the load until all four sets reach six clean reps with about two reps left. Then consider the smallest practical increase, often 2.5–5%.'} Suggestions never change your weight automatically. Jump contacts and box heights never rise automatically.</p>
+      <h3>Readiness</h3><p>{v9 ? 'Check recovery before Wednesday speed/jumps and Saturday Lower B. Friday PE and volleyball are significant workload, and missing sleep or exposure logs remain unknown.' : settings?.revision === '8.1' ? 'Your V8.1 lower-body checks remain Wednesday and non-match Sunday.' : 'Check Monday, Wednesday and Saturday Lower B; a moved lower session is checked on Sunday.'} Green: recovered, controlled movement. Yellow: reduce jumps and selected hard sets. Red: stop painful or unstable work and choose suitable recovery. A jump-height drop can be a fatigue signal, not a diagnosis.</p><p>{v9 ? 'A modified recommendation does not replace the full base prescription. Review the full V9 base in View workout; choosing a reference never bypasses readiness or your recorded guidance. Sunday match means a separate Saturday primer and no extra gym session.' : 'Friday PE and volleyball count toward recovery. Moving Saturday Lower B to Sunday always needs confirmation, and a Sunday match takes priority.'} Persistent or worsening symptoms need professional assessment.</p>
+      <h3>{v9 ? 'Wednesday strength–power complex' : 'Thursday paired work'}</h3><p>{v9 ? 'Three rounds: Hack Squat → 3–4 minutes rest → two CMJs → 2–3 minutes rest → repeat. Reset fully and stop explosive work when speed, landing control or jump quality deteriorates. Thursday separates agility from the full upper-body block.' : 'Two rounds pair Cable Lateral Raise with Reverse Pec Deck; the third reverse-fly set remains separate. Three rounds pair Incline Dumbbell Curl with Rope Triceps Extension. Rest 60–90 seconds after each pair, or longer if quality drops. The whole workout is not a circuit.'}</p>
+      <h3>{v9 ? 'Performance checks' : 'Week 8 retest'}</h3><p>{v9 ? 'Retest jumps about every two weeks and 5 m / 10 m sprints about every four weeks when practical, using the same protocol and timing method. Record only measured results. An optional check around week 6 can guide review without restarting the cycle. Week 8 remains reduced-volume evaluation, not an extra maximal jump session.' : 'Standing reach · standing vertical · approach touch and vertical · weekly body-weight trend · Hack Squat · pull-ups. Record actual dated measurements in Progress and lift performance in Train.'}</p>{!v9 && <p>Approximate reference only: reach 235 cm, standing touch ~310 cm, approach touch 315–317 cm. These suggest ~75 cm and ~80–82 cm verticals; they are never saved as test results.</p>}
     </details>
     {settings && (hasPreviousPlan && onRestorePrevious ? <div className="master-program__saved"><button className="text-button" type="button" disabled={locked} onClick={() => { setError(''); setRestorePrevious(true); }}>Restore previous program</button><details><summary>Older weekly plan</summary>{savedPlanButton}</details></div> : savedPlanButton)}
     {error && <p role="alert" className="builder-error">{error}</p>}
@@ -197,7 +209,7 @@ export function VolleyballMasterProgram({ settings, guidance, defaultStartDate, 
         {error && <p role="alert" className="builder-error">{error}</p>}
       </DialogContent>
     </Dialog>
-    <AlertDialog open={restorePrevious} onOpenChange={setRestorePrevious}><AlertDialogContent className="app-dialog"><AlertDialogHeader className=""><AlertDialogTitle className="">Restore your previous program?</AlertDialogTitle><AlertDialogDescription className="">Your saved personal program and its cycle settings return. Workout history, active sessions, nutrition and measurements stay unchanged.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className=""><AlertDialogCancel className="">Keep V13.1</AlertDialogCancel><AlertDialogAction className="" disabled={locked} onClick={(event: MouseEvent<HTMLButtonElement>) => { event.preventDefault(); void applyRestorePrevious(); }}>Restore previous program</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+    <AlertDialog open={restorePrevious} onOpenChange={setRestorePrevious}><AlertDialogContent className="app-dialog"><AlertDialogHeader className=""><AlertDialogTitle className="">Restore your previous program?</AlertDialogTitle><AlertDialogDescription className="">Your saved personal program and its cycle settings return. Workout history, active sessions, nutrition and measurements stay unchanged.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className=""><AlertDialogCancel className="">{v9 ? 'Keep V9' : 'Keep V13.1'}</AlertDialogCancel><AlertDialogAction className="" disabled={locked} onClick={(event: MouseEvent<HTMLButtonElement>) => { event.preventDefault(); void applyRestorePrevious(); }}>Restore previous program</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     <AlertDialog open={restore} onOpenChange={setRestore}><AlertDialogContent className="app-dialog"><AlertDialogHeader className=""><AlertDialogTitle className="">Return to your saved plan?</AlertDialogTitle><AlertDialogDescription className="">The weekly plan from before this block returns. History, meals, measurements and active workouts stay unchanged.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className=""><AlertDialogCancel className="">Keep program</AlertDialogCancel><AlertDialogAction className="" disabled={locked} onClick={(event: MouseEvent<HTMLButtonElement>) => { event.preventDefault(); void save(undefined); }}>Restore saved plan</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     <Dialog open={nextBlock} onOpenChange={(open: boolean) => { if (!busy) setNextBlock(open); }}><DialogContent className="app-dialog"><DialogHeader className=""><DialogTitle className="">Plan the next block?</DialogTitle><DialogDescription className="">Start a new eight-week cycle using your current weekly plan. Match weeks start empty; choose the new competition dates afterward. Your records stay.</DialogDescription></DialogHeader><label className="field-label">Next start Monday<input type="date" value={nextStart} disabled={locked} onChange={event => setNextStart(event.target.value)} /></label><button className="btn full" type="button" disabled={locked} onClick={() => settings && void save({ ...settings, startDate: nextStart, matchWeeks: [], matchTimes: [] })}>Start next block</button>{error && <p role="alert" className="builder-error">{error}</p>}</DialogContent></Dialog>
     <AlertDialog open={changedStart !== null} onOpenChange={(open: boolean) => { if (!open) setChangedStart(null); }}><AlertDialogContent className="app-dialog"><AlertDialogHeader className=""><AlertDialogTitle className="">Change this block’s start?</AlertDialogTitle><AlertDialogDescription className="">Changing the start date changes the current week and phase. Existing workout snapshots stay unchanged. Apply the schedule starting {changedStart?.startDate}?</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className=""><AlertDialogCancel className="">Keep start date</AlertDialogCancel><AlertDialogAction className="" disabled={locked} onClick={(event: MouseEvent<HTMLButtonElement>) => { event.preventDefault(); if (changedStart) void save(changedStart); }}>Apply schedule</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
@@ -211,18 +223,19 @@ export function MasterProgramReadiness({ settings, date, disabled, onSave }: {
   const day = new Date(`${date}T12:00:00Z`).getUTCDay();
   const week = getMasterProgramWeek(settings.startDate, date);
   const v131 = settings.revision === '13.1';
+  const v9 = settings.revision === '9';
   const match = settings.matchWeeks.includes(week ?? 0);
   const previousDate = new Date(new Date(`${date}T12:00:00Z`).getTime() - 86400000).toISOString().slice(0, 10);
   const moved = v131 && day === 0 && settings.rescheduledLowerDates?.includes(previousDate);
   const movingFrom = day === 6 ? date : previousDate;
   const canMove = v131 && !match && day === 6 && !settings.rescheduledLowerDates?.includes(date);
-  const needsCheck = v131 ? day === 1 || day === 3 || (!match && ((day === 6 && !settings.rescheduledLowerDates?.includes(date)) || !!moved))
+  const needsCheck = v9 ? day === 3 || (day === 6 && !match) : v131 ? day === 1 || day === 3 || (!match && ((day === 6 && !settings.rescheduledLowerDates?.includes(date)) || !!moved))
     : settings.revision === '8.1' ? day === 3 || (day === 0 && !match) : day === 6;
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const [moveOpen, setMoveOpen] = useState(false);
   const [expanded, setExpanded] = useState(() => needsCheck && !settings.readiness?.some(row => row.date === date));
   useEffect(() => { setExpanded(needsCheck && !settings.readiness?.some(row => row.date === date)); }, [date, needsCheck]);
-  if (!week) return null;
+  if (!week && !v9) return null;
   const status = settings.readiness?.find(row => row.date === date)?.status;
   async function select(value: MasterReadiness) {
     setBusy(true); setError('');
@@ -240,7 +253,11 @@ export function MasterProgramReadiness({ settings, date, disabled, onSave }: {
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not move this session.'); }
     finally { setBusy(false); }
   }
-  const context = v131 ? day === 1 ? 'Check recovery after Sunday before maximal approach work. Shoulder quality matters for the upper-body session.'
+  const context = v9 ? day === 6 ? match ? 'A confirmed Sunday match selects the short primer. No heavy lifting or maximal jumps; full rest is valid when fatigued.' : 'Friday PE and volleyball count. Check legs, sleep, pain and landing quality before full Lower B. Missing logs are unknown, not proof of recovery.'
+    : day === 3 ? 'Tuesday volleyball counts. Check recovery before acceleration, the jump block and heavy strength. Use an unobstructed sprint lane with enough deceleration distance.'
+      : day === 4 ? 'Use clear, non-slip space for agility, then check shoulder quality before throwing and upper-body work.'
+        : 'Check movement quality and your reported guidance. Power needs speed and control, not exhaustion.'
+    : v131 ? day === 1 ? 'Check recovery after Sunday before maximal approach work. Shoulder quality matters for the upper-body session.'
     : day === 3 ? 'Tuesday volleyball counts. Check legs and movement quality before strength and the small jump dose.'
       : 'Friday PE and volleyball count. Lower B is optional when recovery is poor; full rest is valid.'
     : settings.revision !== '8.1' ? 'Friday PE and volleyball count. Check legs, sleep, pain and jump quality before this session.'

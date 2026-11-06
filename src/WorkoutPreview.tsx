@@ -7,6 +7,7 @@ import './workout-preview.css';
 /** Rest labels describe the saved configuration without changing the prescription. */
 export function previewRestLabel(exercise: PlanExercise): string {
   if (exercise.superset) return `${exercise.superset.restAfterRound} sec after pair`;
+  if (exercise.restRange) return `${exercise.restRange} rest`;
   return exercise.rest > 0 ? `${exercise.rest} sec rest` : 'No timed rest';
 }
 
@@ -19,6 +20,7 @@ export function PreviewSessionDetails({ exercise }: { exercise: PlanExercise }) 
     {exercise.superset ? <p>Superset {exercise.superset.label} · follow the prescribed sequence.</p>
       : /complex pair/i.test(exercise.group) && <p>{exercise.group} · follow the prescribed sequence.</p>}
     {exercise.targetRpe != null && <p>Target RPE {exercise.targetRpe}</p>}
+    {exercise.targetRir != null && <p>Target RIR {exercise.targetRir} · how many more controlled reps you could complete.</p>}
     {exercise.benefit && <p>{exercise.benefit}</p>}
     {exercise.cue && <p className="preview-session-details__note">{exercise.cue}</p>}
   </section>;

@@ -3,6 +3,7 @@ import type { ReportSession } from './weekly-report.ts';
 
 export interface PreviousPerformanceExercise extends PerformanceExerciseReference {
   preparationOnly?: boolean;
+  prescribedDistanceM?: number;
 }
 
 export interface PreviousSetMetric {
@@ -26,7 +27,7 @@ const nonnegative = (value: number | null | undefined): value is number => typeo
 const number = (value: number) => value.toLocaleString('en-GB', { maximumFractionDigits: 2 });
 
 /** A missing metric stays unknown: it is never displayed as zero or a different logging type. */
-export function formatPreviousSet(exercise: Pick<PreviousPerformanceExercise, 'mode' | 'measurement' | 'quantityUnit' | 'perSide'>, log: PreviousSetMetric | null | undefined): string | undefined {
+export function formatPreviousSet(exercise: Pick<PreviousPerformanceExercise, 'mode' | 'measurement' | 'quantityUnit' | 'perSide' | 'prescribedDistanceM'>, log: PreviousSetMetric | null | undefined): string | undefined {
   if (!log?.done) return undefined;
   const side = exercise.perSide ? ' per side' : '';
   if (exercise.measurement) {
@@ -34,10 +35,11 @@ export function formatPreviousSet(exercise: Pick<PreviousPerformanceExercise, 'm
     const metric = exercise.measurement === 'touch' ? 'Maximum touch' : exercise.measurement === 'height' ? 'Jump height' : 'Distance';
     return `${metric} ${number(log.measurementCm)} cm${side}`;
   }
-  if (exercise.mode === 'timed') return positive(log.seconds) ? `${number(log.seconds)} sec${side}` : undefined;
+  if (exercise.mode === 'timed') return positive(log.seconds)
+    ? `${positive(log.kg) ? `${number(log.kg)} kg · ` : ''}${number(log.seconds)} sec${side}` : undefined;
   if (!positive(log.reps)) return undefined;
   const quantity = `${number(log.reps)} ${exercise.quantityUnit === 'm' ? 'm' : 'reps'}`;
-  if (exercise.mode === 'bodyweight' && (log.kg == null || log.kg === 0)) return `${quantity}${side}`;
+  if (exercise.mode === 'bodyweight' && (log.kg == null || log.kg === 0)) return `${quantity}${side}${exercise.prescribedDistanceM != null && positive(log.seconds) ? ` · ${number(log.seconds)} sec measured` : ''}`;
   if (!nonnegative(log.kg)) return undefined;
   return `${number(log.kg)} kg × ${number(log.reps)}${exercise.quantityUnit === 'm' ? ' m' : ''}${side}`;
 }

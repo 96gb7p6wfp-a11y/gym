@@ -1,6 +1,6 @@
 import { DEFAULT_PROFILE } from './domain.js';
 import { findLibraryExercise } from './exercise-library.ts';
-import { createV81VolleyballMasterPlan, createVolleyballMasterPlan } from './volleyball-master-plan.ts';
+import { createV81VolleyballMasterPlan, createVolleyballMasterPlan, createV9VolleyballMasterPlan } from './volleyball-master-plan.ts';
 import { getStretchRoutine, type StretchStep } from './stretch-routine.ts';
 
 export interface PreparationExercise {
@@ -22,7 +22,8 @@ export interface SessionPreparationOptions {
   name?: string;
   goal?: string;
   minutes?: number;
-  programRevision?: '8.1' | '13.1';
+  programRevision?: '8.1' | '13.1' | '9';
+  programSessionId?: string;
   /** Finished sessions must not imply that unlogged exercises were performed. */
   completedOnly?: boolean;
 }
@@ -84,6 +85,10 @@ for (const [name, concept] of [
   ['Standing Scapular Retraction', 'scapular'], ['Supported Quarter Squat', 'landing'],
   ['No-Impact Takeoff Rehearsal', 'jump'], ['Unloaded Throw Rehearsal', 'upper-power'],
   ['Unloaded Pattern Rehearsal', 'rehearsal'], ['Seated Easy Breathing', 'breathing'],
+  ['Easy Upper-Body Movement', 'easy'], ['Easy Walk or Bike', 'easy'],
+  ['Bodyweight Squat + Hinge', 'lower-rehearsal'], ['Light Throwing Rehearsal', 'upper-power'],
+  ['Landing + Progressive Jump Preparation', 'jump'], ['Easy Defensive Footwork', 'speed'],
+  ['Easy Walk + Comfortable Mobility', 'walk'],
 ]) conceptByName.set(normalize(name), concept);
 
 // Only exact shipped defaults are replaceable. Renamed steps or edited targets/cues are custom.
@@ -92,7 +97,7 @@ const signature = (item: Omit<StretchStep, 'done'>) => JSON.stringify([item.key,
 const automatic = new Map<string, string>();
 const conceptByKey = new Map<string, string>();
 const prescribedPreparation = new Map<string, readonly StretchStep[]>();
-const preparationKey = (revision: string, name?: string) => `${revision}:${normalize(name)}`;
+const preparationKey = (revision: string, name?: string, sessionId?: string) => `${revision}:${sessionId ?? normalize(name)}`;
 const register = (items: readonly Omit<StretchStep, 'done'>[]) => {
   for (const item of items) {
     const concept = conceptByName.get(normalize(item.name));
@@ -101,12 +106,18 @@ const register = (items: readonly Omit<StretchStep, 'done'>[]) => {
 };
 register(allTemplates);
 register(getStretchRoutine());
-for (const day of [...DEFAULT_PROFILE.plan, ...createV81VolleyballMasterPlan(), ...createV81VolleyballMasterPlan(true), ...createVolleyballMasterPlan(), ...createVolleyballMasterPlan(true)]) {
+for (const day of [...DEFAULT_PROFILE.plan, ...createV81VolleyballMasterPlan(), ...createV81VolleyballMasterPlan(true), ...createVolleyballMasterPlan(), ...createVolleyballMasterPlan(true), ...createV9VolleyballMasterPlan(), ...createV9VolleyballMasterPlan(true)]) {
   register(day.warmup ?? []);
   register(day.cooldown ?? []);
   if (day.extraSession) { register(day.extraSession.warmup ?? []); register(day.extraSession.cooldown ?? []); }
-  if (day.programRevision && day.warmup && (day.warmup.length || day.programRevision === '13.1')) prescribedPreparation.set(preparationKey(day.programRevision, day.name), day.warmup);
-  if (day.extraSession?.programRevision && day.extraSession.warmup && (day.extraSession.warmup.length || day.extraSession.programRevision === '13.1')) prescribedPreparation.set(preparationKey(day.extraSession.programRevision, day.extraSession.name), day.extraSession.warmup);
+  if (day.programRevision && day.warmup && (day.warmup.length || ['13.1', '9'].includes(day.programRevision))) {
+    prescribedPreparation.set(preparationKey(day.programRevision, day.name), day.warmup);
+    if (day.programSessionId) prescribedPreparation.set(preparationKey(day.programRevision, day.name, day.programSessionId), day.warmup);
+  }
+  if (day.extraSession?.programRevision && day.extraSession.warmup && (day.extraSession.warmup.length || ['13.1', '9'].includes(day.extraSession.programRevision))) {
+    prescribedPreparation.set(preparationKey(day.extraSession.programRevision, day.extraSession.name), day.extraSession.warmup);
+    if (day.extraSession.programSessionId) prescribedPreparation.set(preparationKey(day.extraSession.programRevision, day.extraSession.name, day.extraSession.programSessionId), day.extraSession.warmup);
+  }
 }
 
 function focusFor(exercises: readonly PreparationExercise[]): Set<Focus> {
@@ -208,10 +219,10 @@ export function getSessionPreparation(options: SessionPreparationOptions): Stret
   if (options.phase === 'warmup' && options.programRevision) {
     // The revised program prescribes one concise preparation sequence. Keep
     // its dose and saved substitutions instead of appending a generic routine.
-    const prescribed = options.items ?? prescribedPreparation.get(preparationKey(options.programRevision, options.name));
+    const prescribed = options.items ?? prescribedPreparation.get(preparationKey(options.programRevision, options.name, options.programSessionId));
     // An explicitly empty V13.1 sequence can be a clearance/readiness adjustment
     // or a primer that already contains its preparation. Do not re-add impact.
-    if (prescribed && (prescribed.length || options.programRevision === '13.1')) return prescribed.slice(0, 20).map(item => ({ ...item }));
+    if (prescribed && (prescribed.length || ['13.1', '9'].includes(options.programRevision))) return prescribed.slice(0, 20).map(item => ({ ...item }));
   }
   const desired = suggestions(options);
   const wanted = new Set(desired.map(item => item.concept));
@@ -262,12 +273,12 @@ export function getSessionPreparation(options: SessionPreparationOptions): Stret
   return limited;
 }
 
-export type WarmupPlan = Pick<SessionPreparationOptions, 'kind' | 'exercises' | 'name' | 'goal' | 'minutes' | 'programRevision'> & { warmup?: readonly StretchStep[] };
+export type WarmupPlan = Pick<SessionPreparationOptions, 'kind' | 'exercises' | 'name' | 'goal' | 'minutes' | 'programRevision' | 'programSessionId'> & { warmup?: readonly StretchStep[] };
 
 /** Stable, short view of preparation. The full saved routine is never changed. */
 export function getQuickWarmup(plan: WarmupPlan, items: readonly StretchStep[] = []): StretchStep[] {
   const available = items.length ? items : getSessionPreparation({ ...plan, items: plan.warmup, phase: 'warmup' });
-  if (plan.programRevision && prescribedPreparation.has(preparationKey(plan.programRevision, plan.name))) return available.map(item => ({ ...item }));
+  if (plan.programRevision === '9' || (plan.programRevision && prescribedPreparation.has(preparationKey(plan.programRevision, plan.name, plan.programSessionId)))) return available.map(item => ({ ...item }));
   const focus = focusFor(plan.exercises);
   const upper = ['shoulders', 'chest', 'back', 'biceps', 'triceps'].some(value => focus.has(value as Focus));
   const lower = ['quads', 'glutes', 'hamstrings', 'hips', 'adductors', 'calves'].some(value => focus.has(value as Focus));
@@ -303,7 +314,64 @@ export function getQuickWarmup(plan: WarmupPlan, items: readonly StretchStep[] =
   return selected;
 }
 
+/** V9 uses saved template identity, so renamed sessions keep the right preparation. */
+function v9Preparation(plan: WarmupPlan): { title: string; duration: string; purpose: string; rampUp: string } | undefined {
+  if (plan.programRevision !== '9') return undefined;
+  const id = plan.programSessionId;
+  const allPreparation = plan.exercises.length > 0 && plan.exercises.every(exercise => exercise.preparationOnly);
+  if (id === 'v9-match-primer') return {
+    title: 'Preparation Is the Session', duration: 'Included in primer',
+    purpose: 'This short primer is already the preparation; full rest is valid when fatigued.',
+    rampUp: 'Start the easy dynamic movement in the primer itself. No extra checklist, heavy lifting or maximal jumps. Keep approach footwork controlled.',
+  };
+  if (id === 'v9-approach-technique') return {
+    title: 'Approach Rhythm Preparation', duration: 'Included in technique',
+    purpose: 'Move gently into the first rhythm drill without adding maximal indoor jumps.',
+    rampUp: 'Start slowly, check clear footing and build rhythm within the saved technique dose. Skip the optional routine if practice already included it.',
+  };
+  if (allPreparation) return {
+    title: 'Easy Session Preparation', duration: '3–5 min',
+    purpose: 'Rehearse comfortable movements within your recorded guidance.',
+    rampUp: 'Use easy, comfortable rehearsal only. Do not add heavy loading, maximal jumps or ballistic work removed from this prescription.',
+  };
+  if (plan.kind === 'recovery') return {
+    title: 'Easy Movement Preparation', duration: '2–3 min',
+    purpose: 'Move comfortably without creating another training session.',
+    rampUp: 'Choose easy walking or mobility. No catch-up strength, acceleration or jump work is needed.',
+  };
+  if (plan.kind === 'sport') return {
+    title: 'Court Preparation', duration: '6–8 min',
+    purpose: 'Prepare ankles, hips and shoulders before practice or competition.',
+    rampUp: 'Build court movement and hitting speed gradually with your team. Log only activity and contacts that actually happen.',
+  };
+  const limitedStrength = plan.exercises.some(exercise => exercise.preparationOnly && exercise.mode === 'weight')
+    && !plan.exercises.some(exercise => !exercise.preparationOnly && exercise.mode === 'weight' && !/throw|slam|jump/i.test(exercise.name ?? ''));
+  const limitedRamp = 'Follow only the movements remaining in today’s prescription. Keep weighted strength rehearsal easy within your recorded guidance; do not add heavy ramp-up sets or restore removed impact work.';
+  if (id === 'v9-speed-lower-a') return {
+    title: 'Speed + Lower Preparation', duration: '6–8 min + ramp-up',
+    purpose: 'Prepare acceleration, controlled landings and lower-body loading without fatigue.',
+    rampUp: limitedStrength ? limitedRamp : 'Check a clear lane with enough deceleration space. Build any prescribed acceleration and jumps gradually. Before Hack Squat, take 2–4 progressively loaded practice sets, reducing reps as load rises; rehearse the RDL lightly. Working Hack Squat remains three sets in the complex, never three extra sets.',
+  };
+  if (id === 'v9-lower-b') return {
+    title: 'Lower Strength Preparation', duration: '6–8 min + ramp-up',
+    purpose: 'Check readiness after Friday, then prepare safe acceleration and controlled lower-body strength.',
+    rampUp: limitedStrength ? limitedRamp : 'Use progressive easy acceleration only in a safe, unobstructed lane when it remains prescribed. Take 2–4 lighter Leg Press sets before working sets, then rehearse Smith Bulgarian Split Squat and Hip Thrust with easy loading. Keep all preparation short of fatigue.',
+  };
+  if (id === 'v9-agility-upper-b') return {
+    title: 'Agility + Shoulder Preparation', duration: '6–8 min + ramp-up',
+    purpose: 'Rehearse balanced footwork, shoulder movement and light throwing before demanding work.',
+    rampUp: limitedStrength ? limitedRamp : 'Check a non-slip area with clear stopping space. Rehearse shuffles and plants slowly before faster efforts, then build light throwing speed where prescribed. Use easy pulling and pressing sets before the first demanding upper-body lifts.',
+  };
+  return {
+    title: 'Upper Body Preparation', duration: '6–8 min + ramp-up',
+    purpose: 'Warm shoulders and upper back for fast, controlled power and challenging presses and pulls.',
+    rampUp: limitedStrength ? limitedRamp : 'Rehearse the two-handed overhead slam with a light ball only when prescribed. Then use lighter or more-assisted pulling sets and lighter chest-press sets before working sets. Keep each rehearsal controlled and well short of fatigue.',
+  };
+}
+
 export function getQuickWarmupPresentation(plan: WarmupPlan): { title: string; duration: string; purpose: string; rampUp: string } {
+  const v9 = v9Preparation(plan);
+  if (v9) return v9;
   const detailed = getWarmupPresentation(plan);
   const firstLift = plan.exercises.find(item => !item.preparationOnly && item.mode === 'weight' && !/throw|slam|jump/i.test(item.name ?? ''));
   const primer = /primer|technique/i.test(plan.name ?? '');
@@ -356,12 +424,15 @@ export function getQuickWarmupCue(item: StretchStep): string {
     scapular: 'Draw the shoulder blades back; keep the neck easy.', landing: 'Settle softly; knees track with the feet.',
     foot: 'Keep the heel and both toe bases grounded.', pogo: 'Light, quick contacts. Skip if calves or Achilles hurt.',
     breathing: 'Exhale gently and let the ribs settle.', rehearsal: 'Start very light. Finish ready, not tired.',
+    speed: 'Clear footing first. Rehearse balanced, easy steps.',
   };
   return cues[concept ?? ''] ?? item.cue.split(/(?<=[.!?])\s/)[0];
 }
 
 /** Small shared labels for the preview and the preparation sheet. No session is created. */
 export function getWarmupPresentation(plan: WarmupPlan): { title: string; duration: string; purpose: string } {
+  const v9 = v9Preparation(plan);
+  if (v9) return v9;
   const focus = focusFor(plan.exercises);
   const upper = ['shoulders', 'chest', 'back', 'biceps', 'triceps'].some(item => focus.has(item as Focus));
   const lower = ['quads', 'glutes', 'hamstrings', 'hips', 'adductors', 'calves'].some(item => focus.has(item as Focus));
@@ -392,6 +463,7 @@ const benefits: Record<string, string> = {
   cuff: 'Prepare shoulder rotation with a light load.', scapular: 'Activate the upper back gently.', glute: 'Prepare hip extension and pelvic control.',
   trunk: 'Prepare trunk control for loading.', landing: 'Rehearse a quiet, controlled landing.', 'upper-power': 'Build throwing speed without fatigue.',
   pogo: 'Prepare light, quick ankle contacts.', 'upper-rehearsal': 'Practice today’s upper-body pattern.', 'lower-rehearsal': 'Practice today’s lower-body pattern.',
+  speed: 'Rehearse balanced foot placement before faster movement.',
 };
 
 /** Alternatives are low-dose preparation, never permission to train through pain. */
