@@ -41,7 +41,7 @@ test('new-session history defaults yield to the last completed set without compl
 
 test('planned fallback is an unfinished draft; explicit manual choices and deliberate clears always win', () => {
   const session = SessionSchema.parse(createSession(plan(), 2, '2026-11-11', DEFAULT_PROFILE, []));
-  assert.deepEqual(session.exercises[0].logs[1].inputSources, { kg: 'planned', reps: 'planned' });
+  assert.deepEqual(session.exercises[0].logs[1].inputSources, { kg: 'default', reps: 'default' });
   assert.equal(session.exercises[0].logs[1].kg, 40);
   assert.equal(session.exercises[0].logs[1].reps, 4);
   session.exercises[0].logs[0] = { ...session.exercises[0].logs[0], kg: 60, reps: 8, done: true };

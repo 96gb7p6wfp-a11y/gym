@@ -962,11 +962,11 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     measurementCm: optionalAmount(1e3).optional(),
     // Additive provenance protects deliberately cleared drafts after refresh.
     inputSources: zObject({
-      kg: zEnum(['manual', 'planned', 'history', 'last-set']).optional(),
-      reps: zEnum(['manual', 'planned', 'history', 'last-set']).optional(),
+      kg: zEnum(['manual', 'planned', 'default', 'history', 'last-set']).optional(),
+      reps: zEnum(['manual', 'planned', 'default', 'history', 'last-set']).optional(),
     }).strict().optional(),
-    // Only new generated defaults may yield to a completed set. Older planned
-    // values retain their stronger meaning and are never relabeled on read.
+    // Accept early preview backups without rewriting them. New generated
+    // fallbacks use the compact 'default' source instead of this per-set object.
     plannedDefaults: zObject({ kg: zLiteral(true).optional(), reps: zLiteral(true).optional() }).strict().optional(),
   }),
   SessionExerciseSchema = ExerciseSchema.extend({
@@ -1233,12 +1233,8 @@ function createSession(e, t, n, r, i) {
             const kg = e.preparationOnly ? (e.defaultKg ?? 0) : r ? r.kg : (e.defaultKg ?? null);
             const reps = e.prescribedDistanceM != null ? e.prescribedDistanceM : r?.reps ?? plannedReps;
             const inputSources = {
-              ...(kg != null ? { kg: r ? 'history' : 'planned' } : {}),
-              ...(reps != null ? { reps: e.prescribedDistanceM != null ? 'planned' : r?.reps != null ? 'history' : 'planned' } : {}),
-            };
-            const plannedDefaults = {
-              ...(!e.preparationOnly && inputSources.kg === 'planned' ? { kg: true } : {}),
-              ...(!e.preparationOnly && e.prescribedDistanceM == null && inputSources.reps === 'planned' ? { reps: true } : {}),
+              ...(kg != null ? { kg: r ? 'history' : e.preparationOnly ? 'planned' : 'default' } : {}),
+              ...(reps != null ? { reps: e.prescribedDistanceM != null ? 'planned' : r?.reps != null ? 'history' : e.preparationOnly ? 'planned' : 'default' } : {}),
             };
             return {
               id: crypto.randomUUID(),
@@ -1248,7 +1244,6 @@ function createSession(e, t, n, r, i) {
               rir: null,
               done: !1,
               ...(Object.keys(inputSources).length ? { inputSources } : {}),
-              ...(Object.keys(plannedDefaults).length ? { plannedDefaults } : {}),
             };
           },
         ),

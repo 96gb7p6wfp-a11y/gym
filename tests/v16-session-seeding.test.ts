@@ -25,7 +25,7 @@ test('initial session suggestions respect normalized equipment and never label l
   for (const equipmentLabel of ['Matrix Chest Press', undefined]) {
     const incompatible = draft({ ...BASE, equipmentLabel, defaultKg: 10 }, [technogym]);
     assert.deepEqual(incompatible.exercises[0].logs.map(log => [log.kg, log.reps]), [[10, 8], [10, 8], [10, 8]]);
-    assert.equal(incompatible.exercises[0].logs[0].inputSources?.reps, 'planned');
+    assert.equal(incompatible.exercises[0].logs[0].inputSources?.reps, 'default');
   }
   const unlabeled = history('2026-10-26');
   const known = draft({ ...BASE, equipmentLabel: 'Technogym Chest Press' }, [unlabeled]);
@@ -47,7 +47,7 @@ test('initial suggestions exclude incompatible movement configurations and prepa
   const withoutAddedLoad = draft({ ...bodyweight, defaultKg: 0 }, [history('2026-10-26', bodyweight, 20)]);
   assert.equal(withoutAddedLoad.exercises[0].logs[0].kg, 0);
   assert.equal(withoutAddedLoad.exercises[0].logs[0].reps, 8);
-  assert.equal(withoutAddedLoad.exercises[0].logs[0].inputSources?.reps, 'planned');
+  assert.equal(withoutAddedLoad.exercises[0].logs[0].inputSources?.reps, 'default');
 });
 
 test('source set ordinals remain stable and missing newest values never fall back to older work', () => {

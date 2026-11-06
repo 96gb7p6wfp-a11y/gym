@@ -258,7 +258,7 @@ test('a renamed, retyped or remeasured movement cannot inherit another movementâ
     assert.equal(next.exercises[0].logs[0].kg, null);
     assert.equal(next.exercises[0].logs[0].reps, 'measurement' in patch ? null : 4);
     assert.equal(next.exercises[0].logs[0].done, false);
-    if (!('measurement' in patch)) assert.equal(next.exercises[0].logs[0].inputSources?.reps, 'planned');
+    if (!('measurement' in patch)) assert.equal(next.exercises[0].logs[0].inputSources?.reps, 'default');
   }
 });
 
