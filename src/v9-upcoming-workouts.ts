@@ -6,6 +6,7 @@ import { createV9VolleyballMasterPlan } from './volleyball-v9-plan.ts';
 import { masterWeekStart, resolveMasterProgramPlan, type MasterProgramSettings } from './volleyball-master-plan.ts';
 import { effectiveTrainingGuidance } from './training-guidance.ts';
 import { findLibraryExercise } from './exercise-library.ts';
+import { getCoachRecords } from './coach-schedule.ts';
 
 type Profile = z.infer<typeof ProfileSchema>;
 export type V9ReviewableDraft = SessionDraft & {
@@ -75,7 +76,7 @@ function v9Match(plan: PlanDay): boolean {
  * Sunday match selection cannot reuse an approval for the opposite Saturday.
  * This is read-only: quarantined drafts remain recoverable and are never erased.
  */
-export function getV9DraftDisposition(draft: V9ReviewableDraft | undefined, recommended: PlanDay): V9DraftDisposition {
+export function getV9DraftDisposition(draft: V9ReviewableDraft | undefined, recommended: PlanDay, options: { coach?: boolean } = {}): V9DraftDisposition {
   if (!draft) return { kind: 'none', reason: 'Use the saved weekly recommendation.' };
   if (recommended.programRevision !== '9') return { kind: 'custom', reason: 'Use the existing program’s date-edit rules.' };
   if (draft.customized === false) return { kind: 'preparation', reason: 'Preparation checks do not replace a newer training prescription.' };
@@ -89,6 +90,7 @@ export function getV9DraftDisposition(draft: V9ReviewableDraft | undefined, reco
     || expected === 'v9-recovery' && (match || !safeRecovery(draft.plan))
     || Boolean(actual && expected && actual !== expected);
   if (conflict) return { kind: 'schedule-conflict', reason: 'This saved edit belongs to a different session or match variant. It stays stored; the actual date’s V9 recommendation takes priority.' };
+  if (options.coach && draft.reviewedForCoach !== 1) return { kind: 'review-needed', reason: 'This date edit was saved before daily coaching. It stays stored for review; today’s current recommendation is shown until you explicitly keep or replace it.' };
   if (expected && (draft.plan.programRevision === '9' && actual === expected
     || draft.reviewedForProgram?.revision === '9' && draft.reviewedForProgram.programSessionId === expected)) {
     return { kind: 'custom', reason: 'Use the explicitly reviewed custom workout for this date.' };
@@ -104,7 +106,7 @@ export function v9SettingsForProfile(profile: Profile, today: string): MasterPro
   const { rescheduledLowerDates: _oldMoves, optional: _oldOptional, ...settings } = current ?? {
     version: 1 as const, startDate: masterWeekStart(today), matchWeeks: [],
   };
-  return { ...settings, revision: '9', ...(current?.revision === '9' ? {} : { v9EffectiveDate: today }),
+  return { ...settings, ...getCoachRecords(profile), revision: '9', ...(current?.revision === '9' ? {} : { v9EffectiveDate: today }),
     ...(guidance ? { clearance: structuredClone(guidance) } : {}) };
 }
 
@@ -128,7 +130,7 @@ export function reviewV9UpcomingWorkouts(profile: Profile, today: string, option
   for (const date of activeDates) assertV9Date(date);
   return (profile.sessionDrafts ?? []).filter(draft => draft.date >= activation).map(draft => {
     const recommended = recommendedV9Workout(profile, today, draft.date, draft.slot);
-    const resolution = recommended ? getV9DraftDisposition(draft, recommended) : undefined;
+    const resolution = recommended ? getV9DraftDisposition(draft, recommended, { coach: true }) : undefined;
     const active = activeDates.has(draft.date);
     const currentPreparation = draft.plan.programRevision === '9'
       && draft.plan.programSessionId === recommended?.programSessionId;
@@ -176,7 +178,7 @@ export function applyV9UpcomingDraftDecisions(profile: Profile, today: string, o
     if (!available.has(v9DraftKey(draft)) || options.activeDates?.includes(draft.date)) return [structuredClone(draft)];
     const key = v9DraftKey(draft);
     if (replace.has(key) || available.get(key)?.disposition === 'preparation-refresh') return [];
-    if (keep.has(key)) return [{ ...structuredClone(draft), reviewedForProgram: { revision: '9' as const, programSessionId: available.get(key)!.programSessionId! } }];
+    if (keep.has(key)) return [{ ...structuredClone(draft), reviewedForCoach: 1 as const, reviewedForProgram: { revision: '9' as const, programSessionId: available.get(key)!.programSessionId! } }];
     return [structuredClone(draft)];
   });
 }

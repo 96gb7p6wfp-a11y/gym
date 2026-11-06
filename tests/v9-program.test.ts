@@ -154,7 +154,7 @@ test('Friday is PE plus volleyball, not recovery or a manufactured gym completio
 });
 
 test('normal Green Saturday resolves exactly the complete eleven-item V9 Lower B in order', () => {
-  const day = resolve('2026-11-07', { readiness: [{ date: '2026-11-07', status: 'green' }] })[5];
+  const day = resolve('2026-11-07', { dailyReadiness: [{ date: '2026-11-07', feeling: 'normal' }] })[5];
   assert.equal(day.name, 'Lower B — Full Strength');
   assert.equal(day.programSessionId, 'v9-lower-b');
   assert.equal(day.subtitle, 'Speed + Lower-Body Strength');
@@ -291,10 +291,10 @@ test('unknown heavy guidance remains easy preparation, but the full base and its
   assert.ok(onlyImpact.exercises.every(e => !/Complex pair/.test(e.group)), 'easy preparation and unequal jump sets are not a full strength-power complex');
 });
 
-test('week four and eight reduce demanding work explicitly rather than overwriting the base plan', () => {
+test('explicit legacy-cycle periodization can reduce weeks four/eight without overwriting the base plan', () => {
   const base = factory(), before = structuredClone(base);
-  const deload = resolveMasterProgramPlan(base, settings, '2026-11-25');
-  const evaluation = resolveMasterProgramPlan(base, settings, '2026-12-23');
+  const deload = resolveMasterProgramPlan(base, { ...settings, periodizationMode: 'legacy-cycle' }, '2026-11-25');
+  const evaluation = resolveMasterProgramPlan(base, { ...settings, periodizationMode: 'legacy-cycle' }, '2026-12-23');
   assert.match(deload[2].name, /Deload/);
   assert.ok(masterJumpContacts(deload[2]).planned < 24);
   assert.equal(deload[2].exercises.find(e => e.name === 'Hack Squat')?.sets, 2);
@@ -313,10 +313,10 @@ test('six-week evaluation is optional and neither adds contacts nor restarts the
 });
 
 test('date readiness remains available after the block; old reschedule flags never move or duplicate V9 Lower B', () => {
-  const after = resolve('2027-01-02', { readiness: [{ date: '2027-01-02', status: 'yellow' }] });
+  const after = resolve('2027-01-02', { dailyReadiness: [{ date: '2027-01-02', feeling: 'tired' }] });
   assert.match(after[5].name, /Modified/);
-  assert.equal(isMasterReadinessRequired(settings, '2027-01-02', factory()[5]), true);
-  assert.equal(isMasterReadinessRequired(settings, '2026-11-04', factory()[2]), true);
+  assert.equal(isMasterReadinessRequired(settings, '2027-01-02', factory()[5]), false);
+  assert.equal(isMasterReadinessRequired(settings, '2026-11-04', factory()[2]), false);
   assert.equal(isMasterReadinessRequired({ ...settings, matchWeeks: [1] }, '2026-11-07', createV9VolleyballMasterPlan(true)[5]), false);
   const moved = resolve('2026-11-07', { rescheduledLowerDates: ['2026-11-07'] });
   assert.equal(moved[5].programSessionId, 'v9-lower-b');
@@ -326,7 +326,7 @@ test('date readiness remains available after the block; old reschedule flags nev
 
 test('fresh factories and resolutions never mutate saved recommendations, match variants or personal guidance', () => {
   const base = factory(), weekend = createV9VolleyballMasterPlan(true).slice(5);
-  const preferences: MasterProgramSettings = { ...settings, matchWeeks: [1], readiness: [{ date: '2026-11-04', status: 'yellow' }] };
+  const preferences: MasterProgramSettings = { ...settings, matchWeeks: [1], dailyReadiness: [{ date: '2026-11-04', feeling: 'tired' }] };
   const before = structuredClone({ base, weekend, preferences });
   resolveMasterProgramPlan(base, preferences, '2026-11-04', weekend);
   assert.deepEqual({ base, weekend, preferences }, before);

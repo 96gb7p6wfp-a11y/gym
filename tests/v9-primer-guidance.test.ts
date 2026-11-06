@@ -65,7 +65,8 @@ test('the primer name or identity never conceals heavy loading, high effort or e
 
 test('Yellow primer remains optional and easy while Red resolves to recovery without restored work', () => {
   for (const status of ['green', 'yellow', 'red'] as const) {
-    const options = { ...settings, readiness: [{ date, status }] };
+    const feeling = status === 'green' ? 'normal' as const : status === 'yellow' ? 'tired' as const : 'poor' as const;
+    const options = { ...settings, readiness: [{ date, status }], dailyReadiness: [{ date, feeling }] };
     const plan = resolveMasterProgramPlan(createV9VolleyballMasterPlan(), options, date)[5];
     const before = structuredClone(plan), view = getWorkoutPrescription({ plan, settings: options, date });
     assert.equal(view.difficulty, 'light');

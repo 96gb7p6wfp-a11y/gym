@@ -5,6 +5,7 @@ import { effectiveTrainingGuidance } from './training-guidance.ts';
 import type { PlanDay, PlanExercise } from './workout-customization';
 import { findLibraryExercise } from './exercise-library.ts';
 import { createV9VolleyballMasterPlan } from './volleyball-v9-plan.ts';
+import { getCoachRecords } from './coach-schedule.ts';
 import {
   applyV9UpcomingDraftDecisions, assertV9Date, reviewV9UpcomingWorkouts, v9SettingsForProfile,
   type V9DraftReviewOptions, type V9UpcomingWorkoutReview,
@@ -162,11 +163,13 @@ export function restorePreviousMasterProgram(profile: Profile): Profile {
   const archive = [...(current.masterProgramArchive ?? [])];
   const previousBackup = archive.pop();
   const guidance = effectiveTrainingGuidance(current);
+  const coachRecords = getCoachRecords(current);
   return ProfileSchema.parse({
     ...other,
     ...(guidance ? { trainingGuidance: guidance } : {}),
+    ...(coachRecords ? { coachRecords } : {}),
     plan: backup.plan,
-    ...(backup.masterProgram ? { masterProgram: { ...backup.masterProgram, ...(guidance ? { clearance: guidance } : {}) } } : {}),
+    ...(backup.masterProgram ? { masterProgram: { ...backup.masterProgram, ...coachRecords, ...(guidance ? { clearance: guidance } : {}) } } : {}),
     ...(backup.masterMatchWeekend ? { masterMatchWeekend: backup.masterMatchWeekend } : {}),
     ...(backup.preMasterPlan ? { preMasterPlan: backup.preMasterPlan } : {}),
     ...(previousBackup ? { masterProgramBackup: previousBackup } : {}),

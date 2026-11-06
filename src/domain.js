@@ -840,6 +840,7 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     measurement: zEnum([`touch`, `height`, `distance`]).optional(),
     exerciseId: zString().min(1).max(120).optional(),
     defaultKg: optionalAmount(2e3).optional(),
+    loadIncrementKg: zNumber().finite().min(0.25).max(25).optional(),
     targetRpe: zNumber().finite().min(1).max(10).optional(),
     targetRir: zNumber().finite().min(0).max(10).optional(),
     section: zString().max(100).optional(),
@@ -889,6 +890,7 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     readiness: zEnum([`green`, `yellow`, `red`]).optional(),
     customized: zBoolean().optional(),
     reviewedForProgram: zObject({ revision: zLiteral('9'), programSessionId: zString().min(1).max(100) }).strict().optional(),
+    reviewedForCoach: zLiteral(1).optional(),
   }),
   ProfileWeeklyPlanSchema = zArray(
       PlanDaySchema.extend({
@@ -930,6 +932,7 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
     appearance: zEnum([`system`, `light`, `dark`]).optional(),
     presentationMode: zEnum([`simple`, `athlete`]).optional(),
     trainingPreferences: TrainingPreferencesSchema.optional(),
+    coachRecords: MasterProgramSettingsSchema.pick({ calendarMatches: true, dailyReadiness: true }).optional(),
     onboarding: OnboardingStateSchema.optional(),
     bodyWeight: zNumber().finite().min(20).max(400).nullable(),
     restSeconds: zNumber().int().min(15).max(600),
@@ -1208,9 +1211,10 @@ function createSession(e, t, n, r, i) {
       done: !1,
     })),
     exercises: e.exercises.filter((exercise) => exercise.optionalWork !== true).map((e) => {
-      const t = previousSessionSeed(i, e, n);
+      const t = e.preparationOnly ? undefined : previousSessionSeed(i, e, n);
       return {
         ...e,
+        ...(e.loadIncrementKg == null && t?.loadIncrementKg != null ? { loadIncrementKg: t.loadIncrementKg } : {}),
         elapsedMs: 0,
         runningSince: null,
         logs: Array.from(
@@ -1220,14 +1224,23 @@ function createSession(e, t, n, r, i) {
           (_, n) => {
             const previous = t?.logs[n];
             const r = previous?.done ? previous : undefined;
+            const targetRep = !e.measurement && !e.quantityUnit && e.mode !== 'timed'
+              && !/sec|min|\bhold\b/i.test(e.target) ? Number(e.target.match(/\d+/)?.[0]) : null;
+            const plannedReps = Number.isInteger(targetRep) && targetRep > 0 && targetRep <= 1000 ? targetRep : null;
+            const kg = e.preparationOnly ? (e.defaultKg ?? 0) : r ? r.kg : (e.defaultKg ?? null);
+            const reps = e.prescribedDistanceM != null ? e.prescribedDistanceM : r?.reps ?? plannedReps;
+            const inputSources = {
+              ...(kg != null ? { kg: r ? 'history' : 'planned' } : {}),
+              ...(reps != null ? { reps: e.prescribedDistanceM != null ? 'planned' : r?.reps != null ? 'history' : 'planned' } : {}),
+            };
             return {
               id: crypto.randomUUID(),
-              kg: r ? r.kg : (e.defaultKg ?? null),
-              reps: e.prescribedDistanceM != null ? e.prescribedDistanceM : r?.reps ?? null,
+              kg,
+              reps,
               seconds: e.prescribedDistanceM != null ? null : r?.seconds ?? null,
               rir: null,
               done: !1,
-              ...(e.prescribedDistanceM != null ? { inputSources: { reps: 'planned' } } : {}),
+              ...(Object.keys(inputSources).length ? { inputSources } : {}),
             };
           },
         ),

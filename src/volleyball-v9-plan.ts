@@ -166,6 +166,22 @@ const modifiedTitle = (day: PlanDay) => day.programSessionId === 'v9-lower-b' ? 
     : day.programSessionId === 'v9-agility-upper-b' ? 'Modified Agility + Upper B'
       : day.programSessionId === 'v9-upper-a' ? 'Modified Upper A' : `Modified — ${day.name}`.slice(0, 80);
 
+/** Relative workload estimate, never a reason to add work or a completion target. */
+function adjustedDuration(base: PlanDay, modified: PlanDay): PlanDay {
+  const work = (day: PlanDay) => day.exercises.filter(item => !item.optionalWork).reduce((total, item) => {
+    const timed = item.mode === 'timed' ? Number(item.target.match(/\d+/)?.[0] ?? 30) * (/\bmin\b/.test(item.target) ? 60 : 1) : 45;
+    return total + item.sets * (Math.min(600, item.rest) + timed * (item.perSide ? 2 : 1));
+  }, 0);
+  const previous = work(base), current = work(modified);
+  if (!previous || !current || current >= previous) return modified;
+  const ratio = current / previous;
+  const original = base.durationRange?.match(/(\d+)\s*[–—-]\s*(\d+)/);
+  const lower = Number(original?.[1] ?? base.minutes * .9), upper = Number(original?.[2] ?? base.minutes * 1.1);
+  const round = (minutes: number) => Math.max(5, Math.round(minutes / 5) * 5);
+  const minimum = round(lower * ratio), maximum = Math.max(minimum + 5, round(upper * ratio));
+  return { ...modified, minutes: round(base.minutes * ratio), durationRange: `≈ ${minimum}–${maximum} min` };
+}
+
 /** Changes only a future recommendation, never the stored base or a session. */
 export function applyV9Readiness(workout: PlanDay, readiness?: MasterReadiness): PlanDay {
   if (!readiness || readiness === 'green' || workout.kind !== 'strength' || workout.programSessionId === 'v9-approach-technique') return workout;
@@ -176,9 +192,9 @@ export function applyV9Readiness(workout: PlanDay, readiness?: MasterReadiness):
     const hard = (item.targetRpe ?? 0) >= 8;
     return hard ? { ...item, sets: Math.max(1, item.sets - 1), targetRpe: 7, targetRir: 3 } : { ...item };
   }));
-  return { ...workout, name: modifiedTitle(workout), exercises,
+  return adjustedDuration(workout, { ...workout, name: modifiedTitle(workout), exercises,
     warmup: workout.warmup?.filter(item => !/jump|pogo|throw/i.test(item.name)),
-    note: `Modified because of self-reported Yellow readiness: acceleration, reactive/maximal jumps, aggressive agility and ballistic throws omitted; demanding strength sets reduced with more reserve. Full V9 base remains available to review. ${workout.note}`.slice(0, 500) };
+    note: `Modified because of self-reported Yellow readiness: acceleration, reactive/maximal jumps, aggressive agility and ballistic throws omitted; demanding strength sets reduced with more reserve. Full V9 base remains available to review. ${workout.note}`.slice(0, 500) });
 }
 
 /** Preserves the full base; lighter phases do not become a new weekly template. */
@@ -199,8 +215,8 @@ export function v9PhasePlan(day: PlanDay, week: number): PlanDay {
     if (cmj) exercises.splice(Math.max(0, approach), 0, { ...cmj, group: 'Standing vertical evaluation', section: 'B · Fresh Performance Evaluation', cue: 'Fresh measured standing jump attempts with full recovery. This replaces normal CMJ complex contacts; do not add another jump session.' });
     exercises = exercises.map(item => item.key === 'master-v9-hack' ? { ...item, group: 'Strength', cue: 'Reduced-volume evaluation-week strength after fresh jump measurements. Keep about RIR 2.' } : item);
   }
-  return { ...day, name: `${evaluation ? 'Evaluation' : 'Deload'} — ${day.name}`.slice(0, 80), exercises: unlinkComplex(exercises),
-    note: `${evaluation ? 'Week 8: reduced-volume evaluation. Fresh jump tests replace normal jump volume; record results only when actually measured. No automatic cycle restart.' : 'Week 4: recovery/deload opportunity. Demanding working sets and additional jump/acceleration volume are reduced; movement quality takes priority.'} ${day.note}`.slice(0, 500) };
+  return adjustedDuration(day, { ...day, name: `${evaluation ? 'Evaluation' : 'Deload'} — ${day.name}`.slice(0, 80), exercises: unlinkComplex(exercises),
+    note: `${evaluation ? 'Week 8: reduced-volume evaluation. Fresh jump tests replace normal jump volume; record results only when actually measured. No automatic cycle restart.' : 'Week 4: recovery/deload opportunity. Demanding working sets and additional jump/acceleration volume are reduced; movement quality takes priority.'} ${day.note}`.slice(0, 500) });
 }
 
 /** Unknown guidance never becomes approval when selecting the complete V9 plan. */
@@ -223,7 +239,7 @@ export function applyV9Clearance(workout: PlanDay, clearance?: MasterProgramSett
   });
   if (!exercises.length) exercises = [ex('clearance-mobility', 'Easy Dynamic Movement', 'Modified preparation', 'Mobility', 1, '2–3 min', 0,
     { mode: 'timed', exerciseId: 'light-dynamic-mobility', preparationOnly: true, targetRpe: 4, cue: 'Choose comfortable non-impact movement or rest within your recorded guidance.' })];
-  return { ...workout, name: heavy ? modifiedTitle(workout) : 'Modified — Easy Preparation', exercises: unlinkComplex(exercises),
+  return adjustedDuration(workout, { ...workout, name: heavy ? modifiedTitle(workout) : 'Modified — Easy Preparation', exercises: unlinkComplex(exercises),
     warmup: workout.warmup?.filter(item => impact || !/jump|pogo|throw/i.test(item.name)),
-    note: `Modified by recorded guidance: ${!impact ? 'impact approval is unknown or restricted; maximal jumps, sprints, aggressive agility and ballistic throws omitted. ' : ''}${!heavy ? 'heavy-lifting approval is unknown or restricted; easy preparation instead of full strength. ' : ''}The full V9 base remains available to preview; only your explicit guidance changes these limits. ${workout.note}`.slice(0, 500) };
+    note: `Modified by recorded guidance: ${!impact ? 'impact approval is unknown or restricted; maximal jumps, sprints, aggressive agility and ballistic throws omitted. ' : ''}${!heavy ? 'heavy-lifting approval is unknown or restricted; easy preparation instead of full strength. ' : ''}The full V9 base remains available to preview; only your explicit guidance changes these limits. ${workout.note}`.slice(0, 500) });
 }

@@ -256,7 +256,9 @@ test('a renamed, retyped or remeasured movement cannot inherit another movementâ
     Object.assign(changed.exercises[0], patch);
     const next = createSession(changed, 0, '2026-10-12', DEFAULT_PROFILE, [old]);
     assert.equal(next.exercises[0].logs[0].kg, null);
-    assert.equal(next.exercises[0].logs[0].reps, null);
+    assert.equal(next.exercises[0].logs[0].reps, 'measurement' in patch ? null : 4);
+    assert.equal(next.exercises[0].logs[0].done, false);
+    if (!('measurement' in patch)) assert.equal(next.exercises[0].logs[0].inputSources?.reps, 'planned');
   }
 });
 
