@@ -1,12 +1,43 @@
 import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
-import { finishWarmup, settingsGroup } from './helpers/navigation';
+import { finishWarmup, openSection, settingsGroup } from './helpers/navigation';
 import { COACH_SATURDAY, COACH_SUNDAY, COACH_TODAY, chooseFeeling, coachDay, coachPreview,
   coachRaw, coachRead, expectCoachFullSaturday, expectCoachPreserved, openCoachPreview, seedCoach } from './helpers/coach';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.install({ time: new Date(`${COACH_TODAY}T10:00:00Z`) });
   await page.goto('/');
+});
+
+test('the older Return to saved plan route retains dated matches and readiness alongside untouched history', async ({ page }) => {
+  const before = await seedCoach(page);
+  const coachRecords = { calendarMatches: [{ date: COACH_SUNDAY, scheduled: true, opponent: 'QA visitor' }],
+    dailyReadiness: [{ date: COACH_SATURDAY, feeling: 'normal' }] };
+  const previousPlan = structuredClone(before.profile.plan);
+  previousPlan[0].name = 'QA saved personal weekly workout';
+  await page.evaluate(({ coachRecords, previousPlan }) => {
+    const state = JSON.parse(localStorage.getItem('setline.gym.v1')!);
+    state.profile.preMasterPlan = previousPlan;
+    Object.assign(state.profile.masterProgram, coachRecords);
+    localStorage.setItem('setline.gym.v1', JSON.stringify(state));
+  }, { coachRecords, previousPlan });
+  await page.reload();
+  await openSection(page, 'You');
+  await page.getByRole('button', { name: 'Training plan', exact: true }).click();
+  await page.locator('.native-program-options > summary').click();
+  await page.getByRole('button', { name: 'Return to saved plan', exact: true }).click();
+  await page.getByRole('alertdialog', { name: 'Return to your saved plan?', exact: true })
+    .getByRole('button', { name: 'Restore saved plan', exact: true }).click();
+  await expect.poll(async () => (await coachRead(page)).profile.masterProgram).toBeUndefined();
+  const after = await coachRead(page);
+  expect(after.profile.coachRecords).toEqual(coachRecords);
+  expect(after.profile.plan).toEqual(previousPlan);
+  expect(after.profile.trainingGuidance).toEqual(before.profile.trainingGuidance);
+  for (const key of ['sessions', 'nutrition', 'activities', 'reminders', 'performance']) {
+    expect(after[key]).toEqual(before[key as keyof typeof before]);
+  }
+  await page.reload();
+  expect((await coachRead(page)).profile.coachRecords).toEqual(coachRecords);
 });
 
 test('the reported Week 4 Easy Preparation state presents the complete planning reference and honest safe duration', async ({ page }) => {
@@ -292,5 +323,45 @@ test('a lighter phase is an explicit dated choice that can be replaced without r
   sheet = await openCoachPreview(page);
   await expectCoachFullSaturday(page);
   expect((await coachRead(page)).profile.masterProgram.startDate).toBe(before.profile.masterProgram!.startDate);
+  await expectCoachPreserved(page, before);
+});
+
+test('optional recovery details open the actual current-date observation form without recording future conditions', async ({ page }) => {
+  await seedCoach(page);
+  await coachDay(page, 'Sat');
+  const future = page.getByRole('region', { name: 'Daily readiness', exact: true });
+  await future.locator('.daily-readiness__details > summary').click();
+  await expect(future.getByRole('button', { name: 'Add optional recovery details', exact: true })).toHaveCount(0);
+  await page.clock.setFixedTime(new Date(`${COACH_SATURDAY}T10:00:00Z`));
+  await page.reload();
+  await coachDay(page, 'Sat');
+  const before = await coachRaw(page);
+  const current = page.getByRole('region', { name: 'Daily readiness', exact: true });
+  await current.locator('.daily-readiness__details > summary').click();
+  await current.getByRole('button', { name: 'Add optional recovery details', exact: true }).click();
+  await expect(page.getByRole('tab', { name: 'Progress', exact: true })).toHaveAttribute('data-state', 'active');
+  const details = page.locator('.sprint-readiness');
+  await expect(details).toHaveAttribute('open', '');
+  await expect(details.getByLabel('Check-in date', { exact: true })).toHaveValue(COACH_SATURDAY);
+  expect(await coachRaw(page)).toBe(before);
+});
+
+test('a match primer still offers the optional daily check-in and Poor recommends rest without changing the match', async ({ page }) => {
+  const before = await seedCoach(page);
+  before.profile.masterProgram!.calendarMatches = [{ date: COACH_SUNDAY, scheduled: true }];
+  await page.evaluate(state => localStorage.setItem('setline.gym.v1', JSON.stringify(state)), before);
+  await page.reload();
+  await coachDay(page, 'Sat');
+  await expect(page.locator('.session-card h2')).toHaveText('Pre-Match Primer');
+  await chooseFeeling(page, 'Poor');
+  const sheet = await openCoachPreview(page);
+  await expect(sheet.getByRole('heading', { name: 'Pre-Match Primer', exact: true })).toBeVisible();
+  const recommendation = sheet.getByRole('region', { name: 'Executable recommendation', exact: true });
+  await expect(recommendation).toContainText('Recovery');
+  await expect(recommendation).toContainText('0 sets');
+  await sheet.getByRole('button', { name: 'Recommended today', exact: true }).click();
+  await expect(sheet.getByRole('button', { name: /Exercise details for Leg Press/ })).toHaveCount(0);
+  const after = await coachRead(page);
+  expect(after.profile.masterProgram.calendarMatches).toEqual([{ date: COACH_SUNDAY, scheduled: true }]);
   await expectCoachPreserved(page, before);
 });

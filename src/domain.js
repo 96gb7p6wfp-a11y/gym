@@ -965,6 +965,9 @@ var optionalAmount = (e) => zNumber().finite().min(0).max(e).nullable(),
       kg: zEnum(['manual', 'planned', 'history', 'last-set']).optional(),
       reps: zEnum(['manual', 'planned', 'history', 'last-set']).optional(),
     }).strict().optional(),
+    // Only new generated defaults may yield to a completed set. Older planned
+    // values retain their stronger meaning and are never relabeled on read.
+    plannedDefaults: zObject({ kg: zLiteral(true).optional(), reps: zLiteral(true).optional() }).strict().optional(),
   }),
   SessionExerciseSchema = ExerciseSchema.extend({
     logs: zArray(SetLogSchema).min(1).max(30),
@@ -1233,6 +1236,10 @@ function createSession(e, t, n, r, i) {
               ...(kg != null ? { kg: r ? 'history' : 'planned' } : {}),
               ...(reps != null ? { reps: e.prescribedDistanceM != null ? 'planned' : r?.reps != null ? 'history' : 'planned' } : {}),
             };
+            const plannedDefaults = {
+              ...(!e.preparationOnly && inputSources.kg === 'planned' ? { kg: true } : {}),
+              ...(!e.preparationOnly && e.prescribedDistanceM == null && inputSources.reps === 'planned' ? { reps: true } : {}),
+            };
             return {
               id: crypto.randomUUID(),
               kg,
@@ -1241,6 +1248,7 @@ function createSession(e, t, n, r, i) {
               rir: null,
               done: !1,
               ...(Object.keys(inputSources).length ? { inputSources } : {}),
+              ...(Object.keys(plannedDefaults).length ? { plannedDefaults } : {}),
             };
           },
         ),

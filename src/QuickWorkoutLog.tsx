@@ -47,16 +47,16 @@ const numberInput = (raw: string, maximum: number, integer = true) => {
   return integer ? Math.trunc(value) : value;
 };
 
-function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone, onTimer, onSelect, onInvalidChange, now, editing, showLoad, onLoadInteraction, onLoadValidityChange }: Pick<QuickWorkoutLogProps, 'sessionId' | 'onSet' | 'onDone' | 'onTimer' | 'onSelect' | 'onInvalidChange' | 'now' | 'editing'> & {
+function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone, onTimer, onSelect, onInvalidChange, now, editing, showLoad, onLoadInteraction, onLoadValidityChange, adjusting, onAdjust, onAdjustmentFinished }: Pick<QuickWorkoutLogProps, 'sessionId' | 'onSet' | 'onDone' | 'onTimer' | 'onSelect' | 'onInvalidChange' | 'now' | 'editing'> & {
   exercise: FocusedExercise; log: FocusedSetLog; index: number; previous?: FocusedSetLog;
   showLoad: boolean; onLoadInteraction: () => void; onLoadValidityChange: (id: string, invalid: boolean) => void;
+  adjusting: boolean; onAdjust: () => void; onAdjustmentFinished: () => void;
 }) {
   const target = { sessionId, exerciseKey: exercise.key, setId: log.id };
   const [gate] = useState(() => new CompletionIntentGate(target));
   const [, renderGate] = useState(0);
   const [invalidWeight, setInvalidWeight] = useState(false);
   const [reuseRevision, setReuseRevision] = useState(0);
-  const [adjusting, setAdjusting] = useState(false);
   const metric = formatPreviousSet(exercise, previous);
   const kind = exerciseInputKind(exercise);
   const timed = kind === 'duration';
@@ -91,6 +91,7 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
     renderGate(value => value + 1);
     onSelect(exercise.key, log.id);
     if (!onDone(exercise.key, log.id, true, intent)) arm();
+    else onAdjustmentFinished();
   }
 
   function stepWeight(direction: -1 | 1) {
@@ -111,12 +112,14 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
   const singleQuantity = (kind === 'bodyweight' || kind === 'distance' || timed) && !showLoad;
 
   return <div className={`quick-set${timed ? ' quick-set--timed' : ''}${singleQuantity ? ' quick-set--single' : ''}${log.done ? ' is-complete' : ''}`} role="group" aria-label={`Quick log ${name}`}
-    onFocusCapture={() => { if (!log.done) setAdjusting(true); }}
-    onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setAdjusting(false); }}>
+    // Button focus happens before pointerup. Changing row height there can move
+    // Copy/Complete away from the finger and cancel the click. Keep the toolbar
+    // stable until an explicit input/edit action or a finished button action.
+    onFocusCapture={event => { if (!log.done && event.target instanceof HTMLInputElement) onAdjust(); }}>
     <span className="quick-set__number" aria-label={`Set ${index + 1}`}>{index + 1}</span>
     {log.done ? <span className="quick-set__previous" aria-label={`Previous ${name}`}>{metric ?? '—'}</span>
       : <button type="button" className="quick-set__previous quick-set__adjust-target" aria-label={`Previous ${name}`}
-        title="Adjust this set" onClick={() => setAdjusting(true)}>{metric ?? '—'}</button>}
+        title="Adjust this set" onClick={onAdjust}>{metric ?? '—'}</button>}
     {timed ? <>
       {showLoad && weightInput}
       <input className="set-input quick-set__duration" type="number" min="0" max={inMinutes ? 1440 : 86400}
@@ -147,6 +150,7 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
         onInvalidChange(log.id, false); onLoadValidityChange(log.id, false);
         if (optionalLoad && (previous.kg ?? 0) > 0) onLoadInteraction();
         edit({ kg: previous.kg, reps: previous.reps });
+        onAdjustmentFinished();
       }}><RotateCcw size={14} aria-hidden="true" />Use previous</button></div>}
     {hasLastSetSuggestion && <p className="quick-set__suggestion" aria-label={`${name} suggestion`}>Last-set suggestion · editable</p>}
     {canCopyLast && lastSet && <div className="quick-set__review"><button type="button"
@@ -158,6 +162,7 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
         onLoadValidityChange(log.id, false);
         if (optionalLoad && lastSet.patch.kg != null && lastSet.patch.kg > 0) onLoadInteraction();
         edit(lastSet.patch);
+        onAdjustmentFinished();
       }}>Use set {lastSet.sourceSetNumber} · {lastSet.patch.kg == null ? 'bodyweight' : `${lastSet.patch.kg} kg`} × {lastSet.patch.reps}</button></div>}
     {!log.done && !ready && <div className="quick-set__review"><button type="button" onClick={arm} aria-label={`Ready for ${name}`}>Review & ready</button></div>}
     {timed && !log.done && <details className="quick-set__timer"><summary>Set {index + 1} timer</summary>
@@ -182,6 +187,7 @@ function QuickExercise(props: QuickWorkoutLogProps & { exercise: FocusedExercise
   const timed = kind === 'duration';
   const recordedLoad = hasRecordedLoad(exercise.logs);
   const [loadOpen, setLoadOpen] = useState(() => recordedLoad);
+  const [adjustingSetId, setAdjustingSetId] = useState<string | null>(null);
   const [appliedVersions, setAppliedVersions] = useState<Record<string, number>>({});
   const optionalLoad = kind === 'bodyweight' || timed || (kind === 'distance' && (recordedLoad || loadOpen));
   const invalidLoads = useRef(new Set<string>());
@@ -212,6 +218,7 @@ function QuickExercise(props: QuickWorkoutLogProps & { exercise: FocusedExercise
     </div>
     {exercise.logs.map((log, index) => <QuickSetRow key={`${sessionId}-${exercise.key}-${log.id}-${appliedVersions[log.id] ?? 0}`} {...props}
       exercise={exercise} log={log} index={index} previous={prior?.logs[index]} showLoad={showLoad}
+      adjusting={adjustingSetId === log.id} onAdjust={() => setAdjustingSetId(log.id)} onAdjustmentFinished={() => setAdjustingSetId(null)}
       onLoadInteraction={() => setLoadOpen(true)} onLoadValidityChange={(id, invalid) => { if (invalid) invalidLoads.current.add(id); else invalidLoads.current.delete(id); }} />)}
     <details className="quick-exercise__effort"><summary>Details <span>Optional</span></summary>
       {(kind === 'weight' || showLoad) && onLoadIncrementChange && <LoadStepControl exercise={exercise} onChange={increment => onLoadIncrementChange(exercise.key, increment)} />}

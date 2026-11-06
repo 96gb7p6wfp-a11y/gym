@@ -28,9 +28,10 @@ test('accepted completion fills only the next same-exercise draft in one immutab
   assert.equal(carryForwardAfterCompletion(after, target), after);
 });
 
-test('existing legacy/manual values and explicit zeroes are protected field by field', () => {
+test('existing legacy/manual/planned values and explicit zeroes are protected field by field', () => {
   for (const next of [
     log('s2', { kg: 0, reps: 5 }),
+    log('s2', { kg: 0, reps: 5, inputSources: { kg: 'planned', reps: 'planned' } }),
     log('s2', { kg: 62.5, reps: 7, inputSources: { kg: 'manual', reps: 'manual' } }),
   ]) {
     const state = session(exercise([log('s1', { kg: 60, reps: 8, done: true }), next]));

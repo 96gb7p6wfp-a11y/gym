@@ -13,8 +13,9 @@ import { getV9DraftDisposition } from './v9-upcoming-workouts';
 import { SprintPerformance } from './SprintPerformance';
 import { DailyReadiness } from './DailyReadiness';
 import { SundayMatchSchedule } from './SundayMatchSchedule';
-import { getCalendarMatch, getDailyReadiness, getCoachReadinessStatus, getCoachPhase, migrateLegacyMatchSchedule, saveCalendarMatch, sundayForDate } from './coach-schedule';
+import { getCalendarMatch, getCoachRecords, getDailyReadiness, getCoachReadinessStatus, getCoachPhase, migrateLegacyMatchSchedule, saveCalendarMatch, sundayForDate } from './coach-schedule';
 import { resolveV9PlanningBase } from './volleyball-master-plan';
+import { hasDeliberatePlannedLoad } from './workout-input-steps';
 import './personal-coach.css';
 import './v16.css';
 import { createNewProfile, createStarterPlan, DEFAULT_TRAINING_PREFERENCES, presentationMode } from './onboarding';
@@ -807,10 +808,15 @@ function GymApp({
       if (session.warmupStatus !== 'not-recorded') session.warmupCompletedAt = Date.now();
       // A weight deliberately planned for this date takes precedence over the
       // previous-session suggestion used by createSession.
+      const standardWeek = profile.masterProgram ? createRecommendedMasterPlan(profile.masterProgram,
+        profile.masterProgram.revision === '9' ? getCalendarMatch(profile.masterProgram, sundayForDate(context.date)).scheduled
+          : profile.masterProgram.matchWeeks.includes(getMasterProgramWeek(profile.masterProgram.startDate, context.date))) : DEFAULT_PROFILE.plan;
+      const standardDay = context.slot === 'extra' ? standardWeek[context.day].extraSession : standardWeek[context.day];
       session.exercises = session.exercises.map(exercise => {
         if (exercise.preparationOnly) return { ...exercise, logs: exercise.logs.map(log => ({ ...log, kg: exercise.defaultKg ?? 0,
           inputSources: { ...log.inputSources, kg: 'planned' } })) };
-        if (!(draft.customized !== false || plan.customizedForProgram === '9') || exercise.defaultKg == null) return exercise;
+        if (!hasDeliberatePlannedLoad(exercise, standardDay?.exercises.find(row => row.key === exercise.key),
+          draft.customized !== false || plan.customizedForProgram === '9')) return exercise;
         return { ...exercise, logs: exercise.logs.map(log => ({ ...log, kg: exercise.defaultKg, inputSources: { ...log.inputSources, kg: 'manual' } })) };
       });
       queueSession(SessionSchema.parse(session), true);
@@ -1091,7 +1097,9 @@ function GymApp({
       });
     }
     const { masterProgram, preMasterPlan, masterMatchWeekend, ...savedProfile } = profile;
-    return saveProfile({ ...savedProfile, ...guidanceFields, plan: preMasterPlan ?? profile.plan }, { checkpoint: true });
+    const coachRecords = getCoachRecords(profile);
+    return saveProfile({ ...savedProfile, ...guidanceFields, ...(coachRecords ? { coachRecords } : {}),
+      plan: preMasterPlan ?? profile.plan }, { checkpoint: true });
   }
   async function saveDailyFeeling(date, feeling) {
     if (!loaded || profileSaving || !(await flushPendingWrites())) return false;
@@ -1377,6 +1385,13 @@ function GymApp({
     setSettingsOpen(true);
   }
   function reviewTrainingGuidance() { openSettings(`training`); setGuidanceOpen(true); }
+  function openRecoveryObservations() {
+    setPerformanceAction(undefined); setProgressView('details'); setTab('progress');
+    requestAnimationFrame(() => {
+      const details = document.querySelector('.sprint-readiness');
+      if (details) { details.open = true; details.scrollIntoView({ block: 'start' }); }
+    });
+  }
   function reviewSetupRecovery() { openSettings(`data`); setRecoveryOpen(true); }
   function saveTrainingGuidance(guidance) {
     return saveProfile({ ...profile, trainingGuidance: guidance,
@@ -1666,9 +1681,9 @@ function GymApp({
               {!currentSession && masterSettings?.revision === '9' && selectedDate >= masterSettings.startDate && <>
                 {selectedDay === 6 && <SundayMatchSchedule date={selectedDate} match={getCalendarMatch(masterSettings, selectedDate)} disabled={!loaded || profileSaving || !!loadError}
                   readOnlyReason={selectedDate < today ? 'Past planning stays archived. Edit actual match activity in History.' : undefined} onSave={saveSundayMatch} />}
-                {selectedReferencePlan.kind === 'strength' && selectedReferencePlan.programSessionId !== 'v9-match-primer' && <DailyReadiness date={selectedDate} feeling={getDailyReadiness(masterSettings, selectedDate)}
+                {selectedReferencePlan.kind === 'strength' && <DailyReadiness date={selectedDate} feeling={getDailyReadiness(masterSettings, selectedDate)}
                   disabled={!loaded || profileSaving || selectedDate < today || !!loadError} guidanceLimited={trainingGuidance?.heavyLifting !== 'cleared' || trainingGuidance?.impact !== 'cleared'} onReviewGuidance={reviewTrainingGuidance}
-                  onAdvanced={() => { setPerformanceAction('readiness'); setProgressView('details'); setTab('progress'); }} onChange={feeling => saveDailyFeeling(selectedDate, feeling)} />}
+                  onAdvanced={athleteMode && selectedDate === today ? openRecoveryObservations : undefined} onChange={feeling => saveDailyFeeling(selectedDate, feeling)} />}
                 {selectedDay === 5 && <button type="button" className="coach-weekend-link" onClick={() => selectTrainingDate(sundayForDate(selectedDate))}><span>Sunday match</span><strong>{selectedMasterMatch ? 'Scheduled' : 'Not scheduled'}<ChevronRight size={15} /></strong></button>}
               </>}
               {!currentSession && masterSettings?.revision !== '9' && masterWeek && <>

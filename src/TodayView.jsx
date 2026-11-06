@@ -84,7 +84,7 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
         {!active && !completed && <button type="button" className="day-cover__preview" disabled={disabled} onClick={onPreview}>{logSport ? 'View session' : 'View workout'}<ChevronRight size={14} aria-hidden="true" /></button>}
       </div>
       {adjusted && <button type="button" className="coach-today-adjustment" onClick={onPreview}><span>{adjustment?.title ?? 'Adjusted recommendation'} · {prescription.workingSets} sets</span><ChevronRight size={15} aria-hidden="true" /></button>}
-      {coach && !active && !completed && shownPlan.kind === 'strength' && shownPlan.programSessionId !== 'v9-match-primer' && <button type="button" className="coach-today-readiness" onClick={onTrain}>{readinessFeeling ? `Feeling ${readinessFeeling} · change` : 'Readiness unknown · check in'}</button>}
+      {coach && !active && !completed && shownPlan.kind === 'strength' && <button type="button" className="coach-today-readiness" onClick={onTrain}>{readinessFeeling ? `Feeling ${readinessFeeling} · change` : 'Readiness unknown · check in'}</button>}
       {active && plannedSetCount > 0 && <div className="day-cover__track" role="progressbar" aria-label="Current workout" aria-valuemin={0} aria-valuemax={plannedSetCount} aria-valuenow={setCount}><span style={{ width: `${plannedSetCount ? setCount / plannedSetCount * 100 : 0}%` }} /></div>}
       <button className="btn day-cover__start" disabled={disabled} onClick={action}>{actionLabel}<ArrowRight size={20} aria-hidden="true" /></button>
     </section>

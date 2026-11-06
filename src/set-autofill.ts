@@ -11,6 +11,7 @@ export interface CarryForwardLog {
   reps: number | null;
   done: boolean;
   inputSources?: SetInputSources;
+  plannedDefaults?: { kg?: boolean; reps?: boolean };
 }
 
 export interface CarryForwardExercise {
@@ -68,13 +69,13 @@ export function missingSetValuesFromLast(exercise: CarryForwardExercise, targetI
   const target = exercise.logs.find(log => log.id === targetId)!;
   const patch: { kg?: number | null; reps?: number; inputSources: SetInputSources } = { inputSources: { ...target.inputSources } };
   if ((target.kg == null && target.inputSources?.kg === undefined && suggestion.patch.kg != null)
-    || (['history', 'planned'].includes(target.inputSources?.kg ?? '') && target.kg !== suggestion.patch.kg)
+    || ((target.inputSources?.kg === 'history' || target.inputSources?.kg === 'planned' && target.plannedDefaults?.kg === true) && target.kg !== suggestion.patch.kg)
     || (target.inputSources?.kg === 'last-set' && target.kg !== suggestion.patch.kg)) {
     patch.kg = suggestion.patch.kg;
     patch.inputSources.kg = 'last-set';
   }
   if ((target.reps == null && target.inputSources?.reps === undefined)
-    || (['history', 'planned'].includes(target.inputSources?.reps ?? '') && target.reps !== suggestion.patch.reps)
+    || ((target.inputSources?.reps === 'history' || target.inputSources?.reps === 'planned' && target.plannedDefaults?.reps === true) && target.reps !== suggestion.patch.reps)
     || (target.inputSources?.reps === 'last-set' && target.reps !== suggestion.patch.reps)) {
     patch.reps = suggestion.patch.reps;
     patch.inputSources.reps = 'last-set';

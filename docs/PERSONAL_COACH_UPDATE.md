@@ -56,7 +56,8 @@ pure on read and persists only with an explicit save. Changing an old cycle star
 first retains the old exact match dates. Legacy indices remain stored.
 
 Optional `dailyReadiness` and `calendarMatches` survive restoring an older or
-plain personal plan through `coachRecords`; they carry back into an explicitly
+plain personal plan through `coachRecords`, including the older **Return to saved
+plan** entry; they carry back into an explicitly
 selected V9 plan without resurrecting cleared or disabled entries. Medical
 guidance remains individually controlled. Program-specific phase records remain
 in their existing program/backup and are not inferred from incomplete logs.
@@ -87,8 +88,13 @@ increments. Quick Log reveals compact weight/repetition steppers for the active
 row, preserving direct decimal input and previous-performance reuse. New session
 defaults carry provenance: deliberate input/applied advice stays protected,
 completed current-set values outrank old history, then planned fallback applies.
-Legacy untagged active values remain protected. Preparation-only work never
-inherits a heavy historic load. New suggestions never mark sets complete or
+Legacy untagged and explicitly planned active values remain protected. Only new
+generated planned defaults carry the optional `plannedDefaults` qualifier that
+allows replacement by the last completed set; old records are never relabeled.
+Deliberate custom weekly/date loads also take precedence over historic suggestions.
+Quick Log action buttons keep a stable position through pointer activation;
+focusing Copy or Complete no longer expands a toolbar before the click finishes.
+Preparation-only work never inherits a heavy historic load. New suggestions never mark sets complete or
 invent RIR. Tired/Poor suppress load-increase recommendations. Existing immutable
 completion, Undo, timers, refresh recovery and offline logging remain.
 

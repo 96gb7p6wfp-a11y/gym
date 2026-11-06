@@ -39,3 +39,8 @@ export function plannedRepetitions(target: string): number | null {
   const value = Number(target.match(/\d+/)?.[0]);
   return Number.isInteger(value) && value > 0 && value <= 1000 ? value : null;
 }
+
+/** A saved custom prescription is stronger evidence of intent than a generic default. */
+export function hasDeliberatePlannedLoad(exercise: { defaultKg?: number | null }, baseline?: { defaultKg?: number | null }, explicit = false): boolean {
+  return exercise.defaultKg != null && (explicit || !baseline || exercise.defaultKg !== baseline.defaultKg);
+}

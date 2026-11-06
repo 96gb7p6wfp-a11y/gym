@@ -11,7 +11,8 @@ async function seed(page: Page) {
   const session = SessionSchema.parse(createSession(plan, 0, DATE, DEFAULT_PROFILE, []));
   session.startedAt = Date.parse(`${DATE}T10:00:00Z`);
   session.runningSince = null;
-  session.exercises[0].logs = session.exercises[0].logs.map((log, index) => ({ ...log, kg: 62.5 - index * 2.5, reps: 8 - index, rir: 2 }));
+  session.exercises[0].logs = session.exercises[0].logs.map((log, index) => ({ ...log, kg: 62.5 - index * 2.5, reps: 8 - index, rir: 2,
+    inputSources: { kg: 'manual' as const, reps: 'manual' as const } }));
   await page.evaluate(({ key, profile, session }) => localStorage.setItem(key, JSON.stringify({
     schemaVersion: 1, profile, profileVersion: 1, sessions: [{ session, version: 1 }], nutrition: [], activities: [],
   })), { key: STORE, profile: DEFAULT_PROFILE, session });

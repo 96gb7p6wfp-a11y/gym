@@ -69,9 +69,9 @@ test('completes a focused decimal set, preserves other sets and keeps actions ab
   await expect(exercise.getByRole('spinbutton', { name: `${MOVEMENT} set 2 reps`, exact: true })).toHaveValue('4');
   const logsAfter = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!).sessions[0].session.exercises[0].logs, STORE);
   expect(logsAfter[0]).toEqual({ ...logsBefore[0], kg: 12.5, reps: 4, done: true,
-    inputSources: { kg: 'manual', reps: 'manual' } });
+    inputSources: { ...logsBefore[0].inputSources, kg: 'manual' } });
   expect(logsAfter[1]).toEqual({ ...logsBefore[1], kg: 12.5, reps: 4,
-    inputSources: { kg: 'last-set', reps: 'last-set' } });
+    inputSources: { ...logsBefore[1].inputSources, kg: 'last-set' } });
   expect(logsAfter.slice(2)).toEqual(logsBefore.slice(2));
   await expect(page.locator('.rest-floating')).toBeVisible();
   const complete = exercise.getByRole('button', { name: `Complete ${MOVEMENT} set 2`, exact: true });

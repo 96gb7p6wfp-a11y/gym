@@ -3,12 +3,19 @@ import test from 'node:test';
 import { DEFAULT_PROFILE, SessionSchema, createSession, stopSessionTimers } from '../src/domain.js';
 import { carryForwardAfterCompletion, markSetInput } from '../src/set-autofill.ts';
 import { getProgressionRecommendation } from '../src/performance-insights.ts';
-import { adjustedWorkoutLoad, exerciseLoadIncrement, plannedRepetitions } from '../src/workout-input-steps.ts';
+import { adjustedWorkoutLoad, exerciseLoadIncrement, plannedRepetitions, hasDeliberatePlannedLoad } from '../src/workout-input-steps.ts';
 
 const plan = () => ({ ...structuredClone(DEFAULT_PROFILE.plan[0]), exercises: [{
   ...structuredClone(DEFAULT_PROFILE.plan[0].exercises[1]), name: 'Hack Squat', exerciseId: 'hack-squat', key: 'hack',
   mode: 'weight' as const, sets: 3, target: '4–6 reps', targetRir: 2, defaultKg: 40, equipmentLabel: 'Machine A',
 }] });
+test('intentional weekly or date loads outrank history while unchanged factory defaults do not', () => {
+  assert.equal(hasDeliberatePlannedLoad({ defaultKg: 12.5 }, {}), true);
+  assert.equal(hasDeliberatePlannedLoad({ defaultKg: 0 }, { defaultKg: 20 }), true);
+  assert.equal(hasDeliberatePlannedLoad({ defaultKg: 40 }, { defaultKg: 40 }), false);
+  assert.equal(hasDeliberatePlannedLoad({ defaultKg: 40 }, { defaultKg: 40 }, true), true);
+  assert.equal(hasDeliberatePlannedLoad({ defaultKg: null }, {}, true), false);
+});
 function completed(date: string, kg = 70, reps = 6) {
   const result = SessionSchema.parse(stopSessionTimers(createSession(plan(), 2, date, DEFAULT_PROFILE, []), 'completed'));
   result.exercises[0].logs = result.exercises[0].logs.map(log => ({ ...log, kg, reps, rir: 2, done: true }));
