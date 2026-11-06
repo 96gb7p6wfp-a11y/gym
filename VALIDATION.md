@@ -1,5 +1,52 @@
 # Standalone app validation
 
+## Volleyball Performance Plan V9 in Setline V18 — 6 November 2026
+
+Baseline: latest V18 main `bbf3c51`. V9 is an opt-in training prescription,
+independent of the application version. Existing V17/V18 features and storage
+compatibility remain. PRs #1 and #5 were inspected and were not merged.
+
+| Check | Actual result |
+| --- | --- |
+| `npm run typecheck` | Passed |
+| `npm test` | 735 passed, zero failures/cancellations/skips |
+| `npm run build` | Passed; 26 precached app files; existing large-chunk advisory |
+| Final complete `npm run test:web`, Chromium, 2 workers | **381 passed, 19.1m**, no failures |
+| Final targeted primer browser regressions | 3 passed, 10.6 seconds |
+| Local visual captures | 13 isolated localhost captures; 320/390 px, light/dark; no horizontal overflow |
+| Diff whitespace and capture-script syntax | Passed |
+| Lint | No repository lint script/configuration; not run |
+
+The final full suite ran against the frozen build after the gentle-primer guidance
+and direct-start fix, including custom warm-up preservation. An earlier complete
+integration run also passed all 378 then-existing browser scenarios in 18.9 minutes.
+The old V13.1 review tests now deliberately use the retained legacy-program control
+because the primary offer is V9. A new primer test was corrected to await an
+unfinished planned duration suggestion before asserting refresh equality; no
+completion/history assertion was weakened.
+
+V9 coverage includes all requested day prescriptions, exactly eleven normal
+Saturday entries and 29 working sets, distinct actual-date match/primer identities,
+24 planned Wednesday contacts and exactly three Hack/CMJ rounds with correct rest,
+Green/Yellow/Red/guidance/phase changes, full-base preview, and post-block dates.
+Migration tests cover opt-in approval, exact archives, settings/nutrition/history
+preservation, old five-exercise drafts, approved date edits surviving later edits,
+stale profile leases, late active sessions, restoration and incompatible variants.
+Logging tests cover sprint/hold units, previous values, Focus/Quick shared state,
+touch/pointer/mouse/keyboard duplicate completion, Undo, refresh and offline use.
+Measured sprint protocol comparisons, optional joint context, invalid backup
+non-overwrite, legacy backup import and existing large-history tests also pass.
+
+All data and screenshots are isolated QA fixtures. No personal iPhone store was
+accessed, restored, reset or replaced. Storage remains `setline.gym.v1`, schema 1,
+backup version 1. Actual iPhone keyboard/VoiceOver/Dynamic Type, OS eviction,
+speech audibility and background/locked-screen audio remain physical-device checks.
+
+See [V9 prescription and migration](docs/VOLLEYBALL_PERFORMANCE_PLAN_V9.md) and
+[V9 delivery boundaries](docs/SETLINE_PLAN_V9_RELEASE.md). Production deployment
+must be verified against the actual merged commit; local validation alone does
+not establish a live deployment.
+
 ## Setline V18 — 5 November 2026
 
 Latest inspected main is V16 `dcc75aa`. The V18 feature branch preserves the
