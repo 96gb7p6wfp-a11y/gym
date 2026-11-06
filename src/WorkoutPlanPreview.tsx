@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ChevronRight, Clock3, MoreHorizontal, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui';
 import { DecimalWeightInput } from './DecimalWeightInput';
@@ -13,7 +13,7 @@ import { getQuickWarmupPresentation } from './session-preparation';
 import { masterJumpContacts } from './volleyball-master-plan';
 import { workoutTitle } from './presentation';
 import { previewRestLabel, PreviewSessionDetails } from './WorkoutPreview';
-import { getWorkoutPrescription, isGentleV9MatchPrimer, type WorkoutPrescription } from './training-prescription';
+import { compareWorkoutPrescriptions, getWorkoutPrescription, isGentleV9MatchPrimer, type WorkoutPrescription } from './training-prescription';
 import { WorkoutPrescriptionSummary } from './WorkoutPrescriptionSummary';
 import { findComplexPair } from './training-flow';
 import './workout-plan-preview.css';
@@ -30,6 +30,7 @@ export interface WorkoutPlanPreviewProps {
   previous?: (exercise: PlanExercise) => string | undefined;
   prescription?: WorkoutPrescription;
   onReviewProgram?: () => void;
+  onReviewGuidance?: () => void;
   onReviewReset?: () => void;
   basePlan?: PlanDay;
   sourceInfo?: string;
@@ -37,7 +38,7 @@ export interface WorkoutPlanPreviewProps {
 }
 
 /** This editor only changes the selected day's plan. It never creates a session. */
-export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup, disabled = false, onChange, onStart, previous, prescription: suppliedPrescription, onReviewProgram, onReviewReset, basePlan, sourceInfo, onReviewV9Draft }: WorkoutPlanPreviewProps) {
+export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup, disabled = false, onChange, onStart, previous, prescription: suppliedPrescription, onReviewProgram, onReviewGuidance, onReviewReset, basePlan, sourceInfo, onReviewV9Draft }: WorkoutPlanPreviewProps) {
   const [menuKey, setMenuKey] = useState<string | null>(null);
   const [guide, setGuide] = useState<PlanExercise | null>(null);
   const [editor, setEditor] = useState<PlanExercise | null>(null);
@@ -54,12 +55,17 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
   const rowTrigger = useRef<HTMLButtonElement | null>(null);
   const menuExercise = plan.exercises.find(exercise => exercise.key === menuKey);
   const replacement = plan.exercises.find(exercise => exercise.key === replaceKey);
+  const baseChanges = basePlan ? compareWorkoutPrescriptions(basePlan, plan) : [];
+  const hasBaseDifference = Boolean(basePlan && (baseChanges.length || basePlan.kind !== plan.kind || basePlan.name !== plan.name));
   const viewingBase = showBase && Boolean(basePlan);
   const displayPlan = viewingBase ? basePlan! : plan;
   const displayWarmup = viewingBase ? displayPlan.warmup ?? [] : warmup;
   const purpose = getSessionPurpose(displayPlan);
   const preparation = getQuickWarmupPresentation(displayPlan);
-  const prescription = viewingBase ? getWorkoutPrescription({ plan: displayPlan }) : suppliedPrescription ?? getWorkoutPrescription({ plan });
+  const recommendation = suppliedPrescription ?? getWorkoutPrescription({ plan, originalPlan: basePlan });
+  const prescription = viewingBase ? getWorkoutPrescription({ plan: displayPlan }) : recommendation;
+  const limitation = recommendation.reasons.find(reason => reason.code.startsWith('clearance-lifting-') || reason.code.startsWith('clearance-impact-'));
+  const reviewGuidance = onReviewGuidance ?? onReviewProgram;
   const workingExercises = displayPlan.exercises.filter(exercise => exercise.optionalWork !== true);
   const optionalExercises = displayPlan.exercises.filter(exercise => exercise.optionalWork === true);
   const workingSets = workingExercises.reduce((count, exercise) => count + exercise.sets, 0);
@@ -73,12 +79,12 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
   const restLabel = (exercise: PlanExercise) => exercise.restRange ? `${exercise.restRange} rest` : previewRestLabel(exercise);
   const plannedSequence = workingExercises.map(exercise => ({ ...exercise, logs: [] }));
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (open && !previousOpen.current) {
-      setMenuKey(null); setGuide(null); setEditor(null); setLibraryOpen(false); setReplaceKey(null); setError(''); setEditError(''); setShowBase(false); setLocationMessage('');
+      setMenuKey(null); setGuide(null); setEditor(null); setLibraryOpen(false); setReplaceKey(null); setError(''); setEditError(''); setShowBase(hasBaseDifference); setLocationMessage('');
     }
     previousOpen.current = open;
-  }, [open]);
+  }, [open, hasBaseDifference]);
 
   async function commit(next: PlanDay): Promise<boolean> {
     if (disabled || viewingBase || committing.current) return false;
@@ -141,13 +147,22 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
           <DialogDescription className="">{prescription.label === 'Preparation' ? prescription.objective : purpose.subtitle}</DialogDescription>
         </DialogHeader>
         <div className="plan-preview__metadata"><div className="plan-preview__summary"><span><Clock3 size={15} aria-hidden="true" />{prescription.duration}</span><span>{workingExercises.length} exercises · {workingSets} sets</span></div>
-        <p className="plan-preview__scope">{viewingBase ? 'Full V9 base · read-only reference. Starting still uses today’s recommended prescription.' : `For ${dayLabel} only. Weekly plan unchanged.`}</p></div>
-        {(sourceInfo || viewingBase) && <p className="plan-preview__source" role="status">{viewingBase ? `Base plan: V9 ${displayPlan.name} · read-only reference` : sourceInfo}</p>}
-        {basePlan && <div className="plan-preview__variant" role="group" aria-label="V9 prescription view">{([['Recommended today', false], ['Full V9 base', true]] as const).map(([label, value]) => <button type="button" key={label} disabled={busy} aria-pressed={showBase === value} onClick={() => { setShowBase(value); setMenuKey(null); setEditor(null); setGuide(null); setLibraryOpen(false); setReplaceKey(null); }}>{label}</button>)}</div>}
+        <p className="plan-preview__scope">{viewingBase ? 'Full V9 base · read-only reference. Starting uses the recommendation below.' : `For ${dayLabel} only. Weekly plan unchanged.`}</p></div>
+        {hasBaseDifference && viewingBase && <section className="plan-preview__recommendation" aria-label="Executable recommendation">
+          <div><span>Recommended for {dayLabel}</span><strong>{plan.name}</strong><p>{recommendation.mandatoryExercises} exercises · {recommendation.workingSets} sets · {recommendation.duration}</p></div>
+          <p className="plan-preview__recommendation-reason">{limitation?.title ?? (recommendation.reasons.find(reason => /readiness|deload|evaluation|phase|today-edit/.test(reason.code))?.title ?? 'Adjusted for this date. The full base stays unchanged.')}</p>
+          {limitation && reviewGuidance && <button type="button" className="text-button" disabled={locked} onClick={() => { onOpenChange(false); reviewGuidance(); }}>Review training guidance<ChevronRight size={16} aria-hidden="true" /></button>}
+          <details className="plan-preview__changes"><summary>See specific changes<span>{baseChanges.length}</span></summary>{baseChanges.length > 0 ? <ul>{baseChanges.map(change => <li key={`${change.key}-${change.kind}`}><strong>{change.name}</strong><span>{change.before}</span><span>{change.after}</span></li>)}</ul> : <p>The session name or purpose was changed for this date. Your saved exercise prescription is shown below.</p>}</details>
+        </section>}
+        {hasBaseDifference && !viewingBase && basePlan && <button type="button" className="plan-preview__baseline-link" onClick={() => setShowBase(true)}>
+          <span>Full baseline</span><strong>{basePlan.name}</strong><small>{basePlan.exercises.filter(exercise => !exercise.optionalWork).length} exercises · {basePlan.exercises.filter(exercise => !exercise.optionalWork).reduce((sum, exercise) => sum + exercise.sets, 0)} sets · {getWorkoutPrescription({ plan: basePlan }).duration}</small><ChevronRight size={18} aria-hidden="true" />
+        </button>}
+        {basePlan && <div className="plan-preview__variant" role="group" aria-label="V9 prescription view">{([['Full V9 base', true], ['Recommended today', false]] as const).map(([label, value]) => <button type="button" key={label} disabled={busy} aria-pressed={showBase === value} onClick={() => { setShowBase(value); setMenuKey(null); setEditor(null); setGuide(null); setLibraryOpen(false); setReplaceKey(null); }}>{label}</button>)}</div>}
         {onReviewV9Draft && <button type="button" className="text-button" disabled={locked} onClick={() => { onOpenChange(false); onReviewV9Draft(); }}>Review saved date edit</button>}
         {!viewingBase && onReviewReset && <button type="button" className="text-button" onClick={onReviewReset}>Review date-only reset</button>}
-        {!viewingBase && <WorkoutPrescriptionSummary prescription={prescription} onReviewProgram={onReviewProgram ? () => { onOpenChange(false); onReviewProgram(); } : undefined} />}
-        {viewingBase && <p className="small-note">This reference is not approval to perform heavy or high-impact work. Your recorded guidance, readiness and phase continue to govern the recommended workout.</p>}
+        {!viewingBase && <WorkoutPrescriptionSummary prescription={prescription} onReviewGuidance={reviewGuidance ? () => { onOpenChange(false); reviewGuidance(); } : undefined} compact={Boolean(basePlan)} />}
+        {viewingBase && <p className="plan-preview__reference-note">Planning reference only. Your recorded guidance and today’s readiness govern what starts; this view cannot authorize restricted heavy or high-impact work.</p>}
+        {sourceInfo && <details className="plan-preview__source"><summary>Plan source</summary><p>{sourceInfo}</p></details>}
         {displayPlan.programSessionId === 'v9-match-primer' ? <p className="small-note">The primer is the short preparation session. No additional long warm-up checklist is required.</p> : <details className="plan-preview__warmup">
           <summary><span><strong>Warm-up</strong><span>{preparation.duration} · {displayWarmup.length} movements</span></span><ChevronRight size={19} aria-hidden="true" /></summary>
           <ol aria-label="Preview warm-up exercises">{displayWarmup.map(step => <li key={step.key}><strong>{step.name}</strong><span>{step.target}</span><p>{step.cue}</p></li>)}</ol>
@@ -187,8 +202,8 @@ export function WorkoutPlanPreview({ open, onOpenChange, plan, dayLabel, warmup,
         </section>
         <div className="plan-preview__start">
           {error && <p className="plan-preview__error" role="alert">{error}</p>}
-          <button type="button" className="btn full" disabled={locked || (!plan.exercises.some(exercise => !exercise.optionalWork) && plan.kind !== 'recovery')} onClick={() => { onOpenChange(false); onStart(); }}>{viewingBase ? 'Start recommended workout' : 'Start workout'}</button>
-          <span>{viewingBase ? `Starts ${plan.name} with today’s recorded guidance and readiness.` : isGentleV9MatchPrimer(plan) ? 'The primer is your preparation. Record only what you perform.' : 'Warm up first. Your workout starts when you’re ready.'}</span>
+          <button type="button" className="btn full" disabled={locked || (!plan.exercises.some(exercise => !exercise.optionalWork) && plan.kind !== 'recovery')} onClick={() => { onOpenChange(false); onStart(); }}>{viewingBase || hasBaseDifference ? 'Start recommended workout' : 'Start workout'}</button>
+          <span>{viewingBase || hasBaseDifference ? `Starts ${plan.name} · ${recommendation.mandatoryExercises} exercises · ${recommendation.workingSets} sets.` : isGentleV9MatchPrimer(plan) ? 'The primer is your preparation. Record only what you perform.' : 'Warm up first. Your workout starts when you’re ready.'}</span>
         </div>
       </DialogContent>
     </Dialog>

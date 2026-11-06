@@ -1,5 +1,5 @@
 import { Fragment, useRef, useState } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Minus, Plus, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { DecimalWeightInput } from './DecimalWeightInput';
 import { CompletionIntentGate, type CompletionIntent } from './set-completion';
@@ -11,6 +11,11 @@ import { exerciseInputKind, hasRecordedLoad, measuredSprintSeconds, measurementI
 import { lastSetSuggestion } from './set-autofill';
 import { findTrainingPair } from './training-flow';
 import { ReactionCue } from './ReactionCue';
+import { LoadStepControl } from './LoadStepControl';
+import { adjustedWorkoutLoad, exerciseLoadIncrement, plannedRepetitions } from './workout-input-steps';
+import { ProgressionCue } from './ProgressionCue';
+import { getProgressionRecommendation, type ProgressionContext } from './performance-insights';
+import type { ReportSession } from './weekly-report';
 import './quick-workout-log.css';
 
 interface QuickWorkoutLogProps {
@@ -28,6 +33,10 @@ interface QuickWorkoutLogProps {
   athleteMode: boolean;
   now: number;
   editing: boolean;
+  onLoadIncrementChange?: (exerciseKey: string, increment: number) => unknown;
+  sessions?: readonly ReportSession[];
+  date?: string;
+  context?: ProgressionContext;
 }
 
 const numberInput = (raw: string, maximum: number, integer = true) => {
@@ -47,6 +56,7 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
   const [, renderGate] = useState(0);
   const [invalidWeight, setInvalidWeight] = useState(false);
   const [reuseRevision, setReuseRevision] = useState(0);
+  const [adjusting, setAdjusting] = useState(false);
   const metric = formatPreviousSet(exercise, previous);
   const kind = exerciseInputKind(exercise);
   const timed = kind === 'duration';
@@ -57,6 +67,10 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
   const lastSet = !editing && !log.done ? lastSetSuggestion(exercise, log.id) : null;
   const canCopyLast = lastSet && (lastSet.patch.kg !== log.kg || lastSet.patch.reps !== log.reps);
   const hasLastSetSuggestion = !log.done && Object.values(log.inputSources ?? {}).includes('last-set');
+  const weightStep = exerciseLoadIncrement(exercise);
+  const reusePrevious = !editing && !log.done && previous?.done && (kind === 'weight' || kind === 'bodyweight')
+    && previous.reps != null && previous.reps > 0 && (kind === 'bodyweight' || previous.kg != null)
+    && (previous.kg !== log.kg || previous.reps !== log.reps);
 
   function arm() {
     gate.arm(target);
@@ -79,6 +93,11 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
     if (!onDone(exercise.key, log.id, true, intent)) arm();
   }
 
+  function stepWeight(direction: -1 | 1) {
+    if (invalidWeight) { toast.error('Correct the weight before using the adjustment buttons.'); return; }
+    edit({ kg: adjustedWorkoutLoad(log.kg, direction, weightStep) });
+  }
+
   const weightInput = <DecimalWeightInput key={reuseRevision} value={log.kg} placeholder={optionalLoad ? '0' : 'kg'} label={`${name} weight in kilograms`}
     onValidityChange={valid => {
       if (!valid && optionalLoad) onLoadInteraction();
@@ -91,9 +110,13 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
     }} />;
   const singleQuantity = (kind === 'bodyweight' || kind === 'distance' || timed) && !showLoad;
 
-  return <div className={`quick-set${timed ? ' quick-set--timed' : ''}${singleQuantity ? ' quick-set--single' : ''}${log.done ? ' is-complete' : ''}`} role="group" aria-label={`Quick log ${name}`}>
+  return <div className={`quick-set${timed ? ' quick-set--timed' : ''}${singleQuantity ? ' quick-set--single' : ''}${log.done ? ' is-complete' : ''}`} role="group" aria-label={`Quick log ${name}`}
+    onFocusCapture={() => { if (!log.done) setAdjusting(true); }}
+    onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setAdjusting(false); }}>
     <span className="quick-set__number" aria-label={`Set ${index + 1}`}>{index + 1}</span>
-    <span className="quick-set__previous" aria-label={`Previous ${name}`}>{metric ?? '—'}</span>
+    {log.done ? <span className="quick-set__previous" aria-label={`Previous ${name}`}>{metric ?? '—'}</span>
+      : <button type="button" className="quick-set__previous quick-set__adjust-target" aria-label={`Previous ${name}`}
+        title="Adjust this set" onClick={() => setAdjusting(true)}>{metric ?? '—'}</button>}
     {timed ? <>
       {showLoad && weightInput}
       <input className="set-input quick-set__duration" type="number" min="0" max={inMinutes ? 1440 : 86400}
@@ -114,6 +137,17 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
       aria-label={`${log.done ? 'Completed' : 'Complete'} ${name}`} aria-pressed={log.done} onClick={complete}>
       {log.done && <Check size={19} aria-hidden="true" />}
     </button>
+    {adjusting && !log.done && (kind === 'weight' || kind === 'bodyweight') && <div className="quick-set__adjustments" role="group" aria-label={`Adjust ${name}`}>
+      {(kind === 'weight' || showLoad) && <div><button type="button" aria-label={`Decrease ${name} weight by ${weightStep} kg`} onClick={() => stepWeight(-1)}><Minus size={17} aria-hidden="true" /></button><small>{weightStep} kg</small><button type="button" aria-label={`Increase ${name} weight by ${weightStep} kg`} onClick={() => stepWeight(1)}><Plus size={17} aria-hidden="true" /></button></div>}
+      <div><button type="button" aria-label={`Decrease ${name} reps`} onClick={() => edit({ reps: Math.max(1, (log.reps ?? plannedRepetitions(exercise.target) ?? 1) - 1) })}><Minus size={17} aria-hidden="true" /></button><small>Reps</small><button type="button" aria-label={`Increase ${name} reps`} onClick={() => edit({ reps: Math.min(1000, (log.reps ?? plannedRepetitions(exercise.target) ?? 0) + 1) })}><Plus size={17} aria-hidden="true" /></button></div>
+    </div>}
+    {reusePrevious && previous && <div className="quick-set__review"><button type="button" aria-label={`Reuse previous ${name} weights and reps`}
+      onClick={() => {
+        setReuseRevision(value => value + 1); setInvalidWeight(false);
+        onInvalidChange(log.id, false); onLoadValidityChange(log.id, false);
+        if (optionalLoad && (previous.kg ?? 0) > 0) onLoadInteraction();
+        edit({ kg: previous.kg, reps: previous.reps });
+      }}><RotateCcw size={14} aria-hidden="true" />Use previous</button></div>}
     {hasLastSetSuggestion && <p className="quick-set__suggestion" aria-label={`${name} suggestion`}>Last-set suggestion · editable</p>}
     {canCopyLast && lastSet && <div className="quick-set__review"><button type="button"
       aria-label={`Copy last completed ${exercise.name} set ${lastSet.sourceSetNumber} to set ${index + 1}`}
@@ -143,11 +177,12 @@ function QuickSetRow({ sessionId, exercise, log, index, previous, onSet, onDone,
 }
 
 function QuickExercise(props: QuickWorkoutLogProps & { exercise: FocusedExercise }) {
-  const { sessionId, exercise, previous, onSet, onSelect, onEquipment, athleteMode } = props;
+  const { sessionId, exercise, previous, onSet, onSelect, onEquipment, athleteMode, onLoadIncrementChange } = props;
   const kind = exerciseInputKind(exercise);
   const timed = kind === 'duration';
   const recordedLoad = hasRecordedLoad(exercise.logs);
   const [loadOpen, setLoadOpen] = useState(() => recordedLoad);
+  const [appliedVersions, setAppliedVersions] = useState<Record<string, number>>({});
   const optionalLoad = kind === 'bodyweight' || timed || (kind === 'distance' && (recordedLoad || loadOpen));
   const invalidLoads = useRef(new Set<string>());
   const showLoad = optionalLoad && (loadOpen || recordedLoad);
@@ -155,6 +190,8 @@ function QuickExercise(props: QuickWorkoutLogProps & { exercise: FocusedExercise
   const prior = previous(exercise)?.exercise;
   const inMinutes = /\bmin(?:ute)?s?\b/i.test(exercise.target);
   const quantityLabel = timed ? inMinutes ? 'Minutes' : 'Seconds' : exercise.quantityUnit === 'm' ? 'Metres' : 'Reps';
+  const recommendation = getProgressionRecommendation(exercise, props.sessions ?? [], props.date ?? new Date().toISOString().slice(0, 10),
+    { ...props.context, loadIncrementKg: exerciseLoadIncrement(exercise), ...(exercise.preparationOnly ? { lowFatigueSession: true } : {}) });
 
   function toggleLoad() {
     if (loadOpen && invalidLoads.current.size) {
@@ -173,10 +210,11 @@ function QuickExercise(props: QuickWorkoutLogProps & { exercise: FocusedExercise
         : (kind === 'weight' || showLoad) && <span>{optionalLoad ? 'Added' : 'Weight'}<small>kg</small></span>}
       <span>{quantityLabel}</span><span>Done</span>
     </div>
-    {exercise.logs.map((log, index) => <QuickSetRow key={`${sessionId}-${exercise.key}-${log.id}`} {...props}
+    {exercise.logs.map((log, index) => <QuickSetRow key={`${sessionId}-${exercise.key}-${log.id}-${appliedVersions[log.id] ?? 0}`} {...props}
       exercise={exercise} log={log} index={index} previous={prior?.logs[index]} showLoad={showLoad}
       onLoadInteraction={() => setLoadOpen(true)} onLoadValidityChange={(id, invalid) => { if (invalid) invalidLoads.current.add(id); else invalidLoads.current.delete(id); }} />)}
     <details className="quick-exercise__effort"><summary>Details <span>Optional</span></summary>
+      {(kind === 'weight' || showLoad) && onLoadIncrementChange && <LoadStepControl exercise={exercise} onChange={increment => onLoadIncrementChange(exercise.key, increment)} />}
       {optionalLoad && !recordedLoad && <button type="button" className="text-button quick-exercise__load" aria-label={`${showLoad ? 'Hide' : 'Add'} load for ${exercise.name}`}
         aria-expanded={showLoad} onClick={toggleLoad}>{showLoad ? 'Hide added load' : 'Add load · kg'}</button>}
       {optionalLoad && <p>Added weight is optional. Existing recorded load stays visible; opening or hiding fields never changes it.</p>}
@@ -189,6 +227,18 @@ function QuickExercise(props: QuickWorkoutLogProps & { exercise: FocusedExercise
         onChange={event => { onSelect(exercise.key, log.id); onSet(exercise.key, log.id, { rir: numberInput(event.target.value, 10) }); }} /></label>)}
       {!athleteMode && <p>Primer: A short preparation session before a demanding activity. Complex Pair: Two linked exercises performed in a prescribed sequence.</p>}
       {exercise.exerciseId === 'split-step-reaction' && <ReactionCue key={exercise.key} />}
+      {!props.editing && ['load', 'reps', 'hold', 'reduce'].includes(recommendation.kind) && <ProgressionCue recommendation={recommendation}
+        onApply={['load', 'reps'].includes(recommendation.kind) ? () => {
+          const target = exercise.logs.find(log => !log.done);
+          if (!target) return;
+          if (recommendation.kg !== undefined) {
+            invalidLoads.current.delete(target.id);
+            props.onInvalidChange(target.id, false);
+            setAppliedVersions(current => ({ ...current, [target.id]: (current[target.id] ?? 0) + 1 }));
+          }
+          onSelect(exercise.key, target.id);
+          onSet(exercise.key, target.id, { ...(recommendation.kg !== undefined ? { kg: recommendation.kg } : {}), ...(recommendation.reps !== undefined ? { reps: recommendation.reps } : {}) });
+        } : undefined} />}
     </details>
   </section>;
 }

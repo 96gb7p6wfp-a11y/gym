@@ -21,6 +21,8 @@ import { EquipmentLabelEditor } from './EquipmentLabel';
 import { exerciseInputKind, hasRecordedLoad, measuredSprintSeconds } from './exercise-input';
 import { lastSetSuggestion, type SetInputSources } from './set-autofill';
 import { ReactionCue } from './ReactionCue';
+import { exerciseLoadIncrement, adjustedWorkoutLoad } from './workout-input-steps';
+import { LoadStepControl } from './LoadStepControl';
 
 export interface FocusedSetLog {
   id: string;
@@ -58,6 +60,7 @@ export interface FocusedExercise {
   superset?: SupersetLink;
   preparationOnly?: boolean;
   equipmentLabel?: string;
+  loadIncrementKg?: number;
 }
 
 export interface FocusedWorkoutProps {
@@ -79,13 +82,14 @@ export interface FocusedWorkoutProps {
   onExerciseAction?: (key: string) => void;
   athleteMode?: boolean;
   onEquipmentChange?: (exerciseKey: string, label: string | undefined) => Promise<boolean | void> | boolean | void;
+  onLoadIncrementChange?: (exerciseKey: string, increment: number) => unknown;
 }
 
 const amount = (raw: string, maximum: number) => raw.trim() === ''
   ? null : Math.min(maximum, Math.max(0, Number(raw.replace(',', '.')) || 0));
 
 /** The existing session mutations remain the only source of workout data. */
-export function FocusedWorkout({ sessionId, editing = false, exercises, now, previous, onSet, onDone, onUndoLast, canUndoLast = false, lastCompletedTarget, onTimer, renderAllSets, sessions = [], date = new Date().toISOString().slice(0, 10), context, onExerciseAction, athleteMode = true, onEquipmentChange }: FocusedWorkoutProps) {
+export function FocusedWorkout({ sessionId, editing = false, exercises, now, previous, onSet, onDone, onUndoLast, canUndoLast = false, lastCompletedTarget, onTimer, renderAllSets, sessions = [], date = new Date().toISOString().slice(0, 10), context, onExerciseAction, athleteMode = true, onEquipmentChange, onLoadIncrementChange }: FocusedWorkoutProps) {
   const initialStep = firstUnfinishedStep(exercises);
   const initialExercise = exercises.find(exercise => exercise.key === initialStep?.exerciseKey) ?? exercises[0];
   const [exerciseKey, setExerciseKey] = useState(initialExercise?.key);
@@ -195,11 +199,11 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
   const hasLastSetSuggestion = !log.done && Object.values(log.inputSources ?? {}).includes('last-set');
   const libraryExercise = findLibraryExercise(exercise);
   const recommendation = getProgressionRecommendation(exercise, sessions, date,
-    exercise.preparationOnly ? { ...context, lowFatigueSession: true } : context);
+    { ...context, loadIncrementKg: exerciseLoadIncrement(exercise), ...(exercise.preparationOnly ? { lowFatigueSession: true } : {}) });
   const qualityCue = setQualityCue({ ...exercise, category: libraryExercise?.category },
     exercise.preparationOnly || recommendation.kind === 'reduce' || context?.lowFatigueSession
       || context?.readiness?.energy === 'low' || context?.readiness?.soreness === 'high');
-  const weightStep = (log.kg ?? 0) >= 40 ? 2.5 : .5;
+  const weightStep = exerciseLoadIncrement(exercise);
   const pair = findTrainingPair(exercises, exercise.key);
   const rounds = pair?.pairedRounds ?? 0;
   const pairedSet = pair && (pair.kind === 'complex' || setIndex < pair.pairedRounds);
@@ -249,6 +253,23 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
     // Automatic selection and parent rerenders never call this function.
     armSet(exercise.key, log.id);
     onSet(exercise.key, log.id, patch);
+  }
+
+  function stepWeight(direction: -1 | 1) {
+    if (invalidWeightInputs.current.has(log.id)) {
+      toast.error('Correct the weight before using the adjustment buttons.'); return;
+    }
+    editSet({ kg: adjustedWorkoutLoad(log.kg, direction, weightStep) });
+  }
+
+  function applyRecommendation() {
+    if (log.done) return;
+    if (recommendation.kg !== undefined) {
+      invalidWeightInputs.current.delete(log.id);
+      setReuseRevision(value => value + 1);
+    }
+    editSet({ ...(recommendation.kg !== undefined ? { kg: recommendation.kg } : {}),
+      ...(recommendation.reps !== undefined ? { reps: recommendation.reps } : {}) });
   }
 
   function completeSet() {
@@ -305,8 +326,8 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
       onValidityChange={valid => valid ? invalidWeightInputs.current.delete(log.id) : invalidWeightInputs.current.add(log.id)}
       onChange={(kg, valid) => editSet({ kg, ...(!valid ? { done: false } : {}) })} />
       <div className="focused-number-stepper__actions">
-        <button type="button" aria-label={`Decrease ${exercise.name} weight by ${weightStep} kg`} onClick={() => editSet({ kg: Math.max(0, Math.round(((log.kg ?? 0) - weightStep) * 10) / 10) })}><Minus size={18} aria-hidden="true" /></button>
-        <button type="button" aria-label={`Increase ${exercise.name} weight by ${weightStep} kg`} onClick={() => editSet({ kg: Math.min(2000, Math.round(((log.kg ?? 0) + weightStep) * 10) / 10) })}><Plus size={18} aria-hidden="true" /></button>
+        <button type="button" aria-label={`Decrease ${exercise.name} weight by ${weightStep} kg`} onClick={() => stepWeight(-1)}><Minus size={18} aria-hidden="true" /></button>
+        <button type="button" aria-label={`Increase ${exercise.name} weight by ${weightStep} kg`} onClick={() => stepWeight(1)}><Plus size={18} aria-hidden="true" /></button>
       </div>
     </div>
   </div>;
@@ -320,7 +341,8 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
       {layout === 'quick' ? <QuickWorkoutLog sessionId={sessionId} exercises={exercises} previous={previous} onSet={onSet} onDone={onDone}
         onTimer={onTimer} onSelect={selectQuickSet} onInvalidChange={(id, invalid) => { if (invalid) invalidWeightInputs.current.add(id); else invalidWeightInputs.current.delete(id); }}
         onEquipment={onEquipmentChange ? key => setEquipmentTarget(key) : undefined} onUndoLast={onUndoLast ? undoLastSet : undefined}
-        canUndoLast={canUndoLast} athleteMode={athleteMode} now={now} editing={editing} /> : <>
+        canUndoLast={canUndoLast} athleteMode={athleteMode} now={now} editing={editing}
+        onLoadIncrementChange={onLoadIncrementChange} sessions={sessions} date={date} context={context} /> : <>
       <section className="focused-exercise" aria-label="Current exercise" ref={exerciseCard}>
         <div className="focused-stage-topline">
           <span aria-label={allDone ? 'All sets complete' : `Exercise ${exerciseIndex + 1} of ${exercises.length}`}>{allDone ? 'Complete' : `${String(exerciseIndex + 1).padStart(2, '0')} / ${String(exercises.length).padStart(2, '0')}`}</span>
@@ -455,6 +477,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
               {!exercise.measurement && exercise.mode !== 'timed' && inputKind !== 'distance' && onEquipmentChange && <button type="button" className="focused-equipment-label text-button"
                 aria-label={`Equipment for ${exercise.name}`} onClick={() => setEquipmentTarget(exercise.key)}>{exercise.equipmentLabel ?? 'Add equipment label'}</button>}
               {!onEquipmentChange && exercise.equipmentLabel && <p className="small-note">{exercise.equipmentLabel}</p>}
+              {showWeight && onLoadIncrementChange && <LoadStepControl exercise={exercise} onChange={increment => onLoadIncrementChange(exercise.key, increment)} />}
               {(exercise.benefit || libraryExercise) && <p className="focused-exercise-benefit">{exercise.benefit ?? libraryExercise?.primaryBenefit}</p>}
               {exercise.restRange && <p className="small-note">Prescribed rest · {exercise.restRange}. The rest timer starts at {exercise.rest} sec and remains adjustable.</p>}
               {inputKind === 'distance' && exercise.prescribedDistanceM != null && <label className="field-label">Measured sprint time · optional
@@ -476,10 +499,10 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
               {!athleteMode && <><p className="small-note">RPE: How hard the effort felt.{exercise.targetRpe ? ` Planned effort: ${exercise.targetRpe}.` : ''}</p>
                 <p className="small-note">Primer: A short preparation session before a demanding activity.</p>
                 <p className="small-note">Complex Pair: Two linked exercises performed in a prescribed sequence.{pair ? ` Your ${pair.first.name} and ${pair.second.name} follow this sequence.` : ''}</p>
-                {!editing && ['load', 'reps', 'hold', 'reduce'].includes(recommendation.kind) && <ProgressionCue recommendation={recommendation} onApply={log.done ? undefined : () => editSet({ ...(recommendation.kg !== undefined ? { kg: recommendation.kg } : {}), ...(recommendation.reps !== undefined ? { reps: recommendation.reps } : {}) })} />}
+                {!editing && ['load', 'reps', 'hold', 'reduce'].includes(recommendation.kind) && <ProgressionCue recommendation={recommendation} onApply={log.done ? undefined : applyRecommendation} />}
               </>}
             </details>}
-            {athleteMode && !editing && ['load', 'reps', 'hold', 'reduce'].includes(recommendation.kind) && <ProgressionCue recommendation={recommendation} onApply={log.done ? undefined : () => editSet({ ...(recommendation.kg !== undefined ? { kg: recommendation.kg } : {}), ...(recommendation.reps !== undefined ? { reps: recommendation.reps } : {}) })} />}
+            {athleteMode && !editing && ['load', 'reps', 'hold', 'reduce'].includes(recommendation.kind) && <ProgressionCue recommendation={recommendation} onApply={log.done ? undefined : applyRecommendation} />}
           </>
         )}
       </section>

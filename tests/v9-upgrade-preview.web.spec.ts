@@ -28,6 +28,7 @@ async function seed(page: Page, options: { v9?: boolean; match?: boolean; readin
     plan, trainingGuidance: guidance,
     masterProgram: { version: 1, revision: options.v9 ? '9' : '13.1', startDate: '2026-11-02', matchWeeks: options.match ? [1] : [],
       clearance: guidance, ...(options.v9 ? { v9EffectiveDate: TODAY } : {}),
+      ...(options.v9 ? { dailyReadiness: [{ date: SATURDAY, feeling: options.readiness === 'yellow' ? 'tired' : options.readiness === 'red' ? 'poor' : 'normal' }] } : {}),
       readiness: [{ date: SATURDAY, status: options.readiness ?? 'green' }] },
     masterMatchWeekend: (options.v9 ? createV9VolleyballMasterPlan(true) : createVolleyballMasterPlan(true)).slice(5),
     customWorkouts: [{ ...structuredClone(legacy[0]), id: crypto.randomUUID(), name: 'Retained personal template' }],
@@ -166,6 +167,9 @@ test('an explicitly kept intentional date edit is labeled and the complete base 
   await applyUpgrade(page, 'keep');
   const sheet = await saturdayPreview(page);
   await expect(sheet).toContainText('Custom workout for this date');
+  await expectFullSaturday(sheet);
+  await expect(sheet.getByRole('region', { name: 'Executable recommendation', exact: true })).toContainText('5 exercises');
+  await sheet.getByRole('button', { name: 'Recommended today', exact: true }).click();
   await expect(sheet.getByRole('list', { name: 'Scheduled exercises', exact: true }).locator(':scope > li')).toHaveCount(5);
   await sheet.getByRole('button', { name: 'Full V9 base', exact: true }).click();
   await expectFullSaturday(sheet);
@@ -207,13 +211,17 @@ for (const readiness of ['yellow', 'red'] as const) {
     await seed(page, { v9: true, readiness });
     const before = await raw(page);
     const sheet = await saturdayPreview(page);
+    await expect(sheet.getByRole('heading', { name: 'Lower B — Full Strength', exact: true })).toBeVisible();
+    await expectFullSaturday(sheet);
+    await expect(sheet.getByRole('region', { name: 'Executable recommendation', exact: true })).toContainText('Modified');
+    await sheet.getByRole('button', { name: 'Recommended today', exact: true }).click();
     await expect(sheet.getByRole('heading', { level: 2 })).toContainText('Modified');
     const recommendedRows = await sheet.getByRole('list', { name: 'Scheduled exercises', exact: true }).locator(':scope > li').count();
     expect(recommendedRows).toBeLessThan(11);
     await sheet.getByRole('button', { name: 'Full V9 base', exact: true }).click();
     await expectFullSaturday(sheet);
     await expect(sheet.getByRole('button', { name: 'Start recommended workout', exact: true })).toBeVisible();
-    await expect(sheet).toContainText('recorded guidance, readiness and phase');
+    await expect(sheet).toContainText('cannot authorize restricted heavy or high-impact work');
     expect(await raw(page)).toBe(before);
   });
 }
@@ -249,21 +257,17 @@ test('browsing V9 Saturday does not change Friday Today or write planned sport a
 
 test('changing an actual match-week selection switches only upcoming recommendations between primer and full Lower B', async ({ page }) => {
   const before = await seed(page, { v9: true });
-  let options = await programOptions(page);
-  let config = options.locator('.master-program__config');
-  if (!await config.evaluate(element => element.hasAttribute('open'))) await config.locator(':scope > summary').click();
-  await config.getByRole('checkbox', { name: 'Week 1', exact: true }).check();
-  await config.getByRole('button', { name: 'Save program', exact: true }).click();
-  await expect.poll(async () => (await read(page)).profile.masterProgram.matchWeeks).toEqual([1]);
+  await page.getByRole('tab', { name: 'Train', exact: true }).click();
+  await page.getByRole('button', { name: /^Sun / }).click();
+  await page.getByRole('switch', { name: 'Match scheduled', exact: true }).click();
+  await expect.poll(async () => (await read(page)).profile.masterProgram.calendarMatches.find((row: {date: string}) => row.date === '2026-11-08')?.scheduled).toBe(true);
   let sheet = await saturdayPreview(page);
   await expect(sheet.getByRole('heading', { name: 'Pre-Match Primer', exact: true })).toBeVisible();
   await sheet.getByRole('button', { name: 'Close', exact: true }).click();
-  options = await programOptions(page);
-  config = options.locator('.master-program__config');
-  if (!await config.evaluate(element => element.hasAttribute('open'))) await config.locator(':scope > summary').click();
-  await config.getByRole('checkbox', { name: 'Week 1', exact: true }).uncheck();
-  await config.getByRole('button', { name: 'Save program', exact: true }).click();
-  await expect.poll(async () => (await read(page)).profile.masterProgram.matchWeeks).toEqual([]);
+  await page.getByRole('button', { name: /^Sun / }).click();
+  await page.getByRole('switch', { name: 'Match scheduled', exact: true }).click();
+  await expect.poll(async () => (await read(page)).profile.masterProgram.calendarMatches.find((row: {date: string}) => row.date === '2026-11-08')?.scheduled).toBe(false);
+  expect((await read(page)).profile.masterProgram.matchWeeks).toEqual(before.profile.masterProgram!.matchWeeks);
   sheet = await saturdayPreview(page);
   await expectFullSaturday(sheet);
   expect((await read(page)).sessions).toEqual(before.sessions);

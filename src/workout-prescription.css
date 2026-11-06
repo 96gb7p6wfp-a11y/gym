@@ -29,4 +29,12 @@
 .workout-prescription__changes li > p > span { display:inline-block; min-width:50px; margin-right:8px; color:var(--ink); }
 .workout-prescription summary:focus-visible,.workout-prescription button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:4px; }
 .workout-prescription--compact { margin:12px 0 16px; }
+.workout-prescription__limitation--compact { display:block; padding:0 14px; }
+.workout-prescription__limitation--compact>summary { display:flex; align-items:center; gap:10px; min-height:52px; list-style:none; cursor:pointer; }
+.workout-prescription__limitation--compact>summary::-webkit-details-marker { display:none; }
+.workout-prescription__limitation--compact>summary>strong { flex:1; min-width:0; font-size:14px; line-height:1.5; font-weight:600; }
+.workout-prescription__limitation--compact>summary>svg { flex-shrink:0; color:var(--sub); }
+.workout-prescription__limitation--compact[open]>summary>svg { rotate:90deg; }
+.workout-prescription__limitation--compact>p { margin:0 0 8px; }
+.workout-prescription__limitation--compact>.text-button { margin-bottom:8px; }
 @media(max-width:350px) { .workout-prescription__facts > div { grid-template-columns:72px minmax(0,1fr); gap:8px; } .workout-prescription__limitation { padding:12px; } }

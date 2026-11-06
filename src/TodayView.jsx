@@ -11,11 +11,13 @@ import './today.css';
 export function TodayView({ date, plan, session, otherSession, completed, activities, nutrition, now = Date.now(),
   sessions = [], weeklyPlan = [], performance, bodyWeight, today = currentReportDate(), athleteMode = true,
   volleyballSchedule, onStart, onPreview, onTrain, onBrowseTrain, onViewLog, onNutrition, onPlan, onActivity,
-  onProgress, disabled, programLabel, blockComplete = false, programOffer, onReviewProgram, scheduledEvents = [], prescription }) {
+  onProgress, disabled, programLabel, blockComplete = false, programOffer, onReviewProgram, scheduledEvents = [], prescription, referencePlan, referencePrescription, readinessFeeling }) {
   const day = new Date(`${date}T12:00:00`);
   const active = session?.status === 'active';
   const unscheduled = !active && !completed && plan.exercises.filter(exercise => !exercise.optionalWork).length === 0 && plan.kind !== 'recovery';
-  const shownPlan = active ? session : completed ?? plan;
+  const coach = plan.programRevision === '9';
+  const shownPlan = active ? session : completed ?? referencePlan ?? plan;
+  const adjusted = coach && !active && !completed && prescription?.changes.length > 0;
   const title = workoutTitle(shownPlan);
   const sessionLabel = active ? 'Session in progress' : completed ? 'Workout recorded'
     : shownPlan.programSessionId === 'v9-match-primer' ? 'Pre-match primer'
@@ -49,37 +51,40 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
   const weekLabel = cadence.weekStart === reportWeekStart(today) ? 'This week'
     : `Week of ${new Date(`${cadence.weekStart}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
   const progressLabel = `${cadence.completedGymDays} of ${cadence.plannedGymDays} planned gym days recorded`;
-  const action = otherSession || active ? onTrain : completed ? () => onViewLog(completed) : blockComplete ? onPlan : unscheduled ? onTrain : onStart;
+  const logSport = coach && !active && !completed && !otherSession && plan.kind === 'sport';
+  const action = otherSession || active ? onTrain : completed ? () => onViewLog(completed) : blockComplete ? onPlan : unscheduled ? onTrain : logSport ? onActivity : onStart;
   const actionLabel = otherSession ? `Resume ${new Date(`${otherSession.date}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} workout` : active ? 'Continue workout' : completed ? 'View workout'
     : blockComplete ? 'Plan next block' : unscheduled ? 'Choose workout'
-      : plan.kind === 'recovery' ? 'Start recovery' : 'Start workout';
+      : logSport ? 'Log activity' : adjusted ? 'Start adjusted workout' : plan.kind === 'recovery' ? 'Start recovery' : 'Start workout';
   const sessionMeta = active && shownPlan.kind === 'recovery' && !plannedSetCount ? 'Gentle mobility · follow your stretch checklist'
     : active && shownPlan.kind === 'sport' ? 'On court · reflect after training'
     : active ? `${setCount} / ${plannedSetCount} sets complete`
     : completed ? `${completedMinutes} min · ${completed.kind === 'recovery' ? 'recovery recorded' : completed.kind === 'sport' ? 'training recorded' : `${setCount} completed sets`}`
-      : plan.kind === 'sport' ? /match/i.test(plan.name) ? `Match · ${plan.startTime ?? 'time not set'} · log actual duration`
-        : `${volleyballSchedule.startTime}–${volleyballSchedule.endTime} · Berlin time`
-        : `${prescription?.duration ?? plan.durationRange ?? `${plan.minutes} min`}${plan.kind === 'recovery' ? ' · mobility & stretching' : ` · ${plan.exercises.filter(exercise => !exercise.optionalWork).length} exercises`}${plan.programRevision === '9' && plan.kind === 'strength' ? ` · ${plan.exercises.filter(exercise => !exercise.optionalWork).reduce((sum, exercise) => sum + exercise.sets, 0)} planned sets` : ''}`;
+      : shownPlan.kind === 'sport' ? /match/i.test(shownPlan.name) ? `Match · ${shownPlan.startTime ?? 'time not set'} · log actual duration`
+        : `${volleyballSchedule.startTime}–${volleyballSchedule.endTime}${coach ? '' : ' · Berlin time'}`
+        : `${referencePrescription?.duration ?? prescription?.duration ?? shownPlan.durationRange ?? `${shownPlan.minutes} min`}${shownPlan.kind === 'recovery' ? ' · mobility & stretching' : ` · ${shownPlan.exercises.filter(exercise => !exercise.optionalWork).length} exercises`}${shownPlan.programRevision === '9' && shownPlan.kind === 'strength' ? ` · ${shownPlan.exercises.filter(exercise => !exercise.optionalWork).reduce((sum, exercise) => sum + exercise.sets, 0)} planned sets` : ''}`;
   const remainingCalories = targets?.calories == null ? null : Math.max(0, Math.round(targets.calories - totals.calories));
   const fuelDetail = remainingCalories === null ? 'Meals & daily targets'
     : `${remainingCalories.toLocaleString('en-GB')} kcal remaining · ${Math.round(totals.protein)}${targets.protein ? ` / ${Math.round(targets.protein)}` : ''} g protein`;
 
-  return <div className="today-view journal-today">
-    <section className="day-cover" aria-label="Your day" data-session-state={active ? 'active' : completed ? 'complete' : shownPlan.kind === 'recovery' ? 'recovery' : 'ready'} data-adjusted={showAdjustment ? 'true' : undefined}>
+  return <div className={`today-view journal-today${coach ? ' today-view--coach' : ''}`}>
+    <section className="day-cover" aria-label="Your day" data-sport={shownPlan.kind === 'sport' && !active && !completed ? 'true' : undefined} data-session-state={active ? 'active' : completed ? 'complete' : shownPlan.kind === 'recovery' ? 'recovery' : 'ready'} data-adjusted={showAdjustment ? 'true' : undefined}>
       <div className="day-cover__edition">
         <p className="day-context" aria-label="Session type">{sessionLabel}</p>
-        {prescription && !completed && <span className="day-cover__effort" aria-label="Planned effort">{prescription.label}</span>}
+        {prescription && !completed && <span className="day-cover__effort" aria-label="Planned effort">{!active && coach ? referencePrescription?.label ?? prescription.label : prescription.label}</span>}
         <button type="button" className="icon-button" aria-label="Choose training day" onClick={onBrowseTrain ?? onTrain}><CalendarDays size={19} aria-hidden="true" /></button>
       </div>
       <h2 key={`${date}-${title}`} className={`day-cover__title${title.length > 30 ? ' day-cover__title--long' : ''}`}>{title}</h2>
-      {showAdjustment ? <button type="button" className="day-cover__adjustment"
+      {showAdjustment && !coach ? <button type="button" className="day-cover__adjustment"
         aria-label={reviewGuidance && onReviewProgram ? 'Review training guidance' : 'View workout adjustments'}
         onClick={reviewGuidance && onReviewProgram ? onReviewProgram : onPreview} disabled={disabled}>
         <span>{adjustment.title}</span><ChevronRight size={16} aria-hidden="true" />
-      </button> : <p className="day-cover__purpose">{prescription?.label === 'Preparation' ? prescription.objective : purpose.subtitle}</p>}
+      </button> : <p className="day-cover__purpose">{!coach && prescription?.label === 'Preparation' ? prescription.objective : purpose.subtitle}</p>}
       <div className="day-cover__plan-row"><p className="day-cover__prescription">{sessionMeta}</p>
-        {!active && !completed && <button type="button" className="day-cover__preview" disabled={disabled} onClick={onPreview}>View workout<ChevronRight size={14} aria-hidden="true" /></button>}
+        {!active && !completed && <button type="button" className="day-cover__preview" disabled={disabled} onClick={onPreview}>{logSport ? 'View session' : 'View workout'}<ChevronRight size={14} aria-hidden="true" /></button>}
       </div>
+      {adjusted && <button type="button" className="coach-today-adjustment" onClick={onPreview}><span>{adjustment?.title ?? 'Adjusted recommendation'} · {prescription.workingSets} sets</span><ChevronRight size={15} aria-hidden="true" /></button>}
+      {coach && !active && !completed && shownPlan.kind === 'strength' && shownPlan.programSessionId !== 'v9-match-primer' && <button type="button" className="coach-today-readiness" onClick={onTrain}>{readinessFeeling ? `Feeling ${readinessFeeling} · change` : 'Readiness unknown · check in'}</button>}
       {active && plannedSetCount > 0 && <div className="day-cover__track" role="progressbar" aria-label="Current workout" aria-valuemin={0} aria-valuemax={plannedSetCount} aria-valuenow={setCount}><span style={{ width: `${plannedSetCount ? setCount / plannedSetCount * 100 : 0}%` }} /></div>}
       <button className="btn day-cover__start" disabled={disabled} onClick={action}>{actionLabel}<ArrowRight size={20} aria-hidden="true" /></button>
     </section>
@@ -90,7 +95,13 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
       </button>
     </section>
 
-    <div className="day-agenda">
+    {coach ? <details className="coach-today-more"><summary>More for today<ChevronRight size={15} /></summary><div className="coach-today-more__links">
+      <button type="button" onClick={onNutrition} aria-label="View today’s nutrition"><span>Fuel<small>{fuelDetail}</small></span><ChevronRight size={16} /></button>
+      <button type="button" onClick={onPlan}>Weekly plan<ChevronRight size={16} /></button>
+      <button type="button" onClick={onActivity}>Add activity<Plus size={16} /></button>
+      {nextVolleyball && <p>Next on court · {dateKey(nextVolleyball) === date ? 'Today' : nextVolleyball.toLocaleDateString('en-GB', { weekday: 'short' })} · {volleyballSchedule.startTime}–{volleyballSchedule.endTime}</p>}
+      {scheduledEvents.map(event => <p key={event.name}>{event.name} · {event.detail}</p>)}
+    </div></details> : <div className="day-agenda">
       {nextVolleyball && <section className="day-next" aria-label="Next training event">
         <p className="day-caption">Next on court</p>
         <div><strong>Volleyball</strong><span>{dateKey(nextVolleyball) === date ? 'Today' : nextVolleyball.toLocaleDateString('en-GB', { weekday: 'short' })} · {volleyballSchedule.startTime}–{volleyballSchedule.endTime}</span></div>
@@ -102,14 +113,14 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
       <button type="button" className="day-fuel" onClick={onNutrition} aria-label="View today’s nutrition">
         <span><strong>Fuel</strong><span>{fuelDetail}</span></span><ChevronRight size={18} aria-hidden="true" />
       </button>
-    </div>
+    </div>}
 
     {extras.length > 0 && <section className="day-recorded" aria-label={`${day.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })} activity timeline`}>
       <div className="day-recorded__heading"><p className="day-caption">Recorded today</p><button type="button" onClick={onActivity}>View all</button></div>
       {extras.slice(0, 3).map(({ activity }) => <button key={activity.id} onClick={onActivity}><span><strong>{activity.name}</strong><span>{activity.durationMinutes} min{activity.distanceKm !== null ? ` · ${activity.distanceKm} km` : ''}</span></span><Check size={16} aria-label="Recorded" /></button>)}
     </section>}
 
-    <div className="day-utilities"><button type="button" onClick={onPlan}>{blockComplete ? 'Plan next block' : 'Weekly plan'}<ChevronRight size={16} aria-hidden="true" /></button><button type="button" onClick={onActivity}>Add activity<Plus size={16} aria-hidden="true" /></button></div>
+    {!coach && <div className="day-utilities"><button type="button" onClick={onPlan}>{blockComplete ? 'Plan next block' : 'Weekly plan'}<ChevronRight size={16} aria-hidden="true" /></button><button type="button" onClick={onActivity}>Add activity<Plus size={16} aria-hidden="true" /></button></div>}
     <span className="sr-only">{dateKey(day)}</span>
   </div>;
 }
