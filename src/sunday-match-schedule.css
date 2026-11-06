@@ -1,0 +1,23 @@
+.sunday-match{min-width:0;margin:16px 0 20px;padding:16px 0;color:var(--ink);border-block:1px solid var(--line)}
+.sunday-match__heading{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.sunday-match__heading>div{min-width:0}
+.sunday-match__heading p{margin:0 0 4px;font-size:12px;color:var(--sub);line-height:1.5}
+.sunday-match__heading h3{font-size:18px;line-height:1.25;letter-spacing:-.035em;margin:0;font-weight:650}
+.sunday-match__switch{display:flex;align-items:center;justify-content:flex-end;flex-shrink:0;gap:8px;min-width:88px;min-height:48px;border:0;padding:0;background:transparent;color:var(--sub);font:inherit;font-size:13px;cursor:pointer}
+.sunday-match__track{display:flex;align-items:center;width:50px;height:30px;border-radius:18px;background:var(--line);padding:3px;box-sizing:border-box;transition:background .15s ease}
+.sunday-match__track>span{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--canvas);color:var(--ink);box-shadow:0 1px 3px #0002;transition:transform .15s ease}
+.sunday-match__switch[aria-checked=true] .sunday-match__track{background:var(--ink)}
+.sunday-match__switch[aria-checked=true] .sunday-match__track>span{transform:translateX(20px)}
+.sunday-match__switch:disabled{opacity:.55;cursor:default}
+.sunday-match__switch:focus-visible,.sunday-match summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:8px}
+.sunday-match__effect,.sunday-match__notice{margin:8px 0 0;font-size:13px;color:var(--sub);line-height:1.5}
+.sunday-match__details{margin-top:8px}
+.sunday-match__details>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;list-style:none;font-size:13px;color:var(--ink);cursor:pointer}
+.sunday-match__details>summary::-webkit-details-marker{display:none}
+.sunday-match__details[open]>summary svg{transform:rotate(90deg)}
+.sunday-match__details .field-label{display:grid;gap:8px;margin:12px 0;font-size:13px}
+.sunday-match__details input,.sunday-match__details textarea{box-sizing:border-box;width:100%;min-height:48px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-soft);color:var(--ink);font:inherit;font-size:16px;line-height:1.4}
+.sunday-match__details textarea{resize:vertical}
+.sunday-match__details .btn{min-height:48px;margin-top:8px}
+.sunday-match__error{font-size:13px;line-height:1.5;margin:8px 0;color:var(--danger,var(--ink))}
+@media(prefers-reduced-motion:reduce){.sunday-match__track,.sunday-match__track>span{transition:none}.sunday-match__details[open]>summary svg{transform:none}}

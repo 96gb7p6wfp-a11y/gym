@@ -24,7 +24,8 @@ test('initial session suggestions respect normalized equipment and never label l
   const before = structuredClone(technogym);
   for (const equipmentLabel of ['Matrix Chest Press', undefined]) {
     const incompatible = draft({ ...BASE, equipmentLabel, defaultKg: 10 }, [technogym]);
-    assert.deepEqual(incompatible.exercises[0].logs.map(log => [log.kg, log.reps]), [[10, null], [10, null], [10, null]]);
+    assert.deepEqual(incompatible.exercises[0].logs.map(log => [log.kg, log.reps]), [[10, 8], [10, 8], [10, 8]]);
+    assert.equal(incompatible.exercises[0].logs[0].inputSources?.reps, 'default');
   }
   const unlabeled = history('2026-10-26');
   const known = draft({ ...BASE, equipmentLabel: 'Technogym Chest Press' }, [unlabeled]);
@@ -37,14 +38,16 @@ test('initial suggestions exclude incompatible movement configurations and prepa
   const previous = history('2026-10-26');
   for (const patch of [{ perSide: true }, { quantityUnit: 'm' as const }, { measurement: 'height' as const }, { mode: 'bodyweight' as const }, { name: 'Renamed press' }, { preparationOnly: true }]) {
     const session = draft({ ...BASE, ...patch }, [previous]);
-    assert.equal(session.exercises[0].logs[0].kg, null);
-    assert.equal(session.exercises[0].logs[0].reps, null);
+    assert.equal(session.exercises[0].logs[0].kg, patch.preparationOnly ? 0 : null);
+    assert.equal(session.exercises[0].logs[0].reps, 'quantityUnit' in patch || 'measurement' in patch ? null : 8);
+    assert.equal(session.exercises[0].logs[0].done, false);
   }
   assert.equal(draft(BASE, [history('2026-10-26', { ...BASE, preparationOnly: true })]).exercises[0].logs[0].kg, null);
   const bodyweight = { ...BASE, name: 'Push-up', mode: 'bodyweight' as const };
   const withoutAddedLoad = draft({ ...bodyweight, defaultKg: 0 }, [history('2026-10-26', bodyweight, 20)]);
   assert.equal(withoutAddedLoad.exercises[0].logs[0].kg, 0);
-  assert.equal(withoutAddedLoad.exercises[0].logs[0].reps, null);
+  assert.equal(withoutAddedLoad.exercises[0].logs[0].reps, 8);
+  assert.equal(withoutAddedLoad.exercises[0].logs[0].inputSources?.reps, 'default');
 });
 
 test('source set ordinals remain stable and missing newest values never fall back to older work', () => {
@@ -55,7 +58,7 @@ test('source set ordinals remain stable and missing newest values never fall bac
   const before = structuredClone([older, latest]);
   const session = draft(BASE, [older, latest]);
   assert.deepEqual(values(session), [
-    { kg: null, reps: null, seconds: null, rir: null, done: false },
+    { kg: null, reps: 8, seconds: null, rir: null, done: false },
     { kg: 60, reps: 7, seconds: null, rir: null, done: false },
     { kg: 60, reps: 8, seconds: null, rir: null, done: false },
   ]);

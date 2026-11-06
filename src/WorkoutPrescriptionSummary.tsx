@@ -5,22 +5,29 @@ import './workout-prescription.css';
 interface WorkoutPrescriptionSummaryProps {
   prescription: WorkoutPrescription;
   onReviewProgram?: () => void;
+  onReviewGuidance?: () => void;
   compact?: boolean;
 }
 
 /** A read-only explanation of this prescription, never an instruction to reset it. */
-export function WorkoutPrescriptionSummary({ prescription, onReviewProgram, compact = false }: WorkoutPrescriptionSummaryProps) {
+export function WorkoutPrescriptionSummary({ prescription, onReviewProgram, onReviewGuidance, compact = false }: WorkoutPrescriptionSummaryProps) {
   const limitation = prescription.reasons.find(reason => reason.code.startsWith('clearance-lifting-')
     || reason.code === 'saved-preparation')
     ?? prescription.reasons.find(reason => reason.code.startsWith('clearance-impact-'));
   const otherReasons = prescription.reasons.filter(reason => reason !== limitation);
+  const reviewGuidance = onReviewGuidance ?? onReviewProgram;
+  const guidanceAction = reviewGuidance && <button type="button" className="text-button" onClick={reviewGuidance}>Review training guidance<ChevronRight size={16} aria-hidden="true" /></button>;
 
   return <section className={`workout-prescription${compact ? ' workout-prescription--compact' : ''}`} aria-label="Workout prescription">
-    {limitation && <div className="workout-prescription__limitation" role="status">
+    {limitation && (compact ? <details className="workout-prescription__limitation workout-prescription__limitation--compact">
+      <summary><strong>{limitation.title}</strong><ChevronRight size={17} aria-hidden="true" /></summary>
+      <p>{limitation.detail}</p>
+      {guidanceAction}
+    </details> : <div className="workout-prescription__limitation" role="status">
       <strong>{limitation.title}</strong>
       <p>{limitation.detail}</p>
-      {onReviewProgram && <button type="button" className="text-button" onClick={onReviewProgram}>Review training guidance<ChevronRight size={16} aria-hidden="true" /></button>}
-    </div>}
+      {guidanceAction}
+    </div>)}
     <details className="workout-prescription__details">
       <summary><span>Workout details<small>{prescription.label} · {prescription.workingSets} working sets</small></span><ChevronRight size={17} aria-hidden="true" /></summary>
       <dl className="workout-prescription__facts">

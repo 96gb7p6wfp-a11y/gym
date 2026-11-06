@@ -41,6 +41,9 @@ test('progression waits for an explicit tap, updates only the current unfinished
   const before = workout('2026-10-01', { key: 'chest-press', sets: 3 });
   const recent = workout('2026-10-08', { key: 'copied-chest-prior', sets: 3 });
   const active = workout(DATE, { key: 'unique-chest-today', active: true, reps: 10 });
+  // This fixture's machine permits a 1 kg step. Unspecified machines now use
+  // practical equipment defaults and may honestly recommend repeating the load.
+  active.exercises[0].loadIncrementKg = 1;
   active.exercises[0].logs[0].done = true;
   active.exercises[0].logs.push({ ...active.exercises[0].logs[1], id: crypto.randomUUID(), kg: 42, reps: 8 });
   active.exercises[0].sets = 3;

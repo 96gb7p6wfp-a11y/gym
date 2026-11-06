@@ -1,5 +1,76 @@
 # Standalone app validation
 
+## Personal training coach and premium UX — 6 November 2026
+
+Baseline: Setline V18 / Volleyball Performance Plan V9, main `1a6284d`.
+Runtime source validated at `7672085`; the final commit only corrects one
+browser metadata expectation and adds this record. No runtime/build change
+followed the complete browser execution. PR #8 targets main; PRs #1/#5 remain
+unmerged. Application version, storage key, schema 1 and backup version 1 stay.
+
+| Check | Actual result |
+| --- | --- |
+| `npm run typecheck` | Passed, including after the final browser-expectation correction |
+| `npm test` | **783 passed**, zero failures/cancellations/skips |
+| `npm run build` | Passed; 26 precached app files; cache `setline-pwa-26abbe59b63a6722832a`; existing large-chunk advisory |
+| Complete `npm run test:web -- --workers=2` | **396 passed, 1 obsolete metadata assertion failed, 21.0 minutes** |
+| Corrected `tests/v9-edge-ui.web.spec.ts` whole-file rerun | **3 passed, 10.1 seconds**, against the same runtime/build |
+| Distinct final browser workflows | **All 397 have passing evidence across the complete run and corrected-file rerun**, not one clean full-suite run |
+| Long-history workflows | 1,000 / 5,000 / 10,000 completed sets: startup, input, search, chart, export and safe restore all passed |
+| Local visual review | 3 before + 13 after isolated localhost captures; light/dark, 320/390 px; no horizontal overflow |
+| Existing responsive Quick Log cases | 320 / 375 / 390 / 430 px in light/dark passed |
+| `git diff --check` | Passed |
+| Lint | No repository lint script/configuration; not run |
+
+The sole final full-run failure expected generated reaction-drill defaults to
+have the old `planned` source. The compact representation deliberately uses
+`default`, leaving old deliberate `planned` records protected. Only that
+expectation changed; unchanged numeric values, no-completion/no-write checks,
+manual reaction-cue start/stop and Focus/Quick behavior all passed in the rerun.
+No completion, safety, historical-record or backup assertion was removed.
+
+Earlier integration runs found and fixed real issues before release: deliberate
+weekly loads yielding to history, legacy planned zeroes being treated as weak
+defaults, Quick Log focus moving Copy/Complete before pointerup, and the older
+Return to saved plan route losing dated coaching observations. A 10,000-set run
+also exposed redundant per-set provenance exhausting the safety-copy quota.
+Restore correctly refused replacement and retained existing records. Compact
+source provenance fixed that storage regression without increasing the timeout,
+removing safety copies, rewriting history or migrating the storage engine.
+An environment restart interrupted a targeted run; its individual passes were
+not represented as a completed suite. The later complete run above covers them.
+
+Actual final-run measurements, Chromium 151.0.7922.173, 390×844, two workers:
+
+| Completed sets | Startup ms | Input paint / save ms | History search ms | Chart ms | Export request ms | Restore ms | Stored UTF-8 bytes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1,000 | 1225.7 | 54.8 / 478.0 | 8.0 | 19.6 | 25.8 | 17.6 | 234,361 |
+| 5,000 | 978.8 | 66.3 / 516.2 | 12.5 | 97.8 | 79.0 | 108.6 | 1,118,361 |
+| 10,000 | 1016.6 | 67.7 / 673.2 | 7.5 | 145.6 | 119.1 | 287.2 | 2,223,361 |
+
+These are single observations on the shared cloud executor, not physical-iPhone
+measurements or proof of a speed improvement. Export-request timing does not
+verify permanent file storage. Browser quotas and device storage eviction remain
+real limits; no destructive IndexedDB migration or fake cloud sync was added.
+
+New coverage includes full-versus-safe V9 references, exact eleven-entry normal
+Saturday, Great/Normal/Tired/Poor, unknown readiness, medical-gate preservation,
+explicit dated phases, legacy-date/DST migration, independent Today/Train dates,
+date-only match switches, draft review, cross-program observation preservation,
+truthful comparable progress, compact input controls, legacy input intent and
+backup/offline round-trips. Existing V13.1, V17/V18, timed/unilateral/sprint units,
+duplicate activation, Undo, timers, plan editing, nutrition, reminders, history,
+PWA update, invalid-backup rejection and active-session recovery cases also pass.
+
+All fixtures are isolated. No personal iPhone store or production records were
+accessed, restored, cleared or reset. Physical iPhone keyboard, VoiceOver, Dynamic
+Type, storage eviction and background/locked-screen audio remain unverified.
+Actual merge and Vercel production deployment must be checked separately against
+the merged commit; local tests and successful preview builds alone do not prove
+that the canonical production site has updated.
+
+See [implementation and preservation notes](docs/PERSONAL_COACH_UPDATE.md).
+
 ## Volleyball Performance Plan V9 in Setline V18 — 6 November 2026
 
 Baseline: latest V18 main `bbf3c51`. V9 is an opt-in training prescription,

@@ -23,7 +23,8 @@ async function seed(page: Page) {
     plan: DEFAULT_PROFILE.plan.map((day, index) => index === 0 ? plan : day) };
   const active = SessionSchema.parse(createSession(plan, 0, DATE, profile, []));
   active.startedAt = Date.parse(`${DATE}T10:00:00Z`); active.runningSince = null;
-  active.exercises[0].logs.forEach((log, index) => Object.assign(log, { kg: 60 - index * 2.5, reps: 8 - index, rir: 2 }));
+  active.exercises[0].logs.forEach((log, index) => Object.assign(log, { kg: 60 - index * 2.5, reps: 8 - index, rir: 2,
+    inputSources: { kg: 'manual', reps: 'manual' } }));
   active.exercises[1].logs[0].seconds = 45;
   active.exercises[2].logs[0].reps = 1;
   active.exercises[3].logs[0].reps = 12;

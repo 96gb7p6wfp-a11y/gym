@@ -87,3 +87,40 @@
  .progress-native .progress-lens-empty__copy { margin-top:4px; font-size:13px; line-height:1.5; }
  .progress-native .progress-lens-empty .progress-empty-action { margin-top:6px; }
 }
+/* Personal coach: quiet controls, one selected measure and compact supporting facts. */
+.progress-native .progress-period-selector { display:flex; gap:4px; margin:-10px 0 18px; }
+.progress-native .progress-period-selector>button { flex:1; min-height:44px; padding:8px; border:0; border-radius:12px; background:transparent; color:var(--sub); font-size:13px; font-weight:550; }
+.progress-native .progress-period-selector>button[aria-pressed='true'] { color:var(--ink); background:var(--surface-soft); }
+.progress-native .progress-lift-select { display:grid; gap:6px; margin:0 0 18px; color:var(--sub); font-size:12px; font-weight:500; }
+.progress-native .progress-lift-select>select { width:100%; min-width:0; min-height:48px; padding:11px 32px 11px 12px; color:var(--ink); background:var(--surface-soft); border:1px solid var(--line); border-radius:13px; font:inherit; font-size:16px; text-overflow:ellipsis; }
+.progress-native .progress-jump-selector { display:flex; gap:8px; margin:0 0 16px; }
+.progress-native .progress-jump-selector>button { flex:1; min-width:0; min-height:44px; padding:9px 6px; border:1px solid var(--line); border-radius:13px; color:var(--sub); background:transparent; font-size:13px; line-height:1.25; }
+.progress-native .progress-jump-selector>button[aria-pressed='true'] { color:var(--accent); background:var(--accent-soft); border-color:transparent; font-weight:600; }
+.progress-native .progress-jump-context { margin:14px 0 0; color:var(--sub); font-size:13px; line-height:1.55; }
+.progress-native .progress-chart-empty { flex-wrap:wrap; gap:12px; }
+.progress-native .progress-chart-empty>button { min-height:44px; }
+.progress-native .progress-athlete-measures { min-width:0; padding:20px; border-radius:24px; background:var(--surface); }
+.progress-native .progress-athlete-measures>h3 { margin:0 0 16px; color:var(--ink); font-size:18px; font-weight:600; letter-spacing:-.025em; }
+.progress-native .progress-verticals { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.progress-native .progress-verticals>button { display:grid; align-content:start; gap:6px; min-width:0; min-height:110px; padding:0 0 16px; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; text-align:left; color:var(--ink); }
+.progress-native .progress-verticals>button>span { color:var(--sub); font-size:13px; line-height:1.4; }
+.progress-native .progress-verticals>button>strong { display:flex; align-items:baseline; gap:4px; font-size:32px; font-weight:650; letter-spacing:-.045em; line-height:1.1; font-variant-numeric:tabular-nums; }
+.progress-native .progress-verticals small { color:var(--sub); font-size:12px; line-height:1.5; font-weight:400; letter-spacing:0; }
+.progress-native .progress-advantage-row { display:flex; align-items:center; gap:10px; width:100%; min-height:76px; margin:0; padding:16px 0 0; border:0; border-radius:0; background:transparent; color:var(--ink); text-align:left; }
+.progress-native .progress-advantage-row>span { display:grid; gap:5px; flex:1; min-width:0; }
+.progress-native .progress-advantage-row strong { font-size:14px; font-weight:600; line-height:1.4; }
+.progress-native .progress-advantage-row small { color:var(--sub); font-size:12px; line-height:1.5; }
+.progress-native .progress-advantage-row>b { flex-shrink:0; font-size:20px; font-weight:600; letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
+.progress-native .progress-advantage-row:disabled { opacity:1; cursor:default; }
+.progress-native .progress-fresh-test { margin:16px 0 0; padding-top:14px; border-top:1px solid var(--line); color:var(--sub); font-size:13px; line-height:1.6; }
+@media(max-width:350px) {
+ .progress-native .progress-athlete-measures { padding:18px; }
+ .progress-native .progress-verticals { gap:12px; }
+ .progress-native .progress-verticals>button>strong { font-size:30px; }
+ .progress-native .progress-advantage-row { gap:7px; }
+ .progress-native .progress-advantage-row>b { font-size:18px; }
+ .progress-native .progress-period-selector>button { font-size:12px; }
+}
+.progress-native .progress-strength-history { max-height:120px; margin:0 0 12px; }
+.progress-native .progress-strength-comparison strong { flex-wrap:wrap; justify-content:flex-end; gap:2px 4px; }
+.progress-native .progress-strength-comparison strong small { white-space:nowrap; }

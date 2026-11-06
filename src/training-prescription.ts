@@ -1,6 +1,7 @@
 import { getMasterProgramWeek, masterWeekStart, type MasterProgramSettings } from './volleyball-master-plan.ts';
 import { findLibraryExercise } from './exercise-library.ts';
 import { v9ExplosiveExercise } from './volleyball-v9-plan.ts';
+import { getCalendarMatch, getCoachPhase, getCoachReadinessStatus, sundayForDate } from './coach-schedule.ts';
 import type { TrainingGuidance } from './training-guidance.ts';
 import type { PlanDay, PlanExercise } from './workout-customization';
 
@@ -96,9 +97,11 @@ export function getWorkoutPrescription({ plan, originalPlan, settings, guidance,
   const week = settings && date ? getMasterProgramWeek(settings.startDate, date) : null;
   const day = date ? (new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7 : null;
   const currentContext = source !== 'snapshot';
+  const coach = settings?.revision === '9' && plan.programRevision === '9';
+  const phase = coach && settings && date ? getCoachPhase(settings, date) : undefined;
   const activeDate = !!(settings && date && (week || settings.revision === '9' && date >= settings.startDate));
   const readiness = currentContext && activeDate && settings && date
-    ? settings.readiness?.find(row => row.date === date)?.status ?? 'unrecorded' : 'unrecorded';
+    ? (coach ? getCoachReadinessStatus(settings, date) : settings.readiness?.find(row => row.date === date)?.status) ?? 'unrecorded' : 'unrecorded';
   const reasons: PrescriptionReason[] = [];
   // A current profile is not evidence of the settings that created an old log.
   const changes = currentContext && originalPlan ? compareWorkoutPrescriptions(originalPlan, plan) : [];
@@ -121,13 +124,13 @@ export function getWorkoutPrescription({ plan, originalPlan, settings, guidance,
   if (source === 'today-edit') add('today-edit', 'Your change for this date', 'This date-specific workout takes priority over the recurring recommendation. The weekly plan and completed history stay separate.');
   if (source === 'today-edit' && plan.programRevision === '9' && (preparationStrength || allPreparation)) add('saved-preparation', 'Preparation saved in this date edit', 'This date edit retains an earlier preparation prescription. Changing readiness or guidance does not recreate removed sets. Review the full base, then use the reviewed date-only reset if you want this date to follow the current weekly prescription. Your history stays unchanged.');
   if (currentContext && activeDate && settings) {
-    if (week === 4) add('deload', 'Deload week', 'This planned week reduces demanding sets and supplementary contacts. It is not a missing-workout penalty or a permanent reduction of your base plan.');
-    if (week === 8) add('retest', 'Peak / retest week', 'Fresh jump measurements replace normal jump volume, with reduced strength work. Do not add a second full plyometric session.');
-    if (readiness === 'yellow') add('readiness-yellow', 'You selected Yellow', settings.revision === '9' ? 'Acceleration, aggressive agility and high-impact jumps are omitted or reduced, with selected hard strength sets reduced. The full V9 base is retained as a read-only reference; use the modified recommended session.' : settings.revision === '13.1'
+    if (coach ? phase?.phase === 'deload' : week === 4) add('deload', coach ? 'Lighter phase selected' : 'Deload week', 'An explicitly selected reduced-volume phase lowers demanding sets and supplementary contacts. Your full base prescription is retained. Training time is a planning estimate, not a target.');
+    if (coach ? phase?.phase === 'evaluation' : week === 8) add('retest', coach ? 'Evaluation phase selected' : 'Peak / retest week', 'Fresh jump measurements replace normal jump volume, with reduced strength work. Do not add a second full plyometric session.');
+    if (readiness === 'yellow') add('readiness-yellow', coach ? 'You selected Tired' : 'You selected Yellow', settings.revision === '9' ? 'Acceleration, aggressive agility and high-impact jumps are omitted or reduced, with selected hard strength sets reduced. The full V9 base is retained as a read-only reference; use the modified recommended session.' : settings.revision === '13.1'
       ? 'Hard jumps and ballistic work are removed and selected working sets are reduced. Keep controlled technique and avoid aggressive overload.'
       : 'Selected demanding work and supplementary contacts are reduced. Follow the actual exercise list, keep controlled technique and avoid aggressive overload.');
-    if (readiness === 'red') add('readiness-red', 'You selected Red', 'Use comfortable recovery and stop relevant painful or unstable work. No missed work needs to be made up.');
-    const match = !!week && settings.matchWeeks.includes(week);
+    if (readiness === 'red') add('readiness-red', coach ? 'You selected Poor' : 'You selected Red', 'Use comfortable recovery and stop relevant painful or unstable work. No missed work needs to be made up.');
+    const match = coach && date ? getCalendarMatch(settings, sundayForDate(date)).scheduled : !!week && settings.matchWeeks.includes(week);
     if (match && (day === 5 || day === 6)) add('match-week', day === 5 ? 'Sunday match preparation' : 'Sunday match',
       day === 5 ? 'Saturday is brief, optional preparation to preserve Sunday performance. Full rest is valid; no catch-up lower workout is added.' : 'Competition takes priority over the usual lower-body session. Record actual playing time and contacts separately.');
     if (settings.revision === '13.1' && match && day === 0) add('match-week', 'Upcoming Sunday match', 'Monday approach contacts are capped and hurdles are omitted. The saved base week is retained.');
@@ -145,7 +148,7 @@ export function getWorkoutPrescription({ plan, originalPlan, settings, guidance,
   // explosive workout into an easy primer. Include optional work in this guard.
   const matchPrimer = isGentleV9MatchPrimer(plan);
   const light = matchPrimer || allPreparation || (preparationStrength && !mixedPreparation) || plan.kind === 'recovery' || readiness === 'red'
-    || (currentContext && plan.kind === 'strength' && (readiness === 'yellow' || week === 4 || week === 8));
+    || (currentContext && plan.kind === 'strength' && (readiness === 'yellow' || (coach ? phase?.phase !== 'normal' && !!phase : week === 4 || week === 8)));
   const demanding = !light && plan.kind === 'strength' && working.some(exercise => (exercise.targetRpe ?? 0) >= 8);
   const difficulty = light ? 'light' : demanding ? 'demanding' : 'moderate';
   const preparation = allPreparation || (preparationStrength && !mixedPreparation);
@@ -174,9 +177,9 @@ export function getWorkoutPrescription({ plan, originalPlan, settings, guidance,
   let duration = plan.durationRange ?? (plan.minutes ?? plan.plannedMinutes ? `About ${plan.minutes ?? plan.plannedMinutes} min` : 'Time not specified');
   let durationEstimated = false;
   let durationDetail = 'Saved planning time, not measured completion time. Optional work may add time.';
-  if (originalPlan && changes.length && doseWeight(originalPlan) > doseWeight(plan) && (originalPlan.minutes ?? originalPlan.plannedMinutes)) {
+  if (originalPlan && changes.length && doseWeight(originalPlan) > 0 && doseWeight(originalPlan) !== doseWeight(plan) && (originalPlan.minutes ?? originalPlan.plannedMinutes)) {
     const originalMinutes = originalPlan.minutes ?? originalPlan.plannedMinutes!;
-    const ratio = Math.max(.15, Math.min(1, doseWeight(plan) / doseWeight(originalPlan)));
+    const ratio = Math.max(.15, doseWeight(plan) / doseWeight(originalPlan));
     const middle = 8 + Math.max(0, originalMinutes - 8) * ratio;
     const lower = Math.max(5, Math.floor((middle * .85) / 5) * 5);
     const upper = Math.max(lower + 5, Math.ceil((middle * 1.15) / 5) * 5);
@@ -187,6 +190,7 @@ export function getWorkoutPrescription({ plan, originalPlan, settings, guidance,
     duration = 'Short preparation · time varies';
     durationDetail = 'The original full-session duration is not a valid estimate for this reduced preparation prescription.';
   }
+  if (coach && /^≈|estimate/i.test(plan.durationRange ?? '')) durationEstimated = true;
   return { objective, difficulty, label, intensity, workingSets, mandatoryExercises: working.length,
     optionalExercises: plan.exercises.length - working.length, duration, durationEstimated, durationDetail,
     progression, reasons, changes, sourceLabel: source === 'snapshot' ? 'Saved workout snapshot' : source === 'today-edit' ? 'Your workout for this date' : 'Saved weekly program',

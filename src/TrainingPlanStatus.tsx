@@ -8,12 +8,16 @@ export function TrainingPlanStatus({ profile, today, selectedDate = today, sessi
   session?: { programRevision?: '8.1' | '13.1' | '9' } | null;
 }) {
   const status = useMemo(() => getTrainingPlanStatus(profile, today, selectedDate), [profile, today, selectedDate]);
+  const weekly = profile.masterProgram?.revision === '9';
   return <section className="training-plan-status" aria-label="Active training plan">
     <div>{showAppVersion && <span>{status.appVersion}</span>}<strong>Plan · {status.planVersion}</strong></div>
     <p>{status.cycle}</p>
     {session && <p>Workout snapshot · {session.programRevision ? `V${session.programRevision}` : 'unversioned saved plan'}</p>}
     {status.selected && <p className="training-plan-status__preview">{status.selected}</p>}
-    {status.previous && <p>Available to restore · {status.previous}</p>}
-    {status.guidance && <p>Future workouts · {status.guidance}</p>}
+    {weekly ? <details className="training-plan-status__details"><summary>Plan details</summary>
+      {status.previous && <p>Available to restore · {status.previous}</p>}
+      {status.guidance && <p>Future workouts · {status.guidance}</p>}
+      <p>Historical cycle details remain in advanced Training Plan settings.</p>
+    </details> : <>{status.previous && <p>Available to restore · {status.previous}</p>}{status.guidance && <p>Future workouts · {status.guidance}</p>}</>}
   </section>;
 }

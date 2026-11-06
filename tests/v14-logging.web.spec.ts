@@ -36,7 +36,8 @@ test('one tap reuses only the current unfinished set, clears invalid drafts and 
   const weight = focus.getByRole('textbox', { name: `${NAME} set 1 weight in kilograms`, exact: true });
   const reps = focus.getByRole('spinbutton', { name: `${NAME} set 1 reps`, exact: true });
   await expect(weight).toHaveValue('');
-  await expect(reps).toHaveValue('');
+  await expect(reps).toHaveValue('8');
+  expect(active.exercises[0].logs[0].inputSources?.reps).toBe('default');
   await expect(focus.getByRole('button', { name: 'Clear reps in reserve', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await weight.fill('12kg');
   await expect(weight).toHaveAttribute('aria-invalid', 'true');

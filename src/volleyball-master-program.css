@@ -80,3 +80,16 @@
 @media(max-width:350px) { .master-program__customization-review { padding:12px; } }
 .master-program__matches label>small { font-size:11px; color:var(--sub); line-height:1.35; }
 .master-program__preview .master-program__section { color:var(--accent); font-weight:600; font-size:12px; }
+.master-program--weekly .master-program__heading h2{font-size:24px;line-height:1.2}
+.master-program--weekly .master-program__heading>span{max-width:12ch;font-size:12px}
+.master-program__calendar-note p{font-size:13px;line-height:1.55;color:var(--sub);margin:8px 0}
+.master-program__calendar-note .text-button{min-height:44px;font-size:13px}
+.master-program__advanced{border-top:1px solid var(--line);margin-top:12px}
+.master-program__phases .field-label{display:grid;gap:8px;margin:12px 0;font-size:13px}
+.master-program__phases select,.master-program__phases input{box-sizing:border-box;width:100%;min-height:48px;border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit;font-size:16px;color:var(--ink);background:var(--surface-soft)}
+.master-program__phase-dates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.master-program__phases>.btn{min-height:48px}
+.master-program__phases ul{list-style:none;margin:8px 0;padding:0}
+.master-program__phases li{font-size:12px;line-height:1.5;color:var(--sub);padding:8px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.master-program__archive .text-button{min-height:44px;font-size:13px;text-align:left}
+@media(max-width:350px){.master-program--weekly .master-program__heading h2{font-size:22px}.master-program__phase-dates{gap:8px}.master-program__phases input{padding:10px}}

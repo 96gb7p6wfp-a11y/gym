@@ -5,6 +5,18 @@ hosted Setline app's delivered React code, styles, and visual reference. The app
 runs on its own: no iframe, sign-in service, old website, external workout API,
 or native iPhone signing is required.
 
+## Personal training coach
+
+V9 now leads with the complete weekly prescription and a separate safe executable
+recommendation. Choose Great, Normal, Tired or Poor for one date, and schedule
+matches on their actual Sunday in Train. Calendar week numbers no longer impose
+V9 reductions by default; explicit phases remain in advanced settings. Existing
+guidance, older program records and intentional date edits stay recoverable.
+
+Today is quieter, Progress compares real lift/jump/weight records over 4/12 weeks
+or all time, and Focus/Quick Log share protected input suggestions and practical
+load/repetition steppers. See [the implementation and preservation boundaries](docs/PERSONAL_COACH_UPDATE.md).
+
 ## Volleyball Performance Plan V9 — opt-in training prescription
 
 V9 is a new training-plan revision; the application remains Setline V18.
@@ -69,10 +81,10 @@ PWA identity are unchanged. No migration or reset is needed.
 ## Features
 
 - **8-week volleyball program management:** V9 is an explicit training-plan
-  upgrade, with reviewed weekly prescriptions and future date edits. Week 4
-  deload and week 8 evaluation reduce demanding work; date-specific readiness
+  upgrade, with reviewed weekly prescriptions and future date edits. Optional
+  explicit reduced/evaluation phases change demanding work; date-specific readiness
   and recorded guidance remain separate from the saved base plan. Confirmed
-  Sunday match weeks select Saturday's short Primer; no-match weeks retain
+  Sunday match dates select Saturday's short Primer; no-match weeks retain
   full Lower B. Planned volleyball and school PE are not completed records.
   Earlier saved programs retain their own prescriptions and optional-work
   settings until explicitly changed. [V9 details](docs/VOLLEYBALL_PERFORMANCE_PLAN_V9.md) ·

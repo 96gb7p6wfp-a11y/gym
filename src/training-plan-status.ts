@@ -13,6 +13,7 @@ export function trainingPlanVersion(settings?: MasterProgramSettings): string {
 }
 
 export function trainingBlockStatus(settings: MasterProgramSettings, date: string): string {
+  if (settings.revision === '9') return 'Weekly training · readiness-led';
   if (date < settings.startDate) return `Upcoming · starts ${settings.startDate}`;
   const week = getMasterProgramWeek(settings.startDate, date);
   return week ? `Week ${week} of 8 · ${getMasterProgramPhase(week)}` : 'Block complete · saved weekly plan continues';

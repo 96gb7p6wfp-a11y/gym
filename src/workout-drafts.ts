@@ -10,6 +10,7 @@ export interface SessionDraft {
   readiness?: 'green' | 'yellow' | 'red';
   customized?: boolean;
   reviewedForProgram?: { revision: '9'; programSessionId: string };
+  reviewedForCoach?: 1;
 }
 
 /** A warm-up draft is not an override of a subsequently edited weekly plan. */

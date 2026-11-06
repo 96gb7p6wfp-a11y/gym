@@ -18,7 +18,7 @@ async function seedConfirmedMatch(page: Page, readiness: 'green' | 'yellow') {
     appearance: 'light', presentationMode: 'athlete', bodyWeight: 70.5, timerSoundEnabled: false,
     plan: createV9VolleyballMasterPlan(), trainingGuidance: guidance,
     masterProgram: { version: 1, revision: '9', startDate: '2026-11-02', v9EffectiveDate: TODAY,
-      matchWeeks: [1], clearance: guidance, readiness: [{ date: SATURDAY, status: readiness }] },
+      matchWeeks: [1], clearance: guidance, readiness: [{ date: SATURDAY, status: readiness }], dailyReadiness: [{ date: SATURDAY, feeling: readiness === 'green' ? 'normal' : 'tired' }] },
     masterMatchWeekend: createV9VolleyballMasterPlan(true).slice(5),
   });
   const state = { schemaVersion: 1, profile, profileVersion: 5, sessions: [], nutrition: [],
@@ -105,7 +105,8 @@ test('confirmed-match Saturday is a light primer and starts its exact dose direc
   const logs = session.exercises.flatMap((exercise: { logs: { done: boolean; kg: number | null; reps: number | null; seconds: number | null }[] }) => exercise.logs);
   expect(logs).toHaveLength(6);
   expect(logs.every((log: { done: boolean; kg: number | null; reps: number | null; seconds: number | null }) =>
-    !log.done && log.kg == null && log.reps == null)).toBe(true);
+    !log.done && log.kg == null)).toBe(true);
+  expect(logs.map((log: {reps: number | null}) => log.reps)).toEqual([null, null, 3, 3, 10, 10]);
   expect(logs[0].seconds).toBe(180);
   expect(logs.slice(1).every((log: { seconds: number | null }) => log.seconds == null)).toBe(true);
   expect(session.exercises.every((exercise: { runningSince: number | null }) => exercise.runningSince == null)).toBe(true);
@@ -133,9 +134,10 @@ test('Yellow match-week primer keeps its gentle guidance and exact dose while ex
   await seedConfirmedMatch(page, 'yellow');
   const saved = await raw(page);
   const sheet = await previewPrimer(page);
+  await sheet.getByRole('button', { name: 'Recommended today', exact: true }).click();
   await expect(sheet.getByRole('heading', { name: 'Modified — Pre-Match Primer or Rest', exact: true })).toBeVisible();
   await expectGentlePrimer(sheet);
-  await expect(sheet.getByRole('group', { name: 'Workout adjustments', exact: true })).toContainText('You selected Yellow');
+  await expect(sheet.getByRole('group', { name: 'Workout adjustments', exact: true })).toContainText('You selected Tired');
   await expect(sheet).not.toContainText('Leg Press');
   expect((await read(page)).sessions).toEqual([]);
   expect((await read(page)).activities).toEqual([]);
@@ -148,7 +150,7 @@ test('an intentional date-specific primer warm-up remains available before expli
     target: '5 easy repetitions', cue: 'A deliberate isolated QA preparation choice. Keep the movement gentle.', done: false };
   const customPlan = { ...createV9VolleyballMasterPlan(true)[5], warmup: [preparation] };
   before.profile = ProfileSchema.parse({ ...before.profile, sessionDrafts: [{ date: SATURDAY, slot: 'main',
-    plan: customPlan, customized: true, readiness: 'green',
+    plan: customPlan, customized: true, readiness: 'green', reviewedForCoach: 1,
     reviewedForProgram: { revision: '9', programSessionId: 'v9-match-primer' } }] });
   await page.evaluate(({ key, state }) => localStorage.setItem(key, JSON.stringify(state)), { key: STORE, state: before });
   await page.reload();

@@ -43,12 +43,14 @@ async function seed(page: Page, options: { pair?: boolean; protectedDrafts?: boo
     Object.assign(log, options.historyIncomplete && index > 0
       ? { kg: null, reps: null, done: false } : { kg: 55, reps: 7, done: true });
     delete log.inputSources;
+    delete log.plannedDefaults;
   }));
   const active = SessionSchema.parse(createSession(plan, 0, DATE, profile, []));
   active.startedAt = Date.parse(`${DATE}T10:00:00Z`); active.runningSince = null;
   active.exercises.forEach(exercise => exercise.logs.forEach(log => {
     Object.assign(log, { kg: null, reps: null, seconds: null, rir: null, done: false });
     delete log.inputSources;
+    delete log.plannedDefaults;
   }));
   Object.assign(active.exercises[0].logs[0], { kg: 60, reps: 8, rir: 2 });
   if (options.pair) Object.assign(active.exercises[1].logs[0], { kg: 35, reps: 10, rir: 3 });

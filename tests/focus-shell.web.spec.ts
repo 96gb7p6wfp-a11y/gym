@@ -85,6 +85,7 @@ for (const width of [320, 390]) {
     await expect(page.getByRole('tab', { name: 'Progress', exact: true })).toHaveAttribute('data-state', 'active');
     const progressViews = (await page.getByRole('group', { name: 'Chart metric', exact: true }).boundingBox())!;
     expect(progressViews.height).toBeLessThanOrEqual(56);
+    await page.getByRole('group', { name: 'Chart metric', exact: true }).getByRole('button', { name: 'Jump', exact: true }).click();
     await expect(page.getByRole('img', { name: /^Approach jump trend:/ })).toHaveAttribute('aria-label', /65 to 67\.5 centimetres/);
     await expect(page.getByRole('region', { name: 'Jump performance', exact: true })).not.toContainText('305');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -119,9 +120,9 @@ test('a workout keyboard keeps inputs and completion reachable without implicitl
   await expect(focused.getByRole('spinbutton', { name: 'Medicine Ball Spike Slam set 2 reps', exact: true })).toHaveValue('4');
   const logsAfter = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!).sessions[0].session.exercises[0].logs, STORE);
   expect(logsAfter[0]).toEqual({ ...logsBefore[0], kg: 12.5, reps: 4, done: true,
-    inputSources: { kg: 'manual', reps: 'manual' } });
+    inputSources: { ...logsBefore[0].inputSources, kg: 'manual' } });
   expect(logsAfter[1]).toEqual({ ...logsBefore[1], kg: 12.5, reps: 4,
-    inputSources: { kg: 'last-set', reps: 'last-set' } });
+    inputSources: { ...logsBefore[1].inputSources, kg: 'last-set' } });
   expect(logsAfter.slice(2)).toEqual(logsBefore.slice(2));
   await expect(focused.getByRole('button', { name: 'Complete Medicine Ball Spike Slam set 2', exact: true })).toBeDisabled();
   await expect(page.getByRole('tablist', { name: 'Main navigation', exact: true })).toBeVisible();

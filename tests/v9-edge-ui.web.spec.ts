@@ -67,11 +67,11 @@ test('post-block V9 Saturday and its program preview do not inherit the old firs
   await page.getByRole('button', { name: 'Training plan', exact: true }).click();
   const options = page.locator('.native-program-options');
   if (!await options.evaluate(element => element.hasAttribute('open'))) await options.locator(':scope > summary').click();
-  const program = page.getByRole('region', { name: '8-week volleyball-first program', exact: true });
-  await expect(program.locator('.master-program__heading')).toContainText('Base week continues');
+  const program = page.getByRole('region', { name: 'Volleyball training plan', exact: true });
+  await expect(program.locator('.master-program__heading')).toContainText('Weekly training');
   await program.locator('.master-program__preview-disclosure > summary').click();
   const schedule = program.locator('.master-program__preview');
-  await expect(schedule.locator('.master-program__preview-phase')).toHaveText('Base week continues · No Sunday match');
+  await expect(schedule.locator('.master-program__preview-phase')).toHaveText('Full V9 base · No Sunday match');
   const lower = schedule.locator(':scope > ol > li').nth(5);
   await expect(lower.locator('summary strong')).toHaveText('Lower B — Full Strength');
   await lower.locator('summary').click();
@@ -129,7 +129,8 @@ test('reaction cues start only by request and never complete or modify a workout
   expect(await raw(page)).toBe(before);
   const record = (await read(page)).sessions.find((row: { session: { id: string } }) => row.session.id === active.id);
   expect(record.session.exercises[0].logs.map((log: { done: boolean }) => log.done)).toEqual([false, false, false]);
-  expect(record.session.exercises[0].logs.every((log: { reps: number | null }) => log.reps === null)).toBe(true);
+  expect(record.session.exercises[0].logs.map((log: { reps: number | null }) => log.reps)).toEqual([4, 4, 4]);
+  expect(record.session.exercises[0].logs.every((log: {inputSources?: {reps?: string}}) => log.inputSources?.reps === 'default')).toBe(true);
   await page.getByRole('button', { name: 'Quick Log', exact: true }).click();
   const quick = page.getByRole('region', { name: 'Quick log Split-Step Reaction Drill', exact: true });
   await quick.locator('.quick-exercise__effort > summary').click();

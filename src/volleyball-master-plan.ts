@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { findLibraryExercise } from './exercise-library.ts';
 import type { PlanDay, PlanExercise } from './workout-customization';
+import { CalendarMatchSchema, DailyReadinessSchema, TrainingPhaseSchema, getCalendarMatch, getCoachPhase, getCoachReadinessStatus, sundayForDate } from './coach-schedule.ts';
 import { applyV9Clearance, applyV9Readiness, createV9VolleyballMasterPlan, v9ExplosiveExercise, v9PhasePlan } from './volleyball-v9-plan.ts';
 export { createV9VolleyballMasterPlan, V9_PROGRAM_NAME } from './volleyball-v9-plan.ts';
 
@@ -12,6 +13,12 @@ export const MasterProgramSettingsSchema = z.object({
   version: z.literal(1),
   revision: z.enum(['8.1', '13.1', '9']).optional(),
   v9EffectiveDate: dateSchema.optional(),
+  calendarMatches: z.array(CalendarMatchSchema).max(2000)
+    .refine(values => new Set(values.map(value => value.date)).size === values.length).optional(),
+  dailyReadiness: z.array(DailyReadinessSchema).max(4000)
+    .refine(values => new Set(values.map(value => value.date)).size === values.length).optional(),
+  periodizationMode: z.enum(['manual', 'legacy-cycle']).optional(),
+  trainingPhases: z.array(TrainingPhaseSchema).max(1000).optional(),
   startDate: dateSchema.refine(value => new Date(`${value}T12:00:00Z`).getUTCDay() === 1, 'Choose a Monday.'),
   matchWeeks: z.array(z.number().int().min(1).max(8)).max(8).refine(values => new Set(values).size === values.length),
   matchTimes: z.array(z.object({ week: z.number().int().min(1).max(8), startTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/) }))
@@ -608,12 +615,9 @@ export function applyMasterReadiness(workout: PlanDay, readiness?: MasterReadine
 
 export function isMasterReadinessRequired(settings: MasterProgramSettings | undefined, date: string, plan: PlanDay): boolean {
   if (settings?.revision === '9' && date >= settings.startDate) {
-    const day = (new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7;
-    const week = getMasterProgramWeek(settings.startDate, date);
-    const match = week !== null && settings.matchWeeks.includes(week);
-    const previousMatch = week === 1 ? settings.previousSundayMatch === true : week !== null && settings.matchWeeks.includes(week - 1);
-    const strengthOrRed = plan.kind === 'strength' || settings.readiness?.some(row => row.date === date && row.status === 'red');
-    return !!strengthOrRed && (day === 2 || (!match && day === 5) || (day === 0 && previousMatch));
+    // A brief daily check is available, not a questionnaire gate. Missing
+    // readiness remains unknown; clearance is enforced independently below.
+    return false;
   }
   if (!settings || !getMasterProgramWeek(settings.startDate, date)) return false;
   const day = (new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7;
@@ -694,11 +698,11 @@ export function resolveMasterProgramPlan(basePlan: PlanDay[], settings: MasterPr
   });
 }
 
-/** Date resolution uses explicit match selection and stable template identity. */
-function resolveV9ProgramPlan(basePlan: PlanDay[], settings: MasterProgramSettings, date: string,
+/** Read-only planning reference before daily effort, phase or medical adaptation. */
+export function resolveV9PlanningBase(basePlan: PlanDay[], settings: MasterProgramSettings, date: string,
   matchWeekend?: PlanDay[]): PlanDay[] {
-  const week = getMasterProgramWeek(settings.startDate, date);
-  const match = week !== null && settings.matchWeeks.includes(week);
+  const actualMatch = getCalendarMatch(settings, sundayForDate(date));
+  const match = actualMatch.scheduled;
   const recommended = createV9VolleyballMasterPlan(match);
   let plan = structuredClone(basePlan).map((day, index) => {
     // A legacy recommendation left in a saved week is not an intentional V9
@@ -729,16 +733,24 @@ function resolveV9ProgramPlan(basePlan: PlanDay[], settings: MasterProgramSettin
     plan[5] = { ...recommended[5], note: `A saved match-primer template does not apply to this non-match Saturday. The full V9 Lower B recommendation is shown. ${recommended[5].note}`.slice(0, 500) };
   }
   if (!match && plan[6].programSessionId === 'v9-match') plan[6] = recommended[6];
-  const matchTime = week !== null ? settings.matchTimes?.find(value => value.week === week)?.startTime : undefined;
+  const matchTime = actualMatch.startTime;
   if (match && matchTime) plan[6] = { ...plan[6], startTime: matchTime };
   else if (match) { const { startTime: _time, ...withoutTime } = plan[6]; plan[6] = withoutTime; }
-  if (week !== null) plan = plan.map(day => v9PhasePlan(day, week));
-  if (week === 6 && plan[2].programSessionId === 'v9-speed-lower-a') plan[2] = { ...plan[2],
+  return plan;
+}
+
+/** Date resolution uses explicit match selection and stable template identity. */
+function resolveV9ProgramPlan(basePlan: PlanDay[], settings: MasterProgramSettings, date: string,
+  matchWeekend?: PlanDay[]): PlanDay[] {
+  const plan = resolveV9PlanningBase(basePlan, settings, date, matchWeekend);
+  if (getMasterProgramWeek(settings.startDate, date) === 6 && plan[2].programSessionId === 'v9-speed-lower-a') plan[2] = { ...plan[2],
     note: `Optional six-week performance check: compare genuinely measured jumps and sprints using the same protocol. Replace existing test attempts rather than adding contacts; the cycle does not restart automatically. ${plan[2].note}`.slice(0, 500) };
   const start = masterWeekStart(date);
   return plan.map((day, index) => {
     const currentDate = new Date(timestamp(start) + index * DAY).toISOString().slice(0, 10);
-    const readiness = settings.readiness?.find(item => item.date === currentDate)?.status;
+    const phase = getCoachPhase(settings, currentDate);
+    if (phase.phase !== 'normal') day = v9PhasePlan(day, phase.phase === 'deload' ? 4 : 8);
+    const readiness = getCoachReadinessStatus(settings, currentDate);
     const guarded = (workout: PlanDay) => applyV9Clearance(applyV9Readiness(workout, readiness), settings.clearance);
     return { ...guarded(day), ...(day.extraSession ? { extraSession: guarded(day.extraSession) } : {}) };
   });

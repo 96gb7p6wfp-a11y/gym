@@ -1,0 +1,36 @@
+.coach-adjustment-link { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:48px; padding:10px 0 0; border:0; background:transparent; color:var(--ink); text-align:left; }
+.coach-adjustment-link>span { display:grid; gap:4px; min-width:0; }
+.coach-adjustment-link strong { font-size:13px; font-weight:600; }
+.coach-adjustment-link small { font-size:12px; line-height:1.45; color:var(--sub); }
+.coach-weekend-link { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:48px; margin:0 0 12px; padding:8px 16px; border:0; border-radius:18px; color:var(--sub); background:var(--surface); font-size:13px; }
+.coach-weekend-link strong { display:flex; align-items:center; gap:6px; color:var(--ink); font-weight:550; }
+.coach-legacy-context { margin-bottom:12px; color:var(--sub); font-size:13px; }
+.coach-legacy-context>summary { min-height:44px; display:flex; align-items:center; }
+.today-view--coach .day-cover { padding:24px; background:var(--wash); }
+.today-view--coach .day-cover__title { margin-top:20px; font-weight:700; letter-spacing:-.04em; }
+.today-view--coach .day-cover__purpose { margin-top:12px; color:var(--sub); }
+.today-view--coach .day-cover__plan-row { margin-top:16px; }
+.today-view--coach .day-cover__prescription { font-size:13px; line-height:1.5; margin:0; }
+.today-view--coach .day-cover__start { margin-top:20px; min-height:56px; }
+.today-view--coach .day-cover[data-sport='true'] .day-cover__prescription { font-size:22px; letter-spacing:-.025em; color:var(--ink); }
+.coach-today-readiness { min-height:40px; padding:8px 0 0; border:0; background:none; color:var(--sub); font-size:12px; text-align:left; }
+.coach-today-adjustment { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; min-height:44px; margin-top:8px; padding:4px 0; background:none; border:0; color:var(--accent); text-align:left; font-size:13px; }
+.coach-today-more { margin:12px 4px 0; border:0; color:var(--sub); }
+.coach-today-more>summary { display:flex; align-items:center; justify-content:space-between; min-height:48px; list-style:none; font-size:13px; }
+.coach-today-more>summary::-webkit-details-marker { display:none; }
+.coach-today-more[open]>summary svg { transform:rotate(90deg); }
+.coach-today-more__links { display:grid; gap:4px; padding:4px 0 12px; }
+.coach-today-more__links>button { display:flex; align-items:center; justify-content:space-between; min-height:48px; width:100%; padding:8px 0; border:0; background:none; color:var(--ink); text-align:left; font-size:14px; }
+.coach-today-more__links>button>span { display:grid; gap:4px; }
+.coach-today-more__links small,.coach-today-more__links>p { color:var(--sub); font-size:12px; line-height:1.5; }
+.coach-adjustment-link:focus-visible,.coach-today-adjustment:focus-visible,.coach-weekend-link:focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:12px; }
+@media(max-width:375px) {
+ .today-view--coach .day-cover { padding:18px; }
+ .today-view--coach .day-cover__title { margin-top:12px; font-size:27px; line-height:1.12; }
+ .today-view--coach .day-cover__title--long { font-size:25px; }
+ .today-view--coach .day-cover__purpose { margin-top:8px; font-size:14px; }
+ .today-view--coach .day-cover__plan-row { margin-top:12px; }
+ .today-view--coach .day-cover__start { margin-top:16px; min-height:52px; }
+ .coach-adjustment-link small { font-size:12px; }
+}
+@media(prefers-reduced-motion:reduce) { .coach-today-more>summary svg { transition:none; } }

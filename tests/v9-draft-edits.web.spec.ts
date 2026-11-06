@@ -90,6 +90,7 @@ test('an explicitly kept legacy Saturday remains approved after a date-only rest
   await expect(review).not.toBeVisible();
 
   let sheet = await saturdayPreview(page);
+  await sheet.getByRole('button', { name: 'Recommended today', exact: true }).click();
   const name = before.profile.sessionDrafts![0].plan.exercises[0].name;
   await sheet.getByRole('button', { name: `Options for ${name}`, exact: true }).click();
   const options = page.getByRole('dialog', { name, exact: true });
@@ -108,6 +109,7 @@ test('an explicitly kept legacy Saturday remains approved after a date-only rest
   expect(after.nutrition).toEqual(before.nutrition);
   await page.reload();
   sheet = await saturdayPreview(page);
+  await sheet.getByRole('button', { name: 'Recommended today', exact: true }).click();
   await expect(sheet).toContainText('Custom workout for this date');
   await expect(sheet.getByRole('list', { name: 'Scheduled exercises', exact: true }).locator(':scope > li')).toHaveCount(5);
   after = await read(page);

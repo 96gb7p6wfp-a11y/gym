@@ -5,11 +5,12 @@ import { isGymTraining } from './training-classification.ts';
 import type { ActivityRecord } from './activities.ts';
 import type { JumpEntry, PerformanceData } from './performance-data.ts';
 import { findLibraryExercise } from './exercise-library.ts';
+import { exerciseLoadIncrement, validLoadIncrement } from './workout-input-steps.ts';
 import { reportWeekStart, shiftReportDate, type ReportNutritionRecord, type ReportPlanDay, type ReportSession } from './weekly-report.ts';
 
 type LoggedExercise = ReportSession['exercises'][number];
 type LoggedSet = LoggedExercise['logs'][number];
-export type ProgressionExercise = Pick<LoggedExercise, 'key' | 'name' | 'group' | 'target' | 'mode'> & Partial<Pick<LoggedExercise, 'measurement' | 'quantityUnit' | 'targetRpe' | 'perSide'>> & { exerciseId?: string; equipmentLabel?: string; preparationOnly?: boolean; sets?: number; targetRir?: number; prescribedDistanceM?: number };
+export type ProgressionExercise = Pick<LoggedExercise, 'key' | 'name' | 'group' | 'target' | 'mode'> & Partial<Pick<LoggedExercise, 'measurement' | 'quantityUnit' | 'targetRpe' | 'perSide'>> & { exerciseId?: string; equipmentLabel?: string; preparationOnly?: boolean; sets?: number; targetRir?: number; prescribedDistanceM?: number; loadIncrementKg?: number };
 export interface ProgressionRecommendation {
   kind: 'load' | 'reps' | 'hold' | 'reduce' | 'quality' | 'baseline';
   title: string;
@@ -19,8 +20,9 @@ export interface ProgressionRecommendation {
   kg?: number;
   reps?: number;
   previous?: { kg: number | null; reps: number };
+  history?: { date: string; kg: number | null; reps: number[]; rir: number[] | null };
 }
-export interface ProgressionContext { volleyballWithin24Hours?: boolean; loadIncrementKg?: number; lowFatigueSession?: boolean; readiness?: { energy: 'low' | 'normal' | 'high'; soreness: 'low' | 'moderate' | 'high' } }
+export interface ProgressionContext { volleyballWithin24Hours?: boolean; loadIncrementKg?: number; lowFatigueSession?: boolean; readinessLevel?: 'great' | 'normal' | 'tired' | 'poor'; readiness?: { energy: 'low' | 'normal' | 'high'; soreness: 'low' | 'moderate' | 'high' } }
 export interface WeightPoint { date: string; kg: number }
 export interface WeightWeek { date: string; kg: number; days: number; adequate: boolean }
 export interface WeightSummary {
@@ -108,7 +110,13 @@ function repRange(target: string): [number, number] | null {
   return low > 0 && high >= low && high <= 50 ? [low, high] : null;
 }
 function previousPerformance(exercise: ProgressionExercise, sessions: readonly ReportSession[], date: string) {
-  return savedSessions(sessions, date).flatMap(session => session.exercises.filter(item => !item.preparationOnly && identity(item) === identity(exercise)).map(item => ({ exercise: item, date: session.date })));
+  return savedSessions(sessions, date).flatMap(session => {
+    const candidates = session.exercises.filter(item => !item.preparationOnly && identity(item) === identity(exercise));
+    const exact = candidates.filter(item => item.key === exercise.key);
+    const matching = exact.length === 1 ? exact[0] : candidates.length === 1 ? candidates[0] : undefined;
+    // Two matching entries in one workout are not two comparable sessions.
+    return matching ? [{ exercise: matching, date: session.date, sessionId: session.id }] : [];
+  });
 }
 
 /** Suggestions are advisory. No saved load, set, rep or nutrition target is changed. */
@@ -117,18 +125,30 @@ export function getProgressionRecommendation(exercise: ProgressionExercise, sess
   const latest = history.at(-1)?.exercise;
   const previous = history.at(-2)?.exercise;
   const intent = exerciseIntent(exercise);
-  const base = { intent };
+  const recorded = latest?.logs.filter(log => log.done && positive(log.reps) && (exercise.mode === 'bodyweight' || positive(log.kg))) ?? [];
+  const historyLoad = recorded[0]?.kg;
+  const historySummary = recorded.length && recorded.every(log => log.kg === historyLoad) ? {
+    date: history.at(-1)!.date, kg: historyLoad ?? null, reps: recorded.map(log => log.reps!),
+    rir: recorded.every(log => validRir(log.rir)) ? recorded.map(log => log.rir!) : null,
+  } : undefined;
+  const base = { intent, ...(historySummary ? { history: historySummary } : {}) };
   if (exercise.prescribedDistanceM != null) return { ...base, kind: 'quality', title: 'Acceleration quality',
     cue: 'Use a clear lane with deceleration space. Reset fully, keep short efforts fast and stop if control or speed deteriorates.',
     reason: 'Planned distance is not a measured sprint result. Record a time only when actually measured; compare the same distance, timing method and protocol.' };
   if (exercise.preparationOnly) return { ...base, kind: 'quality', title: 'Easy preparation only', cue: 'Follow your individual clearance guidance. Use comfortable unloaded or light rehearsal; do not chase load or jump height.', reason: 'This preparation alternative is not a heavy-lifting or maximal-impact recommendation.' };
+  if (context.readinessLevel === 'poor') return { ...base, kind: 'quality', title: 'Recovery first today',
+    cue: 'Use the recovery recommendation and stop painful or unstable movement. Do not chase load, maximal jumps or catch-up work.',
+    reason: 'You reported Poor readiness for this date. This is self-reported context, not medical clearance.' };
+  if (context.readinessLevel === 'tired') return { ...base, kind: powerExercise(exercise) ? 'quality' : 'hold', title: 'Keep the adjusted dose',
+    cue: powerExercise(exercise) ? 'Use the recommended reduced contacts and keep each effort controlled. Stop when output or landing control drops.' : 'Keep the recommended controlled load and reduced working dose. No overload suggestion today.',
+    reason: 'You reported Tired readiness for this date; a previous good workout does not override that choice.' };
   if (context.lowFatigueSession || (exercise.targetRpe != null && exercise.targetRpe <= 6)) return { ...base, kind: 'quality', title: 'Keep this easy', cue: 'Follow the planned effort. Keep plenty in reserve; do not add load or sets today.', reason: 'Primer or reduced-readiness work prioritizes freshness over overload.' };
   if (exercise.quantityUnit) return { ...base, kind: 'quality', title: 'Distance + posture', cue: 'Use the planned metres per side. Stay tall; do not chase reps or extra load.', reason: 'Carry distance is not a repetition or a 1RM test.' };
   if (/assisted.*pull.?up|pull.?up.*assisted/i.test(exercise.name)) {
     const upper = repRange(exercise.target)?.[1] ?? 8;
     return { ...base, kind: 'quality', title: 'Clean pulling first', cue: `Build every planned set to ${upper} clean reps with the prescribed reps in reserve, then consider less assistance. Kg records added load only.`, reason: 'More assistance is not more strength; keep the assistance setup in workout notes.' };
   }
-  if (context.readiness?.energy === 'low' || (context.readiness?.soreness === 'high' && lowerBody(exercise))) return { ...base, kind: powerExercise(exercise) ? 'quality' : 'hold', title: 'Keep it easy today', cue: powerExercise(exercise) ? 'Use fewer crisp contacts. Stop if jump height or landing control falls.' : 'Keep a comfortable load. Reduce a set if your warm-up feels heavy.', reason: 'Your energy or leg soreness check-in suggests moderating this movement.' };
+  if (!context.readinessLevel && (context.readiness?.energy === 'low' || (context.readiness?.soreness === 'high' && lowerBody(exercise)))) return { ...base, kind: powerExercise(exercise) ? 'quality' : 'hold', title: 'Keep it easy today', cue: powerExercise(exercise) ? 'Use fewer crisp contacts. Stop if jump height or landing control falls.' : 'Keep a comfortable load. Reduce a set if your warm-up feels heavy.', reason: 'Your energy or leg soreness check-in suggests moderating this movement.' };
   if (powerExercise(exercise) || exercise.measurement) return {
     ...base, kind: 'quality', title: 'Quality first', cue: 'Keep reps fast. Finish before jump height or landing control drops.',
     reason: 'Explosive work progresses through crisp, repeatable output, not automatic load increases.',
@@ -160,11 +180,11 @@ export function getProgressionRecommendation(exercise: ProgressionExercise, sess
   };
   const recent = history.slice(-2);
   const requiredRir = Math.max(1, Math.floor(exercise.targetRir ?? 2));
-  const fullUpperRange = recent.length === 2 && recent.every(item => item.exercise.logs.length >= (exercise.sets ?? 1) && item.exercise.logs.every(log => log.done && log.kg === best.kg && positive(log.reps) && log.reps >= range[1] && log.rir !== null && log.rir >= requiredRir));
+  const fullUpperRange = recent.length === 2 && recent[0].sessionId !== recent[1].sessionId && recent.every(item => item.exercise.logs.length >= (exercise.sets ?? 1) && item.exercise.logs.every(log => log.done && log.kg === best.kg && positive(log.reps) && log.reps >= range[1] && validRir(log.rir) && log.rir >= requiredRir));
   if (fullUpperRange && exercise.mode === 'weight' && positive(best.kg)) {
-    const increment = context.loadIncrementKg ?? 0.5;
+    const increment = validLoadIncrement(context.loadIncrementKg) ? context.loadIncrementKg : exerciseLoadIncrement(exercise);
     if (positive(increment)) {
-      const desired = Math.max(increment, Math.floor(best.kg * 0.025 / increment) * increment);
+      const desired = increment;
       const increase = round(best.kg + desired, 3);
       if (increase <= best.kg * 1.05 + 0.0001) return {
         ...base, previous: previousLabel, kind: 'load', title: `${number(increase)} kg × ${range[0]}`, kg: increase, reps: range[0],
@@ -172,7 +192,8 @@ export function getProgressionRecommendation(exercise: ProgressionExercise, sess
       };
     }
   }
-  const easy = completed.every(log => log.rir !== null && log.rir >= 2);
+  const easy = latest!.logs.length >= (exercise.sets ?? 1) && latest!.logs.every(log => log.done && positive(log.reps)
+    && (exercise.mode === 'bodyweight' || positive(log.kg)) && validRir(log.rir) && log.rir >= requiredRir);
   if (easy && best.reps! < range[1]) return {
     ...base, previous: previousLabel, kind: 'reps', title: `${best.kg == null ? '' : `${number(best.kg)} kg × `}${best.reps! + 1} reps`,
     kg: best.kg ?? undefined, reps: best.reps! + 1, cue: 'Keep the load. Try one extra controlled rep.', reason: 'You stayed inside the range with reps in reserve.',

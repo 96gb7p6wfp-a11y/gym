@@ -18,6 +18,22 @@
 .quick-set > * { min-width:0; }
 .quick-set__number { color:var(--sub); font-size:12px; font-variant-numeric:tabular-nums; text-align:center; }
 .quick-set__previous { color:var(--sub); font-size:12px; line-height:1.4; text-align:center; overflow-wrap:anywhere; }
+.quick-set__adjust-target { display:block; width:100%; min-height:44px; padding:4px 1px; border:0; border-radius:8px; background:transparent; font-family:inherit; font-variant-numeric:tabular-nums; }
+.quick-set__adjust-target:focus-visible { background:var(--surface-soft); }
+.quick-set__adjustments { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-column:2 / -1; gap:8px; min-width:0; padding-top:4px; }
+.quick-set__adjustments > div { display:grid; grid-template-columns:44px minmax(0,1fr) 44px; align-items:center; min-width:0; background:var(--surface-soft); border-radius:99px; }
+.quick-set__adjustments > div:only-child { grid-column:1 / -1; max-width:184px; justify-self:end; width:100%; }
+.quick-set__adjustments button { display:grid; place-items:center; min-width:44px; min-height:44px; padding:0; border:0; border-radius:50%; background:transparent; color:var(--accent); }
+.quick-set__adjustments button:active { background:var(--accent-soft); }
+.quick-set__adjustments small { color:var(--sub); font-size:12px; text-align:center; overflow-wrap:anywhere; }
+.quick-set__review button { display:inline-flex; align-items:center; gap:6px; }
+.load-step-control { display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; padding:8px 0; color:var(--ink); font-size:14px; }
+.load-step-control > span { min-width:0; }
+.load-step-control small { display:block; margin-top:4px; color:var(--sub); font-size:12px; line-height:1.4; }
+.load-step-control select { width:88px; min-width:88px; min-height:44px; padding:8px; border:1px solid var(--line); border-radius:12px; background:var(--surface-soft); color:var(--ink); font:inherit; font-size:16px; }
+.quick-exercise__effort label.load-step-control { display:flex; color:var(--ink); }
+.progression-cue__history { font-variant-numeric:tabular-nums; }
+.progression-cue__history small { display:block; margin-top:4px; }
 .quick-workout .set-input { width:100%; min-width:0; min-height:48px; margin:0; padding:8px 4px; border:0; border-radius:12px; background:var(--surface-soft); color:var(--ink); font-size:18px; font-variant-numeric:tabular-nums; text-align:center; appearance:textfield; }
 .quick-workout .set-input:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
 .quick-workout .weight-input-field { display:block; min-width:0; }

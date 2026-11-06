@@ -258,6 +258,9 @@ test('provides four primary destinations and secondary Nutrition at iPhone and n
 test('validates sets, saves a complete workout, edits its log, and deletes and restores history', async ({ page }) => {
   await startMonday(page);
   const completed = page.getByRole('checkbox', { name: `Complete ${MOVEMENT} set 1`, exact: true });
+  // Planned reps are now suggested. Deliberately clear them to exercise the
+  // missing-repetition validation, without treating a suggestion as completed.
+  await page.getByRole('spinbutton', { name: `${MOVEMENT} set 1 reps`, exact: true }).fill('');
   await completed.click();
   await expect(completed).not.toBeChecked();
   await expect(page.getByText('Enter your reps before checking off this set.', { exact: true })).toBeVisible();
