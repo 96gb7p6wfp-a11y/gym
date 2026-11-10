@@ -26,6 +26,8 @@ export interface LibraryExercise {
   aliases?: string[];
   legacyKeys?: string[];
   precautions?: string[];
+  /** Retained for old saved records; new workouts choose a precise variant. */
+  legacyChoice?: boolean;
 }
 export interface ExerciseReference { exerciseId?: string; key?: string; name?: string }
 export interface LibraryFilters { muscle?: string; goal?: string; equipment?: string; movement?: string; type?: string }
@@ -133,6 +135,7 @@ family('Strength', 'Horizontal pull', 'Back strength and shoulder stability', 'S
 ], { rest: 120, cues: ['Pull without shrugging.', 'Keep the trunk steady.'], mistakes: ['Jerking the weight with the lower back.', 'Lifting the chest off a support pad.'] });
 family('Strength', 'Vertical push', 'Shoulder and triceps strength', 'Upper-body force and overhead control', [
   ['landmine-press', 'Landmine Press', 'Shoulders|Triceps|Core', 'Barbell|Landmine', { aliases: ['Landmine Press / Machine Shoulder Press', 'Single-Arm Landmine Press'], legacyKeys: ['landmine-press'], perSide: true, substitutions: ['machine-shoulder-press', 'dumbbell-shoulder-press'], primaryBenefit: 'Shoulder strength and unilateral pressing control', cues: ['Press diagonally upward from a stable stance.', 'Keep ribs controlled and avoid leaning or rotating to finish.'], mistakes: ['Flaring the ribs as the weight rises.', 'Swinging the torso or forcing a painful range.'] }],
+  ['half-kneeling-landmine-press', 'Half-Kneeling Single-Arm Landmine Press', 'Shoulders|Triceps|Core', 'Barbell|Landmine|Mat', { aliases: ['Half-Kneeling Landmine Press'], perSide: true, substitutions: ['landmine-press', 'single-arm-neutral-db-press'], primaryBenefit: 'Unilateral pressing with a stable kneeling base', cues: ['Kneel on the pressing-side knee with the other foot planted.', 'Press the secured bar diagonally up and forward without arching.'], mistakes: ['Leaning backwards to finish.', 'Rotating away from the bar or using an unsecured anchor.'] }],
   ['machine-shoulder-press', 'Machine Shoulder Press', 'Shoulders|Triceps', 'Machine', { substitutions: ['dumbbell-shoulder-press', 'landmine-press'] }],
   ['dumbbell-shoulder-press', 'Dumbbell Shoulder Press', 'Shoulders|Triceps', 'Dumbbell|Bench', { substitutions: ['machine-shoulder-press', 'landmine-press'] }],
   ['overhead-press', 'Barbell Overhead Press', 'Shoulders|Triceps|Core', 'Barbell|Rack', { difficulty: 'Intermediate', substitutions: ['dumbbell-shoulder-press', 'landmine-press'] }],
@@ -189,11 +192,14 @@ family('Strength', 'Carry', 'Grip and whole-body strength', 'Trunk stability und
 ]);
 
 family('Power', 'Throw', 'Explosive upper-body power', 'Fast force transfer for hitting', [
-  ['spike-slam', 'Medicine Ball Spike Slam', 'Shoulders|Core|Back', 'Medicine ball', { legacyKeys: ['spike-slam'], recommendedReps: '3 reps', substitutions: ['overhead-throw', 'rotational-throw'], primaryBenefit: 'Explosive overhead force', cues: ['Start with a 2–3 kg slam ball in an approved clear area.', 'Use both hands overhead, drive down fast and reset fully.'], mistakes: ['Using a ball or surface not approved for slams.', 'Forcing ballistic shoulder work when sore or fatigued.'] }],
-  ['overhead-throw', 'Medicine Ball Overhead Throw / Slam', 'Shoulders|Core|Glutes', 'Medicine ball', { legacyKeys: ['overhead-throw'], substitutions: ['spike-slam', 'chest-pass'] }],
+  ['spike-slam', 'Two-Hand Medicine Ball Overhead Slam', 'Shoulders|Core|Back', 'Slam ball|Approved floor', { aliases: ['Medicine Ball Spike Slam', 'Medicine Ball Slam', 'Two-Handed Medicine Ball Overhead Slam'], legacyKeys: ['spike-slam'], recommendedReps: '3 reps', substitutions: ['medicine-ball-overhead-forward-throw', 'rotational-throw'], primaryBenefit: 'Explosive coordinated trunk and upper-body force', cues: ['Use a light ball and floor approved for slams.', 'Raise it with both hands, drive down in front and reset fully.'], mistakes: ['Treating a two-hand floor slam as a one-handed volleyball spike.', 'Throwing forwards or backwards instead of down towards the floor.'] }],
+  ['overhead-throw', 'Medicine Ball Overhead Throw / Slam', 'Shoulders|Core|Glutes', 'Medicine ball', { legacyKeys: ['overhead-throw'], legacyChoice: true, substitutions: ['medicine-ball-overhead-forward-throw', 'spike-slam'] }],
+  ['medicine-ball-overhead-forward-throw', 'Medicine Ball Overhead Forward Throw', 'Shoulders|Core|Glutes', 'Medicine ball|Approved target', { aliases: ['Two-Hand Medicine Ball Overhead Forward Throw'], substitutions: ['chest-pass', 'spike-slam'], cues: ['Face an approved target and hold the ball in both hands.', 'Coordinate legs, trunk and arms to release forwards from overhead.'], mistakes: ['Slamming down at the floor.', 'Throwing backwards or towards an unprepared person.'] }],
+  ['medicine-ball-overhead-backward-throw', 'Medicine Ball Overhead Backward Throw', 'Shoulders|Core|Glutes', 'Medicine ball|Throwing field', { difficulty: 'Advanced', aliases: ['Medicine Ball Backward Overhead Throw'], substitutions: ['medicine-ball-overhead-forward-throw'], cues: ['Use a supervised clear throwing field and check behind you.', 'Extend from the hips and release backwards overhead into the cleared area.'], mistakes: ['Throwing without checking the entire landing area.', 'Using a small gym space or fragile target.'] }],
   ['rotational-throw', 'Medicine Ball Rotational Throw', 'Core|Shoulders|Glutes', 'Medicine ball', { legacyKeys: ['rotational-throw'], perSide: true, substitutions: ['scoop-toss', 'spike-slam'], primaryBenefit: 'Rotational power from hips to hands', cues: ['Use a light medicine ball and an approved target with a clear throwing area.', 'Rotate through hips and trunk, throw explosively and reset each repetition.'], mistakes: ['Twisting only through the lower back.', 'Using a heavy ball that turns the throw into a slow push.'], precautions: ['Use an approved area and target. Omit ballistic work when pain or individualized restrictions make it unsuitable.'] }],
   ['chest-pass', 'Medicine Ball Chest Pass', 'Chest|Triceps|Core', 'Medicine ball', { substitutions: ['overhead-throw', 'explosive-push-up'] }],
-  ['scoop-toss', 'Medicine Ball Scoop Toss', 'Core|Glutes|Shoulders', 'Medicine ball', { perSide: true, substitutions: ['rotational-throw', 'overhead-throw'] }],
+  ['scoop-toss', 'Medicine Ball Scoop Toss', 'Core|Glutes|Shoulders', 'Medicine ball', { legacyChoice: true, perSide: true, substitutions: ['medicine-ball-rotational-scoop-toss', 'rotational-throw'] }],
+  ['medicine-ball-rotational-scoop-toss', 'Rotational Medicine Ball Scoop Toss', 'Core|Glutes|Shoulders', 'Medicine ball|Approved wall', { perSide: true, substitutions: ['rotational-throw'], cues: ['Start side-on to the wall with the ball low beside the rear hip.', 'Turn through the hips and scoop sideways into the wall; reset.'], mistakes: ['Throwing overhead or backwards instead of sideways.', 'Twisting on a planted knee.'] }],
 ], { recommendedSets: 3, recommendedReps: '3–5 reps', rest: 90, goals: ['Power', 'Volleyball'], cues: ['Use a light ball and an approved target.', 'Reset fully; make each rep fast.'], mistakes: ['Choosing a ball that slows the movement.', 'Turning power work into a fatigue circuit.'] });
 family('Power', 'Explosive hinge', 'High-speed hip force production', 'Explosive takeoff power', [
   ['trap-bar-jump', 'Trap Bar Jump', 'Glutes|Quads|Calves', 'Trap bar', { difficulty: 'Advanced', substitutions: ['squat-jump', 'countermovement-jump'], cues: ['Use a light load and clear landing area.', 'Jump fast, land quietly and reset.'], mistakes: ['Loading so heavily that speed falls.', 'Rushing landings.'] }],
@@ -377,16 +383,17 @@ family('Stability', 'Single-leg isometric', 'Unilateral isometric force capacity
 ]);
 family('Hypertrophy', 'Elbow extension', 'Triceps muscle development', 'Controlled elbow extension for upper-body physique', [
   ['rope-triceps-extension', 'Rope Triceps Extension', 'Triceps', 'Cable|Rope', {
+    legacyChoice: true,
     recommendedSets: 3, recommendedReps: '10–15 reps', rest: 60,
     substitutions: ['triceps-pushdown', 'overhead-triceps-extension', 'band-pushdown'],
-    cues: ['Set the cable and rope in a comfortable elbow-extension position.', 'Keep upper arms stable and extend the elbows without swinging the torso.'],
+    cues: ['Face a high cable with the rope held by the chest.', 'Keep elbows beside the ribs and straighten them downwards.'],
     mistakes: ['Using body momentum to move the cable.', 'Forcing a painful shoulder or elbow range.'],
     precautions: ['Use a comfortable setup and reduce load if shoulder or elbow symptoms increase.'],
   }],
 ]);
 const masterAliases: Record<string, string[]> = {
   'pull-up': ['Pull-Up / Assisted Pull-Up', 'Pull-ups / Assisted Pull-ups'], 'arm-swing-jump': ['CMJ with Arm Swing'],
-  'landmine-press': ['Half-Kneeling Landmine Press'], 'low-hurdle-hop': ['Hurdle Hops', 'Low Hurdle Hops'],
+  'low-hurdle-hop': ['Hurdle Hops', 'Low Hurdle Hops'],
   'approach-jump': ['Max Approach Jump', 'Maximal Approach Jump', 'Maximal Three-Step Approach Jump'],
   'ab-wheel': ['Ab Wheel'], 'lateral-band-walk': ['Mini-Band Lateral Walk'],
   'incline-machine-press': ['Incline Machine Chest Press', 'Low-incline Chest Press'],
@@ -433,6 +440,7 @@ export function findLibraryExercise(exercise: ExerciseReference | string): Libra
 export function searchExercises(query = '', filters: LibraryFilters = {}): LibraryExercise[] {
   const words = normalize(query).split(' ').filter(Boolean);
   return catalogue.filter(item => {
+    if (item.legacyChoice) return false;
     if (filters.muscle && !item.muscles.includes(filters.muscle)) return false;
     if (filters.goal && !item.goals.includes(filters.goal)) return false;
     if (filters.equipment && !item.equipment.includes(filters.equipment)) return false;
@@ -472,6 +480,7 @@ export function rankAlternatives(reference: ExerciseReference | string, limit = 
   if (!source) return [];
   const listed = source.substitutions;
   const results = catalogue.filter(candidate => {
+    if (candidate.legacyChoice) return false;
     if (candidate.id === source.id) return false;
     if (listed.includes(candidate.id)) return true;
     return candidate.movement === source.movement && candidate.category === source.category && candidate.muscles.some(muscle => source.muscles.includes(muscle));

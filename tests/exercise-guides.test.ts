@@ -22,12 +22,19 @@ test('every default workout, primer, warm-up and cooldown has specific technique
     assert.ok(guide.caution.length > 20);
     assert.notEqual(guide.loading.category, 'general', `${exercise.name} needs load guidance`);
     assert.equal(guide.loading.target, exercise.target);
-    assert.equal(guide.demonstration.label, 'Find a video demonstration');
+    if (guide.isAmbiguous) {
+      assert.equal(guide.demonstration.kind, 'unavailable');
+      assert.equal(guide.demonstration.url, '', 'an ambiguous label must not imply an exact demonstration');
+      continue;
+    }
+    assert.equal(guide.demonstration.label, 'Search video technique');
+    assert.equal(guide.demonstration.kind, 'search');
     const url = new URL(guide.demonstration.url);
     assert.equal(url.protocol, 'https:');
     assert.equal(url.hostname, 'www.youtube.com');
     assert.equal(url.pathname, '/results');
-    assert.equal(url.searchParams.get('search_query'), `${exercise.name} exercise technique`);
+    assert.ok(url.searchParams.get('search_query')?.endsWith('exercise technique'));
+    assert.ok(!url.pathname.includes('/watch'), 'a search must not masquerade as a reviewed video');
   }
 });
 

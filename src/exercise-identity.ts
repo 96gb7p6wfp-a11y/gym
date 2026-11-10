@@ -23,7 +23,8 @@ export function exercisePerformanceIdentity(exercise: PerformanceExerciseReferen
   let name = exercise.name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-GB');
   // Only documented factory spelling changes are equivalent. Custom names,
   // incline variants, machine labels and logging configurations stay distinct.
-  if (id === 'spike-slam' && ['medicine-ball spike slam', 'medicine ball spike slam'].includes(name)) name = 'medicine ball spike slam';
+  if (id === 'spike-slam' && ['medicine-ball spike slam', 'medicine ball spike slam', 'two-hand medicine ball overhead slam',
+    'two-handed medicine ball overhead slam', 'medicine-ball overhead spike-pattern slam'].includes(name)) name = 'medicine ball spike slam';
   if (id === 'incline-machine-press' && ['incline chest press', 'incline machine press'].includes(name)) name = 'incline machine press';
   return JSON.stringify([id, name,
     exercise.mode, exercise.measurement ?? null, Boolean(exercise.perSide), exercise.quantityUnit ?? null,

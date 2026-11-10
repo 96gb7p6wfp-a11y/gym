@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { getExerciseGuide, type GuideExercise } from './exercise-guides';
 import { findLibraryExercise, rankAlternatives } from './exercise-library';
 import { MuscleMap } from './MuscleMap';
+import { ExerciseTechniqueDiagram } from './ExerciseTechniqueDiagram';
 import './exercise-guides.css';
 
 export interface ExerciseGuideProps {
@@ -20,11 +21,12 @@ export function ExerciseGuideSheet({ exercise, open, onOpenChange, onCloseAutoFo
   children?: ReactNode;
 }) {
   const movement = findLibraryExercise({ name: exercise.name, key: exercise.key });
+  const guide = getExerciseGuide(exercise);
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="app-dialog exercise-guide-sheet" onCloseAutoFocus={onCloseAutoFocus}>
       <DialogHeader className="exercise-guide__header">
         <DialogDescription className="exercise-guide__category">{movement?.category ?? exercise.group ?? 'Exercise guide'}</DialogDescription>
-        <DialogTitle className="exercise-guide__title">{exercise.name}</DialogTitle>
+        <DialogTitle className="exercise-guide__title">{guide.displayName}</DialogTitle>
       </DialogHeader>
       {children}
       <ExerciseGuideBody key={exercise.name} exercise={exercise} />
@@ -40,9 +42,8 @@ export function ExerciseGuideBody({ exercise }: { exercise: GuideExercise }) {
   const [section, setSection] = useState<'technique' | 'alternatives'>('technique');
   const [loadingOpen, setLoadingOpen] = useState(false);
   const swaps = movement ? rankAlternatives(movement.id, 4) : [];
-  const steps = guide.isGeneric && movement ? movement.cues : guide.steps;
-  const mistakes = guide.isGeneric && movement ? movement.mistakes : guide.mistakes;
-  const benefit = movement?.primaryBenefit ?? exercise.cue;
+  const steps = guide.steps;
+  const mistakes = guide.mistakes;
   const intent = movement && (['Power', 'Plyometric', 'Speed'].includes(movement.category)
     ? 'Move explosively. Stop when speed or jump quality drops.'
     : movement.category === 'Hypertrophy' ? 'Controlled reps. Use your full comfortable range.'
@@ -51,7 +52,6 @@ export function ExerciseGuideBody({ exercise }: { exercise: GuideExercise }) {
     : 'Stay steady. Keep your ribs and pelvis controlled.');
 
   return <div className="exercise-guide__content">
-    {benefit && <p className="exercise-guide__benefit">{benefit}</p>}
     <div className="exercise-guide__sections" role="group" aria-label={`Guide sections for ${exercise.name}`}>
       <button type="button" aria-pressed={section === 'technique'} onClick={() => setSection('technique')}>Technique</button>
       <button type="button" aria-pressed={section === 'alternatives'} onClick={() => setSection('alternatives')}>Alternatives</button>
@@ -62,17 +62,22 @@ export function ExerciseGuideBody({ exercise }: { exercise: GuideExercise }) {
           const alternative = getExerciseGuide({ name: alternativeExercise.name });
           return <div key={alternativeExercise.id}>
             <strong>{alternativeExercise.name}</strong><p>{tradeoff}</p>
-            <a href={alternative.demonstration.url} target="_blank" rel="noopener noreferrer">View technique<ArrowUpRight size={16} aria-hidden="true" /></a>
+            {alternative.demonstration.kind === 'search' && <a href={alternative.demonstration.url} target="_blank" rel="noopener noreferrer">Search technique<ArrowUpRight size={16} aria-hidden="true" /></a>}
           </div>;
         })}
         <p className="exercise-guide__alternative-note">Use Replace exercise in your workout to make a change.</p>
       </> : <p>No close alternatives yet. Search the library for a movement with a similar goal.</p>}
     </div> : <>
       {guide.isGeneric && !movement && <p className="exercise-guide__custom">Custom movement · general guidance</p>}
+      {guide.isAmbiguous && <p className="exercise-guide__variant-note">Legacy exercise choice · choose an exact variation for future entries. Your saved records stay unchanged.</p>}
+      <section className="exercise-guide__equipment"><h3>Equipment</h3><p>{guide.instructions.equipment}</p></section>
       <section className="exercise-guide__technique"><h3>Technique</h3>
-        <ol className="exercise-guide__steps">{steps.slice(0, 3).map((step, index) => <li key={index}>{step}</li>)}</ol>
+        <ol className="exercise-guide__steps">{steps.slice(0, 3).map((step, index) => <li key={index}><div><strong>{['Setup', 'Movement', 'Key cue'][index]}</strong><span>{step}</span></div></li>)}</ol>
         {steps.length > 3 && <details className="exercise-guide__disclosure"><summary>More technique</summary><ol className="exercise-guide__steps" start={4}>{steps.slice(3).map((step, index) => <li key={index}>{step}</li>)}</ol></details>}
       </section>
+      <section className="exercise-guide__avoid"><h3>Avoid</h3><p>{guide.instructions.avoid}</p></section>
+      <section className="exercise-guide__purpose"><h3>Purpose</h3><p>{guide.instructions.purpose}</p></section>
+      {guide.diagram && <details className="exercise-guide__disclosure exercise-guide__diagram"><summary>Movement diagram</summary><ExerciseTechniqueDiagram variant={guide.diagram} /></details>}
       <details className="exercise-guide__disclosure exercise-guide__form"><summary>Form &amp; safety</summary>
         <div className="exercise-guide__disclosure-body">
           <section className="exercise-guide__feel"><h3>Feel it</h3><p>{guide.isGeneric && movement ? movement.muscles.join(' · ') : guide.feel}</p></section>
@@ -98,7 +103,10 @@ export function ExerciseGuideBody({ exercise }: { exercise: GuideExercise }) {
           <div><dt>Starting point</dt><dd>{movement.recommendedSets} × {movement.recommendedReps}{movement.perSide ? ' / side' : ''}</dd></div>
         </dl>
       </details> : exercise.group && <p className="exercise-guide__custom">{exercise.group}</p>}
-      <a className="exercise-guide__video" href={guide.demonstration.url} target="_blank" rel="noopener noreferrer">{guide.demonstration.label}<ArrowUpRight size={17} aria-hidden="true" /></a>
+      {guide.techniqueReference && <a className="exercise-guide__video" href={guide.techniqueReference.url} target="_blank" rel="noopener noreferrer">{guide.techniqueReference.label}<ArrowUpRight size={17} aria-hidden="true" /></a>}
+      {guide.demonstration.kind === 'search' ? <><a className="exercise-guide__video" href={guide.demonstration.url} target="_blank" rel="noopener noreferrer">{guide.demonstration.label}<ArrowUpRight size={17} aria-hidden="true" /></a>
+        <p className="exercise-guide__media-note">General video search · results have not been reviewed. Match the exact variation and direction shown above.</p></>
+        : <p className="exercise-guide__media-note">No demonstration is assigned to this ambiguous saved choice. Find the exact variation in the exercise library.</p>}
     </>}
   </div>;
 }
