@@ -1,0 +1,27 @@
+.pre-workout-sheet .dialog-scroll { gap:0; }
+.pre-workout-sheet [data-slot='dialog-title'] { font-size:clamp(1.65rem,7vw,2rem); line-height:1.15; letter-spacing:-.035em; }
+.pre-workout-sheet [data-slot='dialog-description'] { margin-top:8px; line-height:1.4; overflow-wrap:anywhere; }
+.pre-workout__date { margin:4px 0 24px; color:var(--sub); font-size:.8125rem; }
+.pre-workout__question { min-width:0; margin:0 0 24px; padding:0; border:0; }
+.pre-workout__question legend { margin-bottom:10px; color:var(--ink); font-size:1rem; font-weight:600; }
+.pre-workout__question [role='group'] { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.pre-workout__question button { display:flex; justify-content:space-between; align-items:center; gap:8px; min-height:52px; padding:12px 16px; border:1px solid var(--line); border-radius:14px; background:var(--surface-soft); color:var(--ink); font:inherit; text-align:left; overflow-wrap:anywhere; }
+.pre-workout__question button[aria-pressed='true'] { border-color:var(--accent); background:var(--accent-soft); }
+.pre-workout__question button svg { flex-shrink:0; color:var(--accent); }
+.pre-workout__adjustment { margin:-10px 0 24px; }
+.pre-workout__adjustment p,.pre-workout__note,.pre-workout__guidance p { color:var(--sub); font-size:.8125rem; line-height:1.5; }
+.pre-workout__adjustment [role='group'] { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+.pre-workout__adjustment button { min-height:44px; padding:8px 12px; border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink); font:inherit; font-size:.8125rem; text-align:left; }
+.pre-workout__adjustment button[aria-pressed='true'] { background:var(--accent-soft); border-color:var(--accent); }
+.pre-workout__recommendation { display:grid; gap:4px; padding:12px 0; margin:-8px 0 12px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+.pre-workout__recommendation strong { font-size:1rem; line-height:1.4; overflow-wrap:anywhere; }
+.pre-workout__recommendation span,.pre-workout__recommendation p { color:var(--sub); font-size:.8125rem; line-height:1.45; }
+.pre-workout__recommendation p { margin:4px 0 0; }
+.pre-workout__guidance { margin:0 0 12px; }
+.pre-workout__guidance p { margin:0; }
+.pre-workout__guidance button { display:flex; align-items:center; gap:4px; min-height:44px; padding:6px 0; font-size:.8125rem; }
+.pre-workout__note { margin:0 0 16px; }
+.pre-workout__start { min-height:56px; }
+.pre-workout-sheet button:disabled { opacity:.5; }
+@media(max-height:650px) { .pre-workout-sheet .dialog-scroll { padding:24px 18px 18px; } .pre-workout__date { margin-bottom:16px; } .pre-workout__question { margin-bottom:16px; } .pre-workout__note { margin-bottom:12px; } }
+@media(prefers-reduced-motion:no-preference) { .pre-workout__question button { transition:background 120ms ease,border-color 120ms ease; } }

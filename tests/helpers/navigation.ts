@@ -21,9 +21,39 @@ export async function openDisclosure(page: Page, name: string) {
   if (!await summary.evaluate(element => element.closest('details')?.open ?? false)) await summary.click();
 }
 
+/** Take the actual pre-workout route into preparation without checking off any
+ * drills or claiming to be already warmed up. The gentle primer may start
+ * directly because that saved session is itself preparation. */
+export async function openQuickWarmup(page: Page) {
+  const check = page.getByRole('dialog', { name: 'Ready to Train?', exact: true });
+  const warmup = page.getByRole('dialog', { name: 'Warm-up', exact: true });
+  await expect(check.or(warmup)).toBeVisible();
+  if (await check.isVisible()) {
+    await check.getByRole('button', { name: 'Yes — fit to train', exact: true }).click();
+    await check.getByRole('button', { name: 'Not yet', exact: true }).click();
+    await check.getByRole('button', { name: /^(?:Quick warm-up|Recovery preparation)$/ }).click();
+    await expect(check).not.toBeVisible();
+  }
+  await expect(warmup.or(page.getByRole('button', { name: 'Finish workout', exact: true }))).toBeVisible();
+  return await warmup.isVisible();
+}
+
+/** Explicitly use the already-warm fast path. This records the athlete's
+ * deliberate answer, without inventing completed preparation checkboxes. */
+export async function startAlreadyWarmed(page: Page) {
+  const check = page.getByRole('dialog', { name: 'Ready to Train?', exact: true });
+  await expect(check).toBeVisible();
+  await check.getByRole('button', { name: 'Yes — fit to train', exact: true }).click();
+  await check.getByRole('button', { name: 'Yes — already warmed up', exact: true }).click();
+  await check.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await expect(check).not.toBeVisible();
+}
+
 /** Start optional preparation without inventing completed or elsewhere checks.
  * Dedicated warm-up tests cover individual completion, skipping and provenance. */
 export async function finishWarmup(page: Page) {
+  const opened = await openQuickWarmup(page);
+  if (!opened) return;
   const warmup = page.getByRole('dialog', { name: 'Warm-up', exact: true });
   await expect(warmup).toBeVisible();
   await warmup.getByRole('button', { name: 'Start workout', exact: true }).click();
