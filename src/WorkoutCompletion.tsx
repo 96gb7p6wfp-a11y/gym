@@ -1,6 +1,6 @@
 import { Check } from 'lucide-react';
 import { completedSets, estimatedCalories as loggedVolume, sessionDuration } from './domain';
-import { getPersonalRecords, type PersonalRecord } from './performance-insights';
+import { formatWorkoutDuration, getWorkoutAchievements } from './workout-achievements';
 import type { ReportSession } from './weekly-report';
 import './workout-completion.css';
 
@@ -11,19 +11,12 @@ export interface WorkoutCompletionProps {
   onStretch?: () => void;
   volleyballSchedule?: { days: readonly number[] };
 }
-
 const number = (value: number) => value.toLocaleString('en-GB', { maximumFractionDigits: 1 });
-const normalize = (value: string) => value.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-GB');
 
-/** A finished session is also included while the parent's saved list catches up. */
+/** Read-only feedback on the saved workout. Finishing never changes past records. */
 export function WorkoutCompletion({ session, sessions, onDone, onStretch, volleyballSchedule }: WorkoutCompletionProps) {
-  const history = [...sessions.filter(entry => entry.id !== session.id), session];
-  const records = getPersonalRecords(history, session.date).filter(record => record.isNew
-    && record.sessionId === session.id && record.date === session.date
-    && session.exercises.some(exercise => (exercise.exerciseId ?? exercise.key) === record.exerciseKey
-      && normalize(exercise.name) === normalize(record.name)));
+  const achievements = getWorkoutAchievements(session, sessions);
   const duration = Math.max(0, sessionDuration(session));
-  const minutes = duration > 0 ? number(duration / 60_000) : '—';
   const sets = completedSets(session);
   const recoveryOnly = session.kind === 'recovery' && !session.exercises.length;
   const checkedMovements = (session.cooldown ?? []).filter(step => step.done).length;
@@ -34,46 +27,36 @@ export function WorkoutCompletion({ session, sessions, onDone, onStretch, volley
   const cue = recoveryOnly ? 'Recovery recorded. Keep the rest of your day easy.'
     : volleyballTomorrow ? 'Volleyball tomorrow. Keep extra leg work light and recover well.'
     : session.kind === 'sport' ? 'Refuel, rehydrate and keep extra jumps light if your legs feel heavy.'
-      : 'Refuel, hydrate and give your next session fresh legs.';
+      : 'Refuel and hydrate before your next session.';
+  const { highlight, newRecordCount } = achievements;
 
-  // Prefer a genuine record's movement; otherwise highlight one completed set.
-  // This is a logged performance, not a cross-exercise strength comparison.
-  const highlightRecord = records.find(record => ['height', 'touch', 'distance', 'weight'].includes(record.kind));
-  const preferred = highlightRecord ? session.exercises.find(exercise => matchesRecord(exercise, highlightRecord)) : undefined;
-  const candidates = (preferred ? [preferred] : session.exercises).flatMap(exercise => exercise.logs
-    .filter(log => log.done && (exercise.measurement ? (log.measurementCm ?? 0) > 0
-      : exercise.mode === 'timed' ? (log.seconds ?? 0) > 0 : (log.reps ?? 0) > 0))
-    .map(log => ({ exercise, log })));
-  const highlight = candidates.sort((a, b) => {
-    if (preferred?.measurement) return (b.log.measurementCm ?? 0) - (a.log.measurementCm ?? 0);
-    if (preferred?.mode === 'timed') return (b.log.seconds ?? 0) - (a.log.seconds ?? 0);
-    return (b.log.kg ?? 0) - (a.log.kg ?? 0) || (b.log.reps ?? 0) - (a.log.reps ?? 0);
-  })[0];
-  const highlightValue = !highlight ? null : highlight.exercise.measurement
-    ? `${number(highlight.log.measurementCm!)} cm · ${{ height: 'jump height', touch: 'highest touch', distance: 'distance' }[highlight.exercise.measurement]}`
-    : highlight.exercise.mode === 'timed' ? highlight.log.seconds! >= 60
-      ? `${number(highlight.log.seconds! / 60)} min` : `${number(highlight.log.seconds!)} sec`
-      : `${highlight.log.kg != null && highlight.log.kg > 0 ? `${number(highlight.log.kg)} kg` : 'Bodyweight'} × ${highlight.log.reps}`;
-
-  return <section className="workout-completion" aria-label="Workout complete summary" data-has-records={records.length > 0}>
+  return <section className="workout-completion" aria-label="Workout complete summary" data-has-records={newRecordCount > 0}>
     <header className="workout-completion__heading"><span aria-hidden="true"><Check size={21} strokeWidth={2} /></span><h2>{recoveryOnly ? 'Recovery complete' : session.kind === 'sport' ? 'Training recorded' : 'Workout complete'}</h2></header>
-    <div className={`workout-completion__metrics${records.length ? ' workout-completion__metrics--records' : ''}`}>
-      <div><strong>{minutes}</strong><span>{duration > 0 ? 'minutes' : 'duration not recorded'}</span></div>
-      {recoveryOnly ? <div><strong>{checkedMovements}</strong><span>{checkedMovements === 1 ? 'movement checked' : 'movements checked'}</span></div>
-        : (session.kind !== 'sport' || sets > 0) && <div><strong>{sets}</strong><span>{sets === 1 ? 'set' : 'sets'}</span></div>}
-      {records.length > 0 && <div><strong>{records.length}</strong><span>{records.length === 1 ? 'new record' : 'new records'}</span></div>}
+    <p className="workout-completion__session">{session.name}</p>
+    <div className={`workout-completion__metrics${newRecordCount ? ' workout-completion__metrics--records' : ''}`}>
+      <div role="group" aria-label="Training duration"><strong>{formatWorkoutDuration(duration)}</strong><span>{duration > 0 ? 'Training duration' : 'Duration not recorded'}</span></div>
+      {recoveryOnly ? <div role="group" aria-label="Recovery movements checked"><strong>{number(checkedMovements)}</strong><span>{checkedMovements === 1 ? 'Movement checked' : 'Movements checked'}</span></div>
+        : (session.kind !== 'sport' || sets > 0) && <div role="group" aria-label="Completed sets"><strong>{number(sets)}</strong><span>Sets completed</span></div>}
+      {newRecordCount > 0 && <div className="workout-completion__metric--record" role="group" aria-label="New personal records"><strong>{number(newRecordCount)}</strong><span>{newRecordCount === 1 ? 'Personal record' : 'Personal records'}</span></div>}
     </div>
-    {volume > 0 && <div className="workout-completion__volume"><span>Volume</span><strong>{number(volume)}<small>kg logged</small></strong></div>}
-    {highlight && <div className="workout-completion__highlight"><span>{highlightRecord ? 'Best progress' : 'Top logged set'}</span><h3>{highlight.exercise.name}</h3><strong>{highlightValue}</strong></div>}
+    {highlight && <div className="workout-completion__highlight" aria-label="Today’s highlight">
+      <span>Today’s highlight</span><h3>{highlight.name}</h3><strong>{highlight.valueLabel}</strong>
+      <small>{highlight.label}</small>
+      {achievements.comparison && <p className="workout-completion__comparison">{achievements.comparison}</p>}
+    </div>}
     {sets === 0 && session.kind === 'strength' && <p className="workout-completion__empty">Session saved. No completed sets recorded.</p>}
     <p className="workout-completion__cue">{cue}</p>
-    {onStretch && <button type="button" className="btn workout-completion__stretch" onClick={onStretch}>{recoveryOnly ? 'View stretches' : 'Stretch now'}</button>}
-    {onDone && <button type="button" className={`btn workout-completion__done${onStretch ? ' workout-completion__done--secondary' : ''}`} onClick={onDone}>Done</button>}
+    {(volume > 0 || achievements.records.length > 0) && <details className="workout-completion__details">
+      <summary>Performance notes</summary>
+      {volume > 0 && <div className="workout-completion__volume"><span>Logged load-volume</span><strong>{number(volume)}<small>kg logged</small></strong></div>}
+      {achievements.records.length > 0 && <ul className="workout-completion__achievements" aria-label="Recorded performances">
+        {achievements.records.map(record => <li key={record.identity} data-achievement={record.status}>
+          <strong>{record.name} · {record.label}</strong><span>{record.valueLabel}</span>{record.context && <small>{record.context}</small>}
+        </li>)}
+      </ul>}
+    </details>}
+    {onDone && <button type="button" className="btn workout-completion__done" onClick={onDone}>Done</button>}
+    {onStretch && <button type="button" className="workout-completion__stretch" onClick={onStretch}>Optional cooldown</button>}
   </section>;
 }
-
-function matchesRecord(exercise: ReportSession['exercises'][number], record: PersonalRecord) {
-  return (exercise.exerciseId ?? exercise.key) === record.exerciseKey && normalize(exercise.name) === normalize(record.name);
-}
-
 export default WorkoutCompletion;
