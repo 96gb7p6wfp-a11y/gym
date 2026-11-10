@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, ProfileSchema } from '../src/domain.js';
 import { createVolleyballMasterPlan } from '../src/volleyball-master-plan';
+import { openQuickWarmup } from './helpers/navigation';
 
 const STORE = 'setline.gym.v1';
 const read = (page: Page) => page.evaluate(key => JSON.parse(localStorage.getItem(key)!), STORE);
@@ -40,6 +41,7 @@ for (const appearance of ['light', 'dark'] as const) test(`V13.1 Thursday previe
   await page.screenshot({ path: test.info().outputPath(`v131-thursday-preview-${appearance}.png`) });
   await preview.getByRole('button', { name: 'Close', exact: true }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await openQuickWarmup(page);
   const warmup = page.getByRole('dialog', { name: 'Warm-up', exact: true });
   await expect(warmup).toBeVisible();
   await expect(warmup.getByRole('list', { name: 'Quick warm-up exercises', exact: true }).locator(':scope > li')).toHaveCount(5);
@@ -68,6 +70,7 @@ test('unknown clearance previews easy preparation and does not restore impact wa
 test('match-week Saturday preparation is included and never blocks starting on an empty checklist', async ({ page }) => {
   await seed(page, { date: '2026-11-07', match: true });
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await openQuickWarmup(page);
   const warmup = page.getByRole('dialog', { name: 'Warm-up', exact: true });
   await expect(warmup).toBeVisible();
   await expect(warmup).toContainText('Preparation is already part of this easy session');

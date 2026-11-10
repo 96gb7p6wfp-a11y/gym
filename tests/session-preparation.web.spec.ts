@@ -109,7 +109,7 @@ test('post-workout stretching follows performed shoulder work rather than skippe
   const finish = page.getByRole('dialog', { name: 'Finish your workout', exact: true });
   await finish.getByLabel('Workout duration · minutes', { exact: true }).fill('25');
   await finish.getByRole('button', { name: 'Save completed workout', exact: true }).click();
-  await page.getByRole('region', { name: 'Workout complete summary', exact: true }).getByRole('button', { name: 'Stretch now', exact: true }).click();
+  await page.getByRole('region', { name: 'Workout complete summary', exact: true }).getByRole('button', { name: 'Optional cooldown', exact: true }).click();
   const stretch = page.getByRole('dialog', { name: 'Stretch routine', exact: true });
   await expect(stretch).toContainText('Cross-Body Shoulder Stretch');
   await expect(stretch).not.toContainText(/Hip Flexor Stretch|Glute Stretch|Quad Stretch|Gastrocnemius|Soleus/);
@@ -131,7 +131,7 @@ test('finishing without set logs keeps planned shoulder stretches available and 
   const finish = page.getByRole('dialog', { name: 'Finish your workout', exact: true });
   await finish.getByLabel('Workout duration · minutes', { exact: true }).fill('25');
   await finish.getByRole('button', { name: 'Save completed workout', exact: true }).click();
-  await page.getByRole('region', { name: 'Workout complete summary', exact: true }).getByRole('button', { name: 'Stretch now', exact: true }).click();
+  await page.getByRole('region', { name: 'Workout complete summary', exact: true }).getByRole('button', { name: 'Optional cooldown', exact: true }).click();
   const stretch = page.getByRole('dialog', { name: 'Stretch routine', exact: true });
   await expect(stretch).toContainText('No sets logged. Based on your planned session.');
   const shoulder = stretch.getByRole('checkbox', { name: 'Complete Cross-Body Shoulder Stretch in cooldown', exact: true });

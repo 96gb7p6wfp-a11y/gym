@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, ProfileSchema } from '../src/domain.js';
 import { createV9VolleyballMasterPlan } from '../src/volleyball-master-plan';
 import { defaultReminderState } from '../src/reminders';
+import { openQuickWarmup } from './helpers/navigation';
 
 const STORE = 'setline.gym.v1';
 const TODAY = '2026-11-06';
@@ -88,6 +89,14 @@ test('confirmed-match Saturday is a light primer and starts its exact dose direc
   await sheet.getByRole('button', { name: 'Start workout', exact: true }).evaluate(button => {
     for (let tap = 0; tap < 10; tap += 1) (button as HTMLButtonElement).click();
   });
+  const check = page.getByRole('dialog', { name: 'Ready to Train?', exact: true });
+  await expect(check).toBeVisible();
+  expect((await read(page)).sessions).toEqual([]);
+  await check.getByRole('button', { name: 'Yes — fit to train', exact: true }).click();
+  await check.getByRole('button', { name: 'Not yet', exact: true }).click();
+  await check.getByRole('button', { name: 'Quick warm-up', exact: true }).evaluate(button => {
+    for (let tap = 0; tap < 10; tap += 1) (button as HTMLButtonElement).click();
+  });
   await expect.poll(async () => (await read(page)).sessions.length).toBe(1);
   await expect(page.getByRole('dialog', { name: 'Warm-up', exact: true })).toHaveCount(0);
   await expect(page.getByRole('region', { name: 'Current exercise', exact: true })
@@ -163,6 +172,7 @@ test('an intentional date-specific primer warm-up remains available before expli
     await expect(rows.nth(index)).toContainText(dose);
   }
   await sheet.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await openQuickWarmup(page);
   const warmup = page.getByRole('dialog', { name: 'Warm-up', exact: true });
   await expect(warmup).toBeVisible();
   await expect(warmup.getByRole('list', { name: 'Quick warm-up exercises', exact: true }).locator(':scope > li')).toHaveCount(1);

@@ -55,7 +55,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 for (const width of [320, 390]) {
-  test(`Today exposes the workout, purpose and real weekly progress above navigation at ${width}px`, async ({ page }) => {
+  test(`Today keeps its workout action above navigation and real progress reachable at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: width === 320 ? 568 : 844 });
     await seedProgress(page);
     await safeAreas(page);
@@ -66,14 +66,15 @@ for (const width of [320, 390]) {
     const start = page.getByRole('button', { name: 'Start workout', exact: true });
     const progress = page.getByRole('button', { name: 'View training progress: 2 of 4 planned gym days recorded', exact: true });
     const nav = (await page.getByRole('tablist', { name: 'Main navigation', exact: true }).boundingBox())!;
-    for (const action of [start, progress]) {
+    for (const action of [start]) {
       const bounds = (await action.boundingBox())!;
       expect(bounds.y).toBeGreaterThanOrEqual(47);
       expect(bounds.y + bounds.height).toBeLessThan(nav.y);
       await tappable(action, nav.y);
     }
-    // The cover keeps one action and one real weekly-progress row; nutrition is
-    // reachable without restoring the rejected home metric grid.
+    // Useful progress now sits between the hero and consistency. Secondary
+    // sections may scroll, but must remain real, readable and touchable.
+    await tappable(progress, nav.y);
     const fuel = page.getByRole('button', { name: 'View today’s nutrition', exact: true });
     await expect(fuel).toContainText('Fuel');
     await tappable(fuel, nav.y);

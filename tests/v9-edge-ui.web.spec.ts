@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession, stopSessionTimers } from '../src/domain.js';
 import { createV9VolleyballMasterPlan } from '../src/volleyball-master-plan';
 import { defaultReminderState } from '../src/reminders';
+import { openQuickWarmup } from './helpers/navigation';
 
 const STORE = 'setline.gym.v1';
 const TODAY = '2026-11-06';
@@ -104,6 +105,7 @@ test('320px dark V9 preview exposes all eleven working exercises and a reachable
       && hit !== null && element.contains(hit);
   })).toBe(true);
   await start.tap();
+  await openQuickWarmup(page);
   await expect(page.getByRole('dialog', { name: 'Warm-up', exact: true })).toBeVisible();
   const after = await read(page);
   expect(after.sessions).toEqual([]);

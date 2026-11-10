@@ -33,12 +33,13 @@ async function seedJournal(page: Page, appearance: 'light' | 'dark', masterPlan 
 }
 
 /** Check the initial screen, without locator scrolling hiding a misplaced CTA. */
-async function expectFirstScreenAction(page: Page, control: Locator) {
+async function expectFirstScreenAction(page: Page, control: Locator, firstScreen = true) {
   await expect(control).toBeVisible();
+  if (!firstScreen) await control.scrollIntoViewIfNeeded();
   const nav = page.getByRole('tablist', { name: 'Main navigation', exact: true });
   const navBounds = (await nav.boundingBox())!;
   const box = (await control.boundingBox())!;
-  expect(await page.evaluate(() => scrollY)).toBe(0);
+  if (firstScreen) expect(await page.evaluate(() => scrollY)).toBe(0);
   expect(box.width).toBeGreaterThanOrEqual(44);
   expect(box.height).toBeGreaterThanOrEqual(44);
   expect(box.y).toBeGreaterThanOrEqual(47);
@@ -68,7 +69,7 @@ for (const appearance of ['light', 'dark'] as const) {
     await expectFirstScreenAction(page, cover.getByRole('button', { name: 'Start workout', exact: true }));
     await expectFirstScreenAction(page, page.getByRole('button', {
       name: 'View training progress: 0 of 4 planned gym days recorded', exact: true,
-    }));
+    }), false);
 
     await page.getByRole('tab', { name: 'Train', exact: true }).click();
     await expect(page.getByRole('heading', { name: LONG_SESSION, exact: true })).toBeVisible();

@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession, stopSessionTimers } from '../src/domain.js';
 import { defaultReminderState } from '../src/reminders';
+import { openQuickWarmup } from './helpers/navigation';
 
 const STORE = 'setline.gym.v1';
 const DATE = '2026-11-02';
@@ -21,6 +22,7 @@ async function seed(page: Page, appearance: 'light' | 'dark' = 'light') {
   await page.evaluate(({ key, saved }) => localStorage.setItem(key, JSON.stringify(saved)), { key: STORE, saved });
   await page.reload();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await openQuickWarmup(page);
   await expect(preparation(page)).toBeVisible();
   return saved;
 }
