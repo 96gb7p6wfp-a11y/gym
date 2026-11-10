@@ -1,4 +1,8 @@
+import { findLibraryExercise, type LibraryExercise } from './exercise-library.ts';
+import { getSpecificLibraryTechnique } from './exercise-technique-content.ts';
+
 export interface GuideExercise {
+  exerciseId?: string;
   key?: string;
   name: string;
   mode?: string;
@@ -23,7 +27,12 @@ export interface ExerciseGuideContent {
   feel: string;
   mistakes: string[];
   caution: string;
-  demonstration: { label: string; url: string };
+  demonstration: { label: string; url: string; kind: 'search' | 'unavailable' };
+  displayName: string;
+  instructions: { equipment: string; setup: string; movement: string; keyCue: string; avoid: string; purpose: string };
+  isAmbiguous?: boolean;
+  diagram?: 'overhead-slam' | 'forward-throw' | 'drop-jump';
+  techniqueReference?: { label: string; url: string };
   isGeneric: boolean;
   loading: ExerciseLoadingGuidance;
 }
@@ -41,7 +50,7 @@ function register(names: string[], steps: string[], feel: string, mistakes: stri
   for (const name of names) techniques.set(normalizedName(name), technique);
 }
 
-register(['Medicine Ball Spike Slam', 'Light Medicine Ball Spike Slam'], [
+register(['Medicine Ball Spike Slam', 'Light Medicine Ball Spike Slam', 'Two-Hand Medicine Ball Overhead Slam', 'Two-Handed Medicine Ball Overhead Slam', 'Medicine Ball Slam'], [
   'Use a 2–3 kg slam ball in an approved clear area; stand balanced, brace and lift it overhead with both hands.',
   'Drive the ball down in front of you with your trunk and arms, letting hips and knees bend.',
   'Let the ball settle, reset your stance and make the next rep fast.'
@@ -58,9 +67,9 @@ register(['Machine Chest Press / Bench Press'], [
 ], 'For barbell bench press, use a competent spotter or properly set safety bars. Choose a pain-free depth.');
 
 register(['Machine Chest Press'], [
-  'Adjust the seat so the handles start around mid-chest; keep feet firmly supported.',
-  'Hold a comfortable grip, with wrists aligned over forearms and your upper back against the pad.',
-  'Press forward, then return slowly to a comfortable chest stretch.'
+  'Adjust the seat so the handles start around mid-chest; plant the feet and support your upper back on the pad.',
+  'Press the handles forward, then return slowly to a comfortable chest stretch without lifting from the pad.',
+  'Keep each wrist aligned over its forearm and the shoulders supported.'
 ], 'Chest and triceps; steady pressure through both hands.', [
   'Shrugging or lifting your back off the pad.', 'Letting the handles pull the shoulders too far behind you.'
 ], 'Set the starting range before loading. Stop or shorten the range if the shoulder pinches.');
@@ -824,7 +833,7 @@ const v9TechniqueAliases: Record<string, string> = {
   'Penultimate-Step + Plant Rehearsal': 'Penultimate Step Drill',
   'Controlled Approach Footwork': 'Slow L-R-L Rhythm',
   'Easy Dynamic Movement': 'Light Dynamic Mobility',
-  'Light Shoulder Activation': 'Wall Slide',
+  'Light Shoulder Activation': 'Band Pull-apart',
   'Relaxed Walking': 'Easy walk',
   'Easy Upper-Body Movement': 'Easy Walk + Arm Swing',
   'Easy Walk or Bike': 'Easy Walk + Arm Swing',
@@ -1015,6 +1024,28 @@ for (const [name, source] of Object.entries(v9TechniqueAliases)) {
   if (advice) loadingAdvice.set(normalizedName(name), advice);
 }
 
+function libraryLoadingAdvice(movement: LibraryExercise | undefined): LoadingAdvice | undefined {
+  if (!movement) return undefined;
+  if (['Power', 'Plyometric', 'Speed'].includes(movement.category)) return {
+    category: 'power', label: 'Quality before fatigue',
+    advice: 'Follow the saved short dose and recovery. Use a suitable clear area; stop when speed, coordination or landing quality drops. Do not automatically add load, contacts or box height.',
+  };
+  if (['Mobility', 'Stability', 'Recovery'].includes(movement.category)) return {
+    category: movement.category === 'Recovery' ? 'recovery' : 'preparation', label: 'Controlled movement',
+    advice: 'Follow the saved reps or seconds with comfortable effort and normal breathing. Finish before posture or symptoms worsen; this is not a maximal loading test.',
+  };
+  if (movement.category === 'Core') return { category: 'core', label: 'Steady trunk control',
+    advice: 'Choose a difficulty that lets you hold the described trunk position and breathe through your saved reps or time. Stop when that position changes.',
+  };
+  if (movement.category === 'Sport') return { category: 'power', label: 'Record actual activity',
+    advice: 'Record the duration and exposure you actually performed. Planned activity is not a completed record or proof of recovery.',
+  };
+  return { category: movement.category === 'Strength' ? 'strength' : 'control', label: 'Follow your saved effort target',
+    advice: 'Use your saved repetition range, effort target and rest. Keep the described range consistent rather than lifting more by changing the movement.',
+    progression: 'Consider the smallest practical increase only after every working set reaches the top of its range at the prescribed effort with consistent technique. Do not invent missing RIR.',
+  };
+}
+
 /** Use the current name and target, never a retained key or a blanket heavy/low-rep rule. */
 export function getExerciseLoadingGuidance(exercise: GuideExercise): ExerciseLoadingGuidance {
   const target = exercise.target?.trim() || undefined;
@@ -1026,7 +1057,7 @@ export function getExerciseLoadingGuidance(exercise: GuideExercise): ExerciseLoa
     category: 'power', label: 'Saved timed drill', target,
     advice: 'This older record uses its saved duration. It does not establish a measured 5 m or 10 m sprint result. Keep the original log; V9 distance work and separately measured sprint tests use their own units and timing methods.',
   };
-  const saved = loadingAdvice.get(normalizedName(exercise.name));
+  const saved = loadingAdvice.get(normalizedName(exercise.name)) ?? libraryLoadingAdvice(findLibraryExercise({ name: exercise.name }));
   // A custom timed version of a lift needs duration advice, not rep-range progression.
   if (exercise.mode === 'timed' && saved && ['strength', 'control'].includes(saved.category)) {
     return {
@@ -1053,16 +1084,43 @@ export function getExerciseLoadingGuidance(exercise: GuideExercise): ExerciseLoa
 /** Name matching deliberately ignores saved keys: a renamed movement needs new instructions. */
 export function getExerciseGuide(exercise: GuideExercise): ExerciseGuideContent {
   const name = exercise.name.trim() || 'this exercise';
-  const technique = techniques.get(normalizedName(name));
+  // Names are deliberate here: a retained ID/key must not teach an unrelated
+  // movement after a custom rename. Recognized catalogue aliases remain useful.
+  const namedTechnique = techniques.get(normalizedName(name));
+  const movement = findLibraryExercise({ name }) ?? (namedTechnique && exercise.exerciseId ? findLibraryExercise(exercise.exerciseId) : undefined);
+  const detail = movement ? getSpecificLibraryTechnique(movement.id) : undefined;
+  const specific: Technique | undefined = detail && movement ? {
+    steps: [detail.setup, detail.movement, detail.cue], feel: movement.muscles.join(' · '),
+    mistakes: [detail.avoid, movement.mistakes[1] ?? 'Continuing after the intended technique changes.'],
+    caution: movement.precautions?.join(' ') || 'Use the described setup and a manageable effort. Stop for sharp pain, dizziness or loss of control; keep breathing.',
+  } : undefined;
+  const technique = namedTechnique ?? specific ?? (movement ? techniques.get(normalizedName(movement.name)) : undefined);
   const loading = getExerciseLoadingGuidance(exercise);
-  const demonstration = {
-    label: 'Find a video demonstration',
-    url: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${name} exercise technique`)}`,
+  const choices = new Map([
+    ['Medicine Ball Overhead Throw / Slam', 'This saved label includes different release directions. Choose a two-hand downward slam, overhead forward throw or backward throw; they are separate exercises.'],
+    ['Medicine Ball Scoop Toss', 'This saved label does not specify forward or rotational release. Choose the exact toss you actually perform before using a demonstration or comparing results.'],
+    ['Landmine Press / Machine Shoulder Press', 'Choose the secured-bar landmine press or the seated machine shoulder press. Their equipment, path and working loads are different.'],
+    ['Machine Chest Press / Bench Press', 'Choose the seated machine chest press or barbell bench press. Their equipment, safety setup and working loads are different.'],
+    ['Neutral-Grip Lat Pulldown / Pull-up', 'Choose the seated pulldown or neutral-grip pull-up. Their loading and assistance are different.'],
+    ['Rope Triceps Extension', 'This saved label does not say overhead or downward. Choose a rope triceps pushdown or overhead cable extension to match what you actually perform.'],
+  ].map(([key, value]) => [normalizedName(key), value]));
+  const choice = choices.get(normalizedName(name));
+  const searchNames: Record<string, string> = {
+    'spike-slam': 'two hand medicine ball overhead floor slam',
+    'medicine-ball-overhead-forward-throw': 'two hand medicine ball overhead forward throw',
+    'medicine-ball-overhead-backward-throw': 'medicine ball overhead backward throw',
+    'medicine-ball-rotational-scoop-toss': 'rotational medicine ball scoop wall toss',
+    'landmine-press': 'standing single arm landmine press',
+    'half-kneeling-landmine-press': 'half kneeling single arm landmine press',
+    'drop-jump': 'low box drop jump step off immediate vertical rebound',
+    'external-rotation': 'standing cable external rotation elbow at side',
   };
-  if (technique) return { ...structuredClone(technique), demonstration, loading, isGeneric: false };
-
+  const searchName = movement && searchNames[movement.id] || name;
+  const demonstration: ExerciseGuideContent['demonstration'] = choice
+    ? { kind: 'unavailable', label: 'Choose an exact variation first', url: '' }
+    : { kind: 'search', label: 'Search video technique', url: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${searchName} exercise technique`)}` };
   const cue = exercise.cue?.trim();
-  return {
+  const fallback: Technique = {
     steps: [
       'This custom exercise does not have movement-specific instructions yet; confirm its setup and technique with a qualified coach.',
       ...(cue ? [`Your saved cue: ${cue}`] : []),
@@ -1071,8 +1129,40 @@ export function getExerciseGuide(exercise: GuideExercise): ExerciseGuideContent 
     feel: 'The intended working muscles depend on this movement; do not use pain or a strong burn as proof of correct technique.',
     mistakes: ['Adding load before learning the movement.', 'Copying a different exercise because its name or equipment looks similar.'],
     caution: 'Stop for sharp pain, dizziness or loss of control. The search link is a starting point; check that the demonstration matches your exercise.',
-    demonstration,
-    loading,
-    isGeneric: true,
+  };
+  const chosen = choice ? {
+    steps: ['Check which variation this saved choice refers to before starting.', choice, 'Keep the same actual variation, equipment and units when comparing future performances.'],
+    feel: 'The intended muscles and loading depend on the variation you choose.',
+    mistakes: ['Treating different movements as one exercise because they share a saved label.', 'Following a demonstration with a different release direction or equipment setup.'],
+    caution: `The old label and records are preserved. Use a precisely named library variant for future entries; changing a display name does not establish what an older performance used. ${technique?.caution ?? ''}`.trim(),
+  } : technique ?? fallback;
+  const preparationEquipment: Record<string, string> = {
+    'Easy Upper-Body Movement': 'Clear standing space; no external load.',
+    'Light External Rotation': 'Very light band or cable with a secure anchor.',
+    'Light Throwing Rehearsal': 'A light ball approved for the actual throw in your workout and a clear approved target area.',
+    'Easy Walk + Comfortable Mobility': 'Clear walking and floor space; optional mat.',
+    'Easy Walk or Bike': 'Clear walking route or a stationary bicycle.',
+    'Dynamic Hip Mobility': 'Clear floor space; optional mat.',
+    'Bodyweight Squat + Hinge': 'Clear standing space; no external load.',
+    'Landing + Progressive Jump Preparation': 'Clear, non-slip landing area without overhead obstacles.',
+    'Easy Defensive Footwork': 'Clear non-slip movement lane with stopping space.',
+  };
+  const libraryEquipment = movement?.equipment.length === 1 && movement.equipment[0] === 'Machine'
+    ? /machine/i.test(movement.name) ? movement.name : `${movement.name} machine` : movement?.equipment.join(' / ');
+  const equipment = detail?.equipment ?? preparationEquipment[name] ?? (movement?.id === 'spike-slam'
+    ? 'A medicine ball designed for floor slams and an approved clear floor.'
+    : libraryEquipment ?? 'Confirm the equipment intended for this saved movement.');
+  return { ...structuredClone(chosen), demonstration, loading, isGeneric: !choice && !technique,
+    displayName: movement?.id === 'spike-slam' ? 'Two-Hand Medicine Ball Overhead Slam' : name,
+    instructions: { equipment: choice ? 'Depends on the selected variation; confirm before training.' : equipment,
+      setup: chosen.steps[0], movement: chosen.steps[1] ?? '', keyCue: chosen.steps[2] ?? 'Confirm the intended movement with a qualified coach.',
+      avoid: chosen.mistakes[0], purpose: choice ? 'Choose a consistent movement before interpreting performance.'
+        : movement?.primaryBenefit ?? 'The intended training purpose is not specified for this custom movement.' },
+    ...(choice ? { isAmbiguous: true } : {}),
+    ...(!choice && movement?.id === 'spike-slam' ? { techniqueReference: { label: 'Read ACE overhead-slam technique', url: 'https://www.acefitness.org/resources/everyone/exercise-library/182/overhead-slams/' } }
+      : !choice && movement?.id === 'medicine-ball-overhead-forward-throw' ? { techniqueReference: { label: 'Read ACE overhead forward-throw technique', url: 'https://www.acefitness.org/resources/everyone/exercise-library/178/overhead-medicine-ball-throws/' } } : {}),
+    ...(!choice && movement?.id === 'spike-slam' ? { diagram: 'overhead-slam' as const }
+      : !choice && movement?.id === 'medicine-ball-overhead-forward-throw' ? { diagram: 'forward-throw' as const }
+      : !choice && movement?.id === 'drop-jump' ? { diagram: 'drop-jump' as const } : {}),
   };
 }

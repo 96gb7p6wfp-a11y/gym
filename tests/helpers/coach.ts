@@ -62,16 +62,21 @@ export async function openCoachPreview(page: Page) {
   return coachPreview(page);
 }
 
-export async function chooseFeeling(page: Page, feeling: 'Great' | 'Normal' | 'Tired' | 'Poor') {
-  const readiness = page.getByRole('region', { name: 'Daily readiness', exact: true });
-  const button = readiness.getByRole('button', { name: new RegExp(`^${feeling} — `) });
-  if (!await button.isVisible()) {
-    const ancestor = readiness.locator('xpath=ancestor::details[1]/summary');
-    if (await ancestor.count()) await ancestor.click();
-    else await readiness.locator('summary').first().click();
-  }
-  await button.click();
-  await expect(button).toHaveAttribute('aria-pressed', 'true');
+/** Compatibility fixture for observations already saved by prior app versions.
+ * New answers belong to the explicit pre-workout check, not read-only planning.
+ * Only the isolated Playwright store is changed; no workout is created. */
+export async function seedSavedFeeling(page: Page, feeling: 'Great' | 'Normal' | 'Tired' | 'Poor') {
+  await page.evaluate(({ key, date, feeling }) => {
+    const state = JSON.parse(localStorage.getItem(key)!);
+    state.profile.masterProgram.dailyReadiness = [
+      ...(state.profile.masterProgram.dailyReadiness ?? []).filter((row: { date: string }) => row.date !== date),
+      { date, feeling },
+    ];
+    state.profileVersion += 1;
+    localStorage.setItem(key, JSON.stringify(state));
+  }, { key: COACH_STORE, date: COACH_SATURDAY, feeling: feeling.toLowerCase() });
+  await page.reload();
+  await coachDay(page, 'Sat');
   await expect.poll(async () => (await coachRead(page)).profile.masterProgram.dailyReadiness
     .find((entry: { date: string }) => entry.date === COACH_SATURDAY)?.feeling).toBe(feeling.toLowerCase());
 }

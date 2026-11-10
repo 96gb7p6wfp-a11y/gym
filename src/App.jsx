@@ -11,7 +11,8 @@ import { V9ProgramUpgrade } from './V9ProgramUpgrade';
 import { upgradeToV9 } from './master-program-upgrade';
 import { getV9DraftDisposition } from './v9-upcoming-workouts';
 import { SprintPerformance } from './SprintPerformance';
-import { DailyReadiness } from './DailyReadiness';
+import { PreWorkoutCheck } from './PreWorkoutCheck';
+import { withPreWorkoutReadiness, preWorkoutReadinessStatus, preWorkoutRecovery, reduceUnprogrammedWorkout } from './pre-workout';
 import { SundayMatchSchedule } from './SundayMatchSchedule';
 import { getCalendarMatch, getCoachRecords, getDailyReadiness, getCoachReadinessStatus, getCoachPhase, migrateLegacyMatchSchedule, saveCalendarMatch, sundayForDate } from './coach-schedule';
 import { resolveV9PlanningBase } from './volleyball-master-plan';
@@ -222,6 +223,8 @@ function GymApp({
   const [previewContext, setPreviewContext] = React.useState(null);
   const [todayActivitiesOpen, setTodayActivitiesOpen] = React.useState(false);
   const [warmupContext, setWarmupContext] = React.useState(null);
+  const [preWorkoutContext, setPreWorkoutContext] = React.useState(null);
+  const checkingWorkoutRef = React.useRef(false);
   const [protectedPreparation, setProtectedPreparation] = React.useState(null);
   const startingMainRef = React.useRef(false);
   const [stretchContext, setStretchContext] = React.useState(null);
@@ -416,19 +419,21 @@ function GymApp({
     ? sessions.find((e) => e.id === editingHistoryId)
     : activeSession;
   let selectedDate = dateKey(addDays(weekStart, selectedDay));
-  function planForDate(date) {
-    const applyGuidance = week => week.map(day => ({ ...applyTrainingGuidance(day, trainingGuidance),
-      ...(day.extraSession ? { extraSession: applyTrainingGuidance(day.extraSession, trainingGuidance) } : {}) }));
-    if (!masterSettings) return applyGuidance(profile.plan);
-    if (masterSettings.revision === '9' && masterSettings.v9EffectiveDate && date < masterSettings.v9EffectiveDate && profile.masterProgramBackup) {
-      const previous = profile.masterProgramBackup;
+  function planForDate(date, sourceProfile = profile) {
+    const guidance = effectiveTrainingGuidance(sourceProfile);
+    const settings = effectiveMasterProgram(sourceProfile);
+    const applyGuidance = week => week.map(day => ({ ...applyTrainingGuidance(day, guidance),
+      ...(day.extraSession ? { extraSession: applyTrainingGuidance(day.extraSession, guidance) } : {}) }));
+    if (!settings) return applyGuidance(sourceProfile.plan);
+    if (settings.revision === '9' && settings.v9EffectiveDate && date < settings.v9EffectiveDate && sourceProfile.masterProgramBackup) {
+      const previous = sourceProfile.masterProgramBackup;
       if (!previous.masterProgram) return applyGuidance(previous.plan);
-      const savedSettings = { ...previous.masterProgram, ...(trainingGuidance ? { clearance: trainingGuidance } : {}) };
+      const savedSettings = { ...previous.masterProgram, ...(guidance ? { clearance: guidance } : {}) };
       return date < savedSettings.startDate ? applyGuidance(previous.preMasterPlan ?? previous.plan)
         : resolveMasterProgramPlan(previous.plan, savedSettings, date, previous.masterMatchWeekend);
     }
-    if (date < masterSettings.startDate) return applyGuidance(profile.preMasterPlan ?? profile.plan);
-    return resolveMasterProgramPlan(profile.plan, masterSettings, date, profile.masterMatchWeekend);
+    if (date < settings.startDate) return applyGuidance(sourceProfile.preMasterPlan ?? sourceProfile.plan);
+    return resolveMasterProgramPlan(sourceProfile.plan, settings, date, sourceProfile.masterMatchWeekend);
   }
   let scheduledPlan = React.useMemo(() => planForDate(selectedDate), [profile.plan, masterSettings, profile.trainingGuidance, profile.preMasterPlan, profile.masterMatchWeekend, selectedDate]);
   let currentWeekPlan = React.useMemo(() => planForDate(today), [profile.plan, masterSettings, profile.trainingGuidance, profile.preMasterPlan, profile.masterMatchWeekend, today]);
@@ -439,35 +444,37 @@ function GymApp({
   let dayEvents = masterScheduledEvents(profile.masterProgram, selectedDate);
   // A date and slot travel with every plan action. Neither browsing Train nor
   // midnight can retarget an open preview, preparation, or active session.
-  function workoutForDate(date, requestedSlot = 'main', ignoreDraft = false) {
+  function workoutForDate(date, requestedSlot = 'main', ignoreDraft = false, sourceProfile = profile) {
+    const settings = effectiveMasterProgram(sourceProfile);
+    const guidance = effectiveTrainingGuidance(sourceProfile);
     const day = calendarDayIndex(date);
-    const week = date === selectedDate ? scheduledPlan : date === today ? currentWeekPlan : planForDate(date);
+    const week = sourceProfile !== profile ? planForDate(date, sourceProfile) : date === selectedDate ? scheduledPlan : date === today ? currentWeekPlan : planForDate(date);
     const slot = requestedSlot === 'extra' && week[day].extraSession ? 'extra' : 'main';
     const recommended = slot === 'extra' ? week[day].extraSession : week[day];
-    const savedDraft = ignoreDraft ? undefined : findSessionDraft(profile.sessionDrafts, date, slot);
-    const masterWeek = profile.masterProgram && getMasterProgramWeek(profile.masterProgram.startDate, date);
+    const savedDraft = ignoreDraft ? undefined : findSessionDraft(sourceProfile.sessionDrafts, date, slot);
+    const masterWeek = sourceProfile.masterProgram && getMasterProgramWeek(sourceProfile.masterProgram.startDate, date);
     // Competition remains the primary Sunday recommendation. A personal gym
     // draft stays stored, but must not displace or duplicate the match.
-    const matchPriority = profile.masterProgram?.revision === '13.1' && slot === 'main' && day === 6
-      && masterWeek && profile.masterProgram.matchWeeks.includes(masterWeek);
-    const v9Active = profile.masterProgram?.revision === '9' && date >= profile.masterProgram.startDate && date >= (profile.masterProgram.v9EffectiveDate ?? profile.masterProgram.startDate);
+    const matchPriority = sourceProfile.masterProgram?.revision === '13.1' && slot === 'main' && day === 6
+      && masterWeek && sourceProfile.masterProgram.matchWeeks.includes(masterWeek);
+    const v9Active = sourceProfile.masterProgram?.revision === '9' && date >= sourceProfile.masterProgram.startDate && date >= (sourceProfile.masterProgram.v9EffectiveDate ?? sourceProfile.masterProgram.startDate);
     const v9Draft = v9Active ? getV9DraftDisposition(savedDraft, recommended, { coach: date >= today }) : undefined;
     const protectedDraft = !!(matchPriority && savedDraft && savedDraft.plan.kind !== 'sport')
       || !!(v9Draft && ['review-needed', 'schedule-conflict'].includes(v9Draft.kind))
-      || !!(savedDraft?.plan.programRevision === '9' && profile.masterProgram?.revision !== '9');
+      || !!(savedDraft?.plan.programRevision === '9' && sourceProfile.masterProgram?.revision !== '9');
     const draft = protectedDraft ? undefined : savedDraft;
-    const readiness = v9Active ? getCoachReadinessStatus(masterSettings, date)
-      : masterWeek ? profile.masterProgram.readiness?.find(row => row.date === date)?.status : undefined;
+    const readiness = v9Active ? getCoachReadinessStatus(settings, date)
+      : masterWeek ? sourceProfile.masterProgram.readiness?.find(row => row.date === date)?.status : undefined;
     const resolved = resolveSessionDraft(draft, recommended);
-    const currentPrescription = draft && (masterWeek || v9Active) && ['13.1', '9'].includes(profile.masterProgram?.revision)
-      ? { ...resolved, programRevision: profile.masterProgram.revision } : resolved;
+    const currentPrescription = draft && (masterWeek || v9Active) && ['13.1', '9'].includes(sourceProfile.masterProgram?.revision)
+      ? { ...resolved, programRevision: sourceProfile.masterProgram.revision } : resolved;
     const adapted = draft && draft.customized !== false && (draft.readiness !== readiness || draft.plan.programRevision !== currentPrescription.programRevision)
       ? applyMasterReadiness(currentPrescription, readiness) : currentPrescription;
-    const plan = draft && draft.customized !== false && (masterWeek || v9Active) && ['13.1', '9'].includes(masterSettings?.revision)
-      ? applyMasterClearance({ ...adapted, programRevision: masterSettings.revision }, masterSettings.clearance)
-      : draft && draft.customized !== false ? applyTrainingGuidance(adapted, trainingGuidance) : adapted;
+    const plan = draft && draft.customized !== false && (masterWeek || v9Active) && ['13.1', '9'].includes(settings?.revision)
+      ? applyMasterClearance({ ...adapted, programRevision: settings.revision }, settings.clearance)
+      : draft && draft.customized !== false ? applyTrainingGuidance(adapted, guidance) : adapted;
     const warmupIsCurrent = draft && (draft.customized !== false || resolved !== recommended) && draft.readiness === readiness;
-    return { date, day, slot, plan, draft, savedDraft, masterWeek, warmupIsCurrent, protectedDraft, v9Draft };
+    return { date, day, slot, plan, draft, savedDraft, masterWeek, warmupIsCurrent, protectedDraft, v9Draft, readiness };
   }
   const selectedContext = workoutForDate(selectedDate, extraSessionVisible ? 'extra' : 'main');
   const { plan: selectedPlan, slot: selectedSlot } = selectedContext;
@@ -480,7 +487,7 @@ function GymApp({
   const previewWorkout = previewContext ? workoutForDate(previewContext.date, previewContext.slot) : selectedContext;
   const resetWorkout = dayResetContext ? workoutForDate(dayResetContext.date, dayResetContext.slot) : null;
   const resetWeeklyWorkout = dayResetContext ? workoutForDate(dayResetContext.date, dayResetContext.slot, true) : null;
-  const preparationDraft = warmupContext && (warmupContext.protectedDraft ? protectedPreparation
+  const preparationDraft = warmupContext && (warmupContext.protectedDraft || warmupContext.transient ? protectedPreparation
     : findSessionDraft(profile.sessionDrafts, warmupContext.date, warmupContext.slot));
   const warmupPlan = preparationDraft?.plan ?? (warmupContext ? workoutForDate(warmupContext.date, warmupContext.slot).plan : selectedPlan);
   const gateWarmupItems = preparationFor(warmupPlan, 'warmup');
@@ -735,7 +742,7 @@ function GymApp({
   async function saveDayDraft(plan, { date = selectedDate, slot = selectedSlot, override = false,
     customized = findSessionDraft(profile.sessionDrafts, date, slot)?.customized ?? !!findSessionDraft(profile.sessionDrafts, date, slot) } = {}) {
     if (!loaded || loadError || profileSaving) return false;
-    if (warmupContext?.protectedDraft && date === warmupContext.date && slot === warmupContext.slot) {
+    if ((warmupContext?.protectedDraft || warmupContext?.transient) && date === warmupContext.date && slot === warmupContext.slot) {
       setProtectedPreparation({ date, slot, plan, warmupOverride: override, customized: false });
       return true;
     }
@@ -747,7 +754,9 @@ function GymApp({
     return saveProfile({ ...profile, sessionDrafts: putSessionDraft(profile.sessionDrafts,
       { date, slot, plan, warmupOverride: override, customized, ...(reviewedForProgram ? { reviewedForProgram } : {}),
         ...(profile.masterProgram?.revision === '9' && customized ? { reviewedForCoach: 1 } : {}),
-        readiness: profile.masterProgram?.revision === '9' ? getCoachReadinessStatus(masterSettings, date) : profile.masterProgram?.readiness?.find(row => row.date === date)?.status }) }, { notify: false });
+        readiness: profileRef.current.masterProgram?.revision === '9'
+          ? getCoachReadinessStatus(effectiveMasterProgram(profileRef.current), date)
+          : profileRef.current.masterProgram?.readiness?.find(row => row.date === date)?.status }) }, { notify: false });
   }
   function selectTrainingDate(date) {
     setWeekStart(startOfWeek(new Date(`${date}T12:00:00`)));
@@ -766,28 +775,64 @@ function GymApp({
       setPreviewContext(null); openProgramConfiguration();
       toast('Block complete. Choose your next block before restarting.'); return;
     }
-    if (isMasterReadinessRequired(profile.masterProgram, context.date, context.plan) && !profile.masterProgram.readiness?.some(row => row.date === context.date)) {
-      setPreviewContext(null); selectTrainingDate(context.date); setTab('train');
-      requestAnimationFrame(() => document.querySelector('.master-readiness')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
-      toast('Check readiness during your warm-up first.'); return;
-    }
     if (!context.plan.exercises.some(exercise => exercise.optionalWork !== true) && context.plan.kind !== 'recovery') {
       toast.error('Add an exercise to this day before starting.'); return;
     }
-    const plan = { ...context.plan, warmup: preparationFor(context.plan, 'warmup').map(step => ({ ...step, done: context.warmupIsCurrent ? step.done : false })) };
-    // The gentle primer is already preparation. Reuse the same guarded session
-    // transaction without an empty extra warm-up screen or invented checkmarks.
-    if (isGentleV9MatchPrimer(plan) && plan.warmup.length === 0) {
-      setPreviewContext(null);
-      return startMainWorkout({}, { context, plan, items: [], draft: context.draft ?? {
-        date: context.date, slot: context.slot, plan, customized: false, warmupOverride: false,
-      } });
-    }
-    if (context.protectedDraft) setProtectedPreparation({ date: context.date, slot: context.slot, plan, customized: false, warmupOverride: false });
-    else if (!(await saveDayDraft(plan, { date: context.date, slot: context.slot,
-      override: context.warmupIsCurrent && context.draft.warmupOverride === true }))) return;
     setPreviewContext(null);
-    setWarmupContext({ date: context.date, day: context.day, slot: context.slot, protectedDraft: context.protectedDraft });
+    setPreWorkoutContext({ date: context.date, slot: context.slot });
+  }
+  function preWorkoutChoice(context, feeling, sourceProfile = profileRef.current) {
+    const candidate = withPreWorkoutReadiness(sourceProfile, context.date, feeling);
+    // Derive a normal eligible base, then apply this explicit answer once. A
+    // stale draft's readiness stamp cannot prove its dose was actually reduced.
+    const eligibleProfile = withPreWorkoutReadiness(sourceProfile, context.date, 'normal');
+    const resolved = workoutForDate(context.date, context.slot, false, eligibleProfile);
+    let plan = feeling === 'poor' ? preWorkoutRecovery(resolved.plan)
+      : feeling === 'tired' ? ['9', '13.1', '8.1'].includes(resolved.plan.programRevision)
+        ? applyMasterReadiness(resolved.plan, 'yellow') : reduceUnprogrammedWorkout(resolved.plan) : resolved.plan;
+    if (feeling === 'tired' && plan.kind === 'strength' && !/^(?:modified|lighter)/i.test(plan.name)) {
+      plan = { ...plan, name: `Lighter — ${plan.name}`.slice(0, 80) };
+    }
+    return { candidate, context: { ...resolved, plan, readiness: preWorkoutReadinessStatus(feeling),
+      guidanceAtPreparation: effectiveTrainingGuidance(sourceProfile) } };
+  }
+  function preWorkoutRecommendation(feeling) {
+    const { context } = preWorkoutChoice(preWorkoutContext, feeling);
+    const working = context.plan.exercises.filter(exercise => !exercise.optionalWork);
+    return { name: context.plan.name, kind: context.plan.kind, exercises: working.length,
+      sets: working.reduce((sum, exercise) => sum + exercise.sets, 0),
+      detail: feeling === 'tired' ? 'Explosive work is reduced or omitted; use the lighter prescription shown here.' : undefined };
+  }
+  async function confirmPreWorkout({ feeling, warmedUp }) {
+    if (!preWorkoutContext || checkingWorkoutRef.current || !loaded || loadError || profileSaving
+      || sessionsRef.current.some(session => session.status === 'active')) return false;
+    checkingWorkoutRef.current = true;
+    try {
+      if (!(await flushPendingWrites())) return false;
+      const { candidate, context } = preWorkoutChoice(preWorkoutContext, feeling);
+      if (context.date === today && candidate !== profileRef.current
+        && !(await saveProfile(candidate, { notify: false }))) return false;
+      const result = await beginWorkoutPreparation({ ...context,
+        transient: context.date !== today || !!(context.draft && context.draft.customized !== false) }, warmedUp);
+      if (result) setPreWorkoutContext(null);
+      return result;
+    } finally { checkingWorkoutRef.current = false; }
+  }
+  async function beginWorkoutPreparation(context, warmedUp) {
+    const previousSession = sessionsRef.current.some(session => session.date === context.date && session.status === 'completed'
+      && (context.plan.programSessionId ? session.programSessionId === context.plan.programSessionId : session.name === context.plan.name));
+    const plan = { ...context.plan, warmup: preparationFor(context.plan, 'warmup').map(step => ({ ...step, done: context.warmupIsCurrent && !previousSession ? step.done : false })) };
+    const draft = { ...(context.draft ?? { date: context.date, slot: context.slot, customized: false }),
+      plan, warmupOverride: warmedUp || (context.warmupIsCurrent && context.draft?.warmupOverride === true) };
+    const items = preparationFor(plan, 'warmup');
+    if (warmedUp || (isGentleV9MatchPrimer(plan) && items.length === 0)) {
+      return startMainWorkout({ warmedUpElsewhere: warmedUp }, { context, plan, items, draft });
+    }
+    if (context.protectedDraft || context.transient) setProtectedPreparation(draft);
+    else if (!(await saveDayDraft(plan, { date: context.date, slot: context.slot, override: draft.warmupOverride }))) return false;
+    setWarmupContext({ date: context.date, day: context.day, slot: context.slot, protectedDraft: context.protectedDraft,
+      transient: context.transient, guidanceAtPreparation: context.guidanceAtPreparation });
+    return true;
   }
   async function startMainWorkout(options = {}, prepared = null) {
     void restAudio.unlock();
@@ -795,15 +840,38 @@ function GymApp({
     const draft = prepared?.draft ?? preparationDraft;
     const plan = prepared?.plan ?? warmupPlan;
     const items = prepared?.items ?? gateWarmupItems;
-    if (!context || !draft || activeSession || startingMainRef.current || profileSaving) return;
+    if (!context || !draft || activeSession || startingMainRef.current || profileSaving) return false;
     startingMainRef.current = true;
     try {
-      if (!(await flushPendingWrites()) || sessionsRef.current.some(session => session.status === 'active')) return;
-      const session = createSession({ ...plan, cooldown: preparationFor(plan, 'cooldown') },
-        context.day, context.date, profile, sessionsRef.current);
-      session.warmup = items.map(step => ({ ...step }));
-      const quickSteps = getQuickWarmup(plan, items);
-      session.warmupOverride = options.skipWarmup === true ? false : draft.warmupOverride === true;
+      if (!(await flushPendingWrites()) || sessionsRef.current.some(session => session.status === 'active')) return false;
+      const latestStore = await requestTracker();
+      if (latestStore.sessions.some(row => row.session.status === 'active')) {
+        await loadWorkouts();
+        toast('A workout is already open. Continue that saved session.');
+        return false;
+      }
+      const latestProfile = ProfileSchema.parse(latestStore.profile);
+      const latestSessions = latestStore.sessions.map(row => {
+        sessionVersionsRef.current.set(row.session.id, row.version);
+        return SessionSchema.parse(row.session);
+      });
+      sessionsRef.current = latestSessions;
+      setSessions(latestSessions);
+      profileRef.current = latestProfile;
+      profileVersionRef.current = latestStore.profileVersion;
+      setProfile(latestProfile);
+      // Guidance can change in another window while preparation is open. The
+      // actual start uses the latest limits, never an earlier cleared snapshot.
+      const latestGuidance = effectiveTrainingGuidance(profileRef.current);
+      const guidanceChanged = JSON.stringify(latestGuidance) !== JSON.stringify(context.guidanceAtPreparation);
+      const executable = guidanceChanged ? applyTrainingGuidance(plan, latestGuidance) : plan;
+      const recordedPreparation = guidanceChanged ? preparationFor(executable, 'warmup').map(step => ({ ...step,
+        done: items.some(item => item.key === step.key && item.name === step.name && item.target === step.target && item.cue === step.cue && item.done) })) : items;
+      const session = createSession({ ...executable, cooldown: preparationFor(executable, 'cooldown') },
+        context.day, context.date, profileRef.current, sessionsRef.current);
+      session.warmup = recordedPreparation.map(step => ({ ...step }));
+      const quickSteps = getQuickWarmup(executable, recordedPreparation);
+      session.warmupOverride = options.warmedUpElsewhere === true ? true : options.skipWarmup === true ? false : draft.warmupOverride === true;
       session.warmupStatus = getPreparationStatus(quickSteps, session.warmupOverride);
       if (session.warmupStatus !== 'not-recorded') session.warmupCompletedAt = Date.now();
       // A weight deliberately planned for this date takes precedence over the
@@ -820,15 +888,31 @@ function GymApp({
         return { ...exercise, logs: exercise.logs.map(log => ({ ...log, kg: exercise.defaultKg, inputSources: { ...log.inputSources, kg: 'manual' } })) };
       });
       queueSession(SessionSchema.parse(session), true);
-      if (!(await flushPendingWrites())) return;
+      if (!(await flushPendingWrites())) return false;
       // Keep the date-specific prescription, but do not reuse this warm-up for another session.
       const next = resetDraftPreparation(draft);
-      if (context.protectedDraft) setProtectedPreparation(null);
+      if (context.protectedDraft || context.transient) {
+        setProtectedPreparation(null);
+        // The executable dose is detached from an intentional date edit. Clear
+        // only its previous preparation acknowledgement after a real start;
+        // retain its exact exercise dose, load, identifiers and readiness stamp.
+        if (!context.protectedDraft && context.draft?.customized !== false && context.draft) {
+          const saved = findSessionDraft(profileRef.current.sessionDrafts, context.date, context.slot);
+          if (JSON.stringify(saved) === JSON.stringify(context.draft)) {
+            const original = resetDraftPreparation(saved);
+            await saveProfile({ ...profileRef.current,
+              sessionDrafts: putSessionDraft(profileRef.current.sessionDrafts, original) }, { notify: false });
+          }
+        }
+      }
       else if (next.customized === false) {
-        await saveProfile({ ...profile, sessionDrafts: (profile.sessionDrafts ?? []).filter(draft => draft.date !== next.date || draft.slot !== next.slot) }, { notify: false });
+        const saved = findSessionDraft(profileRef.current.sessionDrafts, next.date, next.slot);
+        if (saved?.customized === false) await saveProfile({ ...profileRef.current,
+          sessionDrafts: (profileRef.current.sessionDrafts ?? []).filter(draft => draft.date !== next.date || draft.slot !== next.slot) }, { notify: false });
       } else await saveDayDraft(next.plan, { date: next.date, slot: next.slot });
       selectTrainingDate(context.date);
       setWarmupContext(null); setTab('train'); setEditingHistoryId(null);
+      return true;
     } finally { startingMainRef.current = false; }
   }
   function toggleWorkoutTimer() {
@@ -1681,14 +1765,10 @@ function GymApp({
               {!currentSession && masterSettings?.revision === '9' && selectedDate >= masterSettings.startDate && <>
                 {selectedDay === 6 && <SundayMatchSchedule date={selectedDate} match={getCalendarMatch(masterSettings, selectedDate)} disabled={!loaded || profileSaving || !!loadError}
                   readOnlyReason={selectedDate < today ? 'Past planning stays archived. Edit actual match activity in History.' : undefined} onSave={saveSundayMatch} />}
-                {selectedReferencePlan.kind === 'strength' && <DailyReadiness date={selectedDate} feeling={getDailyReadiness(masterSettings, selectedDate)}
-                  disabled={!loaded || profileSaving || selectedDate < today || !!loadError} guidanceLimited={trainingGuidance?.heavyLifting !== 'cleared' || trainingGuidance?.impact !== 'cleared'} onReviewGuidance={reviewTrainingGuidance}
-                  onAdvanced={athleteMode && selectedDate === today ? openRecoveryObservations : undefined} onChange={feeling => saveDailyFeeling(selectedDate, feeling)} />}
                 {selectedDay === 5 && <button type="button" className="coach-weekend-link" onClick={() => selectTrainingDate(sundayForDate(selectedDate))}><span>Sunday match</span><strong>{selectedMasterMatch ? 'Scheduled' : 'Not scheduled'}<ChevronRight size={15} /></strong></button>}
               </>}
               {!currentSession && masterSettings?.revision !== '9' && masterWeek && <>
                 <div className="master-day-note"><p><strong>{`Week ${masterWeek} · ${getMasterProgramPhase(masterWeek)}`}</strong><span>{selectedMasterMatch ? 'Sunday match week' : 'No Sunday match'}</span></p>{dayEvents.map(event => <p key={event.name}><strong>{event.name}</strong><span>{event.detail}</span></p>)}</div>
-                {(selectedPlan.kind === 'strength' || isMasterReadinessRequired(masterSettings, selectedDate, selectedPlan)) && <MasterProgramReadiness settings={masterSettings} date={selectedDate} disabled={profileSaving || !loaded} onSave={saveMasterProgram} />}
               </>}
               {dayCompletedSession && !currentSession && (
                 <div className={`completed-banner`}>
@@ -1704,7 +1784,7 @@ function GymApp({
                   >{`View log`}</button>
                 </div>
               )}
-              {!currentSession && <details className="workout-template-actions"><summary>Workout options</summary><div className="workout-template-options"><button type="button" className="text-button" disabled={!loaded} onClick={() => setWorkoutChooserOpen(true)}>Choose workout</button><button type="button" className="text-button" disabled={!loaded} onClick={() => openCustomWorkout()}>Create workout</button></div></details>}
+              {!currentSession && <details className="workout-template-actions"><summary>Workout options</summary><div className="workout-template-options"><button type="button" className="text-button" disabled={!loaded} onClick={() => setWorkoutChooserOpen(true)}>Choose workout</button><button type="button" className="text-button" disabled={!loaded} onClick={() => openCustomWorkout()}>Create workout</button></div>{masterSettings?.revision !== '9' && masterWeek && <MasterProgramReadiness scheduleOnly settings={masterSettings} date={selectedDate} disabled={profileSaving || !loaded} onSave={saveMasterProgram} />}</details>}
               {loggedJumpContacts && loggedJumpContacts.planned > 0 && <p className="master-contact-status" role="status" aria-label="Main jump contacts">{loggedJumpContacts.completed} / {loggedJumpContacts.planned} main contacts · from completed reps{loggedJumpContacts.completed >= loggedJumpContacts.planned ? ' · Ceiling reached; stop the jump block.' : ' · Ceiling, not a target to force.'}</p>}
               {currentSession ? (
                 <React.Fragment>
@@ -1718,7 +1798,7 @@ function GymApp({
                   sessions={completedSessions} date={currentSession.date}
                   context={{ readiness: performance.data?.readiness.find(row => row.date === currentSession.date),
                     readinessLevel: currentSession.programRevision === '9' ? getDailyReadiness(masterSettings, currentSession.date) : undefined,
-                    lowFatigueSession: /primer/i.test(currentSession.name) || (currentSession.programRevision === '9' ? ['tired', 'poor'].includes(getDailyReadiness(masterSettings, currentSession.date)) || (masterSettings?.revision === '9' && getCoachPhase(masterSettings, currentSession.date).phase !== 'normal') : ['yellow', 'red'].includes(profile.masterProgram?.readiness?.find(row => row.date === currentSession.date)?.status) || (currentSession.programRevision && profile.masterProgram && [4, 8].includes(getMasterProgramWeek(profile.masterProgram.startDate, currentSession.date)))) ,
+                    lowFatigueSession: /primer|^(?:modified|lighter|recovery|deload|evaluation)\s*[—-]/i.test(currentSession.name) || (currentSession.programRevision === '9' ? ['tired', 'poor'].includes(getDailyReadiness(masterSettings, currentSession.date)) || (masterSettings?.revision === '9' && getCoachPhase(masterSettings, currentSession.date).phase !== 'normal') : ['yellow', 'red'].includes(profile.masterProgram?.readiness?.find(row => row.date === currentSession.date)?.status) || (currentSession.programRevision && profile.masterProgram && [4, 8].includes(getMasterProgramWeek(profile.masterProgram.startDate, currentSession.date)))) ,
                     volleyballWithin24Hours: currentSession.date === today && volleyballIsSoon() }}
                   onExerciseAction={setExerciseActionKey}
                   previous={(exercise) => comparablePrevious(exercise, currentSession.date, currentSession.id)}
@@ -2332,7 +2412,14 @@ function GymApp({
         currentPlan={resetWorkout.savedDraft?.plan ?? resetWorkout.plan} weeklyPlan={resetWeeklyWorkout.plan} onConfirm={resetPlannedDate}
         disabled={profileSaving || !loaded || !!loadError || !!activeSession} />}
       <Dialog open={todayActivitiesOpen} onOpenChange={setTodayActivitiesOpen}><DialogContent className="app-dialog"><DialogHeader><DialogTitle>Today’s activities</DialogTitle><DialogDescription>{formatDate(today)} · recorded outside your workout</DialogDescription></DialogHeader><ExtraActivities date={today} bodyWeight={profile.bodyWeight} records={activityRecords} onSave={saveExtraActivity} disabled={!loaded || !!loadError} /></DialogContent></Dialog>
-      <WarmupFlow open={warmupContext !== null} onOpenChange={open => { if (!open) setWarmupContext(null); }}
+      {preWorkoutContext && <PreWorkoutCheck key={`${preWorkoutContext.date}-${preWorkoutContext.slot}`} date={preWorkoutContext.date}
+        name={workoutForDate(preWorkoutContext.date, preWorkoutContext.slot).plan.name}
+        disabled={!loaded || profileSaving || saving || !!loadError || !!activeSession}
+        guidanceLimited={!!trainingGuidance && (trainingGuidance.impact !== 'cleared' || trainingGuidance.heavyLifting !== 'cleared')}
+        onOpenChange={open => { if (!open) setPreWorkoutContext(null); }}
+        onReviewGuidance={() => { setPreWorkoutContext(null); reviewTrainingGuidance(); }}
+        recommendation={preWorkoutRecommendation} onContinue={confirmPreWorkout} />}
+      <WarmupFlow open={warmupContext !== null} onOpenChange={open => { if (!open) { setWarmupContext(null); setProtectedPreparation(null); } }}
         plan={warmupPlan} items={gateWarmupItems} override={preparationDraft?.warmupOverride === true}
         disabled={profileSaving || saving || !!loadError}
         onChange={items => saveDayDraft({ ...warmupPlan, warmup: items }, { date: warmupContext.date, slot: warmupContext.slot, override: preparationDraft?.warmupOverride ?? false })}
@@ -2578,7 +2665,7 @@ function GymApp({
         }}
       >
         <DialogContent className={`app-dialog history-dialog`}>
-          <DialogHeader>
+          <DialogHeader className={selectedHistory && completedCelebrationId === selectedHistory.id ? 'sr-only' : ''}>
             <DialogTitle>{selectedHistory ? workoutTitle(selectedHistory) : 'Workout'}</DialogTitle>
             <DialogDescription>
               {selectedHistory

@@ -115,7 +115,9 @@ test('moving Saturday Lower B requires confirmation and produces one Sunday sess
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: /^Sat / }).click();
   await expect(page.locator('.session-card h2')).toHaveText('Lower Strength B');
-  const readiness = page.locator('.master-readiness');
+  const workoutOptions = page.locator('.workout-template-actions');
+  if (!await workoutOptions.evaluate(element => element.hasAttribute('open'))) await workoutOptions.locator(':scope > summary').click();
+  const readiness = workoutOptions.locator('.master-schedule-options');
   if (!await readiness.evaluate(element => element.hasAttribute('open'))) await readiness.locator(':scope > summary').click();
   const before = await read(page);
   await readiness.getByRole('button', { name: 'Move Lower B to Sunday', exact: true }).click();

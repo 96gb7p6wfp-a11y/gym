@@ -262,8 +262,9 @@ export function VolleyballMasterProgram({ settings, guidance, defaultStartDate, 
   </section>;
 }
 
-export function MasterProgramReadiness({ settings, date, disabled, onSave }: {
+export function MasterProgramReadiness({ settings, date, disabled, onSave, scheduleOnly = false }: {
   settings: MasterProgramSettings; date: string; disabled?: boolean;
+  scheduleOnly?: boolean;
   onSave: (settings: MasterProgramSettings) => Promise<boolean>;
 }) {
   const day = new Date(`${date}T12:00:00Z`).getUTCDay();
@@ -281,7 +282,7 @@ export function MasterProgramReadiness({ settings, date, disabled, onSave }: {
   const [moveOpen, setMoveOpen] = useState(false);
   const [expanded, setExpanded] = useState(() => needsCheck && !settings.readiness?.some(row => row.date === date));
   useEffect(() => { setExpanded(needsCheck && !settings.readiness?.some(row => row.date === date)); }, [date, needsCheck]);
-  if (!week && !v9) return null;
+  if ((!week && !v9) || (scheduleOnly && !canMove && !moved)) return null;
   const status = settings.readiness?.find(row => row.date === date)?.status;
   async function select(value: MasterReadiness) {
     setBusy(true); setError('');
@@ -311,13 +312,13 @@ export function MasterProgramReadiness({ settings, date, disabled, onSave }: {
         : day === 3 ? 'Tuesday volleyball counts. Check legs, pain and landing quality before the main jump session.'
           : day === 0 ? 'Friday PE and volleyball still count. Reduce today’s work if Saturday rest was not enough.'
             : 'Check how you feel. A primer should leave you refreshed; full rest is always an option.';
-  return <details className="master-readiness" open={expanded} onToggle={event => setExpanded(event.currentTarget.open)}>
-    <summary>Readiness{status ? ` · ${status[0].toUpperCase()}${status.slice(1)}` : ' · check during warm-up'}</summary>
-    <p>{context}</p>
+  return <details className={scheduleOnly ? 'master-schedule-options' : 'master-readiness'} open={scheduleOnly ? undefined : expanded} onToggle={event => { if (!scheduleOnly) setExpanded(event.currentTarget.open); }}>
+    <summary>{scheduleOnly ? 'Weekend schedule' : <>Readiness{status ? ` · ${status[0].toUpperCase()}${status.slice(1)}` : ' · check during warm-up'}</>}</summary>
+    {!scheduleOnly && <><p>{context}</p>
     <div role="group" aria-label="Program readiness">{(['green', 'yellow', 'red'] as const).map(value => <button className="btn secondary" type="button" key={value} disabled={disabled || busy} aria-pressed={status === value} onClick={() => void select(value)}>{value[0].toUpperCase()}{value.slice(1)}</button>)}</div>
-    <p>{status === 'red' ? 'Stop painful or unstable work. Choose pain-free recovery; seek assessment if problems persist or worsen.' : status === 'yellow' ? 'Reduced work. Keep technique controlled and avoid aggressive load increases.' : status === 'green' ? 'Follow today’s preparation and prescribed session. Movement quality and personal restrictions still come first.' : 'Green: recovered and controlled. Yellow: heavy legs, poor sleep or reduced quality. Red: concerning pain, unstable landings or poor coordination.'}</p>
+    <p>{status === 'red' ? 'Stop painful or unstable work. Choose pain-free recovery; seek assessment if problems persist or worsen.' : status === 'yellow' ? 'Reduced work. Keep technique controlled and avoid aggressive load increases.' : status === 'green' ? 'Follow today’s preparation and prescribed session. Movement quality and personal restrictions still come first.' : 'Green: recovered and controlled. Yellow: heavy legs, poor sleep or reduced quality. Red: concerning pain, unstable landings or poor coordination.'}</p></>}
     {(canMove || moved) && <button className="text-button master-readiness__move" type="button" disabled={disabled || busy} onClick={() => { setError(''); setMoveOpen(true); }}>{moved ? 'Return Lower B to Saturday' : 'Move Lower B to Sunday'}</button>}
-    <small className="master-readiness__disclaimer">Self-reported readiness, not a measured recovery score.</small>
+    {!scheduleOnly && <small className="master-readiness__disclaimer">Self-reported readiness, not a measured recovery score.</small>}
     {error && <p role="alert">{error}</p>}
     <AlertDialog open={moveOpen} onOpenChange={setMoveOpen}><AlertDialogContent className="app-dialog"><AlertDialogHeader className=""><AlertDialogTitle className="">{moved ? 'Return Lower B to Saturday?' : 'Move Lower B to Sunday?'}</AlertDialogTitle><AlertDialogDescription className="">{moved ? 'The Sunday session returns to Saturday and Sunday becomes recovery. Existing records and personal day edits will not be overwritten.' : 'Saturday becomes recovery and this one Lower B session moves to Sunday. It is not duplicated. A Sunday match always takes priority. Existing records and personal day edits will not be overwritten.'}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className=""><AlertDialogCancel className="">Keep schedule</AlertDialogCancel><AlertDialogAction className="" disabled={disabled || busy} onClick={(event: MouseEvent<HTMLButtonElement>) => { event.preventDefault(); void moveLower(); }}>{busy ? 'Saving…' : moved ? 'Return to Saturday' : 'Move to Sunday'}</AlertDialogAction></AlertDialogFooter>{error && <p role="alert" className="builder-error">{error}</p>}</AlertDialogContent></AlertDialog>
   </details>;

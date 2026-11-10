@@ -161,7 +161,7 @@ test('finishing a workout offers real stretches and saves checks onto that compl
   await finish.getByRole('button', { name: 'Save completed workout', exact: true }).click();
   const complete = page.getByRole('region', { name: 'Workout complete summary', exact: true });
   await expect(page.locator('[data-sonner-toast]').filter({ hasText: 'Workout complete' })).toHaveCount(0);
-  await complete.getByRole('button', { name: 'Stretch now', exact: true }).click();
+  await complete.getByRole('button', { name: 'Optional cooldown', exact: true }).click();
   const stretch = page.getByRole('dialog', { name: 'Stretch routine', exact: true });
   await expect(stretch).toBeVisible();
   await expect(stretch.getByRole('heading', { name: 'Stretch routine', exact: true })).toBeVisible();

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
-import { finishWarmup, openSection, settingsGroup } from './helpers/navigation';
-import { COACH_SATURDAY, COACH_SUNDAY, COACH_TODAY, chooseFeeling, coachDay, coachPreview,
+import { openSection, settingsGroup } from './helpers/navigation';
+import { COACH_SATURDAY, COACH_SUNDAY, COACH_TODAY, seedSavedFeeling, coachDay, coachPreview,
   coachRaw, coachRead, expectCoachFullSaturday, expectCoachPreserved, openCoachPreview, seedCoach } from './helpers/coach';
 
 test.beforeEach(async ({ page }) => {
@@ -48,7 +48,8 @@ test('the reported Week 4 Easy Preparation state presents the complete planning 
   await expect(page.locator('.native-session-overview')).toContainText('11 exercises');
   await expect(page.locator('.native-session-overview')).toContainText('29');
   await expect(page.locator('.native-session-overview')).not.toContainText('Week 4');
-  await expect(page.getByRole('region', { name: 'Daily readiness', exact: true })).toContainText('Readiness unknown');
+  await expect(page.getByRole('region', { name: 'Daily readiness', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: 'Ready to Train?', exact: true })).toHaveCount(0);
   const sheet = await openCoachPreview(page);
   await expectCoachFullSaturday(page);
   await sheet.getByRole('button', { name: 'Recommended today', exact: true }).click();
@@ -60,11 +61,11 @@ test('the reported Week 4 Easy Preparation state presents the complete planning 
   await expectCoachPreserved(page, before);
 });
 
-test('Great and Normal retain the complete dose while Tired and Poor are specific date-only recommendations', async ({ page }) => {
+test('saved Great and Normal observations retain the complete dose while Tired and Poor remain date-only recommendations', async ({ page }) => {
   const before = await seedCoach(page, { legacyReadiness: true });
   await coachDay(page, 'Sat');
   for (const feeling of ['Great', 'Normal'] as const) {
-    await chooseFeeling(page, feeling);
+    await seedSavedFeeling(page, feeling);
     await openCoachPreview(page);
     await expectCoachFullSaturday(page);
     const recommended = coachPreview(page).getByRole('button', { name: 'Recommended today', exact: true });
@@ -72,7 +73,7 @@ test('Great and Normal retain the complete dose while Tired and Poor are specifi
     await expectCoachFullSaturday(page);
     await coachPreview(page).getByRole('button', { name: 'Close', exact: true }).click();
   }
-  await chooseFeeling(page, 'Tired');
+  await seedSavedFeeling(page, 'Tired');
   let sheet = await openCoachPreview(page);
   await expectCoachFullSaturday(page);
   await sheet.getByRole('button', { name: 'Recommended today', exact: true }).click();
@@ -89,7 +90,7 @@ test('Great and Normal retain the complete dose while Tired and Poor are specifi
   await expect(changes).toContainText('Leg Press');
   await expect(changes).toContainText('10 m Acceleration');
   await sheet.getByRole('button', { name: 'Close', exact: true }).click();
-  await chooseFeeling(page, 'Poor');
+  await seedSavedFeeling(page, 'Poor');
   sheet = await openCoachPreview(page);
   await expectCoachFullSaturday(page);
   await sheet.getByRole('button', { name: 'Recommended today', exact: true }).click();
@@ -103,19 +104,27 @@ test('Great and Normal retain the complete dose while Tired and Poor are specifi
   await expect(page.getByRole('region', { name: 'Your day', exact: true })).toContainText(/Volleyball/i);
   await coachDay(page, 'Sat');
   await page.getByRole('button', { name: 'Next week', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'Daily readiness', exact: true })).toContainText('Readiness unknown');
+  await expect(page.getByRole('region', { name: 'Daily readiness', exact: true })).toHaveCount(0);
+  expect((await coachRead(page)).profile.masterProgram.dailyReadiness).toEqual([{ date: COACH_SATURDAY, feeling: 'poor' }]);
+  await openCoachPreview(page);
+  await expectCoachFullSaturday(page);
   await expectCoachPreserved(page, before);
 });
 
-test('Great cannot bypass unconfirmed guidance when starting from the full reference', async ({ page }) => {
+test('a fit-to-train response cannot bypass unconfirmed guidance when starting from the full reference', async ({ page }) => {
   const before = await seedCoach(page, { guidance: 'unknown' });
   await coachDay(page, 'Sat');
-  await chooseFeeling(page, 'Great');
+  await seedSavedFeeling(page, 'Great');
   const sheet = await openCoachPreview(page);
   await expectCoachFullSaturday(page);
   const start = sheet.getByRole('button', { name: /^Start (?:adjusted|recommended) workout$/ });
   await start.click();
-  await finishWarmup(page);
+  const check = page.getByRole('dialog', { name: 'Ready to Train?', exact: true });
+  await expect(check).toBeVisible();
+  await check.getByRole('button', { name: 'Yes — fit to train', exact: true }).click();
+  await check.getByRole('button', { name: 'Yes — already warmed up', exact: true }).click();
+  await check.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await expect(check).not.toBeVisible();
   await expect.poll(async () => (await coachRead(page)).sessions.filter((row: { session: { status: string } }) => row.session.status === 'active').length).toBe(1);
   const after = await coachRead(page);
   const active = after.sessions.find((row: { session: { status: string } }) => row.session.status === 'active').session;
@@ -240,7 +249,7 @@ test('320px dark training keeps the complete reference and the primary action ab
 test('date matches and daily readiness roundtrip in a validated backup and remain editable offline', async ({ page, context }) => {
   const before = await seedCoach(page);
   await coachDay(page, 'Sat');
-  await chooseFeeling(page, 'Normal');
+  await seedSavedFeeling(page, 'Normal');
   await coachDay(page, 'Sun');
   await page.getByRole('region', { name: 'Sunday match schedule', exact: true }).getByRole('switch', { name: 'Match scheduled', exact: true }).click();
   await expect.poll(async () => (await coachRead(page)).profile.masterProgram.calendarMatches[0]?.scheduled).toBe(true);
@@ -326,41 +335,41 @@ test('a lighter phase is an explicit dated choice that can be replaced without r
   await expectCoachPreserved(page, before);
 });
 
-test('optional recovery details open the actual current-date observation form without recording future conditions', async ({ page }) => {
+test('optional joint observations remain in performance details and use today after browsing a future date', async ({ page }) => {
   await seedCoach(page);
   await coachDay(page, 'Sat');
-  const future = page.getByRole('region', { name: 'Daily readiness', exact: true });
-  await future.locator('.daily-readiness__details > summary').click();
-  await expect(future.getByRole('button', { name: 'Add optional recovery details', exact: true })).toHaveCount(0);
-  await page.clock.setFixedTime(new Date(`${COACH_SATURDAY}T10:00:00Z`));
-  await page.reload();
-  await coachDay(page, 'Sat');
+  await expect(page.getByRole('region', { name: 'Daily readiness', exact: true })).toHaveCount(0);
   const before = await coachRaw(page);
-  const current = page.getByRole('region', { name: 'Daily readiness', exact: true });
-  await current.locator('.daily-readiness__details > summary').click();
-  await current.getByRole('button', { name: 'Add optional recovery details', exact: true }).click();
+  const preview = await openCoachPreview(page);
+  await expect(preview.getByRole('region', { name: 'Daily readiness', exact: true })).toHaveCount(0);
+  await preview.getByRole('button', { name: 'Close', exact: true }).click();
+  await page.getByRole('tab', { name: 'Progress', exact: true }).click();
+  await page.getByRole('button', { name: 'Performance details', exact: true }).click();
   await expect(page.getByRole('tab', { name: 'Progress', exact: true })).toHaveAttribute('data-state', 'active');
   const details = page.locator('.sprint-readiness');
+  await details.locator(':scope > summary').click();
   await expect(details).toHaveAttribute('open', '');
-  await expect(details.getByLabel('Check-in date', { exact: true })).toHaveValue(COACH_SATURDAY);
+  await expect(details.getByLabel('Check-in date', { exact: true })).toHaveValue(COACH_TODAY);
   expect(await coachRaw(page)).toBe(before);
 });
 
-test('a match primer still offers the optional daily check-in and Poor recommends rest without changing the match', async ({ page }) => {
+test('a match primer offers a brief pre-workout check and recovery without changing the match', async ({ page }) => {
   const before = await seedCoach(page);
   before.profile.masterProgram!.calendarMatches = [{ date: COACH_SUNDAY, scheduled: true }];
   await page.evaluate(state => localStorage.setItem('setline.gym.v1', JSON.stringify(state)), before);
   await page.reload();
   await coachDay(page, 'Sat');
   await expect(page.locator('.session-card h2')).toHaveText('Pre-Match Primer');
-  await chooseFeeling(page, 'Poor');
-  const sheet = await openCoachPreview(page);
-  await expect(sheet.getByRole('heading', { name: 'Pre-Match Primer', exact: true })).toBeVisible();
-  const recommendation = sheet.getByRole('region', { name: 'Executable recommendation', exact: true });
-  await expect(recommendation).toContainText('Recovery');
-  await expect(recommendation).toContainText('0 sets');
-  await sheet.getByRole('button', { name: 'Recommended today', exact: true }).click();
-  await expect(sheet.getByRole('button', { name: /Exercise details for Leg Press/ })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Daily readiness', exact: true })).toHaveCount(0);
+  const saved = await coachRaw(page);
+  await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  const check = page.getByRole('dialog', { name: 'Ready to Train?', exact: true });
+  await check.getByRole('button', { name: 'Not quite', exact: true }).click();
+  await check.getByRole('button', { name: 'Recovery', exact: true }).click();
+  await check.getByRole('button', { name: 'Yes — already warmed up', exact: true }).click();
+  await expect(check.getByRole('button', { name: 'Start recovery', exact: true })).toBeEnabled();
+  await check.getByRole('button', { name: 'Close', exact: true }).click();
+  expect(await coachRaw(page)).toBe(saved);
   const after = await coachRead(page);
   expect(after.profile.masterProgram.calendarMatches).toEqual([{ date: COACH_SUNDAY, scheduled: true }]);
   await expectCoachPreserved(page, before);

@@ -31,7 +31,7 @@ test('exercise details explain purpose and rank relevant alternatives without cr
   ]);
   await expect(guide.locator('.exercise-guide__alternatives > div').first()).toContainText('chest support');
   await expect(guide.locator('.exercise-guide__alternatives > div').last()).toContainText('lower-back fatigue');
-  await expect(guide.getByRole('link', { name: /View technique/ })).toHaveCount(4);
+  await expect(guide.getByRole('link', { name: /Search technique/ })).toHaveCount(4);
   await guide.getByRole('button', { name: 'Technique', exact: true }).click();
   await expect(guide.locator('ol > li')).toHaveCount(3);
   await expect(guide.getByRole('link')).toHaveAttribute('target', '_blank');

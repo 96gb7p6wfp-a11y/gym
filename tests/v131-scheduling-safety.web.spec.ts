@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, ProfileSchema } from '../src/domain.js';
 import { createV81VolleyballMasterPlan, createVolleyballMasterPlan } from '../src/volleyball-master-plan';
-import { finishWarmup } from './helpers/navigation';
+import { finishWarmup, openDisclosure } from './helpers/navigation';
 
 const STORE = 'setline.gym.v1';
 const read = (page: Page) => page.evaluate(key => JSON.parse(localStorage.getItem(key)!), STORE);
@@ -28,6 +28,8 @@ test('a personal weekend draft prevents an automatic duplicate when moving Lower
   const before = await read(page);
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: /^Sat / }).click();
+  await openDisclosure(page, 'Workout options');
+  await openDisclosure(page, 'Weekend schedule');
   await page.getByRole('button', { name: 'Move Lower B to Sunday', exact: true }).click();
   const confirmation = page.getByRole('alertdialog', { name: 'Move Lower B to Sunday?', exact: true });
   await confirmation.getByRole('button', { name: 'Move to Sunday', exact: true }).click();

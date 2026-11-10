@@ -280,9 +280,10 @@ test('validates sets, saves a complete workout, edits its log, and deletes and r
   await openDisclosure(page, 'Workout notes');
   await page.getByLabel('Workout notes', { exact: true }).fill('Felt strong; keep the same setup.');
   const summary = await finishWorkout(page, '60', '350');
-  await expect(summary).toContainText(/60\s*minutes/);
-  await expect(summary).toContainText(/1\s*set/);
-  await expect(summary.locator('.workout-completion__volume')).toContainText(/Volume24\s*kg logged/);
+  await expect(summary.getByRole('group', { name: 'Training duration', exact: true }).locator('strong')).toHaveText('1h');
+  await expect(summary.getByRole('group', { name: 'Completed sets', exact: true }).locator('strong')).toHaveText('1');
+  await openDisclosure(page, 'Performance notes');
+  await expect(summary.locator('.workout-completion__volume')).toContainText(/Logged load-volume24\s*kg logged/);
   await openSessionDetails(summary);
   await expect(summary).toContainText(/350\s*active kcal/);
   await expect(summary.getByRole('cell', { name: '6 kg', exact: true })).toBeVisible();
@@ -369,7 +370,7 @@ test('keeps the close button tappable while a tall Volleyball log scrolls in iPh
     await setSafeAreas(page, size.top, size.bottom, size.left, size.right);
     await history.click();
     const summary = page.getByRole('dialog', { name: 'Volleyball', exact: true });
-    await expect(summary).toContainText(/120\s*minutes/);
+    await expect(summary.getByRole('group', { name: 'Training duration', exact: true }).locator('strong')).toHaveText('2h');
     await openSessionDetails(summary);
     await expect(summary).toContainText('Ankle Knee-to-Wall');
     await verifyPinnedClose(page, summary, size.top, size.bottom, size.left, size.right);
@@ -638,7 +639,7 @@ test('records jump measurements and timed movement sets', async ({ page }) => {
   await page.getByRole('spinbutton', { name: 'Pogo Jump set 1 seconds', exact: true }).fill('15');
   await page.getByRole('checkbox', { name: 'Complete Pogo Jump set 1', exact: true }).check();
   const summary = await finishWorkout(page);
-  await expect(summary).toContainText(/3\s*sets/);
+  await expect(summary.getByRole('group', { name: 'Completed sets', exact: true }).locator('strong')).toHaveText('3');
   await openSessionDetails(summary);
   await expect(summary.getByRole('cell', { name: '315', exact: true })).toBeVisible();
   await expect(summary.getByRole('cell', { name: '15s', exact: true })).toBeVisible();
@@ -797,7 +798,8 @@ test('reloads the cached full app offline and saves a complete workout without a
   await openDisclosure(page, 'Workout notes');
   await page.getByLabel('Workout notes', { exact: true }).fill('Logged entirely offline.');
   const summary = await finishWorkout(page, '45');
-  await expect(summary.locator('.workout-completion__volume')).toContainText(/Volume54\s*kg logged/);
+  await openDisclosure(page, 'Performance notes');
+  await expect(summary.locator('.workout-completion__volume')).toContainText(/Logged load-volume54\s*kg logged/);
   await closeDialog(summary);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await selectTab(page, 'History');
@@ -1023,23 +1025,25 @@ test('keeps daily food and recovery tips short and shows local exercise instruct
   const guide = page.locator('.exercise-guide-sheet');
   await expect(guide.locator('ol li')).toHaveCount(3);
   await expect(guide).toContainText(/ribs/i);
-  await expect(guide.getByRole('link')).toHaveAttribute('href', /^https:\/\/www\.youtube\.com\/results\?search_query=/);
+  await expect(guide.getByRole('link', { name: 'Search video technique', exact: true })).toHaveAttribute('href', /^https:\/\/www\.youtube\.com\/results\?search_query=/);
   await closeDialog(guide);
   await page.locator('.planned-preview > summary').click();
   await page.getByRole('button', { name: `Exercise details for ${MOVEMENT}`, exact: true }).click();
   await expect(guide.locator('ol li')).toHaveCount(3);
-  await expect(guide.getByRole('link')).toHaveAttribute('target', '_blank');
+  await expect(guide.getByRole('link', { name: 'Search video technique', exact: true })).toHaveAttribute('target', '_blank');
   await closeDialog(guide);
 
   await startMonday(page);
   await page.getByRole('button', { name: `Exercise details for ${MOVEMENT}`, exact: true }).click();
   await expect(guide.locator('ol li')).toHaveCount(3);
   await expect(guide).toContainText('Avoid');
+  await guide.locator('summary').filter({ hasText: /^Form & safety$/ }).click();
   await expect(guide).toContainText('Feel it');
   await expect(guide).toContainText('Safety');
   await page.setViewportSize({ width: 320, height: 844 });
-  await guide.getByRole('link').scrollIntoViewIfNeeded();
-  await expect(guide.getByRole('link')).toBeVisible();
+  const searchTechnique = guide.getByRole('link', { name: 'Search video technique', exact: true });
+  await searchTechnique.scrollIntoViewIfNeeded();
+  await expect(searchTechnique).toBeVisible();
   const dimensions = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     viewportWidth: document.documentElement.clientWidth,

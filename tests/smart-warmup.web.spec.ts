@@ -1,6 +1,8 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, createSession, stopSessionTimers } from '../src/domain.js';
 import { createV81VolleyballMasterPlan as createVolleyballMasterPlan, MasterProgramSettingsSchema } from '../src/volleyball-master-plan';
+import { openQuickWarmup } from './helpers/navigation';
+import { seedLegacyReadiness } from './helpers/readiness-fixture';
 
 const KEY = 'setline.gym.v1';
 const read = (page: Page) => page.evaluate(key => JSON.parse(localStorage.getItem(key)!), KEY);
@@ -19,6 +21,7 @@ const rows = (page: Page) => preparation(page).getByRole('list', { name: 'Quick 
 const start = (page: Page) => preparation(page).getByRole('button', { name: 'Start workout', exact: true });
 async function openPreparation(page: Page) {
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await openQuickWarmup(page);
   await expect(preparation(page)).toBeVisible();
 }
 async function expectOnScreen(page: Page, control: Locator) {
@@ -37,6 +40,7 @@ test('quick preparation is optional and the main session starts only on the expl
   await expect(preview.getByRole('list', { name: 'Scheduled exercises', exact: true }).getByRole('listitem')).toHaveCount(2);
   expect(await read(page)).toEqual(original);
   await preview.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await openQuickWarmup(page);
   await expect(preparation(page)).toBeVisible();
   const count = await rows(page).count();
   expect(count).toBeGreaterThanOrEqual(2);
@@ -107,6 +111,7 @@ test('individual completion checks only performed quick drills and survives refr
 test('recovery remains gentle and explicit preparation elsewhere never fabricates checked steps', async ({ page }) => {
   await seed(page, 'recovery');
   await page.getByRole('button', { name: 'Start recovery', exact: true }).click();
+  await openQuickWarmup(page);
   await expect(preparation(page)).toBeVisible();
   expect(await rows(page).count()).toBeLessThanOrEqual(3);
   await expect(preparation(page).getByRole('list', { name: 'Quick warm-up exercises', exact: true })).not.toContainText(/Pogo|Jump Ramp-Up/);
@@ -156,15 +161,13 @@ test('a saved day draft still respects later Sunday readiness changes', async ({
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: /^Sun / }).click();
   await expect(page.locator('.session-card h2')).toHaveText('Heavy Lower B');
-  await page.locator('.master-readiness > summary').click();
-  const readiness = page.getByRole('group', { name: 'Program readiness', exact: true });
-  await readiness.getByRole('button', { name: 'Yellow', exact: true }).click();
+  await seedLegacyReadiness(page, '2026-10-25', 'Yellow');
   await page.getByRole('button', { name: 'View workout', exact: true }).click();
   const preview = page.getByRole('dialog', { name: 'Workout preview', exact: true });
   await expect(preview.getByRole('list', { name: 'Scheduled exercises', exact: true })).not.toContainText('Split-squat Jump');
   await expect(preview.getByRole('list', { name: 'Scheduled exercises', exact: true })).toContainText('Leg Press');
   await preview.getByRole('button', { name: 'Close', exact: true }).click();
-  await readiness.getByRole('button', { name: 'Red', exact: true }).click();
+  await seedLegacyReadiness(page, '2026-10-25', 'Red');
   await expect(page.locator('.session-card h2')).toContainText('Recovery');
   expect((await read(page)).sessions).toEqual([]);
 });

@@ -212,7 +212,9 @@ for (const appearance of ['light', 'dark'] as const) {
         await expect(first).toHaveAccessibleName(`Exercise details for ${name}`);
         await first.click();
         const guide = page.locator('.exercise-guide-sheet');
-        await expect(guide.getByRole('heading', { name, exact: true })).toBeVisible();
+        // Saved names stay intact; the guide teaches the precise variant.
+        const guideName = name === 'Medicine Ball Spike Slam' ? 'Two-Hand Medicine Ball Overhead Slam' : name;
+        await expect(guide.getByRole('heading', { name: guideName, exact: true })).toBeVisible();
         await expectReadable(guide.locator('.exercise-guide__title, .exercise-guide__category'));
         await guide.getByRole('button', { name: 'Close', exact: true }).click();
         await expect(guide).not.toBeVisible();

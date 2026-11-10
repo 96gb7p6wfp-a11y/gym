@@ -70,15 +70,15 @@ for (const appearance of ['light', 'dark'] as const) {
       expect(bounds.y + bounds.height).toBeLessThanOrEqual(screen.height - 34 - 12);
       expect(await nav.evaluate(element => parseFloat(getComputedStyle(element).borderTopLeftRadius))).toBeGreaterThanOrEqual(24);
       for (const item of await nav.getByRole('tab').all()) await unobscured(item);
-      for (const action of [
-        page.getByRole('button', { name: 'Start workout', exact: true }),
-        page.getByRole('button', { name: /^View training progress:/ }),
-      ]) {
-        const box = (await action.boundingBox())!;
-        expect(box.y).toBeGreaterThanOrEqual(47);
-        expect(box.y + box.height).toBeLessThanOrEqual(bounds.y);
-        await unobscured(action);
-      }
+      const startToday = page.getByRole('button', { name: 'Start workout', exact: true });
+      const startBounds = (await startToday.boundingBox())!;
+      expect(startBounds.y).toBeGreaterThanOrEqual(47);
+      expect(startBounds.y + startBounds.height).toBeLessThanOrEqual(bounds.y);
+      await unobscured(startToday);
+      // Recorded progress now comes before weekly consistency. Secondary
+      // controls remain reachable by ordinary page scrolling, while the main
+      // workout action must still fit above the fixed navigation immediately.
+      await unobscured(page.getByRole('button', { name: /^View training progress:/ }));
       for (const name of ['Train', 'Progress', 'Nutrition', 'You', 'Today']) {
         await tab(page, name);
         await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();

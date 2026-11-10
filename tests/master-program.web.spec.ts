@@ -1,6 +1,7 @@
 import { openSection, finishWarmup } from './helpers/navigation';
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE } from '../src/domain.js';
+import { seedLegacyReadiness } from './helpers/readiness-fixture';
 
 const STORE = 'setline.gym.v1';
 const read = (page: Page) => page.evaluate(key => JSON.parse(localStorage.getItem(key)!), STORE);
@@ -26,11 +27,8 @@ async function day(page: Page, name: string) {
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: new RegExp(`^${name} `) }).click();
 }
-async function readiness(page: Page, status: 'Green' | 'Yellow' | 'Red') {
-  const details = page.locator('.master-readiness');
-  if (!await details.evaluate(element => element.hasAttribute('open'))) await details.locator(':scope > summary').click();
-  await page.getByRole('group', { name: 'Program readiness', exact: true }).getByRole('button', { name: status, exact: true }).click();
-  await expect(page.getByRole('group', { name: 'Program readiness', exact: true }).getByRole('button', { name: status, exact: true })).toHaveAttribute('aria-pressed', 'true');
+async function readiness(page: Page, status: 'Green' | 'Yellow' | 'Red', date = '2026-10-24') {
+  await seedLegacyReadiness(page, date, status);
 }
 async function preview(page: Page) {
   await page.getByRole('button', { name: 'View workout', exact: true }).click();
@@ -73,7 +71,7 @@ test('non-match Saturday is Lower B and Sunday is recovery without a heavy gate'
   await activate(page);
   await day(page, 'Sat');
   await expect(page.locator('.session-card h2')).toHaveText('Lower Strength B');
-  await expect(page.locator('.master-readiness')).toHaveCount(1);
+  await expect(page.getByRole('group', { name: 'Program readiness', exact: true })).toHaveCount(0);
   const saturday = await preview(page);
   await expect(saturday).toContainText('45–55 min');
   await expect(saturday.getByRole('list', { name: 'Scheduled exercises', exact: true })).toContainText('Hip Thrust');
@@ -132,7 +130,7 @@ test('Saturday yellow and red affect future work and green restores the base str
 });
 
 test('Wednesday completes the separate CMJ block before strength without the old complex', async ({ page }) => {
-  await activate(page); await day(page, 'Wed'); await readiness(page, 'Green');
+  await activate(page); await day(page, 'Wed'); await readiness(page, 'Green', '2026-10-21');
   const before = await read(page);
   const sheet = await preview(page);
   await expect(sheet).toContainText('210 sec rest');
@@ -171,7 +169,7 @@ test('week four snapshots reduced Wednesday and Saturday work and program edits 
   await expect(hipThrust).toContainText('2 ×');
   await saturday.getByRole('button', { name: 'Close', exact: true }).click();
   await day(page, 'Wed'); await expect(page.locator('.master-day-note')).toContainText('Week 4 · Deload');
-  await readiness(page, 'Green');
+  await readiness(page, 'Green', '2026-11-11');
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
   await finishWarmup(page);
   const active = (await read(page)).sessions[0].session;
@@ -190,7 +188,7 @@ test('week four snapshots reduced Wednesday and Saturday work and program edits 
 
 test('a carry deliberately added from the library still logs decimal kilograms and metres on a small phone', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
-  await activate(page); await day(page, 'Wed'); await readiness(page, 'Green');
+  await activate(page); await day(page, 'Wed'); await readiness(page, 'Green', '2026-10-21');
   const sheet = await preview(page);
   await sheet.getByRole('button', { name: 'Add exercise', exact: true }).click();
   const library = page.getByRole('dialog', { name: 'Add exercise', exact: true });
@@ -214,7 +212,7 @@ test('a carry deliberately added from the library still logs decimal kilograms a
 
 test('returning to the saved plan restores it exactly without deleting program workout history', async ({ page }) => {
   const before = await read(page); await activate(page);
-  await day(page, 'Mon'); await readiness(page, 'Green'); await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await day(page, 'Mon'); await readiness(page, 'Green', '2026-10-19'); await page.getByRole('button', { name: 'Start workout', exact: true }).click();
   await finishWarmup(page);
   const active = (await read(page)).sessions[0];
   await openPlan(page); await page.getByRole('button', { name: 'Return to saved plan', exact: true }).click();
