@@ -1,5 +1,69 @@
 # Standalone app validation
 
+## Premium Home & Training Experience — 10 November 2026
+
+Baseline: latest main `fc465cf`, Setline V18 / Volleyball Performance Plan V9.
+Runtime source and tested production bundle are frozen at `c3fd477`. Final browser
+expectations were validated at `ca9ce14`; subsequent changes only add this record.
+PR #9 targets main. PRs #1/#5 remain unmerged. Storage key/schema, backup format,
+dependencies, training prescriptions and PWA identity are unchanged.
+
+| Check | Actual result |
+| --- | --- |
+| `npm run typecheck` | Passed, including after final legacy browser expectation updates |
+| `npm test` | **816 passed**, zero failures/cancellations/skips |
+| `npm run build` | Passed; 26 precached app files; cache `setline-pwa-e0d83ddd861e3230ea72`; existing large-chunk advisory |
+| Final complete `npm run test:web -- --workers=2` | **420 passed, 20.1 minutes**, zero failures/skips, one clean complete execution |
+| Earlier targeted new/guide workflows | 24 passed |
+| Earlier affected legacy workflows | 93 passed |
+| Final whole-file legacy `tests/web.spec.ts` verification | 22 passed, 1.8 minutes; also all passed in the final complete run |
+| Long-history workflows | 1,000 / 5,000 / 10,000 completed sets: startup, input, search, chart, export and safe restore passed |
+| Local visual captures | 6 before + 16 after; light/dark, 320/375/390/430 px and 200% root-font enlargement; no document overflow |
+| Exercise visual checks | Three original direction diagrams captured/inspected offline; no remote image dependency |
+| `git diff --check` | Passed |
+| Lint | No repository lint script/configuration; not run |
+
+Earlier integration runs are not represented as clean full passes. One was
+stopped after 215 passes and six obsolete slam-heading assertions, with two tests
+interrupted. The next completed with 416 passes and four obsolete duration,
+set-label and volume-label assertions. Those expectations were updated to the
+new accessible metric groups and explicit Performance notes disclosure. The
+complete legacy file and then all 420 workflows passed. History, backup, safety,
+contrast, focus-return and offline assertions remain; no runtime change followed
+these presentation-expectation failures.
+
+The final run includes completion layout at narrow widths, long durations,
+1,000-set counts, long labels and enlarged text; first/new/matched/ordinary
+achievement semantics; actual Today dates, measured progress and recorded
+attendance; structured exact exercise variants and stable historical IDs; the
+read-only/cancelable start check; already-warm and specific-preparation routes;
+temporary custom-dose preservation; late guidance changes; and the existing
+V9/V13.1, duplicate activation, Undo, timer, recovery, nutrition, setting,
+backup/restore and offline/update workflows.
+
+Actual final-run observations, Chromium 151.0.7922.173, 390×844, two workers:
+
+| Completed sets | Startup ms | Input paint / save ms | History search ms | Chart ms | Export request ms | Restore ms | Stored UTF-8 bytes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1,000 | 903.8 | 24.6 / 500.1 | 8.6 | 34.4 | 13.5 | 10.6 | 234,361 |
+| 5,000 | 641.8 | 69.5 / 494.8 | 13.2 | 82.2 | 156.0 | 90.3 | 1,118,361 |
+| 10,000 | 866.0 | 74.8 / 600.5 | 8.2 | 160.3 | 99.4 | 139.6 | 2,223,361 |
+
+These are single observations on the shared cloud executor, not physical-iPhone
+measurements or proof of a speed improvement. Export-request timing does not
+prove permanent external backup storage. All fixtures are isolated localhost
+records; no actual phone profile, history or production store was accessed or
+reset. Physical iPhone/Safari, VoiceOver, native Dynamic Type, storage eviction
+and background/locked-screen audio remain unverified.
+
+Production deployment must be checked against the actual merged SHA separately.
+The managed environment's network policy blocks direct Vercel-domain requests
+(CONNECT 403); that is not an application HTTP failure. Provider deployment
+status and direct canonical-origin verification must be distinguished.
+
+See [implementation and preservation notes](docs/PREMIUM_HOME_TRAINING_UPDATE.md)
+and [reviewed references](docs/PREMIUM_HOME_REFERENCES.md).
+
 ## Personal training coach and premium UX — 6 November 2026
 
 Baseline: Setline V18 / Volleyball Performance Plan V9, main `1a6284d`.
