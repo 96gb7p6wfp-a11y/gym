@@ -2,12 +2,12 @@ import { useMemo } from 'react';
 import { ArrowRight, CalendarDays, Check, ChevronRight, Plus } from 'lucide-react';
 import { dateKey, addDays, sessionDuration, sumNutrients } from './domain';
 import { getSessionPurpose } from './training-purpose';
-import { getTrainingCadence } from './training-cadence';
+import { getTodayConsistency, getTodayProgress } from './today-progress';
 import { currentReportDate, reportWeekStart } from './weekly-report';
 import { workoutTitle } from './presentation';
 import './today.css';
 
-/** A session cover, rather than a collection of daily statistics. */
+/** Today's session, real progress, recorded consistency and one useful next step. */
 export function TodayView({ date, plan, session, otherSession, completed, activities, nutrition, now = Date.now(),
   sessions = [], weeklyPlan = [], performance, bodyWeight, today = currentReportDate(), athleteMode = true,
   volleyballSchedule, onStart, onPreview, onTrain, onBrowseTrain, onViewLog, onNutrition, onPlan, onActivity,
@@ -30,8 +30,10 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
     || reason.code === 'deload' || reason.code === 'match-week' || reason.code === 'post-match');
   const reviewGuidance = adjustment && (adjustment.code.startsWith('clearance-') || adjustment.code === 'saved-preparation');
   const showAdjustment = !active && !completed && adjustment;
-  const cadence = useMemo(() => getTrainingCadence({ sessions, activities, plan: weeklyPlan,
-    today, weekStart: reportWeekStart(date) }), [sessions, activities, weeklyPlan, today, date]);
+  const cadence = useMemo(() => getTodayConsistency({ sessions, activities, plan: weeklyPlan, today }),
+    [sessions, activities, weeklyPlan, today]);
+  const progress = useMemo(() => getTodayProgress({ sessions, nutritionRecords: nutrition ?? [], performance, today, athleteMode }),
+    [sessions, nutrition, performance, today, athleteMode]);
   const extras = activities.filter(({ activity }) => activity.date === date && activity.deletedAt === null);
   const targets = nutrition?.find(record => record.payload.kind === 'targets')?.payload;
   const totals = sumNutrients((nutrition ?? []).filter(record => record.date === date && record.payload.kind === 'meal').flatMap(record => record.payload.foods));
@@ -84,15 +86,40 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
         {!active && !completed && <button type="button" className="day-cover__preview" disabled={disabled} onClick={onPreview}>{logSport ? 'View session' : 'View workout'}<ChevronRight size={14} aria-hidden="true" /></button>}
       </div>
       {adjusted && <button type="button" className="coach-today-adjustment" onClick={onPreview}><span>{adjustment?.title ?? 'Adjusted recommendation'} · {prescription.workingSets} sets</span><ChevronRight size={15} aria-hidden="true" /></button>}
-      {coach && !active && !completed && shownPlan.kind === 'strength' && <button type="button" className="coach-today-readiness" onClick={onTrain}>{readinessFeeling ? `Feeling ${readinessFeeling} · change` : 'Readiness unknown · check in'}</button>}
       {active && plannedSetCount > 0 && <div className="day-cover__track" role="progressbar" aria-label="Current workout" aria-valuemin={0} aria-valuemax={plannedSetCount} aria-valuenow={setCount}><span style={{ width: `${plannedSetCount ? setCount / plannedSetCount * 100 : 0}%` }} /></div>}
       <button className="btn day-cover__start" disabled={disabled} onClick={action}>{actionLabel}<ArrowRight size={20} aria-hidden="true" /></button>
     </section>
 
-    <section className="day-week" aria-label="Training progress">
-      <button type="button" onClick={onProgress} aria-label={`View training progress: ${progressLabel}`}>
-        <span>{weekLabel}</span><span><strong>{cadence.completedGymDays} / {cadence.plannedGymDays}</strong> gym days<ChevronRight size={16} aria-hidden="true" /></span>
+    <section className="today-progress" aria-label="Your progress">
+      <button type="button" className="today-progress__open" aria-label="View your progress" aria-describedby="today-progress-summary" onClick={onProgress}>
+        <span className="today-section-heading">Your progress<ChevronRight size={17} aria-hidden="true" /></span>
+        {progress.metrics.length ? <span id="today-progress-summary" className="today-progress__metrics" data-count={progress.metrics.length}>
+          {progress.metrics.map((metric, index) => <span key={metric.id} className={`today-progress__metric${index === 0 ? ' today-progress__metric--lead' : ''}`}
+            data-positive={metric.positive ? 'true' : undefined}>
+            <span className="today-progress__description"><span className="today-progress__label">{metric.label}</span><strong>{metric.name}</strong></span>
+            <span className="today-progress__value">{metric.value}<small>{metric.unit}</small></span>
+            <span className="today-progress__detail">{metric.detail}</span>
+            {metric.comparison && <span className="today-progress__comparison">{metric.comparison}</span>}
+          </span>)}
+        </span> : <span id="today-progress-summary" className="today-progress__empty"><strong>A clear baseline comes first.</strong><span>Log working sets or a measured test. Your results will appear here.</span></span>}
       </button>
+    </section>
+
+    <section className="day-week today-consistency" aria-label="Training progress">
+      <button type="button" onClick={onProgress} aria-label={`View training progress: ${progressLabel}`}>
+        <span>{weekLabel}</span><span><strong>{cadence.completedGymDays} / {cadence.plannedGymDays}</strong> gym days recorded<ChevronRight size={16} aria-hidden="true" /></span>
+      </button>
+      <div className="today-consistency__days" role="list" aria-label="Recorded activity this week">{cadence.days.map(item =>
+        <div key={item.date} role="listitem" aria-current={item.isToday ? 'date' : undefined}
+          aria-label={`${new Date(`${item.date}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}: ${item.hasGym ? 'gym workout recorded' : item.hasActivity ? 'activity recorded' : 'no activity recorded'}`}
+          data-recorded={item.hasActivity ? 'true' : undefined}>
+          <span>{item.label}</span><span>{item.hasActivity ? <Check size={15} aria-hidden="true" /> : <i aria-hidden="true" />}</span>
+        </div>)}</div>
+      <p className="today-consistency__caption">{athleteMode ? `${cadence.volleyballDays} volleyball ${cadence.volleyballDays === 1 ? 'day' : 'days'} recorded` : `${cadence.recordedActivityDays} ${cadence.recordedActivityDays === 1 ? 'day' : 'days'} with recorded activity`}. Planned sessions do not count as completed.</p>
+    </section>
+
+    <section className="today-insight" aria-label="Today’s coaching insight">
+      <h2>Next focus</h2><p>{progress.insight}</p>
     </section>
 
     {coach ? <details className="coach-today-more"><summary>More for today<ChevronRight size={15} /></summary><div className="coach-today-more__links">
