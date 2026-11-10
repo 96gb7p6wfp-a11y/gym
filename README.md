@@ -5,15 +5,29 @@ hosted Setline app's delivered React code, styles, and visual reference. The app
 runs on its own: no iframe, sign-in service, old website, external workout API,
 or native iPhone signing is required.
 
+## Premium Home & Training Experience
+
+Today pairs the actual scheduled session with recorded progress, weekly training
+consistency and one useful next focus. The completion summary has responsive
+metrics and distinguishes first performances from genuine comparable records.
+Exercise guides use precise movement variants, concise structured instructions
+and three original offline direction diagrams.
+
+Start workout now opens a compact **Ready to Train?** check. Choose whether you
+feel fit and have warmed up; continue directly or use the workout-specific quick
+preparation. Stored medical guidance remains enforced. Persistent readiness
+panels are removed; prior observations and V9 prescriptions remain compatible.
+See [implementation and preservation details](docs/PREMIUM_HOME_TRAINING_UPDATE.md).
+
 ## Personal training coach
 
 V9 now leads with the complete weekly prescription and a separate safe executable
-recommendation. Choose Great, Normal, Tired or Poor for one date, and schedule
+recommendation. Date-specific readiness remains recorded, and you can schedule
 matches on their actual Sunday in Train. Calendar week numbers no longer impose
 V9 reductions by default; explicit phases remain in advanced settings. Existing
 guidance, older program records and intentional date edits stay recoverable.
 
-Today is quieter, Progress compares real lift/jump/weight records over 4/12 weeks
+Progress compares real lift/jump/weight records over 4/12 weeks
 or all time, and Focus/Quick Log share protected input suggestions and practical
 load/repetition steppers. See [the implementation and preservation boundaries](docs/PERSONAL_COACH_UPDATE.md).
 
