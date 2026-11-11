@@ -15,6 +15,9 @@ const phones = [[375, 812], [390, 844], [430, 932]];
 const tablets = [[768, 1024], [820, 1180], [1024, 768], [1194, 834], [1366, 1024], [700, 900], [540, 900]];
 
 async function capture(page, name) {
+  // The deterministic clock must also deliver viewport/ResizeObserver frames
+  // after opening a sheet; disabling CSS animations alone can catch a midpoint.
+  await page.clock.runFor(350);
   const layout = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, documentWidth: document.documentElement.scrollWidth,
     theme: document.documentElement.dataset.theme,
     activeTab: document.querySelector('[role="tab"][data-state="active"]')?.textContent }));
