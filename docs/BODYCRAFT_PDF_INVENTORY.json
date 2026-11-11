@@ -1,0 +1,891 @@
+{
+  "source": {
+    "filename": "1-ExerciseBook.pdf",
+    "suppliedDisplayName": "ExerciseBook.pdf / ExerciseBook(1).pdf",
+    "pages": 65,
+    "namedExercisePlates": 54,
+    "publisherIntroClaim": 52,
+    "sha256": "c8b751a14008cb7d87f2ea3f7bc4104d0f03249cccae5a3c9207c126e096dde7",
+    "inspectionDate": "2026-11-11",
+    "inspection": "All page text extracted; all 65 rendered pages inspected across five private contact sheets; variant-critical descriptions checked in full.",
+    "permissionStatus": "not-established",
+    "publicImageImports": 0
+  },
+  "pages": [
+    {
+      "pdfPage": 1,
+      "printedPage": "Unnumbered",
+      "kind": "non-exercise",
+      "title": "Cover",
+      "reviewNote": "Brand/cover photography; no instructional exercise mapping.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 2,
+      "printedPage": "Unnumbered",
+      "kind": "non-exercise",
+      "title": "Table of Contents",
+      "reviewNote": "Section index, not an exercise.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 3,
+      "printedPage": "1",
+      "kind": "non-exercise",
+      "title": "Introduction",
+      "reviewNote": "Publisher context; no redistribution grant found.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 4,
+      "printedPage": "2",
+      "kind": "non-exercise",
+      "title": "Functional Training Arms / General Exercise Guidelines",
+      "reviewNote": "Machine/generic exercise guidance; not a new Setline prescription.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 5,
+      "printedPage": "3",
+      "kind": "non-exercise",
+      "title": "Chest section divider",
+      "reviewNote": "Decorative anatomical/athlete photo, not a movement demonstration.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 6,
+      "printedPage": "4",
+      "kind": "exercise-plate",
+      "title": "Bench Press",
+      "section": "Chest",
+      "observedVariation": "Seated linked-lever chest press on the BODYCRAFT multigym.",
+      "setlineExerciseIds": [
+        "chest-press"
+      ],
+      "movementMapping": "candidate-equipment-review",
+      "reviewNote": "Machine chest press only; never a barbell bench press.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 7,
+      "printedPage": "5",
+      "kind": "exercise-plate",
+      "title": "Cable Bench Press",
+      "section": "Chest",
+      "observedVariation": "Back-supported seated two-handle cable press.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "No dedicated seated cable chest-press ID; do not assign to barbell/DB press.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 8,
+      "printedPage": "6",
+      "kind": "exercise-plate",
+      "title": "Converging Bench Press",
+      "section": "Chest",
+      "observedVariation": "Seated cable chest press with hands converging.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "Convergence/cable variation is distinct from an unspecified lever chest press.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 9,
+      "printedPage": "7",
+      "kind": "exercise-plate",
+      "title": "Incline Bench Press",
+      "section": "Chest",
+      "observedVariation": "Linked-lever press with the BODYCRAFT adjustable seat/body orientation.",
+      "setlineExerciseIds": [
+        "incline-machine-press"
+      ],
+      "movementMapping": "candidate-equipment-review",
+      "reviewNote": "Only an incline machine variant; not incline barbell or dumbbell press.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 10,
+      "printedPage": "8",
+      "kind": "exercise-plate",
+      "title": "Cable Incline Bench Press",
+      "section": "Chest",
+      "observedVariation": "Seated cable press with an upward diagonal path.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "No dedicated seated incline cable-press ID.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 11,
+      "printedPage": "9",
+      "kind": "exercise-plate",
+      "title": "Converging Incline Press",
+      "section": "Chest",
+      "observedVariation": "Seated upward cable press with converging hands.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "Do not reuse for an incline dumbbell or barbell press.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 12,
+      "printedPage": "10",
+      "kind": "exercise-plate",
+      "title": "Decline Bench Press",
+      "section": "Chest",
+      "observedVariation": "BODYCRAFT lever press with decline-relative body orientation.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "No current decline lever-press ID.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 13,
+      "printedPage": "11",
+      "kind": "exercise-plate",
+      "title": "Cable Decline Bench Press",
+      "section": "Chest",
+      "observedVariation": "Back-supported decline-direction cable press.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "Not a current flat or incline press.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 14,
+      "printedPage": "12",
+      "kind": "exercise-plate",
+      "title": "Converging Decline Bench Press",
+      "section": "Chest",
+      "observedVariation": "Decline-direction cable press with hands converging.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "No current exact variant.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 15,
+      "printedPage": "13",
+      "kind": "exercise-plate",
+      "title": "Self Stabilizing Chest Press",
+      "section": "Chest",
+      "observedVariation": "Seated cable press without back support.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "Unsupported seated trunk demand differs from supported machine chest press.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 16,
+      "printedPage": "14",
+      "kind": "exercise-plate",
+      "title": "Cable Pec Fly",
+      "section": "Chest",
+      "observedVariation": "Back-supported seated/reclined cable fly.",
+      "setlineExerciseIds": [
+        "cable-fly"
+      ],
+      "movementMapping": "related-incompatible",
+      "reviewNote": "Current Cable Chest Fly guide is standing split-stance; seated image must not be assigned automatically.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 17,
+      "printedPage": "15",
+      "kind": "exercise-plate",
+      "title": "Cable Incline Fly",
+      "section": "Chest",
+      "observedVariation": "Supported seated cable fly with an upward closing arc.",
+      "setlineExerciseIds": [
+        "cable-fly"
+      ],
+      "movementMapping": "related-incompatible",
+      "reviewNote": "Current standing fly does not identify this supported incline variant.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 18,
+      "printedPage": "16",
+      "kind": "exercise-plate",
+      "title": "Cable Low Fly",
+      "section": "Chest",
+      "observedVariation": "Upright seated cable low-to-high fly.",
+      "setlineExerciseIds": [
+        "cable-fly"
+      ],
+      "movementMapping": "related-incompatible",
+      "reviewNote": "Not the current standing chest-height fly.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 19,
+      "printedPage": "17",
+      "kind": "non-exercise",
+      "title": "Shoulders section divider",
+      "reviewNote": "Decorative section photo, not a movement demonstration.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 20,
+      "printedPage": "18",
+      "kind": "exercise-plate",
+      "title": "Shoulder Press",
+      "section": "Shoulders",
+      "observedVariation": "Seated overhead linked-lever press.",
+      "setlineExerciseIds": [
+        "machine-shoulder-press"
+      ],
+      "movementMapping": "candidate-equipment-review",
+      "reviewNote": "Only a compatible machine setup; not dumbbells or a barbell.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 21,
+      "printedPage": "19",
+      "kind": "exercise-plate",
+      "title": "Cable Shoulder Press",
+      "section": "Shoulders",
+      "observedVariation": "Back-supported two-handle overhead cable press.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "Not a dumbbell shoulder press or generic lever-machine photograph.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 22,
+      "printedPage": "20",
+      "kind": "exercise-plate",
+      "title": "Converging Shoulder Press",
+      "section": "Shoulders",
+      "observedVariation": "Seated overhead cable press with converging hands.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "No dedicated converging cable shoulder-press ID.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 23,
+      "printedPage": "21",
+      "kind": "exercise-plate",
+      "title": "Cable Lateral Raise",
+      "section": "Shoulders",
+      "observedVariation": "Seated bilateral low-cable lateral raise.",
+      "setlineExerciseIds": [
+        "lateral-raise"
+      ],
+      "movementMapping": "related-incompatible",
+      "reviewNote": "Current default is standing one arm; use PDF25 rather than this seated bilateral variation.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 24,
+      "printedPage": "22",
+      "kind": "exercise-plate",
+      "title": "Cable Front Raise",
+      "section": "Shoulders",
+      "observedVariation": "Seated bilateral low-cable front raise.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "Front flexion is not lateral abduction.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 25,
+      "printedPage": "23",
+      "kind": "exercise-plate",
+      "title": "Standing Cable Lateral Raise",
+      "section": "Shoulders",
+      "observedVariation": "Standing single-arm low-cable lateral raise.",
+      "setlineExerciseIds": [
+        "lateral-raise"
+      ],
+      "movementMapping": "candidate-pattern-match",
+      "reviewNote": "Matches standing cable variant; cable line and working arm must remain visible.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 26,
+      "printedPage": "24",
+      "kind": "exercise-plate",
+      "title": "Standing Front Raise",
+      "section": "Shoulders",
+      "observedVariation": "Standing low-pulley straight-bar front raise.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "No current cable front-raise ID; not a lateral raise.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 27,
+      "printedPage": "25",
+      "kind": "exercise-plate",
+      "title": "Upright Row",
+      "section": "Shoulders",
+      "observedVariation": "Standing low-cable straight-bar upright row.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "Not a horizontal back row or lateral raise.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 28,
+      "printedPage": "26",
+      "kind": "exercise-plate",
+      "title": "Shrugs",
+      "section": "Shoulders",
+      "observedVariation": "Standing low-cable straight-bar shrug.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "No current shrug ID.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 29,
+      "printedPage": "27",
+      "kind": "exercise-plate",
+      "title": "External Rotator",
+      "section": "Shoulders",
+      "observedVariation": "Standing dynamic cable external rotation with elbow by the ribs.",
+      "setlineExerciseIds": [
+        "external-rotation"
+      ],
+      "movementMapping": "candidate-equipment-review",
+      "reviewNote": "Cable dynamic variant only; band and timed external-rotation-isometric require separate verification.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 30,
+      "printedPage": "28",
+      "kind": "exercise-plate",
+      "title": "Internal Rotator",
+      "section": "Shoulders",
+      "observedVariation": "Standing cable internal rotation with elbow by the ribs.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "Opposite rotation direction to external-rotation.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 31,
+      "printedPage": "29",
+      "kind": "non-exercise",
+      "title": "Back section divider",
+      "reviewNote": "Decorative section photo, not a movement demonstration.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 32,
+      "printedPage": "30",
+      "kind": "exercise-plate",
+      "title": "Lat Pull Down",
+      "section": "Back",
+      "observedVariation": "Seated wide pronated-grip high-pulley pulldown to the upper chest.",
+      "setlineExerciseIds": [
+        "standard-lat-pulldown"
+      ],
+      "movementMapping": "candidate-pattern-match",
+      "reviewNote": "Not the distinct neutral-grip lat-pulldown ID.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 33,
+      "printedPage": "31",
+      "kind": "exercise-plate",
+      "title": "Low Cable Row",
+      "section": "Back",
+      "observedVariation": "Floor-seated unsupported low-cable row with braced feet.",
+      "setlineExerciseIds": [
+        "cable-row"
+      ],
+      "movementMapping": "candidate-equipment-review",
+      "reviewNote": "Floor and handle variant must be disclosed; not chest-supported-row.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 34,
+      "printedPage": "32",
+      "kind": "exercise-plate",
+      "title": "Mid Row",
+      "section": "Back",
+      "observedVariation": "Seated linked-lever row facing the adjustable front pad.",
+      "setlineExerciseIds": [
+        "chest-row"
+      ],
+      "movementMapping": "candidate-equipment-review",
+      "reviewNote": "Potential supported machine variant: verify sustained chest-pad contact and handle path; not bench/DB version or unsupported cable row.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 35,
+      "printedPage": "33",
+      "kind": "exercise-plate",
+      "title": "One Arm Row",
+      "section": "Back",
+      "observedVariation": "Bent-over single-arm cable row with the free hand supported on the seat.",
+      "setlineExerciseIds": [
+        "one-arm-cable-row"
+      ],
+      "movementMapping": "candidate-equipment-review",
+      "reviewNote": "Cable resistance, support and trunk angle must match; not one-arm-dumbbell-row.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 36,
+      "printedPage": "34",
+      "kind": "exercise-plate",
+      "title": "Front Lat Pullover",
+      "section": "Back",
+      "observedVariation": "Standing high-cable straight-arm pullover/pulldown.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "No dedicated straight-arm cable pulldown ID; not a bent-elbow pulldown.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 37,
+      "printedPage": "35",
+      "kind": "exercise-plate",
+      "title": "Seated Cable Mid Row",
+      "section": "Back",
+      "observedVariation": "Seat-supported position with unsupported trunk and mid-pulley bar row.",
+      "setlineExerciseIds": [
+        "cable-row"
+      ],
+      "movementMapping": "candidate-equipment-review",
+      "reviewNote": "Different cable height/handle to PDF33; no chest support.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 38,
+      "printedPage": "36",
+      "kind": "exercise-plate",
+      "title": "Self Stabilizing Mid Row",
+      "section": "Back",
+      "observedVariation": "Standing unsupported mid-cable bilateral row.",
+      "setlineExerciseIds": [
+        "cable-row"
+      ],
+      "movementMapping": "related-incompatible",
+      "reviewNote": "Current Seated Cable Row is seated, not standing.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 39,
+      "printedPage": "37",
+      "kind": "non-exercise",
+      "title": "Arms section divider",
+      "reviewNote": "Decorative section photo, not a movement demonstration.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 40,
+      "printedPage": "38",
+      "kind": "exercise-plate",
+      "title": "Cable Arm Curl",
+      "section": "Arms",
+      "observedVariation": "Seated low-cable handle curl.",
+      "setlineExerciseIds": [
+        "cable-curl",
+        "biceps-curl"
+      ],
+      "movementMapping": "related-incompatible",
+      "reviewNote": "Current Cable Curl guide is standing; generic Biceps Curl does not establish this seated cable variant.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 41,
+      "printedPage": "39",
+      "kind": "exercise-plate",
+      "title": "Standing Bar Curl",
+      "section": "Arms",
+      "observedVariation": "Standing low-cable straight-bar curl.",
+      "setlineExerciseIds": [
+        "cable-curl",
+        "biceps-curl"
+      ],
+      "movementMapping": "candidate-equipment-review",
+      "reviewNote": "Cable Curl is compatible with bar selection; Biceps Curl only if explicitly configured for cable, never a DB image substitute.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 42,
+      "printedPage": "40",
+      "kind": "exercise-plate",
+      "title": "Overhead Biceps Curl",
+      "section": "Arms",
+      "observedVariation": "Seated facing-machine high-cable curl with upper arms raised.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "Not a standard standing low-cable curl.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 43,
+      "printedPage": "41",
+      "kind": "exercise-plate",
+      "title": "Arm Curl From Mid Pulley",
+      "section": "Arms",
+      "observedVariation": "Seated cable curl toward the face from a mid pulley.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "No current exact mid-pulley face-height curl variant.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 44,
+      "printedPage": "42",
+      "kind": "exercise-plate",
+      "title": "Triceps Pushdown",
+      "section": "Arms",
+      "observedVariation": "Standing high-cable straight-bar pushdown.",
+      "setlineExerciseIds": [
+        "triceps"
+      ],
+      "movementMapping": "candidate-equipment-review",
+      "reviewNote": "Only straight-bar configuration; existing rope alias needs a separate rope photograph.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 45,
+      "printedPage": "43",
+      "kind": "exercise-plate",
+      "title": "Triceps Extension",
+      "section": "Arms",
+      "observedVariation": "Seated mid-cable bar extension with upper arms near horizontal.",
+      "setlineExerciseIds": [
+        "overhead-triceps-extension",
+        "rope-triceps-extension"
+      ],
+      "movementMapping": "related-incompatible",
+      "reviewNote": "Not current overhead rope extension or downward rope pushdown.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 46,
+      "printedPage": "44",
+      "kind": "exercise-plate",
+      "title": "Triceps Extension From High Pulley",
+      "section": "Arms",
+      "observedVariation": "Seated forward-lean high-cable bar extension, upper arms near horizontal.",
+      "setlineExerciseIds": [
+        "overhead-triceps-extension"
+      ],
+      "movementMapping": "related-incompatible",
+      "reviewNote": "Do not label this as the current standing upper-arms-overhead rope variation.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 47,
+      "printedPage": "45",
+      "kind": "exercise-plate",
+      "title": "Triceps Kickback",
+      "section": "Arms",
+      "observedVariation": "Bent-over cable kickback with one hand supporting the trunk.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "No cable triceps-kickback ID in the current catalogue.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 48,
+      "printedPage": "46",
+      "kind": "non-exercise",
+      "title": "Core section divider",
+      "reviewNote": "Decorative section photo; text layer also contains stray CHEST label.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 49,
+      "printedPage": "47",
+      "kind": "exercise-plate",
+      "title": "Ab Crunch",
+      "section": "Core",
+      "observedVariation": "Seated high-cable strap crunch with the strap over the shoulders.",
+      "setlineExerciseIds": [
+        "cable-crunch"
+      ],
+      "movementMapping": "related-incompatible",
+      "reviewNote": "Current Cable Crunch is kneeling with a rope; not the same setup.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 50,
+      "printedPage": "48",
+      "kind": "exercise-plate",
+      "title": "Reverse Crunch (Seated Knee Raise)",
+      "section": "Core",
+      "observedVariation": "Seated supported-hands knee raise.",
+      "setlineExerciseIds": [
+        "reverse-crunch",
+        "hanging-knee-raise"
+      ],
+      "movementMapping": "related-incompatible",
+      "reviewNote": "Neither the current floor reverse crunch nor a hanging knee raise.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 51,
+      "printedPage": "49",
+      "kind": "exercise-plate",
+      "title": "Oblique Twist",
+      "section": "Core",
+      "observedVariation": "Standing cable-resisted trunk rotation.",
+      "setlineExerciseIds": [
+        "pallof",
+        "pallof-isometric-hold"
+      ],
+      "movementMapping": "related-incompatible",
+      "reviewNote": "Dynamic rotation is not Pallof anti-rotation or an isometric hold.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 52,
+      "printedPage": "50",
+      "kind": "exercise-plate",
+      "title": "Side Bends",
+      "section": "Core",
+      "observedVariation": "Standing unilateral cable-loaded lateral trunk flexion.",
+      "setlineExerciseIds": [
+        "suitcase-carry",
+        "suitcase-static-hold"
+      ],
+      "movementMapping": "related-incompatible",
+      "reviewNote": "Dynamic lateral bending is not a suitcase carry or anti-lateral-flexion hold.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 53,
+      "printedPage": "51",
+      "kind": "non-exercise",
+      "title": "Legs section divider",
+      "reviewNote": "Decorative section photo, not a movement demonstration.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 54,
+      "printedPage": "52",
+      "kind": "exercise-plate",
+      "title": "Leg Extension",
+      "section": "Legs",
+      "observedVariation": "Seated lever/pad knee extension.",
+      "setlineExerciseIds": [
+        "leg-extension"
+      ],
+      "movementMapping": "candidate-equipment-review",
+      "reviewNote": "Confirm knee pivot and pad layout; no claim that this is the athlete's exact gym machine.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 55,
+      "printedPage": "53",
+      "kind": "exercise-plate",
+      "title": "Standing Leg Curl",
+      "section": "Legs",
+      "observedVariation": "Supported standing unilateral lever/pad knee curl.",
+      "setlineExerciseIds": [
+        "leg-curl"
+      ],
+      "movementMapping": "related-incompatible",
+      "reviewNote": "The current broad Leg Curl ID has seated/lying aliases; this standing variant is not identified by either.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 56,
+      "printedPage": "54",
+      "kind": "exercise-plate",
+      "title": "Seated Leg Curl",
+      "section": "Legs",
+      "observedVariation": "BODYCRAFT Elite seated lever/pad knee curl.",
+      "setlineExerciseIds": [
+        "leg-curl"
+      ],
+      "movementMapping": "candidate-equipment-review",
+      "reviewNote": "Explicitly seated Elite-model variant; do not use for a lying leg curl or imply identical commercial machine.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 57,
+      "printedPage": "55",
+      "kind": "exercise-plate",
+      "title": "Leg Press",
+      "section": "Legs",
+      "observedVariation": "Seated horizontal BODYCRAFT optional leg-press attachment.",
+      "setlineExerciseIds": [
+        "leg-press"
+      ],
+      "movementMapping": "candidate-equipment-review",
+      "reviewNote": "Not a 45-degree sled; equipment-specific caption and choice required.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 58,
+      "printedPage": "56",
+      "kind": "exercise-plate",
+      "title": "Calf Raise",
+      "section": "Legs",
+      "observedVariation": "Near-straight-leg ankle press on the seated leg-press attachment.",
+      "setlineExerciseIds": [
+        "calf",
+        "seated-calf-raise",
+        "standing-calf-isometric",
+        "bent-knee-calf-isometric"
+      ],
+      "movementMapping": "related-incompatible",
+      "reviewNote": "Neither standing calf raise nor bent-knee seated calf raise; also dynamic, not an isometric.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 59,
+      "printedPage": "57",
+      "kind": "exercise-plate",
+      "title": "Hip Adduction",
+      "section": "Legs",
+      "observedVariation": "Standing ankle-cuff cable hip adduction.",
+      "setlineExerciseIds": [
+        "adductor-machine"
+      ],
+      "movementMapping": "related-incompatible",
+      "reviewNote": "Not a seated pad-loaded adductor machine.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 60,
+      "printedPage": "58",
+      "kind": "exercise-plate",
+      "title": "Hip Abduction",
+      "section": "Legs",
+      "observedVariation": "Standing ankle-cuff cable hip abduction.",
+      "setlineExerciseIds": [
+        "clamshell",
+        "lateral-band-walk"
+      ],
+      "movementMapping": "related-incompatible",
+      "reviewNote": "Neither a side-lying clamshell nor a lateral band walk.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 61,
+      "printedPage": "59",
+      "kind": "exercise-plate",
+      "title": "Glute Kick",
+      "section": "Legs",
+      "observedVariation": "Supported standing ankle-cuff low-cable hip extension.",
+      "setlineExerciseIds": [
+        "cable-kickback"
+      ],
+      "movementMapping": "candidate-pattern-match",
+      "reviewNote": "Cable cuff and supported standing variant align; not a hip-thrust photograph.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 62,
+      "printedPage": "60",
+      "kind": "non-exercise",
+      "title": "Sports Specific / Functional introduction",
+      "reviewNote": "Sport section text/club background, not a separate exercise demonstration.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 63,
+      "printedPage": "61",
+      "kind": "exercise-plate",
+      "title": "Golf Swing",
+      "section": "Sports Specific / Functional",
+      "observedVariation": "Cable-resisted golf swing pattern.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "Not a medicine-ball rotational throw or volleyball drill.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 64,
+      "printedPage": "62",
+      "kind": "exercise-plate",
+      "title": "Tennis Swing",
+      "section": "Sports Specific / Functional",
+      "observedVariation": "Cable-resisted tennis forehand/backhand swing.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "Not a rotational medicine-ball throw.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    },
+    {
+      "pdfPage": 65,
+      "printedPage": "63",
+      "kind": "exercise-plate",
+      "title": "Baseball Pitch",
+      "section": "Sports Specific / Functional",
+      "observedVariation": "Cable-resisted single-arm pitching action.",
+      "setlineExerciseIds": [],
+      "movementMapping": "no-current-variant",
+      "reviewNote": "Not a two-handed medicine-ball slam, overhead throw or actual volleyball spike.",
+      "permissionStatus": "not-established",
+      "imageImported": false
+    }
+  ]
+}
