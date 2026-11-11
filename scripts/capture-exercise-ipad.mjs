@@ -16,8 +16,9 @@ const tablets = [[768, 1024], [820, 1180], [1024, 768], [1194, 834], [1366, 1024
 
 async function capture(page, name) {
   const layout = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, documentWidth: document.documentElement.scrollWidth,
-    theme: document.documentElement.dataset.theme }));
-  await page.screenshot({ path: path.join(output, `${name}.png`) });
+    theme: document.documentElement.dataset.theme,
+    activeTab: document.querySelector('[role="tab"][data-state="active"]')?.textContent }));
+  await page.screenshot({ path: path.join(output, `${name}.png`), animations: 'disabled' });
   results.push({ name, ...layout });
   console.log(JSON.stringify({ name, ...layout }));
 }
