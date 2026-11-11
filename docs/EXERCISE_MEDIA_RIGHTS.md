@@ -18,9 +18,11 @@ reusable photograph must show the correct equipment, stance, support, release
 direction and prescribed variation before it is enabled. A machine photograph
 does not identify the user's own machine or make its strength results comparable.
 
-The final enabled-asset count belongs to `src/exercise-media.ts` and the release
-report. The candidates below are research leads, not assets silently approved or
-downloaded by this document.
+Four lossless WebP frames from the original Everkinetic collection have now been
+added for two individually reviewed exercise IDs. They are illustrations, not
+photos. Their exact source, permission and exclusions are recorded below. The
+final enabled-asset count belongs to `src/exercise-media.ts` and the release
+report; the other candidates remain research leads.
 
 ## Requested vendors
 
@@ -50,7 +52,7 @@ an asset has passed Setline's exact-movement visual review.
 | Candidate | Rights evidence | Matching and verification status | Added by this rights research? |
 | --- | --- | --- | --- |
 | CDC PHIL [14128](https://wwwn.cdc.gov/phil/Details.aspx?pid=14128), seated machine leg extension, flexed starting position; companion [14127](https://wwwn.cdc.gov/phil/Details.aspx?pid=14127), extended position | The item identifies CDC / Amanda Mills (2011), says permission is not required for its public-domain image, and permits redistribution with attribution and identification of CDC as the free source. [CDC agency material conditions](https://www.cdc.gov/other/agencymaterials.html) also require prominent nonendorsement wording and preservation of substantive content. | Candidate for the generic seated **Leg Extension** only, not every knee-extension variation. The description identifies a Pulse machine, not the user's equipment. The binary image fetch was blocked by the environment's CONNECT 403 policy; the text-search tool did not expose viewable pixels. **No visual approval has been claimed.** | **No.** Candidate and rights evidence only. |
-| [Everkinetic original repository](https://github.com/everkinetic/data) | The official project identifies Greg Priday / Everkinetic and publishes a CC BY-SA 4.0 license. | A source of exercise illustrations, not a verified photograph collection. Review each actual asset and its upstream attribution before mapping it to an ID. | **No.** Source identified for a later exact-variant selection. |
+| [Everkinetic original repository](https://github.com/everkinetic/data) | The official project identifies Greg Priday / Everkinetic and publishes a CC BY-SA 4.0 license. The source license and selected files were retrieved from pinned commit `446bb9a3d0c3beb6b84f7c9d77dfc8af707a2ab6`. | The four selected start/finish illustrations were actually inspected: seated machine leg extension and seated machine calf raise. Full athlete and essential equipment remain visible. Other source images are not automatically approved. | **Yes: four WebP frames for two exercise IDs.** See the selected-asset record below. |
 | [Workout Guide asset license](https://github.com/bryllim/workout-guide/blob/main/LICENSE-ASSETS) and [attribution](https://github.com/bryllim/workout-guide/blob/main/ATTRIBUTION.md) | The publisher explicitly permits commercial sharing/adaptation under CC BY-SA 4.0 and identifies Everkinetic-derived poses separately from code licensing. | Candidate illustrations must be inspected for the exact variant. A repository's MIT code license is not the artwork license. | **No.** No package dependency or bulk asset import was added by this research. |
 | Wikimedia Commons [Romanian-deadlift-1.png](https://commons.wikimedia.org/wiki/File:Romanian-deadlift-1.png) | File page credits Everkinetic and identifies CC BY-SA 3.0. | Illustration candidate for a barbell hip hinge. The name alone does not establish its knee position/range matches Setline's RDL. Binary pixels were not independently inspected here; not approved. | **No.** |
 | Wikimedia Commons [Leg-extensions-1-672x1024.png](https://commons.wikimedia.org/wiki/File:Leg-extensions-1-672x1024.png) | File page credits Everkinetic and identifies CC BY-SA 3.0. | Candidate illustration for a seated machine leg extension; exact apparatus and visible body/equipment coverage still need review. Not approved. | **No.** |
@@ -64,6 +66,30 @@ record of changes. Adapted media must retain the required share-alike license;
 do not present the application's general code license as replacing it. The
 licenses also identify limits concerning publicity, privacy and similar rights.
 Their availability is not a promise that a candidate is suitable for every use.
+
+## Selected licensed illustrations actually added
+
+| Stable Setline ID | Exact illustrated variation | Original images | Local files |
+| --- | --- | --- | --- |
+| `leg-extension` | Supported seated machine leg extension, flexed start then knee extension with shin roller | Everkinetic `0142-relaxation` / `0142-tension` | `leg-extension-start.webp`, `leg-extension-extended.webp` |
+| `seated-calf-raise` | Seated **machine** calf raise with bent knees, thigh restraint and lowered/raised heels | Everkinetic `0279-relaxation` / `0279-tension` | `seated-calf-raise-lowered.webp`, `seated-calf-raise-raised.webp` |
+
+Files are in `public/exercise-media/licensed/everkinetic/`, together with the
+full upstream CC BY-SA 4.0 license, attribution/readme and a per-file source/hash
+manifest. They total 122,426 image bytes. Conversion to WebP is lossless and
+decoded-pixel equality was checked against each original PNG; dimensions and
+poses were not changed or cropped. The converted assets retain CC BY-SA 4.0.
+The illustrations do not assert the user's machine brand, load or recorded
+performance. The seated-calf image must be labeled as a machine example, not a
+dumbbell variation.
+
+Review rejected cropped original RDL and biceps-curl images because the feet or
+bar were missing from the source frame. The lateral-raise pair was excluded
+after a second reviewer identified an incomplete foot in the original artwork.
+A newer Workout Guide RDL candidate
+showed a substantially different knee/torso configuration and was also excluded.
+Its available license did not override the need for an accurate illustration.
+No BODYCRAFT, ACE, MuscleWiki or CDC photograph was added.
 
 ## Original and commissioned media
 
@@ -111,7 +137,8 @@ Google API key. Preserve a verified direct YouTube URL when one exists; label
 general searches honestly rather than presenting a result as a reviewed video.
 
 No vendor was emailed, no account or paid subscription was created, no API key
-was requested and no Google/third-party photo scrape was performed. The official
-pages above were read as public documentation; this review does not assert that
+was requested and no Google/third-party photo scrape was performed. Only the
+selected licensed illustrations were downloaded for publication; the official
+pages above were read as public documentation. This review does not assert that
 every candidate photo was visually inspected. Public terms can change, so review
 the exact grant again before a future licensed-media release.
