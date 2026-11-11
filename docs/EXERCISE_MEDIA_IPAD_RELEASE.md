@@ -85,6 +85,10 @@ application state:
 
 The application and training-plan versions remain V18 and V9. Medical guidance
 and the existing pre-workout check are unchanged by the layout choice.
+Resizing one window retains its existing records. Separate iPhone/iPad browser
+installations still have separate local stores; use the existing validated
+backup export/restore to transfer personal records. No cloud synchronization
+or automatic cross-device copying is claimed by this interface update.
 
 ## Loading and offline behavior
 
