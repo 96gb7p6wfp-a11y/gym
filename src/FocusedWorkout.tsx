@@ -108,6 +108,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
   const invalidWeightInputs = useRef(new Set<string>());
   const pendingCompletion = useRef<{ exerciseKey: string; setId: string } | null>(null);
   const exerciseCard = useRef<HTMLElement | null>(null);
+  const workoutPane = useRef<HTMLDivElement | null>(null);
   const shownExercise = useRef(exerciseKey);
 
   useEffect(() => {
@@ -236,6 +237,21 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
     if (selected) armSet(entry.key, selected.id);
   }
 
+  function selectWorkspaceExercise(entry: FocusedExercise) {
+    // The compact Focus input owns its unfinished decimal draft. Keep it mounted
+    // until corrected; Quick Log keeps every row mounted while navigating.
+    if (layout === 'focus' && invalidWeightInputs.current.size) {
+      toast.error('Correct the invalid weight before changing exercises.');
+      return;
+    }
+    selectExercise(entry);
+    if (layout === 'quick') {
+      const index = exercises.findIndex(exercise => exercise.key === entry.key);
+      workoutPane.current?.querySelectorAll<HTMLElement>('.quick-exercise')[index]
+        ?.scrollIntoView({ block: 'start', behavior: 'instant' });
+    }
+  }
+
   function armSet(key: string, id: string) {
     completionGate.arm({ sessionId, exerciseKey: key, setId: id });
     updateCompletionState(value => value + 1);
@@ -334,6 +350,23 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
 
   return (
     <div className="focused-workout" data-session-id={sessionId}>
+      <div className="focused-workout__workspace">
+      <nav className="focused-workout__navigator" aria-label="Workout exercises">
+        <header><h2>This workout</h2><p>{exercises.length} exercises · {exercises.reduce((sum, entry) => sum + entry.logs.filter(log => log.done).length, 0)} / {exercises.reduce((sum, entry) => sum + entry.logs.length, 0)} sets recorded</p></header>
+        <ol>{exercises.map((entry, index) => {
+          const completed = entry.logs.filter(log => log.done).length;
+          return <li key={entry.key}>
+            {entry.section && entry.section !== exercises[index - 1]?.section && <p className="focused-workout__section-label">{entry.section}</p>}
+            <button type="button" aria-label={`Select ${entry.name}`} aria-pressed={entry.key === exercise.key}
+              aria-current={entry.key === exercise.key ? 'step' : undefined} onClick={() => selectWorkspaceExercise(entry)}>
+              <span className="focused-workout__exercise-number" aria-hidden="true">{completed === entry.logs.length ? <Check size={17} /> : String(index + 1).padStart(2, '0')}</span>
+              <span className="focused-workout__exercise-copy"><strong>{entry.name}</strong><small>{entry.logs.length} × {entry.target}{entry.perSide ? ' / side' : ''}</small><small>{completed} / {entry.logs.length} sets recorded</small></span>
+              {entry.key === exercise.key && <ChevronRight size={16} aria-hidden="true" />}
+            </button>
+          </li>;
+        })}</ol>
+      </nav>
+      <div className="focused-workout__main" ref={workoutPane}>
       <div className="workout-layout-switch" role="group" aria-label="Workout logging layout">
         <button type="button" aria-pressed={layout === 'focus'} onClick={() => changeLayout('focus')}>Focus</button>
         <button type="button" aria-pressed={layout === 'quick'} onClick={() => changeLayout('quick')}>Quick Log</button>
@@ -525,6 +558,8 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
         ? pair.kind === 'superset' && (anticipated?.setIndex ?? 0) >= pair.pairedRounds ? 'Extra standalone set' : `Next in pair · round ${anticipated?.round}` : 'Up next'}<span>{nextExercise.name}</span></p>}
       {allDone && <p className="focused-workout__finished" role="status">All sets complete. Finish when you’re ready.</p>}
       </>}
+      </div>
+      </div>
       {equipmentExercise && onEquipmentChange && <EquipmentLabelEditor open onOpenChange={open => { if (!open) setEquipmentTarget(null); }}
         exerciseName={equipmentExercise.name} label={equipmentExercise.equipmentLabel}
         onSave={label => onEquipmentChange(equipmentExercise.key, label)} />}
