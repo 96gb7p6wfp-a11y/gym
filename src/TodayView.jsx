@@ -5,14 +5,17 @@ import { getSessionPurpose } from './training-purpose';
 import { getTodayConsistency, getTodayProgress } from './today-progress';
 import { currentReportDate, reportWeekStart } from './weekly-report';
 import { workoutTitle } from './presentation';
+import { WorkoutPreview } from './WorkoutPreview';
+import { useWideLayout } from './useAdaptiveLayout';
 import './today.css';
 
 /** Today's session, real progress, recorded consistency and one useful next step. */
 export function TodayView({ date, plan, session, otherSession, completed, activities, nutrition, now = Date.now(),
   sessions = [], weeklyPlan = [], performance, bodyWeight, today = currentReportDate(), athleteMode = true,
-  volleyballSchedule, onStart, onPreview, onTrain, onBrowseTrain, onViewLog, onNutrition, onPlan, onActivity,
+  volleyballSchedule, onStart, onPreview, onTrain, onBrowseTrain, onViewLog, onNutrition, onPlan, onActivity, previous = () => undefined,
   onProgress, disabled, programLabel, blockComplete = false, programOffer, onReviewProgram, scheduledEvents = [], prescription, referencePlan, referencePrescription, readinessFeeling }) {
   const day = new Date(`${date}T12:00:00`);
+  const wideLayout = useWideLayout();
   const active = session?.status === 'active';
   const unscheduled = !active && !completed && plan.exercises.filter(exercise => !exercise.optionalWork).length === 0 && plan.kind !== 'recovery';
   const coach = plan.programRevision === '9';
@@ -70,6 +73,7 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
     : `${remainingCalories.toLocaleString('en-GB')} kcal remaining · ${Math.round(totals.protein)}${targets.protein ? ` / ${Math.round(targets.protein)}` : ''} g protein`;
 
   return <div className={`today-view journal-today${coach ? ' today-view--coach' : ''}`}>
+    <div className="today-workspace"><div className="today-primary">
     <section className="day-cover" aria-label="Your day" data-sport={shownPlan.kind === 'sport' && !active && !completed ? 'true' : undefined} data-session-state={active ? 'active' : completed ? 'complete' : shownPlan.kind === 'recovery' ? 'recovery' : 'ready'} data-adjusted={showAdjustment ? 'true' : undefined}>
       <div className="day-cover__edition">
         <p className="day-context" aria-label="Session type">{sessionLabel}</p>
@@ -89,6 +93,11 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
       {active && plannedSetCount > 0 && <div className="day-cover__track" role="progressbar" aria-label="Current workout" aria-valuemin={0} aria-valuemax={plannedSetCount} aria-valuenow={setCount}><span style={{ width: `${plannedSetCount ? setCount / plannedSetCount * 100 : 0}%` }} /></div>}
       <button className="btn day-cover__start" disabled={disabled} onClick={action}>{actionLabel}<ArrowRight size={20} aria-hidden="true" /></button>
     </section>
+    {wideLayout && shownPlan.exercises.length > 0 && <section className="today-exercise-preview" aria-label="Today’s exercise list">
+      <header><h2>Today’s exercises</h2><p>{active || completed ? 'Saved session' : adjusted ? 'Full plan reference · review the adjusted recommendation before starting' : 'Full plan reference'}</p></header>
+      <WorkoutPreview exercises={shownPlan.exercises} previous={previous} />
+    </section>}
+    </div><div className="today-secondary">
 
     <section className="today-progress" aria-label="Your progress">
       <button type="button" className="today-progress__open" aria-label="View your progress" aria-describedby="today-progress-summary" onClick={onProgress}>
@@ -121,6 +130,7 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
     <section className="today-insight" aria-label="Today’s coaching insight">
       <h2>Next focus</h2><p>{progress.insight}</p>
     </section>
+    </div></div>
 
     {coach ? <details className="coach-today-more"><summary>More for today<ChevronRight size={15} /></summary><div className="coach-today-more__links">
       <button type="button" onClick={onNutrition} aria-label="View today’s nutrition"><span>Fuel<small>{fuelDetail}</small></span><ChevronRight size={16} /></button>

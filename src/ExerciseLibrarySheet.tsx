@@ -1,7 +1,9 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ChevronRight, Search, SlidersHorizontal } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui';
-import { ExerciseGuideBody } from './ExerciseGuide';
+import { ExerciseGuideBody, ExerciseGuidePanel } from './ExerciseGuide';
+import { ExerciseMedia } from './ExerciseMedia';
+import { useWideLayout } from './useAdaptiveLayout';
 import { EXERCISE_CATALOGUE, findLibraryExercise, rankAlternatives, searchExercises, type ExerciseReference, type LibraryExercise, type LibraryFilters } from './exercise-library';
 import './exercise-library.css';
 
@@ -33,6 +35,7 @@ function matchesCategory(item: LibraryExercise, category: Category) {
 }
 
 export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacementFor, title, browseOnly = false, confirmationLabel }: ExerciseLibrarySheetProps) {
+  const wide = useWideLayout();
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<LibraryFilters>({});
   const [category, setCategory] = useState<Category>('All');
@@ -40,6 +43,7 @@ export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacement
   const [selected, setSelected] = useState<LibraryExercise | null>(null);
   const [limit, setLimit] = useState(30);
   const body = useRef<HTMLDivElement>(null);
+  const detailPane = useRef<HTMLElement | null>(null);
   const listScroll = useRef(0);
   const selectedId = useRef<string | null>(null);
   const confirming = useRef(false);
@@ -50,7 +54,7 @@ export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacement
     listScroll.current = 0; selectedId.current = null; confirming.current = false;
   }, [open, replacementIdentity]);
   useLayoutEffect(() => {
-    if (!open) return;
+    if (!open || wide) return;
     const frame = requestAnimationFrame(() => {
       const scroller = body.current?.closest('.dialog-scroll');
       if (!scroller) return;
@@ -60,7 +64,10 @@ export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacement
       }
     });
     return () => cancelAnimationFrame(frame);
-  }, [selected, open]);
+  }, [selected, open, wide]);
+  useLayoutEffect(() => {
+    if (wide && detailPane.current) detailPane.current.scrollTop = 0;
+  }, [wide, selected?.id]);
   const results = useMemo(() => searchExercises(query, filters).filter(item => matchesCategory(item, category)), [query, filters, category]);
   const alternatives = useMemo(() => replacementFor ? rankAlternatives(replacementFor) : [], [replacementIdentity, replacementFor?.name]);
   const currentId = replacementFor ? findLibraryExercise(replacementFor)?.id : undefined;
@@ -74,6 +81,10 @@ export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacement
     selectedId.current = item.id;
     setSelected(item);
   }
+  function backToList() {
+    setSelected(null);
+    if (wide) requestAnimationFrame(() => body.current?.querySelector<HTMLButtonElement>(`button[data-exercise-id="${selectedId.current}"]`)?.focus({ preventScroll: true }));
+  }
   function confirm() {
     if (!selected || confirming.current) return;
     confirming.current = true;
@@ -82,24 +93,25 @@ export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacement
   }
   function row(item: LibraryExercise, tradeoff?: string) {
     return <li className="exercise-library__item" key={item.id}>
-      <button className="exercise-library__select" type="button" data-exercise-id={item.id} aria-label={`${browseOnly ? 'View' : 'Select'} ${item.name}`} onClick={() => showDetails(item)}>
+      <button className="exercise-library__select" type="button" data-exercise-id={item.id} aria-label={`${browseOnly ? 'View' : 'Select'} ${item.name}`} aria-pressed={wide ? selected?.id === item.id : undefined} onClick={() => showDetails(item)}>
+        <ExerciseMedia exercise={item.id} thumbnail />
         <span className="exercise-library__row-copy"><strong>{item.name}</strong><span>{tradeoff ?? item.muscles.join(' · ')}</span></span>
         <ChevronRight size={16} aria-hidden="true" />
       </button>
     </li>;
   }
   return <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="app-dialog exercise-library-sheet">
-      <div ref={body} className={`exercise-library__body${selected ? ' exercise-library__body--detail' : ''}`}>
-        {selected ? <>
-          <button type="button" className="exercise-library__back" onClick={() => setSelected(null)}><ArrowLeft size={19} aria-hidden="true" />Back</button>
+    <DialogContent className={`app-dialog exercise-library-sheet${wide ? ' exercise-library-sheet--wide' : ''}`}>
+      <div ref={body} className={`exercise-library__body${selected && !wide ? ' exercise-library__body--detail' : ''}${wide ? ' exercise-library__body--workspace' : ''}`}>
+        {selected && !wide ? <>
+          <button type="button" className="exercise-library__back" onClick={backToList}><ArrowLeft size={19} aria-hidden="true" />Back</button>
           <DialogHeader className="exercise-library__detail-header">
             <DialogDescription className="exercise-library__category">{selected.category}</DialogDescription>
             <DialogTitle className="exercise-library__detail-title">{selected.name}</DialogTitle>
           </DialogHeader>
           <ExerciseGuideBody key={selected.id} exercise={{ name: selected.name, key: selected.id, mode: selected.mode, target: selected.recommendedReps }} />
           <div className="exercise-library__confirmation"><button type="button" className="btn full" onClick={confirm}>{browseOnly ? 'Done' : confirmationLabel ?? (replacementFor ? 'Replace exercise' : 'Add exercise')}</button></div>
-        </> : <>
+        </> : <div className="exercise-library__index">
           <DialogHeader className="exercise-library__header">
             <DialogTitle className="exercise-library__title">{title ?? (browseOnly ? 'Exercises' : replacementFor ? 'Replace exercise' : 'Add exercise')}</DialogTitle>
             <DialogDescription className="sr-only">{replacementFor ? 'Find a similar movement for your workout.' : 'Search movements and open a technique guide.'}</DialogDescription>
@@ -129,7 +141,13 @@ export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacement
             {remaining.length ? <ul>{remaining.slice(0, limit).map(item => row(item))}</ul> : <p className="exercise-library__empty">No matches.<span>Try another name or clear a filter.</span></p>}
             {remaining.length > limit && <button className="exercise-library__more" type="button" onClick={() => setLimit(value => value + 30)}>Show more</button>}
           </section>
-        </>}
+        </div>}
+        {wide && <aside className="exercise-library__detail-pane" aria-label="Exercise detail workspace" ref={detailPane}>
+          {selected ? <>
+            <ExerciseGuidePanel exercise={{ name: selected.name, key: selected.id, mode: selected.mode, target: selected.recommendedReps }} onClose={backToList} />
+            <div className="exercise-library__confirmation"><button type="button" className="btn full" onClick={confirm}>{browseOnly ? 'Done' : confirmationLabel ?? (replacementFor ? 'Replace exercise' : 'Add exercise')}</button></div>
+          </> : <div className="exercise-library__pane-empty"><p>Exercise guide</p><h2>Select a movement</h2><span>Compare the exact setup, see approved images and open Google or YouTube demonstrations.</span></div>}
+        </aside>}
       </div>
     </DialogContent>
   </Dialog>;

@@ -124,3 +124,31 @@
 .progress-native .progress-strength-history { max-height:120px; margin:0 0 12px; }
 .progress-native .progress-strength-comparison strong { flex-wrap:wrap; justify-content:flex-end; gap:2px 4px; }
 .progress-native .progress-strength-comparison strong small { white-space:nowrap; }
+
+/* One chart and one set of controls remain mounted while the window changes.
+   Contents wrappers preserve the existing compact grid and its spacing. */
+.progress-workspace,
+.progress-workspace__primary,
+.progress-workspace__supporting { display: contents; }
+@media (min-width: 1024px) {
+ .progress-overview.progress-native { width: 100%; max-width: 1160px; margin-inline: auto; gap: 24px; }
+ .progress-native .progress-takeaway { max-width: 86ch; }
+ .progress-workspace { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(250px, .9fr); align-items: start; gap: 24px; }
+ .progress-workspace__primary { display: block; min-width: 0; }
+ .progress-workspace__supporting { display: grid; align-content: start; gap: 20px; min-width: 0; }
+ .progress-native .progress-lens-card { padding: 16px 28px 28px; }
+ .progress-native .progress-chart-selector { margin-inline: -12px; }
+ .progress-native .progress-lens-title { max-width: 24ch; }
+ .progress-native .progress-native-chart { max-width: 680px; max-height: 280px; margin-inline: auto; }
+ .progress-native .progress-strength-history { max-height: 180px; }
+ .progress-native .progress-strength-comparison { padding-block: 24px; gap: 28px; }
+ .progress-native .progress-chart-empty { min-height: 160px; }
+ .progress-native .progress-lens-empty { padding-block: 24px 16px; }
+ .progress-native .progress-supporting-row, .progress-native .progress-consistency { flex-wrap: wrap; }
+ .progress-native .progress-supporting-row > span, .progress-native .progress-consistency > span { flex-basis: 55%; }
+ .progress-native .progress-verticals { gap: 12px; }
+ .progress-native .progress-advantage-row { flex-wrap: wrap; }
+ .progress-native .progress-advantage-row > span { flex-basis: 55%; }
+ .progress-native button:hover:not(:disabled) { background-color: var(--surface-soft); }
+ .progress-native .progress-chart-selector > button[aria-pressed='true']:hover { background: var(--surface); }
+}

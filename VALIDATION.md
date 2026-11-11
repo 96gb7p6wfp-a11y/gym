@@ -1,5 +1,81 @@
 # Standalone app validation
 
+## Exercise media, demonstrations and adaptive iPad — 11 November 2026
+
+Baseline: latest main `4d1652a`, Setline V18 / Volleyball Performance Plan V9.
+Runtime source and production bundle are frozen at `d029515`; later commits
+only document evidence, include isolated app screenshots and settle screenshot
+timing. PR #10 targets main. Existing PRs #1/#5 remain unmerged. No data-schema,
+storage-key, backup-format, dependency, prescription or PWA-identity changes.
+
+| Check | Actual result |
+| --- | --- |
+| `npm run typecheck` | Passed |
+| `npm test` | **831 passed**, zero failures/cancellations/skips, 32.5 seconds |
+| `npm run build` | Passed; 26 precached shell files; seven optional images excluded from initial precache; cache `setline-pwa-0c12b755da157bd1ac30`; existing large-chunk advisory |
+| Complete `npm run test:web -- --workers=2` | **457 passed, 25.0 minutes**, zero failures/skips in one complete run |
+| Earlier new adaptive browser run | 28 passed |
+| Final focused media/logging/PWA browser run | 30 passed |
+| Generated media-worker tests | Five passed: no bulk precache, exact/size/origin allowlist, 24-entry eviction, cache-denial/quota fallback, independent offline failure |
+| Long-history workflows | 1,000 / 5,000 / 10,000 sets: startup, input, history, chart, export and safe restore passed |
+| Screenshot evidence | 38 before / 129 after, nine representative images committed; no horizontal document overflow |
+| Phone pixel comparisons | 32 non-guide pairs: 30 exact, two with at most 55 differing edge pixels; six guide changes intentionally add media/research controls |
+| `git diff --check` | Passed |
+| Lint | No repository lint script/configuration; not run |
+
+The screenshot matrix covers 375×812, 390×844, 430×932, 768×1024, 820×1180,
+1024×768, 1194×834, 1366×1024 and narrow 700×900 / 540×900 windows in both
+themes. Enlarged root text, simulated safe areas, keyboard/visible-viewport
+geometry, vertical-sidebar keyboard navigation, resize without state writes,
+Focus/Quick Log shared inputs, rest ownership, duplicate completion and Undo
+are covered. Layouts use actual width/container space, not the iPhone user agent
+used by existing browser fixtures.
+
+Earlier scoped integration had two obsolete selector failures: an unqualified
+link locator now matched Google and YouTube, and a drop-jump image-name locator
+matched both the new file image and existing inline SVG. Assertions now select
+the two named research actions and specifically verify the inline SVG, retaining
+rights, units, no-write, offline and no-broken-image checks. Both files pass in
+the final complete execution. A settings screenshot captured during sheet
+transition was recaptured at a stable frame; this was not an app-data failure.
+
+Media evidence is explicit: **zero imported photographs**, seven illustrated
+files across five stable IDs, and 176 IDs without approved media. The PDF was
+accessible: all 65 physical pages were inventoried, including 54 named plates.
+No raw PDF, extracted photograph or full-page image was committed. Four approved
+Everkinetic WebP frames cover two exact movements and retain CC BY-SA 4.0,
+attribution, source URLs and hashes. An independent review confirmed the pinned
+upstream license and decoded pixels/dimensions of all four files. Three original
+Setline direction diagrams complete the registry. Missing/ambiguous variants
+do not inherit unrelated pictures. Every one of the 181 built-in IDs has an
+explicit source/permission/image-gap record.
+
+Actual final-run observations, Chromium 151.0.7922.173, 390×844, two workers:
+
+| Completed sets | Startup ms | Input paint / save ms | History search ms | Chart ms | Export request ms | Restore ms | Stored UTF-8 bytes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1,000 | 1037.9 | 57.0 / 491.3 | 15.4 | 25.0 | 32.0 | 11.5 | 234,361 |
+| 5,000 | 741.1 | 25.1 / 498.0 | 19.8 | 102.9 | 87.1 | 123.2 | 1,118,361 |
+| 10,000 | 1260.2 | 36.7 / 575.9 | 17.0 | 178.2 | 119.5 | 103.6 | 2,223,361 |
+
+These are single shared-cloud observations, not physical-device measurements
+or proof of a speed improvement. Export timing does not verify permanent file
+storage. All fixtures and captures are isolated localhost data; no real phone
+or production store was read, cleared or reset. Resizing shares one app state;
+separate devices still need the existing validated backup transfer, not fake
+cloud synchronization.
+
+Physical iPhone/iPad Safari, Stage Manager gestures, native keyboards, VoiceOver,
+native Dynamic Type and background/locked-screen audio remain unverified.
+Production deployment must be checked separately against the merged SHA. The
+managed environment blocks direct Vercel-origin HTTP with CONNECT 403, so provider
+deployment status and direct page verification must be distinguished.
+
+See [implementation, screenshots and limits](docs/EXERCISE_MEDIA_IPAD_RELEASE.md),
+[complete image-gap register](docs/EXERCISE_PHOTO_MAPPING.md),
+[rights evidence](docs/EXERCISE_MEDIA_RIGHTS.md) and
+[PDF page inventory](docs/BODYCRAFT_PDF_INVENTORY.md).
+
 ## Premium Home & Training Experience — 10 November 2026
 
 Baseline: latest main `fc465cf`, Setline V18 / Volleyball Performance Plan V9.

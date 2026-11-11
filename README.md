@@ -5,6 +5,20 @@ hosted Setline app's delivered React code, styles, and visual reference. The app
 runs on its own: no iframe, sign-in service, old website, external workout API,
 or native iPhone signing is required.
 
+## Exercise media, demonstrations and iPad
+
+Exercise guides now have independent **Search Google** and **YouTube
+Demonstration** actions, a rights-reviewed optional image registry and graceful
+offline fallbacks. Seven original/licensed illustration files cover five exact
+movements; BODYCRAFT photographs remain excluded until redistribution permission
+is established. The [complete 181-exercise image register](docs/EXERCISE_PHOTO_MAPPING.md)
+records every missing image and source/permission requirement.
+
+Wide windows adapt to sidebar navigation, Today and training workspaces,
+adjacent exercise guides, readable Progress and grouped Settings. Narrow windows
+retain the familiar phone interface and the same training state. See
+[implementation details, licenses and before/after screenshots](docs/EXERCISE_MEDIA_IPAD_RELEASE.md).
+
 ## Premium Home & Training Experience
 
 Today pairs the actual scheduled session with recorded progress, weekly training

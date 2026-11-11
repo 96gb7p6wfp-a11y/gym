@@ -63,5 +63,5 @@ export function MenuRow({ title, subtitle, icon, onClick, trailing }: {
 }
 
 export function BottomNavigation({ items, onSelect }: { onSelect?: (value: string) => void; items: { value: string; label: string; icon: ReactNode }[] }) {
-  return <TabsList className="app-nav native-tabbar" aria-label="Main navigation"><div className="app-nav-inner">{items.map(item => <TabsTrigger className="app-nav-item" value={item.value} key={item.value} onClick={() => onSelect?.(item.value)}><span className="app-nav-icon" aria-hidden="true">{item.icon}</span><span className="app-nav-label">{item.label}</span></TabsTrigger>)}</div></TabsList>;
+  return <TabsList className="app-nav native-tabbar" aria-label="Main navigation"><span className="adaptive-nav-brand" aria-hidden="true">Setline<span>.</span></span><div className="app-nav-inner">{items.map(item => <TabsTrigger className="app-nav-item" value={item.value} key={item.value} onClick={() => onSelect?.(item.value)}><span className="app-nav-icon" aria-hidden="true">{item.icon}</span><span className="app-nav-label">{item.label}</span></TabsTrigger>)}</div></TabsList>;
 }

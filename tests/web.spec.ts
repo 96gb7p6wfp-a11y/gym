@@ -1025,12 +1025,12 @@ test('keeps daily food and recovery tips short and shows local exercise instruct
   const guide = page.locator('.exercise-guide-sheet');
   await expect(guide.locator('ol li')).toHaveCount(3);
   await expect(guide).toContainText(/ribs/i);
-  await expect(guide.getByRole('link', { name: 'Search video technique', exact: true })).toHaveAttribute('href', /^https:\/\/www\.youtube\.com\/results\?search_query=/);
+  await expect(guide.getByRole('link', { name: 'YouTube Demonstration', exact: true })).toHaveAttribute('href', /^https:\/\/www\.youtube\.com\/results\?search_query=/);
   await closeDialog(guide);
   await page.locator('.planned-preview > summary').click();
   await page.getByRole('button', { name: `Exercise details for ${MOVEMENT}`, exact: true }).click();
   await expect(guide.locator('ol li')).toHaveCount(3);
-  await expect(guide.getByRole('link', { name: 'Search video technique', exact: true })).toHaveAttribute('target', '_blank');
+  await expect(guide.getByRole('link', { name: 'YouTube Demonstration', exact: true })).toHaveAttribute('target', '_blank');
   await closeDialog(guide);
 
   await startMonday(page);
@@ -1041,7 +1041,7 @@ test('keeps daily food and recovery tips short and shows local exercise instruct
   await expect(guide).toContainText('Feel it');
   await expect(guide).toContainText('Safety');
   await page.setViewportSize({ width: 320, height: 844 });
-  const searchTechnique = guide.getByRole('link', { name: 'Search video technique', exact: true });
+  const searchTechnique = guide.getByRole('link', { name: 'YouTube Demonstration', exact: true });
   await searchTechnique.scrollIntoViewIfNeeded();
   await expect(searchTechnique).toBeVisible();
   const dimensions = await page.evaluate(() => ({

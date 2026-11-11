@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 166" width="680" height="332" role="img" aria-labelledby="title desc">
+  <title id="title">Low-box drop-jump sequence</title><desc id="desc">Step off the box without jumping upward, contact the ground and rebound vertically, then make a controlled final landing.</desc>
+  <rect width="340" height="166" fill="#f1f4ef"/>
+  <defs><marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 7 3.5 0 7Z" fill="#456456"/></marker></defs>
+  <g fill="none" stroke="#233c30" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 151H330M12 126H64V151H12ZM119 14V151M232 14V151" stroke="#7b8b7f" stroke-width="1.5"/>
+    <circle cx="40" cy="34" r="9"/><path d="M40 45V82M40 54 25 67M40 54 58 65M40 82 32 106 36 125M40 82 66 106 82 122"/>
+    <path d="M93 84V137" stroke="#456456" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <circle cx="170" cy="44" r="9"/><path d="M170 55V103M170 64 157 45 155 22M170 64 184 45 187 22M170 103 158 147M170 103 184 147"/>
+    <path d="M214 134V35" stroke="#456456" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <circle cx="281" cy="82" r="9"/><path d="M278 94 262 116M276 99 294 116M276 99 257 100M262 116 248 136 250 149M262 116 285 134 293 149"/>
+  </g>
+</svg>

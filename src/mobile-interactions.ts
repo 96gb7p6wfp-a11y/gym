@@ -24,8 +24,13 @@ export function initializeInputModality() {
       const field = active.getBoundingClientRect();
       const completion = exercise.querySelector('.focused-complete-set')?.getBoundingClientRect();
       const safeTop = parseFloat(getComputedStyle(root).getPropertyValue('--app-safe-area-top')) || 0;
-      const visibleTop = top + Math.max(16, safeTop);
-      const visibleBottom = top + height - 16;
+      // Wide workspaces have their own bounded scroll area so rest can occupy
+      // a separate band. Compact layouts continue to use the document scroller.
+      const workspace = active.closest<HTMLElement>('.workspace');
+      const localScroll = workspace && /auto|scroll/.test(getComputedStyle(workspace).overflowY) ? workspace : null;
+      const scrollBounds = localScroll?.getBoundingClientRect();
+      const visibleTop = Math.max(top + Math.max(16, safeTop), scrollBounds ? scrollBounds.top + 16 : 0);
+      const visibleBottom = Math.min(top + height - 16, scrollBounds ? scrollBounds.bottom - 16 : Infinity);
       let first = field.top, last = field.bottom;
       // Keep the current input and completion action together when they fit.
       if (completion && Math.max(field.bottom, completion.bottom) - Math.min(field.top, completion.top) < visibleBottom - visibleTop) {
@@ -33,8 +38,9 @@ export function initializeInputModality() {
       }
       // Scroll offsets are rounded by the browser. Round outward so fractional
       // layout coordinates cannot leave the field or its action under the keyboard.
-      if (last > visibleBottom) window.scrollBy({ top: Math.ceil(last - visibleBottom), behavior: 'instant' });
-      else if (first < visibleTop) window.scrollBy({ top: Math.floor(first - visibleTop), behavior: 'instant' });
+      const scroller = localScroll ?? window;
+      if (last > visibleBottom) scroller.scrollBy({ top: Math.ceil(last - visibleBottom), behavior: 'instant' });
+      else if (first < visibleTop) scroller.scrollBy({ top: Math.floor(first - visibleTop), behavior: 'instant' });
     });
   }
   const pointer = () => { root.dataset.inputModality = 'pointer'; };
