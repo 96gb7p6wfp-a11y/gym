@@ -112,12 +112,13 @@ export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutri
         : metric === 'weight' ? <p><strong>{weightPoints.length >= 2 ? `Weekly average ${weightPoints.at(-1)!.kg === weightPoints[0].kg ? 'is stable' : `is ${weightPoints.at(-1)!.kg > weightPoints[0].kg ? 'up' : 'down'} ${number(Math.abs(weightPoints.at(-1)!.kg - weightPoints[0].kg))} kg`} across ${weightPoints.length} recorded weeks.` : 'Body weight, with context.'}</strong>{' '}{weightPoints.length >= 2 ? 'Compare morning averages; one-day fluctuations can be normal fluid changes.' : 'Recorded check-ins build your trend. A profile weight alone does not create a weekly comparison.'}</p>
           : <p><strong>{takeaway.observation}</strong>{' '}{takeaway.nextStep}</p>}
     </section>}
+    <div className="progress-workspace">
+    <div className="progress-workspace__primary">
     <div className="progress-lens-card">
     <div className="progress-chart-selector" role="group" aria-label="Chart metric">
       {availableMetrics.map(item => <button key={item} type="button"
         aria-pressed={metric === item} onClick={() => selectMetric(item)}>{item === 'weight' ? 'Body weight' : capitalized(item)}</button>)}
     </div>
-
     {(value !== null || metric === 'strength' && historicalStrengthAvailable) && <div className="progress-period-selector" role="group" aria-label="Chart period">{(['4w', '12w', 'all'] as const).map(item => <button type="button" key={item} aria-pressed={period === item} onClick={() => setPeriod(item)}>{coachPeriodLabel(item)}</button>)}</div>}
     {metric === 'strength' && strengthTrends.length > 0 && <label className="progress-lift-select">Exercise<select aria-label="Strength exercise" value={selectedStrength?.id} onChange={event => setSelectedLift(event.target.value)}>{strengthTrends.map(item => <option value={item.id} key={item.id}>{item.name}{item.equipmentLabel ? ` · ${item.equipmentLabel}` : ''}</option>)}</select></label>}
     {metric === 'jump' && jumpSeries.length > 0 && <div className="progress-jump-selector" role="group" aria-label="Jump test type">{(['approach', 'standing'] as const).map(item => <button type="button" aria-pressed={activeJumpType === item} key={item} onClick={() => { setJumpType(item); setJumpSetup(null); }}>{capitalized(item)} vertical</button>)}</div>}
@@ -172,7 +173,9 @@ export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutri
       {showWeightCheckIn && <button type="button" className={metric === 'weight' ? 'is-contextual' : ''} onClick={onLogWeight}><Plus size={17} aria-hidden="true" />Log body weight</button>}
     </div>}
     </div>
+    </div>
 
+    <div className="progress-workspace__supporting">
     {athleteMode && <section className="progress-athlete-measures" aria-label="Volleyball progress">
       <h3>On the court</h3><div className="progress-verticals">{(['standing', 'approach'] as const).map(type => { const test = primaryCoachJump(jumpSeries, type); return <button type="button" key={type} onClick={() => { setJumpType(type); setJumpSetup(null); selectMetric('jump'); }} aria-label={`View ${type} vertical jump`}><span>{capitalized(type)} vertical</span><strong>{test ? number(test.latest.cm) : '—'}{test && <small>cm</small>}</strong><small>{test ? `${shortDate(test.latest.date)} · best ${number(test.best)} cm` : 'Record a measured test'}</small></button>; })}</div>
       <button type="button" className="progress-advantage-row" onClick={viewDetails} disabled={!viewDetails}><span><strong>Approach Advantage</strong><small>{advantage ? `${shortDate(advantage.date)} · matched test setup` : 'Pair standing + approach heights in one test'}</small></span><b>{advantage ? `${signed(advantage.advantageCm)} cm` : '—'}</b><ChevronRight size={16} aria-hidden="true" /></button>
@@ -196,6 +199,8 @@ export function ProgressOverview({ sessions, activities, plan, bodyWeight, nutri
       {onViewStrength && onViewStrength !== viewDetails && <button type="button" onClick={onViewStrength}><span>Strength history</span><ChevronRight size={18} aria-hidden="true" /></button>}
       {onViewHistory && <button type="button" onClick={onViewHistory}><span>View history</span><ChevronRight size={18} aria-hidden="true" /></button>}
       {athleteMode && onViewWeek && <button type="button" onClick={onViewWeek}><span>Weekly report</span><ChevronRight size={18} aria-hidden="true" /></button>}
+    </div>
+    </div>
     </div>
   </section>;
 }

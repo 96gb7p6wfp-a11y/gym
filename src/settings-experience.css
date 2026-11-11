@@ -41,3 +41,22 @@
   .settings-experience__groups .menu-row { padding: 16px 12px; }
   .settings-experience__heading { margin-bottom: 16px; }
 }
+
+/* Wide windows keep navigation beside the same mounted preference forms.
+   Narrow Split View windows use the familiar landing-and-back flow. */
+@media (min-width: 1024px) {
+  .app-dialog.settings-dialog { --dialog-max-width: 980px; }
+  .settings-experience[data-layout='wide'] { grid-template-columns: minmax(220px, .8fr) minmax(0, 1.8fr); align-items: start; gap: 32px; }
+  .settings-experience[data-layout='wide'] .settings-experience__groups { position: sticky; top: 0; padding-right: 24px; border-right: 1px solid var(--line); }
+  .settings-experience[data-layout='wide'] .settings-experience__groups .menu-group { border: 0; border-radius: 16px; background: transparent; }
+  .settings-experience[data-layout='wide'] .settings-experience__groups .menu-row { min-height: 68px; padding: 14px 12px; border: 0; border-radius: 14px; }
+  .settings-experience[data-layout='wide'] .settings-experience__groups .menu-row[aria-current='page'] { background: var(--accent-soft); color: var(--ink); }
+  .settings-experience[data-layout='wide'] .settings-experience__groups .menu-row:hover { background: var(--surface-soft); }
+  .settings-experience[data-layout='wide'] .settings-experience__groups .menu-row[aria-current='page']:hover { background: var(--accent-soft); }
+  .settings-experience[data-layout='wide'] .menu-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .settings-experience[data-layout='wide'] .settings-experience__panel { padding-top: 2px; }
+  .settings-experience[data-layout='wide'] .settings-experience__content { max-width: 560px; }
+  .settings-experience[data-layout='wide'] .settings-experience__heading { margin-bottom: 24px; }
+  .settings-experience[data-layout='wide'] .settings-experience__intro { max-width: 24ch; }
+  .settings-experience[data-layout='wide'] .settings-experience__status { margin-bottom: 20px; padding: 0; }
+}

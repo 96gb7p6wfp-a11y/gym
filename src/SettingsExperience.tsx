@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { ArrowLeft, ChevronRight } from 'lucide-react';
-import { MenuRow } from './components/design';
+import { useWideLayout } from './useAdaptiveLayout';
 import './settings-experience.css';
 
 export type SettingsSection = 'training' | 'appearance' | 'data' | null;
@@ -27,7 +27,10 @@ const groups = [
 /** Presentation only: changing groups never saves or replaces user data. */
 export function SettingsExperience({ section, onSectionChange, training, appearance, data, profile, trainingStatus, recoveryAction, appInfo, saving = false }: SettingsExperienceProps) {
   const prefix = useId();
-  const selected = groups.find(group => group.id === section);
+  const wide = useWideLayout();
+  // The wide default is presentation only: opening or resizing Settings never
+  // changes saved preferences or remounts a form with unsaved input.
+  const selected = groups.find(group => group.id === section) ?? (wide ? groups[0] : undefined);
   const content = { training, appearance, data };
   const headings = useRef(new Map<string, HTMLHeadingElement>());
   const landing = useRef<HTMLElement | null>(null);
@@ -46,17 +49,20 @@ export function SettingsExperience({ section, onSectionChange, training, appeara
     target?.scrollIntoView({ block: 'nearest' });
   }, [selected?.id]);
 
-  return <div className="settings-experience">
-    <nav className="settings-experience__groups" aria-label="Settings groups" hidden={!!selected} ref={landing} tabIndex={-1}>
+  return <div className="settings-experience" data-layout={wide ? 'wide' : 'compact'}>
+    <nav className="settings-experience__groups" aria-label="Settings groups" hidden={!wide && !!selected} ref={landing} tabIndex={-1}>
       <p className="settings-experience__intro">Make Setline fit the way you train.</p>
       {trainingStatus && <div className="settings-experience__status" role="group" aria-label="Your saved setup">{trainingStatus}</div>}
       <div className="menu-group">
-        {groups.map(group => <MenuRow key={group.id} title={group.title} subtitle={group.description}
-          onClick={() => navigate(group.id)} />)}
+        {groups.map(group => <button key={group.id} className="menu-row" type="button" aria-label={group.title}
+          aria-current={wide && selected?.id === group.id ? 'page' : undefined} onClick={() => navigate(group.id)}>
+          <span className="menu-row-copy"><strong>{group.title}</strong><span>{group.description}</span></span>
+          <span className="menu-row-trailing"><ChevronRight size={18} aria-hidden="true" /></span>
+        </button>)}
       </div>
       {recoveryAction && <div className="settings-experience__recovery">{recoveryAction}</div>}
     </nav>
-    {selected && <button type="button" className="text-button settings-experience__back"
+    {!wide && selected && <button type="button" className="text-button settings-experience__back"
       aria-label="All settings" onClick={() => navigate(null)}><ArrowLeft size={18} aria-hidden="true" />All settings</button>}
     {groups.map(group => <section key={group.id} className="settings-experience__panel"
       id={`${prefix}-${group.id}`} hidden={selected?.id !== group.id} aria-labelledby={`${prefix}-${group.id}-title`}>
