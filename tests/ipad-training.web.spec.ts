@@ -103,6 +103,41 @@ test('the wide selector keeps an invalid Focus draft mounted until explicitly co
   expect(after.sessions.find((record: { session: { id: string } }) => record.session.id === before.active.id).session.exercises.every((exercise: { logs: { done: boolean }[] }) => exercise.logs.every(log => !log.done))).toBe(true);
 });
 
+test('the iPad keyboard scrolls the real workout pane and leaves rest outside the input area without completing another set', async ({ page }) => {
+  await page.setViewportSize({ width: 1194, height: 834 });
+  const before = await seed(page, 'dark');
+  await page.getByRole('button', { name: `Complete ${PRESS} set 1`, exact: true }).click();
+  const input = reps(page, PRESS, 2);
+  await input.fill('7'); await input.focus();
+  const restBefore = await page.evaluate(() => ({ deadline: sessionStorage.getItem('setline.rest-deadline.v1'), owner: sessionStorage.getItem('setline.rest-owner.v16') }));
+  await page.evaluate(() => {
+    Object.defineProperty(window.visualViewport, 'height', { configurable: true, value: 420 });
+    Object.defineProperty(window.visualViewport, 'offsetTop', { configurable: true, value: 0 });
+    window.visualViewport!.dispatchEvent(new Event('resize'));
+  });
+  await expect(page.locator('html')).toHaveAttribute('data-keyboard-open', 'true');
+  const main = (await page.locator('main.workspace').boundingBox())!;
+  const rest = (await page.locator('.rest-floating').boundingBox())!;
+  expect(main.y + main.height).toBeLessThanOrEqual(rest.y);
+  expect(rest.y + rest.height).toBeLessThanOrEqual(420);
+  await expect.poll(() => input.evaluate(element => {
+    const field = element.getBoundingClientRect(), container = element.closest('.workspace')!.getBoundingClientRect();
+    const hit = document.elementFromPoint(field.x + field.width / 2, field.y + field.height / 2);
+    return field.top >= container.top && field.bottom <= container.bottom && hit != null && element.contains(hit);
+  })).toBe(true);
+  await input.press('Enter');
+  await page.evaluate(() => {
+    Object.defineProperty(window.visualViewport, 'height', { configurable: true, value: 834 });
+    window.visualViewport!.dispatchEvent(new Event('resize'));
+  });
+  const after = await read(page);
+  const session = after.sessions.find((row: { session: { id: string } }) => row.session.id === before.active.id).session;
+  expect(session.exercises[0].logs.map((log: { done: boolean }) => log.done)).toEqual([true, false, false]);
+  expect(after.profile).toEqual(before.profile);
+  expect(after.sessions.find((row: { session: { id: string } }) => row.session.id === before.history.id)).toEqual(before.sessions[0]);
+  expect(await page.evaluate(() => ({ deadline: sessionStorage.getItem('setline.rest-deadline.v1'), owner: sessionStorage.getItem('setline.rest-owner.v16') }))).toEqual(restBefore);
+});
+
 for (const size of [{ width: 768, height: 1024 }, { width: 820, height: 1180 }, { width: 1024, height: 768 }, { width: 1366, height: 1024 }]) {
   test(`active workout responds to actual ${size.width}×${size.height} window width and enlarged text without overflow`, async ({ page }, testInfo) => {
     await page.setViewportSize(size);

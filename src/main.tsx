@@ -6,6 +6,7 @@ import './app.css';
 import './native-system.css';
 import './native-shell.css';
 import './mobile-interactions.css';
+import './adaptive-layout.css';
 import { initializeInputModality } from './mobile-interactions';
 import { initializeAppearance } from './theme';
 

@@ -1,4 +1,6 @@
 import { SettingsExperience } from './SettingsExperience';
+import { useWideLayout } from './useAdaptiveLayout';
+import { TrainingPlanWorkspace } from './TrainingPlanWorkspace';
 import { rebaseObjectChanges } from './profile-updates';
 import { markSetInput, carryForwardAfterCompletion } from './set-autofill';
 import { effectiveTrainingGuidance, effectiveMasterProgram } from './training-guidance';
@@ -191,6 +193,7 @@ function GymApp({
   initialDate = berlinDate(),
   initialNow = Date.now(),
 } = {}) {
+  const wideLayout = useWideLayout();
   let [profile, setProfile] = React.useState(createNewProfile);
   const profileRef = React.useRef(profile);
   const profileSaveQueue = React.useRef(Promise.resolve());
@@ -1563,7 +1566,7 @@ function GymApp({
           </div>
   </div>;
   return (
-    <Tabs value={tab} onValueChange={setTab} className={`app-shell ${currentSession && tab === `train` ? `is-training` : ``} ${restEndsAt !== null ? `has-rest` : ``}`}>
+    <Tabs value={tab} onValueChange={setTab} orientation={wideLayout ? 'vertical' : 'horizontal'} className={`app-shell ${currentSession && tab === `train` ? `is-training` : ``} ${restEndsAt !== null ? `has-rest` : ``}`}>
       <Toaster
         position={`top-center`}
         theme={document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'}
@@ -1640,9 +1643,13 @@ function GymApp({
             onProgress={() => { setProgressView('overview'); setTab('progress'); }}
             disabled={!loaded || saving || profileSaving || !!loadError} onPreview={() => openPreview(todayContext)} onStart={() => startWorkout(todayContext)} onTrain={() => { setEditingHistoryId(null); if (!activeSession) selectTrainingDate(today); setTab(`train`); }} onBrowseTrain={() => setTab(`train`)}
             onViewLog={setSelectedHistory} onNutrition={() => setTab(`nutrition`)} onPlan={() => masterBlockComplete ? openProgramConfiguration() : openPlan()}
-            onActivity={() => setTodayActivitiesOpen(true)} />
+            onActivity={() => setTodayActivitiesOpen(true)} previous={exercise => {
+              const prior = previousPerformance(exercise, completedSessions, today);
+              return prior ? `${prior.label} · ${prior.date}` : undefined;
+            }} />
         </TabsContent>
         <TabsContent value={`train`}>
+          <TrainingPlanWorkspace active={!!currentSession || !selectedPlan.exercises.length}>
           {!currentSession && weekSelector}
           <div className={`workout-grid`}>
             <section className={`workout-main`}>
@@ -1857,8 +1864,8 @@ function GymApp({
                 </React.Fragment>
               ) : (
                 <div className="planned-section">
-                <details className="planned-preview"><summary>{selectedAdjusted && selectedPlan.programRevision === '9' ? 'Recommended exercises' : 'Exercises'} <span>{selectedWorkingExercises.length}</span></summary>
-                <WorkoutPreview exercises={selectedPlan.exercises} previous={exercise => {
+                <details className="planned-preview" open={wideLayout || undefined}><summary>{selectedAdjusted && selectedPlan.programRevision === '9' ? 'Recommended exercises' : 'Exercises'} <span>{selectedWorkingExercises.length}</span></summary>
+                <WorkoutPreview adaptive exercises={selectedPlan.exercises} previous={exercise => {
                   const prior = previousPerformance(exercise, completedSessions, selectedDate);
                   return prior ? `${prior.label} · ${prior.date}` : undefined;
                 }} /></details>
@@ -2078,6 +2085,7 @@ function GymApp({
               </details>}
             </aside></div></details>
           </div>
+          </TrainingPlanWorkspace>
         </TabsContent>
         <TabsContent value="progress">
           {performance.error && <div className="error-state" role="alert"><p>{performance.error}</p><button className="text-button" onClick={performance.reload}>Reload performance</button></div>}
