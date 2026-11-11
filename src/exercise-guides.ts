@@ -27,7 +27,8 @@ export interface ExerciseGuideContent {
   feel: string;
   mistakes: string[];
   caution: string;
-  demonstration: { label: string; url: string; kind: 'search' | 'unavailable' };
+  demonstration: { label: string; url: string; kind: 'search' | 'unavailable' | 'verified' };
+  research: { query: string; googleUrl: string; youtubeSearchUrl: string; precision: 'canonical' | 'unconfirmed' };
   displayName: string;
   instructions: { equipment: string; setup: string; movement: string; keyCue: string; avoid: string; purpose: string };
   isAmbiguous?: boolean;
@@ -1116,6 +1117,21 @@ export function getExerciseGuide(exercise: GuideExercise): ExerciseGuideContent 
     'external-rotation': 'standing cable external rotation elbow at side',
   };
   const searchName = movement && searchNames[movement.id] || name;
+  // Google uses the precise catalogue variation, never a misleading historical
+  // alias. Existing assigned YouTube URLs retain their original identity.
+  const canonicalSearchNames: Record<string, string> = { ...searchNames,
+    'lateral-raise': 'standing single arm cable lateral raise',
+    'chest-row': 'chest supported row machine chest pad',
+  };
+  const canonicalSearchName = movement && (canonicalSearchNames[movement.id] || movement.name) || name;
+  const researchQuery = choice ? `${name} exercise variations correct form differences`
+    : `${canonicalSearchName} correct form demonstration`;
+  const research: ExerciseGuideContent['research'] = {
+    query: researchQuery,
+    googleUrl: `https://www.google.com/search?q=${encodeURIComponent(researchQuery)}`,
+    youtubeSearchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(researchQuery)}`,
+    precision: movement && !choice ? 'canonical' : 'unconfirmed',
+  };
   const demonstration: ExerciseGuideContent['demonstration'] = choice
     ? { kind: 'unavailable', label: 'Choose an exact variation first', url: '' }
     : { kind: 'search', label: 'Search video technique', url: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${searchName} exercise technique`)}` };
@@ -1152,7 +1168,7 @@ export function getExerciseGuide(exercise: GuideExercise): ExerciseGuideContent 
   const equipment = detail?.equipment ?? preparationEquipment[name] ?? (movement?.id === 'spike-slam'
     ? 'A medicine ball designed for floor slams and an approved clear floor.'
     : libraryEquipment ?? 'Confirm the equipment intended for this saved movement.');
-  return { ...structuredClone(chosen), demonstration, loading, isGeneric: !choice && !technique,
+  return { ...structuredClone(chosen), demonstration, research, loading, isGeneric: !choice && !technique,
     displayName: movement?.id === 'spike-slam' ? 'Two-Hand Medicine Ball Overhead Slam' : name,
     instructions: { equipment: choice ? 'Depends on the selected variation; confirm before training.' : equipment,
       setup: chosen.steps[0], movement: chosen.steps[1] ?? '', keyCue: chosen.steps[2] ?? 'Confirm the intended movement with a qualified coach.',
@@ -1164,5 +1180,15 @@ export function getExerciseGuide(exercise: GuideExercise): ExerciseGuideContent 
     ...(!choice && movement?.id === 'spike-slam' ? { diagram: 'overhead-slam' as const }
       : !choice && movement?.id === 'medicine-ball-overhead-forward-throw' ? { diagram: 'forward-throw' as const }
       : !choice && movement?.id === 'drop-jump' ? { diagram: 'drop-jump' as const } : {}),
+  };
+}
+
+/** Adding a Google search never replaces an assigned YouTube demonstration. */
+export function getExerciseDemonstrationLinks(guide: Pick<ExerciseGuideContent, 'demonstration' | 'research'>) {
+  return {
+    google: guide.research.googleUrl,
+    youtube: guide.demonstration.url && guide.demonstration.kind !== 'unavailable'
+      ? guide.demonstration.url : guide.research.youtubeSearchUrl,
+    verifiedYouTube: guide.demonstration.kind === 'verified' && Boolean(guide.demonstration.url),
   };
 }

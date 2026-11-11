@@ -1,15 +1,31 @@
 import { useRef, useState, type ReactNode } from 'react';
-import { ArrowUpRight, ChevronRight } from 'lucide-react';
+import { ArrowUpRight, ChevronRight, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui';
-import { getExerciseGuide, type GuideExercise } from './exercise-guides';
+import { getExerciseDemonstrationLinks, getExerciseGuide, type GuideExercise } from './exercise-guides';
 import { findLibraryExercise, rankAlternatives } from './exercise-library';
 import { MuscleMap } from './MuscleMap';
 import { ExerciseTechniqueDiagram } from './ExerciseTechniqueDiagram';
+import { AdditionalExerciseMedia, ExerciseMedia } from './ExerciseMedia';
 import './exercise-guides.css';
 
 export interface ExerciseGuideProps {
   exercise: GuideExercise;
   compact?: boolean;
+}
+
+/** The same guide in an adjacent iPad pane; it owns no training records. */
+export function ExerciseGuidePanel({ exercise, children, onClose }: {
+  exercise: GuideExercise; children?: ReactNode; onClose?: () => void;
+}) {
+  const guide = getExerciseGuide(exercise);
+  const movement = findLibraryExercise({ name: exercise.name });
+  return <section className="exercise-guide-panel" aria-label={`Exercise guide for ${guide.displayName}`}>
+    <header className="exercise-guide-panel__header"><div>
+      <p className="exercise-guide__category">{movement?.category ?? exercise.group ?? 'Exercise guide'}</p>
+      <h2 tabIndex={-1}>{guide.displayName}</h2>
+    </div>{onClose && <button type="button" aria-label="Close exercise guide" onClick={onClose}><X size={20} aria-hidden="true" /></button>}</header>
+    {children}<ExerciseGuideBody key={exercise.name} exercise={exercise} />
+  </section>;
 }
 
 /** A shared sheet lets compact exercise rows open the complete existing guide. */
@@ -44,6 +60,7 @@ export function ExerciseGuideBody({ exercise }: { exercise: GuideExercise }) {
   const swaps = movement ? rankAlternatives(movement.id, 4) : [];
   const steps = guide.steps;
   const mistakes = guide.mistakes;
+  const links = getExerciseDemonstrationLinks(guide);
   const intent = movement && (['Power', 'Plyometric', 'Speed'].includes(movement.category)
     ? 'Move explosively. Stop when speed or jump quality drops.'
     : movement.category === 'Hypertrophy' ? 'Controlled reps. Use your full comfortable range.'
@@ -70,13 +87,16 @@ export function ExerciseGuideBody({ exercise }: { exercise: GuideExercise }) {
     </div> : <>
       {guide.isGeneric && !movement && <p className="exercise-guide__custom">Custom movement · general guidance</p>}
       {guide.isAmbiguous && <p className="exercise-guide__variant-note">Legacy exercise choice · choose an exact variation for future entries. Your saved records stay unchanged.</p>}
+      <ExerciseMedia exercise={{ name: exercise.name }} />
       <section className="exercise-guide__equipment"><h3>Equipment</h3><p>{guide.instructions.equipment}</p></section>
       <section className="exercise-guide__technique"><h3>Technique</h3>
         <ol className="exercise-guide__steps">{steps.slice(0, 3).map((step, index) => <li key={index}><div><strong>{['Setup', 'Movement', 'Key cue'][index]}</strong><span>{step}</span></div></li>)}</ol>
         {steps.length > 3 && <details className="exercise-guide__disclosure"><summary>More technique</summary><ol className="exercise-guide__steps" start={4}>{steps.slice(3).map((step, index) => <li key={index}>{step}</li>)}</ol></details>}
       </section>
       <section className="exercise-guide__avoid"><h3>Avoid</h3><p>{guide.instructions.avoid}</p></section>
+      {movement && !guide.isAmbiguous && <section className="exercise-guide__targets"><h3>Target muscles</h3><p>{movement.muscles.join(' · ')}</p></section>}
       <section className="exercise-guide__purpose"><h3>Purpose</h3><p>{guide.instructions.purpose}</p></section>
+      <AdditionalExerciseMedia exercise={{ name: exercise.name }} />
       {guide.diagram && <details className="exercise-guide__disclosure exercise-guide__diagram"><summary>Movement diagram</summary><ExerciseTechniqueDiagram variant={guide.diagram} /></details>}
       <details className="exercise-guide__disclosure exercise-guide__form"><summary>Form &amp; safety</summary>
         <div className="exercise-guide__disclosure-body">
@@ -104,10 +124,15 @@ export function ExerciseGuideBody({ exercise }: { exercise: GuideExercise }) {
         </dl>
       </details> : exercise.group && <p className="exercise-guide__custom">{exercise.group}</p>}
       {guide.techniqueReference && <a className="exercise-guide__video" href={guide.techniqueReference.url} target="_blank" rel="noopener noreferrer">{guide.techniqueReference.label}<ArrowUpRight size={17} aria-hidden="true" /></a>}
-      {guide.demonstration.kind === 'search' ? <><a className="exercise-guide__video" href={guide.demonstration.url} target="_blank" rel="noopener noreferrer">{guide.demonstration.label}<ArrowUpRight size={17} aria-hidden="true" /></a>
-        <p className="exercise-guide__media-note">General video search · results have not been reviewed. Match the exact variation and direction shown above.</p></>
-        : <p className="exercise-guide__media-note">No demonstration is assigned to this ambiguous saved choice. Find the exact variation in the exercise library.</p>}
     </>}
+    <div className="exercise-guide__research" aria-label="Exercise demonstration links">
+      <a className="exercise-guide__video" href={links.google} target="_blank" rel="noopener noreferrer">Search Google<ArrowUpRight size={17} aria-hidden="true" /></a>
+      <a className="exercise-guide__video" href={links.youtube} target="_blank" rel="noopener noreferrer">YouTube Demonstration<ArrowUpRight size={17} aria-hidden="true" /></a>
+    </div>
+    <p className="exercise-guide__media-note">{guide.research.precision === 'unconfirmed'
+      ? 'The saved name needs an exact variation. Search results are unreviewed; confirm the movement and equipment before following them.'
+      : links.verifiedYouTube ? 'Assigned YouTube demonstration · general Google search results have not been reviewed.'
+        : 'General demonstration searches · results have not been reviewed. Match the exact variation and direction shown above.'}</p>
   </div>;
 }
 

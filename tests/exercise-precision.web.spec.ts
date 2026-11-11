@@ -27,12 +27,15 @@ for (const [name, movement, diagram] of [
     await expect(guide.getByRole('heading', { name: 'Avoid', exact: true }).first()).toBeVisible();
     await expect(guide.getByRole('heading', { name: 'Purpose', exact: true })).toBeVisible();
     await guide.getByText('Movement diagram', { exact: true }).click();
-    await expect(guide.getByRole('img', { name: diagram })).toBeVisible();
-    expect(await guide.locator('img').count(), 'inline original SVGs have no broken remote image box').toBe(0);
-    await expect(guide.getByRole('link', { name: 'Search video technique', exact: true })).toHaveAttribute('href', /youtube\.com\/results\?search_query=/);
+    await expect(guide.locator('svg').and(guide.getByRole('img', { name: diagram }))).toBeVisible();
+    // Approved local images augment the original inline diagram. Neither may
+    // produce a broken-image box, including when the media cache is unavailable.
+    const broken = await guide.locator('img').evaluateAll(images => images.some(image => image instanceof HTMLImageElement && image.complete && image.naturalWidth === 0));
+    expect(broken).toBe(false);
+    await expect(guide.getByRole('link', { name: 'YouTube Demonstration', exact: true })).toHaveAttribute('href', /youtube\.com\/results\?search_query=/);
     await expect(guide).toContainText('results have not been reviewed');
     await page.context().setOffline(true);
-    await expect(guide.getByRole('img', { name: diagram })).toBeVisible();
+    await expect(guide.locator('svg').and(guide.getByRole('img', { name: diagram }))).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect(await page.evaluate(() => localStorage.getItem('setline.gym.v1'))).toBe(before);
     await page.screenshot({ path: testInfo.outputPath(`guide-${name.replace(/\W+/g, '-')}-320.png`) });

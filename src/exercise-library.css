@@ -58,3 +58,43 @@
  .exercise-library-sheet .exercise-library__detail-header { gap:8px; margin-bottom:10px; }
  .exercise-library__detail-header .exercise-library__category { min-height:24px; padding-top:3px; padding-bottom:3px; }
 }
+
+/* Portrait tablets get a bounded two-column catalogue. Compact phone rows and
+   their existing Back/detail flow are deliberately unchanged. */
+@media (min-width:700px) {
+ .app-dialog.exercise-library-sheet { --dialog-max-width:790px; }
+ .exercise-library__index .exercise-library__section ul { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; padding:0; border-radius:0; background:none; }
+ .exercise-library__index .exercise-library__section .exercise-library__item { min-width:0; border:0; }
+ .exercise-library__index .exercise-library__select { align-items:flex-start; height:100%; min-height:100px; padding:16px; border:1px solid var(--line); border-radius:18px; background:var(--surface-soft); }
+ .exercise-library__index .exercise-library__select > svg { margin-top:3px; }
+}
+
+/* An actual window-width workspace: the catalogue and selected guide share one
+   state. Narrowing Split View reuses that selection in the compact detail flow. */
+@media (min-width:1024px) {
+ .app-dialog.exercise-library-sheet--wide { --dialog-max-width:1240px; }
+ .exercise-library-sheet--wide .dialog-scroll { display:block; overflow:hidden; }
+ .exercise-library__body--workspace { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(320px,1fr); gap:32px; height:min(800px,calc(var(--dialog-viewport-height,100dvh) - 96px - var(--app-safe-area-top) - var(--app-safe-area-bottom))); min-height:0; }
+ .exercise-library__body--workspace > .exercise-library__index,.exercise-library__detail-pane { min-width:0; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; scrollbar-width:thin; scroll-padding:12px 0 24px; }
+ .exercise-library__body--workspace > .exercise-library__index { padding:0 6px 16px 0; }
+ .exercise-library__detail-pane { padding:8px 4px 16px 24px; border-left:1px solid var(--line); }
+ .exercise-library__detail-pane .exercise-guide-panel__header { padding-right:32px; }
+ .exercise-library-sheet--wide .exercise-library__header { margin-top:0; }
+ .exercise-library__body--workspace .exercise-library__section ul { grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr)); }
+ .exercise-library__body--workspace .exercise-library__select { flex-wrap:wrap; align-content:flex-start; gap:10px; min-height:112px; }
+ .exercise-library__body--workspace .exercise-library__select .exercise-media--thumbnail { flex-basis:100%; width:100%; }
+ .exercise-library__body--workspace .exercise-media--thumbnail img { width:100%; height:106px; max-height:106px; padding:4px; border-radius:10px; }
+ .exercise-library__body--workspace .exercise-library__row-copy { flex-basis:calc(100% - 28px); }
+ .exercise-library__body--workspace .exercise-library__row-copy > strong { font-size:15px; }
+ .exercise-library__body--workspace .exercise-library__row-copy > span { font-size:13px; }
+ .exercise-library__body--workspace .exercise-library__select[aria-pressed='true'] { border-color:var(--accent); background:var(--accent-soft); }
+ .exercise-library__detail-pane .exercise-library__confirmation { bottom:-16px; margin-right:0; margin-left:0; padding:12px 0 0; }
+ .exercise-library__pane-empty { display:grid; align-content:center; gap:12px; min-height:300px; max-width:32ch; margin:auto; padding:32px 12px; color:var(--sub); }
+ .exercise-library__pane-empty p { margin:0; font-size:13px; }
+ .exercise-library__pane-empty h2 { margin:0; color:var(--ink); font-size:26px; font-weight:650; letter-spacing:-.03em; line-height:1.2; }
+ .exercise-library__pane-empty span { font-size:15px; line-height:1.5; }
+}
+@media (hover:hover) {
+ .exercise-library__select:hover { background:var(--accent-soft); }
+ .exercise-guide__research a:hover { background:var(--accent-soft); }
+}

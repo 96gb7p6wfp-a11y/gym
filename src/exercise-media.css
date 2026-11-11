@@ -1,0 +1,12 @@
+.exercise-media { min-width:0; margin:0 0 20px; color:var(--sub); }
+.exercise-media img { display:block; width:100%; height:auto; max-height:320px; aspect-ratio:var(--exercise-media-ratio,auto); object-fit:contain; object-position:center; border:1px solid var(--line); border-radius:18px; background:#f1f4ef; }
+.exercise-media figcaption { display:grid; gap:3px; margin:8px 3px 0; font-size:13px; line-height:1.4; }
+.exercise-media figcaption small { font-size:12px; color:var(--sub); }
+.exercise-media__credits { display:flex; align-items:center; flex-wrap:wrap; gap:8px 16px; }
+.exercise-media__credits a { display:inline-flex; align-items:center; min-height:44px; color:var(--accent); text-underline-offset:3px; }
+.exercise-media__credits a:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+.exercise-media--thumbnail { flex:0 0 60px; width:60px; margin:0; }
+.exercise-media--thumbnail img { width:60px; height:60px; padding:3px; border-radius:12px; object-fit:contain; }
+.exercise-media__unavailable { margin:0 0 16px; color:var(--sub); font-size:13px; line-height:1.4; }
+.exercise-media__additional { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr)); gap:16px; }
+@media (min-width:1024px) { .exercise-media img { max-height:360px; } }

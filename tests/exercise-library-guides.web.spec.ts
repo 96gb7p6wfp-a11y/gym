@@ -34,7 +34,8 @@ test('exercise details explain purpose and rank relevant alternatives without cr
   await expect(guide.getByRole('link', { name: /Search technique/ })).toHaveCount(4);
   await guide.getByRole('button', { name: 'Technique', exact: true }).click();
   await expect(guide.locator('ol > li')).toHaveCount(3);
-  await expect(guide.getByRole('link')).toHaveAttribute('target', '_blank');
+  await expect(guide.getByRole('link', { name: 'Search Google', exact: true })).toHaveAttribute('target', '_blank');
+  await expect(guide.getByRole('link', { name: 'YouTube Demonstration', exact: true })).toHaveAttribute('target', '_blank');
 
   await page.setViewportSize({ width: 320, height: 568 });
   const sizes = await page.evaluate(() => ({ viewport: innerWidth, content: document.documentElement.scrollWidth }));
