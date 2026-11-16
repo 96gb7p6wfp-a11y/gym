@@ -55,7 +55,10 @@ test('bodyweight reuse preserves no added load, measurements reuse reps only and
   exercise.mode = 'bodyweight';
   exercise.logs[0].kg = null;
   assert.deepEqual(previousSetReuse(exercise, 0, [session], '2026-10-02', 'today')?.patch, { kg: null, reps: 8 });
-  assert.equal(previousSetReuse({ ...exercise, defaultKg: 0 }, 0, [session], '2026-10-02', 'today'), null, 'clearance-limited bodyweight work must not inherit added load');
+  assert.deepEqual(previousSetReuse({ ...exercise, defaultKg: 0 }, 0, [session], '2026-10-02', 'today')?.patch, { kg: 0, reps: 8 }, 'genuinely unloaded reps stay reusable without adding load');
+  exercise.logs[0].kg = 20;
+  assert.equal(previousSetReuse({ ...exercise, defaultKg: 0 }, 0, [session], '2026-10-02', 'today'), null, 'bodyweight-only work must not inherit loaded performance');
+  exercise.logs[0].kg = null;
   exercise.measurement = 'height';
   exercise.logs[0].measurementCm = 52;
   assert.deepEqual(previousSetReuse(exercise, 0, [session], '2026-10-02', 'today')?.patch, { reps: 8 });
