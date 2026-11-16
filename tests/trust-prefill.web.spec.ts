@@ -57,8 +57,10 @@ test('Add one set keeps the completed load and reps, saves immediately, and surv
   await page.getByRole('button', { name: 'Options for Machine Chest Press', exact: true }).click();
   const options = page.getByRole('dialog', { name: 'Machine Chest Press', exact: true });
   await options.getByRole('button', { name: 'Adjust effort', exact: true }).click();
-  await options.getByRole('button', { name: 'Add one set', exact: true }).click();
-  await expect(options).not.toBeVisible();
+  const effort = page.getByRole('dialog', { name: 'Adjust effort', exact: true });
+  await expect(effort).toBeVisible();
+  await effort.getByRole('button', { name: 'Add one set', exact: true }).click();
+  await expect(effort).not.toBeVisible();
   const saved = async () => (await read(page)).sessions.find((row: { session: { id: string } }) => row.session.id === active.id).session;
   await expect.poll(async () => (await saved()).exercises[0].logs.length).toBe(3);
   const snapshot = await saved();
