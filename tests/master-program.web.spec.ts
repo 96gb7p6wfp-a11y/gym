@@ -160,7 +160,7 @@ test('Wednesday completes the separate CMJ block before strength without the old
   expect(active.exercises.some((exercise: { group: string }) => /complex pair/i.test(exercise.group))).toBe(false);
 });
 
-test('week four snapshots reduced Wednesday and Saturday work and program edits cannot rewrite active records', async ({ page }) => {
+test('week four previews its reduced work, while an original start preserves full targets and later program edits cannot rewrite the snapshot', async ({ page }) => {
   await activate(page); await page.getByRole('tab', { name: 'Train', exact: true }).click();
   for (let week = 0; week < 3; week++) await page.getByRole('button', { name: 'Next week', exact: true }).click();
   await day(page, 'Sat');
@@ -176,8 +176,9 @@ test('week four snapshots reduced Wednesday and Saturday work and program edits 
   expect(active.exercises.some((exercise: { name: string }) => /Approach Jump/.test(exercise.name))).toBe(false);
   const hack = active.exercises.find((exercise: { name: string }) => exercise.name === 'Hack Squat');
   const cmj = active.exercises.find((exercise: { name: string }) => /CMJ|Countermovement/.test(exercise.name));
-  expect(hack.logs).toHaveLength(3); expect(cmj.logs).toHaveLength(3);
-  expect(cmj.target).toBe('1 rep');
+  expect(hack.logs).toHaveLength(4); expect(cmj.logs).toHaveLength(3);
+  expect(cmj.target).toBe('2 reps');
+  expect((await read(page)).profile.plan[2].exercises.find((exercise: { name: string }) => exercise.name === 'Hack Squat').sets).toBe(4);
   await openPlan(page); const program = page.getByRole('region', { name: '8-week volleyball-first program', exact: true });
   await program.getByText('Schedule & options', { exact: true }).click();
   await program.getByRole('checkbox', { name: 'Week 4', exact: true }).check();

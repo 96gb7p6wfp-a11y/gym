@@ -35,7 +35,7 @@ async function seed(page: Page, { restricted = false, stalePoor = false, custom 
 }
 async function open(page: Page) {
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
-  await page.getByRole('button', { name: /^Start (?:adjusted )?workout$/ }).click();
+  await page.getByRole('button', { name: /^Start (?:(?:adjusted )?workout|recovery)$/ }).click();
   await expect(gate(page)).toBeVisible();
 }
 async function notQuite(page: Page) {
