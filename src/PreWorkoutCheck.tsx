@@ -20,6 +20,7 @@ export function PreWorkoutCheck({ date, name, disabled = false, guidanceLimited 
   onContinue: (choice: { feeling: PreWorkoutFeeling; warmedUp: boolean }) => Promise<boolean>;
 }) {
   const [feeling, setFeeling] = useState<PreWorkoutFeeling | null>(null);
+  const [adjustmentOpen, setAdjustmentOpen] = useState(false);
   const [warmedUp, setWarmedUp] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -43,12 +44,12 @@ export function PreWorkoutCheck({ date, name, disabled = false, guidanceLimited 
       <p className="pre-workout__date">{new Date(`${date}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })}</p>
       <fieldset className="pre-workout__question"><legend>Feeling fit to train?</legend>
         <div role="group" aria-label="Feeling fit to train?">
-          <button type="button" disabled={locked} aria-label="Yes — fit to train" aria-pressed={feeling === 'normal'} onClick={() => setFeeling('normal')}><span>Yes</span>{feeling === 'normal' && <Check size={17} aria-hidden="true" />}</button>
-          <button type="button" disabled={locked} aria-pressed={feeling === 'tired' || feeling === 'poor'} onClick={() => setFeeling('poor')}><span>Not quite</span>{feeling !== null && feeling !== 'normal' && <Check size={17} aria-hidden="true" />}</button>
+          <button type="button" disabled={locked} aria-label="Yes — fit to train" aria-pressed={feeling === 'normal'} onClick={() => { setFeeling('normal'); setAdjustmentOpen(false); }}><span>Yes</span>{feeling === 'normal' && <Check size={17} aria-hidden="true" />}</button>
+          <button type="button" disabled={locked} aria-pressed={adjustmentOpen} onClick={() => { setAdjustmentOpen(true); if (feeling === 'normal') setFeeling(null); }}><span>Not quite</span>{adjustmentOpen && <Check size={17} aria-hidden="true" />}</button>
         </div>
       </fieldset>
-      {feeling !== null && feeling !== 'normal' && <div className="pre-workout__adjustment">
-        <p>Choose recovery if you feel unwell, movement hurts or landings feel unstable. Full rest is also valid.</p>
+      {adjustmentOpen && <div className="pre-workout__adjustment">
+        <p>Choose what fits today. If you are just tired, select lighter training; choose recovery if you feel unwell, movement hurts or landings feel unstable. Full rest is also valid.</p>
         <div role="group" aria-label="Training adjustment">
           <button type="button" disabled={locked} aria-pressed={feeling === 'poor'} onClick={() => setFeeling('poor')}>Recovery</button>
           <button type="button" disabled={locked} aria-pressed={feeling === 'tired'} onClick={() => setFeeling('tired')}>Just tired — lighter training</button>
