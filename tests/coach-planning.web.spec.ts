@@ -365,7 +365,7 @@ test('a match primer offers a brief pre-workout check and recovery without chang
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
   const check = page.getByRole('dialog', { name: 'Ready to Train?', exact: true });
   await check.getByRole('button', { name: 'Not quite', exact: true }).click();
-  await check.getByRole('button', { name: 'Recovery', exact: true }).click();
+  await check.getByRole('button', { name: 'Switch to recovery session', exact: true }).click();
   await check.getByRole('button', { name: 'Yes — already warmed up', exact: true }).click();
   await expect(check.getByRole('button', { name: 'Start recovery', exact: true })).toBeEnabled();
   await check.getByRole('button', { name: 'Close', exact: true }).click();

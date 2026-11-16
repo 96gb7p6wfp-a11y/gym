@@ -4,6 +4,15 @@ import type { PlanDay } from './workout-customization';
 import { findLibraryExercise } from './exercise-library.ts';
 
 export type PreWorkoutFeeling = 'normal' | 'tired' | 'poor';
+/** Workout dose and the answer about feeling fit are independent. Continuing
+ * the original after "Not quite" must not become a positive readiness report.
+ */
+export type PreWorkoutDecision = 'original' | 'lighter' | 'recovery' | 'rest';
+export interface PreWorkoutChoice {
+  fit: boolean;
+  decision: PreWorkoutDecision;
+  warmedUp: boolean;
+}
 export const preWorkoutReadinessStatus = (feeling: PreWorkoutFeeling): MasterReadiness =>
   feeling === 'normal' ? 'green' : feeling === 'tired' ? 'yellow' : 'red';
 
@@ -13,9 +22,11 @@ export const preWorkoutReadinessStatus = (feeling: PreWorkoutFeeling): MasterRea
  * Medical guidance and every unrelated setting are retained as supplied.
  */
 export function withPreWorkoutReadiness<Profile extends { masterProgram?: MasterProgramSettings }>(
-  profile: Profile, date: string, feeling: PreWorkoutFeeling,
+  profile: Profile, date: string, feeling: PreWorkoutFeeling | null,
 ): Profile {
   CoachDateSchema.parse(date);
+  // A declined adjustment is not evidence of recovery.
+  if (feeling === null) return profile;
   const settings = profile.masterProgram;
   if (!settings || date < settings.startDate) return profile;
   if (settings.revision === '9') {

@@ -39,7 +39,7 @@ async function open(page: Page) {
 async function answer(page: Page, { tired = false, poor = false, warm = true } = {}) {
   if (tired || poor) {
     await gate(page).getByRole('button', { name: 'Not quite', exact: true }).click();
-    if (tired) await gate(page).getByRole('button', { name: 'Just tired — lighter training', exact: true }).click();
+    await gate(page).getByRole('button', { name: tired ? 'Use suggested lighter workout' : 'Switch to recovery session', exact: true }).click();
   } else await gate(page).getByRole('button', { name: 'Yes — fit to train', exact: true }).click();
   await gate(page).getByRole('button', { name: warm ? 'Yes — already warmed up' : 'Not yet', exact: true }).click();
 }
@@ -129,7 +129,7 @@ test('a tired cold start reduces a deliberate date edit exactly once and preserv
   expect(state.sessions.find((row: { session: { id: string } }) => row.session.id === before.sessions[0].session.id)).toEqual(before.sessions[0]);
 });
 
-test('Not quite defaults to recovery while a positive answer cannot grant medical clearance', async ({ page }) => {
+test('a positive answer cannot grant medical clearance', async ({ page }) => {
   const before = await seed(page, { unknown: true });
   await open(page); await answer(page);
   await expect(gate(page)).toContainText('Your saved guidance still limits');
@@ -145,7 +145,7 @@ test('Not quite defaults to recovery while a positive answer cannot grant medica
 test('feeling unwell offers recovery instead of starting heavy or high-impact work', async ({ page }) => {
   await seed(page);
   await open(page); await answer(page, { poor: true });
-  await expect(gate(page).getByRole('button', { name: 'Recovery', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(gate(page).getByRole('button', { name: 'Switch to recovery session', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await gate(page).getByRole('button', { name: 'Start recovery', exact: true }).click();
   await expect.poll(() => active(page)).toBeTruthy();
   expect((await active(page)).kind).toBe('recovery');

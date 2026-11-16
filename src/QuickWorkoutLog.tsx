@@ -30,6 +30,7 @@ interface QuickWorkoutLogProps {
   onEquipment?: (exerciseKey: string) => void;
   onUndoLast?: () => boolean;
   canUndoLast?: boolean;
+  undoActivation?: { exerciseKey: string; setId: string; version: number } | null;
   athleteMode: boolean;
   now: number;
   editing: boolean;
@@ -216,7 +217,7 @@ function QuickExercise(props: QuickWorkoutLogProps & { exercise: FocusedExercise
         : (kind === 'weight' || showLoad) && <span>{optionalLoad ? 'Added' : 'Weight'}<small>kg</small></span>}
       <span>{quantityLabel}</span><span>Done</span>
     </div>
-    {exercise.logs.map((log, index) => <QuickSetRow key={`${sessionId}-${exercise.key}-${log.id}-${appliedVersions[log.id] ?? 0}`} {...props}
+    {exercise.logs.map((log, index) => <QuickSetRow key={`${sessionId}-${exercise.key}-${log.id}-${appliedVersions[log.id] ?? 0}-${props.undoActivation?.exerciseKey === exercise.key && props.undoActivation.setId === log.id ? props.undoActivation.version : 0}`} {...props}
       exercise={exercise} log={log} index={index} previous={prior?.logs[index]} showLoad={showLoad}
       adjusting={adjustingSetId === log.id} onAdjust={() => setAdjustingSetId(log.id)} onAdjustmentFinished={() => setAdjustingSetId(null)}
       onLoadInteraction={() => setLoadOpen(true)} onLoadValidityChange={(id, invalid) => { if (invalid) invalidLoads.current.add(id); else invalidLoads.current.delete(id); }} />)}
