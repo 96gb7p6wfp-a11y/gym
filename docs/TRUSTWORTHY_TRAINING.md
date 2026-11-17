@@ -69,6 +69,11 @@ History and analytics use the completed record, not the saved weekly plan.
    latest queued session, writes it successfully, then updates history and opens
    the completion summary. A synchronous action guard rejects duplicate finish
    taps. A failure leaves the active record, entered duration and retry available.
+   Initial start had the inverse problem: a rejected first write exposed an
+   unsaved active session and disabled preflight, trapping retry. Start now also
+   commits before exposing active state. Failed starts remain retryable; an
+   already-saved active session from another window is resumed without creating
+   a duplicate or leaving an inert start sheet in front of it.
 6. **New-context rest.** Session storage preserves refresh but can disappear when
    an app window terminates. A tiny optional local record references the existing
    active workout, its exact start instant, restore generation and still-completed

@@ -293,3 +293,60 @@ test('Quick Log Undo immediately rearms only its exact set and ten recompletion 
   expect(state.profile).toEqual(before.profile);
   expect(state.sessions).toHaveLength(2);
 });
+
+test('a rejected initial start keeps preflight retryable without an optimistic active-session trap', async ({ page }, testInfo) => {
+  const before = await seed(page, 'light');
+  expect(await current(page)).toBeUndefined();
+  const today = page.getByRole('region', { name: 'Your day', exact: true });
+  await today.getByRole('button', { name: 'Start workout', exact: true }).click();
+  const check = page.getByRole('dialog', { name: 'Ready to Train?', exact: true });
+  await check.getByRole('button', { name: 'Yes — fit to train', exact: true }).click();
+  await check.getByRole('button', { name: 'Yes — already warmed up', exact: true }).click();
+  await rejectWorkoutWrites(page);
+  await check.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await expect(check).toBeVisible();
+  await expect(check.getByRole('alert')).toContainText(/could not|storage|save/i);
+  expect(await current(page)).toBeUndefined();
+  expect(await read(page)).toEqual(before);
+  await page.screenshot({ path: testInfo.outputPath('initial-start-error-retryable-390.png') });
+  // A failed initial write must leave no in-memory active session that locks
+  // this sheet. Correcting storage should be sufficient to retry the start.
+  await expect(check.getByRole('button', { name: 'Start workout', exact: true })).toBeEnabled();
+  await allowWorkoutWrites(page);
+  await check.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await expect(check).not.toBeVisible();
+  await expect.poll(() => current(page)).toBeTruthy();
+  const state = await read(page), active = await current(page);
+  expect(state.sessions).toHaveLength(2);
+  expect(state.sessions.filter((row: { session: { status: string } }) => row.session.status === 'active')).toHaveLength(1);
+  expect(active.exercises.every((exercise: { logs: { done: boolean }[] }) => exercise.logs.every(log => !log.done))).toBe(true);
+  expect(state.profile).toEqual(before.profile);
+  expect(state.sessions.find((row: { session: { id: string } }) => row.session.id === before.sessions[0].session.id)).toEqual(before.sessions[0]);
+});
+
+test('an active workout saved by another window during preflight is resumed without a second session or trapped sheet', async ({ page }) => {
+  const before = await seed(page);
+  const today = page.getByRole('region', { name: 'Your day', exact: true });
+  await today.getByRole('button', { name: 'Start workout', exact: true }).click();
+  const check = page.getByRole('dialog', { name: 'Ready to Train?', exact: true });
+  await check.getByRole('button', { name: 'Yes — fit to train', exact: true }).click();
+  await check.getByRole('button', { name: 'Yes — already warmed up', exact: true }).click();
+  const other = SessionSchema.parse(createSession(before.profile.plan[0], 0, DATE, before.profile, [before.sessions[0].session]));
+  other.startedAt = Date.parse(`${DATE}T10:00:00Z`);
+  other.runningSince = null;
+  other.notes = 'Isolated QA session saved in another window.';
+  Object.assign(other.exercises[0].logs[0], { kg: 67.5, reps: 9, done: true, inputSources: { kg: 'manual', reps: 'manual' } });
+  // A same-origin tab's save is authoritative even if this stale page has not
+  // processed its storage event yet. Do not give this window an early hint.
+  const authoritative = { ...before, sessions: [{ session: other, version: 3 }, ...before.sessions] };
+  await page.evaluate(state => localStorage.setItem('setline.gym.v1', JSON.stringify(state)), authoritative);
+  await check.getByRole('button', { name: 'Start workout', exact: true }).click();
+  await expect(check).not.toBeVisible();
+  await expect(page.getByRole('button', { name: 'Finish workout', exact: true })).toBeVisible();
+  await expect(focus(page)).toBeVisible();
+  expect((await current(page)).id).toBe(other.id);
+  expect(await read(page)).toEqual(authoritative);
+  await page.reload();
+  expect(await read(page)).toEqual(authoritative);
+  expect((await current(page)).id).toBe(other.id);
+});

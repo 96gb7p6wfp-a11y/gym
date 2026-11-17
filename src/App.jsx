@@ -935,6 +935,8 @@ function GymApp({
       const latestStore = await requestTracker();
       if (latestStore.sessions.some(row => row.session.status === 'active')) {
         await loadWorkouts();
+        setPreWorkoutContext(null); setWarmupContext(null); setProtectedPreparation(null);
+        setTab('train');
         toast('A workout is already open. Continue that saved session.');
         return false;
       }
@@ -975,8 +977,16 @@ function GymApp({
           draft.customized !== false || plan.customizedForProgram === '9')) return exercise;
         return { ...exercise, logs: exercise.logs.map(log => ({ ...log, kg: exercise.defaultKg, inputSources: { ...log.inputSources, kg: 'manual' } })) };
       });
-      queueSession(SessionSchema.parse(session), true);
-      if (!(await flushPendingWrites())) return false;
+      const savedSession = SessionSchema.parse(session);
+      // Do not expose an active session until its first write succeeds. An
+      // optimistic queued start can otherwise lock preflight behind a phantom
+      // active workout when storage is full or another window wins the race.
+      const saved = await requestTracker({ action: 'session', session: savedSession, expectedVersion: 0 });
+      sessionVersionsRef.current.set(savedSession.id, saved.version);
+      sessionsRef.current = [savedSession, ...sessionsRef.current.filter(entry => entry.id !== savedSession.id)];
+      setSessions(sessionsRef.current);
+      lastSetReceipt.current = null; saveCompletionReceipt(null);
+      persistWorkoutControls();
       // Keep the date-specific prescription, but do not reuse this warm-up for another session.
       const next = resetDraftPreparation(draft);
       if (context.protectedDraft || context.transient) {
@@ -1001,6 +1011,9 @@ function GymApp({
       selectTrainingDate(context.date);
       setWarmupContext(null); setTab('train'); setEditingHistoryId(null);
       return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Your workout could not start saving. Your existing records stay unchanged; please retry.');
+      return false;
     } finally { startingMainRef.current = false; }
   }
   function toggleWorkoutTimer() {
