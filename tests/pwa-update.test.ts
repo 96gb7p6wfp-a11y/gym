@@ -72,7 +72,7 @@ test('registration checks again after foreground return without silently activat
   let configuration: unknown;
   let now = 1_000_000;
   let primed = 0;
-  const document = { visibilityState: 'visible', addEventListener: (name: string, handler: () => void) => events.set(name, handler) };
+  const document = { readyState: 'loading', visibilityState: 'visible', addEventListener: (name: string, handler: () => void) => events.set(name, handler) };
   const registration = {
     waiting: null,
     update: async () => { updateChecks++; },
@@ -84,7 +84,7 @@ test('registration checks again after foreground return without silently activat
     window: { isSecureContext: true, addEventListener: (name: string, handler: () => void) => events.set(name, handler), dispatchEvent: () => { primed++; } },
     Date: { now: () => now }, Event, console,
   });
-  events.get('load')!(); await Promise.resolve(); await Promise.resolve();
+  events.get('DOMContentLoaded')!(); await Promise.resolve(); await Promise.resolve();
   assert.deepEqual(JSON.parse(JSON.stringify(configuration)), { scope: '/', updateViaCache: 'none' });
   events.get('visibilitychange')!(); await Promise.resolve(); await Promise.resolve();
   assert.equal(updateChecks, 1);
