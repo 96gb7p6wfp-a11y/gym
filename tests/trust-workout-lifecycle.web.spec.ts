@@ -170,7 +170,7 @@ test('a complete workout retains prior values, manual edits, Undo, timer ownersh
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-test('storage rejection keeps the durable session and saved plan intact, and Retry saves the same pending set once', async ({ page }) => {
+test('storage rejection retains the edited draft but never confirms completion until an explicit durable retry', async ({ page }) => {
   const before = await seed(page, 'light');
   await startToday(page);
   const session = await current(page);
@@ -182,11 +182,24 @@ test('storage rejection keeps the durable session and saved plan intact, and Ret
   await expect(error).toBeVisible();
   await expect(error).toContainText(/storage|save|space/i);
   expect(await read(page)).toEqual(durable);
-  await expect(focus(page).getByRole('textbox', { name: `${PRESS} set 2 weight in kilograms`, exact: true })).toHaveValue('65');
+  await expect(focus(page).getByRole('textbox', { name: `${PRESS} set 1 weight in kilograms`, exact: true })).toHaveValue('65');
+  await expect(focus(page).getByRole('button', { name: `Complete ${PRESS} set 1`, exact: true })).toBeEnabled();
+  await expect(page.locator('.rest-floating')).toHaveCount(0);
+  await expect(page.getByRole('status', { name: 'Set completion', exact: true })).toHaveCount(0);
+  expect(await page.evaluate(() => sessionStorage.getItem('setline.last-completed-set.v16'))).toBeNull();
   await allowWorkoutWrites(page);
   await error.getByRole('button', { name: 'Retry', exact: true }).click();
   await expect(error).not.toBeVisible();
+  // Retry saves only the manual input draft. It must not resurrect a failed
+  // completion intent, start rest or advance through a set without a new action.
+  await expect.poll(async () => (await current(page)).exercises[0].logs[0]).toMatchObject({ kg: 65, reps: 8, done: false });
+  await expect(page.locator('.rest-floating')).toHaveCount(0);
+  await expect(page.getByRole('status', { name: 'Set completion', exact: true })).toHaveCount(0);
+  const draft = await current(page);
+  expect(draft.exercises[0].logs.slice(1)).toEqual(session.exercises[0].logs.slice(1));
+  await focus(page).getByRole('button', { name: `Complete ${PRESS} set 1`, exact: true }).click();
   await expect.poll(async () => (await current(page)).exercises[0].logs[0]).toMatchObject({ kg: 65, reps: 8, done: true });
+  await expect(page.locator('.rest-floating')).toHaveCount(1);
   const state = await read(page);
   expect(state.sessions).toHaveLength(2);
   expect(state.sessions.find((row: { session: { id: string } }) => row.session.id === session.id).session.exercises[0].logs.map((log: { done: boolean }) => log.done)).toEqual([true, false, false]);
