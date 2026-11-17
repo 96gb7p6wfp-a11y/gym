@@ -97,3 +97,18 @@ test('registration checks again after foreground return without silently activat
   assert.equal(updateChecks, 2);
   assert.equal(primed, 0, 'no ready event is invented without a waiting worker');
 });
+
+test('an already-ready document registers without waiting for delayed images or the window load event', async () => {
+  const events: string[] = [], requests: string[] = [];
+  const registration = { waiting: null, addEventListener() {}, update: async () => {} };
+  vm.runInNewContext(readFileSync('public/register-sw.js', 'utf8'), {
+    navigator: { onLine: true, serviceWorker: { register: async (url: string) => { requests.push(url); return registration; } } },
+    document: { readyState: 'interactive', visibilityState: 'visible', addEventListener: (name: string) => events.push(name) },
+    window: { isSecureContext: true, addEventListener: (name: string) => events.push(name), dispatchEvent() {} },
+    Date, Event, console,
+  });
+  await Promise.resolve(); await Promise.resolve();
+  assert.deepEqual(requests, ['/service-worker.js']);
+  assert.equal(events.includes('load'), false);
+  assert.equal(events.includes('DOMContentLoaded'), false);
+});

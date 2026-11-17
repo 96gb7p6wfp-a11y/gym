@@ -26,6 +26,10 @@ async function listFiles(directory, relative = '') {
 
 const files = await listFiles(outputDir);
 const hash = createHash('sha256');
+// Worker-only fixes need their own cache generation too. Otherwise a failed
+// replacement install could delete the cache still used by the active worker.
+hash.update(await readFile(fileURLToPath(import.meta.url)));
+hash.update('\0');
 const optionalMedia = [];
 for (const file of files) {
   const content = await readFile(path.join(outputDir, file));
@@ -49,6 +53,7 @@ const MEDIA_PATHS = new Set(${JSON.stringify(optionalMedia.map(assetUrl))});
 const MEDIA_CACHE_LIMIT = 24;
 const PRECACHE_URLS = ${JSON.stringify(urls, null, 2)};
 const PRECACHE_PATHS = new Set(PRECACHE_URLS);
+const NAVIGATION_TIMEOUT_MS = 3000;
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
@@ -82,8 +87,10 @@ self.addEventListener('message', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
-    const names = await caches.keys();
-    await Promise.all(names.filter((name) => name.startsWith(CACHE_PREFIX) && name !== CACHE_NAME && name !== MEDIA_CACHE).map((name) => caches.delete(name)));
+    try {
+      const names = await caches.keys();
+      await Promise.all(names.filter((name) => name.startsWith(CACHE_PREFIX) && name !== CACHE_NAME && name !== MEDIA_CACHE).map((name) => caches.delete(name)));
+    } catch { /* Cache denial must not prevent a successfully installed worker from claiming its app. */ }
     await self.clients.claim();
   })());
 });
@@ -129,11 +136,20 @@ self.addEventListener('fetch', (event) => {
       } catch {
         // First visit/private browsing: use the network when caching is denied.
       }
+      let timeout;
+      const controller = new AbortController();
       try {
-        const response = await fetch(request);
-        if (response.status < 500) return response;
+        // A missing/evicted shell cannot offer offline training, but a hanging
+        // connection must not hide its available recovery instructions forever.
+        const response = await Promise.race([
+          fetch(request, { signal: controller.signal }),
+          new Promise((resolve) => { timeout = setTimeout(() => { controller.abort(); resolve(null); }, NAVIGATION_TIMEOUT_MS); }),
+        ]);
+        if (response && response.status < 500) return response;
       } catch {
         // First offline visit may not have a complete app installation yet.
+      } finally {
+        if (timeout !== undefined) clearTimeout(timeout);
       }
       try {
         if (cache) {
@@ -151,8 +167,13 @@ self.addEventListener('fetch', (event) => {
 
   if (PRECACHE_PATHS.has(url.pathname)) {
     event.respondWith((async () => {
-      const cache = await caches.open(CACHE_NAME);
-      return await cache.match(url.pathname) || fetch(request);
+      try {
+        const cache = await caches.open(CACHE_NAME);
+        const response = await cache.match(url.pathname);
+        if (response) return response;
+      } catch { /* Denied cache access must not break otherwise-online JS/CSS. */ }
+      try { return await fetch(request); }
+      catch { return Response.error(); }
     })());
   }
 });
