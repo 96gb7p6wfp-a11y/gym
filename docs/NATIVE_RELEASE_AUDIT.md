@@ -181,6 +181,17 @@ after their write-rejection checks passed. The tests now inspect the authoritati
 primary record and separately check the cached tracker response. The final
 131-case rerun above is clean; application behavior was not weakened.
 
+The first archive-source browser run also exposed an incorrect new assertion:
+it assumed restricted guidance removes every `mode: weight` entry. Existing
+`applyRecordedClearance` and `v18-training-guidance.test.ts` preserve that logging
+identity while requiring unloaded preparation, at most two sets and RPE 5.
+The regression now checks every exercise and log for those actual safeguards,
+rejects jumps/power/ballistics and linked heavy pairs, requires unperformed
+zero-load records, and compares the entire profile, prior history and nutrition.
+The runtime restriction was not loosened. The root coordinator must record the
+rerun result. Reapplying guidance can currently duplicate the explanatory cue;
+that cosmetic repetition does not authorize additional load or impact.
+
 ## Release decision and remaining limits
 
 **BLOCKED pending the final frozen build and one clean full browser-suite run.**

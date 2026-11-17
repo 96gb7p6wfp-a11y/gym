@@ -3,6 +3,7 @@ import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession, stopSessi
 import { createVolleyballMasterPlan } from '../src/volleyball-master-plan';
 import { upgradeToV9 } from '../src/master-program-upgrade';
 import { defaultReminderState } from '../src/reminders';
+import { findLibraryExercise } from '../src/exercise-library';
 
 const STORE = 'setline.gym.v1';
 const read = (page: Page) => page.evaluate(key => JSON.parse(localStorage.getItem(key)!), STORE);
@@ -65,14 +66,35 @@ test('a pre-V9 date starts its archived original prescription rather than the ne
 test('archived plans use current medical guidance without restoring archived clearance', async ({ page }) => {
   const { state } = await seed(page, true);
   await startSaturday(page, true);
-  const session = await active(page), after = await read(page);
+  const session = SessionSchema.parse(await active(page)), after = await read(page);
   expect(session.date).toBe('2026-11-14');
   expect(session.programRevision).toBe('13.1');
-  expect(session.exercises.filter((exercise: { mode: string }) => exercise.mode === 'weight')).toHaveLength(0);
+  // A logging mode is movement identity, not medical permission. Existing
+  // guidance keeps weighted movements as unloaded, low-effort preparation.
+  expect(session.exercises.length).toBeGreaterThan(0);
+  for (const exercise of session.exercises) {
+    expect(exercise.preparationOnly, exercise.name).toBe(true);
+    expect(exercise.sets, exercise.name).toBeGreaterThanOrEqual(1);
+    expect(exercise.sets, exercise.name).toBeLessThanOrEqual(2);
+    expect(exercise.logs, exercise.name).toHaveLength(exercise.sets);
+    expect(exercise.targetRpe, exercise.name).toBe(5);
+    expect(exercise.defaultKg, exercise.name).toBe(0);
+    expect(exercise.superset, exercise.name).toBeUndefined();
+    expect(exercise.jumpContactsPerRep ?? 0, exercise.name).toBe(0);
+    expect(exercise.name).not.toMatch(/\b(?:jump|hops?|bounds?|throws?|slams?|sprints?)\b/i);
+    expect(['Power', 'Plyometric']).not.toContain(findLibraryExercise(exercise)?.category);
+    for (const log of exercise.logs) {
+      expect(log.kg, exercise.name).toBe(0);
+      expect(log.done, exercise.name).toBe(false);
+      expect(log.rir, exercise.name).toBeNull();
+    }
+  }
+  expect(after.profile).toEqual(state.profile);
   expect(after.profile.trainingGuidance).toEqual(state.profile.trainingGuidance);
   expect(after.profile.masterProgram.clearance).toEqual(state.profile.masterProgram!.clearance);
   expect(after.profile.masterProgramBackup).toEqual(state.profile.masterProgramBackup);
   expect(after.sessions.find((row: { session: { id: string } }) => row.session.id === state.sessions[0].session.id)).toEqual(state.sessions[0]);
+  expect(after.nutrition).toEqual(state.nutrition);
 });
 
 test('a date after activation still starts the selected full V9 Lower B, preserving the archive', async ({ page }) => {
