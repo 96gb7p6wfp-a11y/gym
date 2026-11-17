@@ -118,18 +118,33 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith((async () => {
+      let cache;
+      try {
+        cache = await caches.open(CACHE_NAME);
+        // Installed Setline must open without waiting for a slow, captive or
+        // disconnected network. The shell is only present after an atomic
+        // precache install; explicit worker activation handles new versions.
+        const shell = await cache.match('/index.html');
+        if (shell) return shell;
+      } catch {
+        // First visit/private browsing: use the network when caching is denied.
+      }
       try {
         const response = await fetch(request);
         if (response.status < 500) return response;
       } catch {
-        // The local bundle and persisted workout data remain usable offline.
+        // First offline visit may not have a complete app installation yet.
       }
-      const cache = await caches.open(CACHE_NAME);
-      return await cache.match('/index.html') || await cache.match('/offline.html') ||
-        new Response('Setline has not finished downloading. Reconnect once, then reopen the app.', {
-          status: 503,
-          headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-        });
+      try {
+        if (cache) {
+          const offlinePage = await cache.match('/offline.html');
+          if (offlinePage) return offlinePage;
+        }
+      } catch { /* A cache read failure must not become a blank screen. */ }
+      return new Response('Setline has not finished downloading. Reconnect once, then reopen the app.', {
+        status: 503,
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      });
     })());
     return;
   }
