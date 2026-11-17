@@ -53,6 +53,17 @@ test('unwell preflight offers recovery for an upper-only legacy workout instead 
   assert.equal(preWorkoutRecovery(recovery), recovery);
 });
 
+test('declining a recommendation does not fabricate a readiness answer or overwrite any existing date', () => {
+  for (const revision of ['9', '13.1'] as const) {
+    const original = profile(revision);
+    const before = structuredClone(original);
+    assert.equal(withPreWorkoutReadiness(original, '2026-11-07', null), original);
+    assert.equal(withPreWorkoutReadiness(original, '2026-11-06', null), original);
+    assert.deepEqual(original, before);
+    assert.throws(() => withPreWorkoutReadiness(original, '2026-02-30', null));
+  }
+});
+
 test('a generic lighter session removes explosive work, reduces longer weighted work and keeps original identifiers and manual planned loads', () => {
   const base = createV9VolleyballMasterPlan()[5];
   const before = structuredClone(base);

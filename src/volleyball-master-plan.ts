@@ -637,9 +637,23 @@ export function isMasterReadinessRequired(settings: MasterProgramSettings | unde
   return !!strengthOrRed && (day === 2 || (day === 6 && !match && plan.programRevision === '8.1'));
 }
 
+export interface MasterProgramResolutionOptions {
+  /** Read-only original prescription: retain real scheduling and medical
+   * limits, but do not apply optional phase or self-reported dose reductions.
+   * Default resolution is unchanged for previews and historical compatibility.
+   */
+  originalPrescription?: boolean;
+}
+
 export function resolveMasterProgramPlan(basePlan: PlanDay[], settings: MasterProgramSettings, date: string,
-  matchWeekend?: PlanDay[]): PlanDay[] {
-  if (settings.revision === '9' && date >= settings.startDate) return resolveV9ProgramPlan(basePlan, settings, date, matchWeekend);
+  matchWeekend?: PlanDay[], options: MasterProgramResolutionOptions = {}): PlanDay[] {
+  if (settings.revision === '9' && date >= settings.startDate) {
+    if (!options.originalPrescription) return resolveV9ProgramPlan(basePlan, settings, date, matchWeekend);
+    return resolveV9PlanningBase(basePlan, settings, date, matchWeekend).map(day => ({
+      ...applyV9Clearance(day, settings.clearance),
+      ...(day.extraSession ? { extraSession: applyV9Clearance(day.extraSession, settings.clearance) } : {}),
+    }));
+  }
   const week = getMasterProgramWeek(settings.startDate, date);
   const withGuidance = (workout: PlanDay) => settings.clearance
     ? applyTrainingGuidance(workout, settings.clearance) : applyMasterClearance(workout);
@@ -670,7 +684,7 @@ export function resolveMasterProgramPlan(basePlan: PlanDay[], settings: MasterPr
       plan[6] = { ...plan[5], note: `Moved from Saturday by you. Complete this session once only, when recovered. ${plan[5].note}`.slice(0, 500) };
       plan[5] = v131Recovery('Lower Strength B was explicitly moved to Sunday. Recovery today; there is no second lower session to make up.');
     }
-    plan = plan.map((day, index) => v131PhasePlan(day, index, week, match));
+    if (!options.originalPrescription) plan = plan.map((day, index) => v131PhasePlan(day, index, week, match));
   } else if (v81) {
     const flags = settings.optional;
     const enabled = new Set([
@@ -682,17 +696,17 @@ export function resolveMasterProgramPlan(basePlan: PlanDay[], settings: MasterPr
       ...(flags?.primerSlam ? ['master-primer-slam'] : []),
     ]);
     plan = plan.map(day => ({ ...day, exercises: day.exercises.map(item => item.optionalWork && enabled.has(item.key) ? { ...item, optionalWork: false } : item) }));
-    plan = plan.map((day, index) => v81PhasePlan(day, index, week, match));
+    if (!options.originalPrescription) plan = plan.map((day, index) => v81PhasePlan(day, index, week, match));
   } else {
     if (settings.optional?.mondayArms) plan[0].exercises.push(...arms());
     if (settings.optional?.thursdayArms) plan[3].exercises.push(...arms(true));
     if (settings.optional?.tuesdayPogos && plan[1].extraSession) plan[1].extraSession.exercises.splice(2, 0, pogos());
-    plan = plan.map((day, index) => legacyPhasePlan(day, index, week, match));
+    if (!options.originalPrescription) plan = plan.map((day, index) => legacyPhasePlan(day, index, week, match));
   }
   const start = masterWeekStart(date);
   return plan.map((day, index) => {
     const currentDate = new Date(timestamp(start) + index * DAY).toISOString().slice(0, 10);
-    const readiness = settings.readiness?.find(item => item.date === currentDate)?.status;
+    const readiness = options.originalPrescription ? undefined : settings.readiness?.find(item => item.date === currentDate)?.status;
     const guarded = (workout: PlanDay) => withGuidance(applyMasterReadiness(workout, readiness));
     return { ...guarded(day), ...(day.extraSession ? { extraSession: guarded(day.extraSession) } : {}) };
   });

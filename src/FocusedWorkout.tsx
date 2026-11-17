@@ -97,6 +97,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
   const [allSetsOpen, setAllSetsOpen] = useState(false);
   const [movementsOpen, setMovementsOpen] = useState(false);
   const [reuseRevision, setReuseRevision] = useState(0);
+  const [undoActivation, setUndoActivation] = useState<{ exerciseKey: string; setId: string; version: number } | null>(null);
   const [layout, setLayout] = useState<'focus' | 'quick'>('focus');
   const [equipmentTarget, setEquipmentTarget] = useState<string | null>(null);
   const [bodyweightLoadShown, setBodyweightLoadShown] = useState(() => new Set<string>());
@@ -129,6 +130,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
     setSetId(first?.setId ?? null);
     setAllSetsOpen(false);
     setSetFeedback(null);
+    setUndoActivation(null);
     pendingCompletion.current = null;
     const exercise = exercises.find(entry => entry.key === first?.exerciseKey) ?? exercises[0];
     const targetId = first?.setId ?? exercise?.logs[0]?.id;
@@ -308,12 +310,15 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
     const undoTarget = lastCompletedTarget;
     if (!onUndoLast?.()) return false;
     pendingCompletion.current = null;
-    completionGate.reset();
+    // Undo is an explicit new intent for that exact set. Re-recording it should
+    // not need an extra Ready tap; auto-advance still never arms the next set.
+    completionGate.reset(undoTarget ? { sessionId, ...undoTarget } : undefined);
     updateCompletionState(value => value + 1);
     setSetFeedback(null);
     if (undoTarget) {
       setExerciseKey(undoTarget.exerciseKey);
       setSetId(undoTarget.setId);
+      setUndoActivation(previous => ({ exerciseKey: undoTarget.exerciseKey, setId: undoTarget.setId, version: (previous?.version ?? 0) + 1 }));
     }
     return true;
   }
@@ -374,7 +379,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
       {layout === 'quick' ? <QuickWorkoutLog sessionId={sessionId} exercises={exercises} previous={previous} onSet={onSet} onDone={onDone}
         onTimer={onTimer} onSelect={selectQuickSet} onInvalidChange={(id, invalid) => { if (invalid) invalidWeightInputs.current.add(id); else invalidWeightInputs.current.delete(id); }}
         onEquipment={onEquipmentChange ? key => setEquipmentTarget(key) : undefined} onUndoLast={onUndoLast ? undoLastSet : undefined}
-        canUndoLast={canUndoLast} athleteMode={athleteMode} now={now} editing={editing}
+        canUndoLast={canUndoLast} undoActivation={undoActivation} athleteMode={athleteMode} now={now} editing={editing}
         onLoadIncrementChange={onLoadIncrementChange} sessions={sessions} date={date} context={context} /> : <>
       <section className="focused-exercise" aria-label="Current exercise" ref={exerciseCard}>
         <div className="focused-stage-topline">
