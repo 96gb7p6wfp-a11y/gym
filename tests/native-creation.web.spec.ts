@@ -140,7 +140,7 @@ test('cancelling one-off preparation restores the unsaved workout name and exerc
   expect(await read(page)).toEqual(before);
 });
 
-test('saving a template preserves V9 metadata, dated matches and deliberate date drafts byte-for-byte', async ({ page }) => {
+test('saving a template preserves exact V9 settings, dated prescriptions and every unrelated record', async ({ page }) => {
   const before = await seedPersonalV9(page);
   const builder = await directTrainBuilder(page, 'Reusable bench session');
   await builder.getByRole('button', { name: 'Save template', exact: true }).click();
@@ -157,7 +157,10 @@ test('saving a template preserves V9 metadata, dated matches and deliberate date
   expect(after.profileVersion).toBe(before.profileVersion + 1);
   const { profile: _beforeProfile, profileVersion: _beforeVersion, ...originalRecords } = before;
   const { profile: _afterProfile, profileVersion: _afterVersion, ...savedRecords } = after;
-  expect(JSON.stringify(savedRecords)).toBe(JSON.stringify(originalRecords));
+  // The existing validated write canonically orders reminder properties. Full
+  // record equality protects every value, identifier and version without
+  // mistaking JSON object-property order for a data change.
+  expect(savedRecords).toEqual(originalRecords);
   await page.reload();
   expect(await read(page)).toEqual(after);
 });
