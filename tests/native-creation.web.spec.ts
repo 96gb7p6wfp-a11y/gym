@@ -162,6 +162,50 @@ test('saving a template preserves V9 metadata, dated matches and deliberate date
   expect(await read(page)).toEqual(after);
 });
 
+for (const fixture of [
+  { label: 'bench 60 kg against 70 kg history', useFactoryMovement: false, kg: 60, previousKg: 70, reps: 8 },
+  // V9's actual factory load is 2 kg. Matching this default still represents a
+  // deliberate saved-template choice; history must not silently replace it.
+  { label: 'V9 slam 2 kg matching its factory default against 3 kg history', useFactoryMovement: true, kg: 2, previousKg: 3, reps: 3 },
+] as const) {
+  test(`a saved template preserves its deliberate load: ${fixture.label}`, async ({ page }) => {
+    const before = await seedPersonalV9(page);
+    const source = fixture.useFactoryMovement ? createV9VolleyballMasterPlan()[0].exercises[0]
+      : before.profile.customWorkouts![0].exercises[0];
+    const exercise = { ...structuredClone(source), defaultKg: fixture.kg };
+    const template = { ...before.profile.customWorkouts![0], name: 'Deliberate saved load', exercises: [exercise] };
+    before.profile.customWorkouts = [template];
+    before.profile.plan[0] = { ...before.profile.plan[0], exercises: [structuredClone(exercise)] };
+    const previous = SessionSchema.parse(stopSessionTimers(createSession(template, 0, '2026-11-16', before.profile, []), 'completed'));
+    previous.startedAt = Date.parse('2026-11-16T10:00:00Z');
+    previous.finishedAt = previous.startedAt + 60 * 60_000; previous.elapsedMs = 60 * 60_000;
+    previous.exercises[0].logs.forEach(log => Object.assign(log, { done: true, kg: fixture.previousKg, reps: fixture.reps, rir: 2 }));
+    before.sessions = [{ session: previous, version: 1 }];
+    await page.evaluate(state => localStorage.setItem('setline.gym.v1', JSON.stringify(state)), before);
+    await page.reload();
+    await page.getByRole('tab', { name: 'Train', exact: true }).click();
+    await page.getByRole('button', { name: 'Next week', exact: true }).click();
+    await page.getByRole('button', { name: /^Mon / }).click();
+    await page.getByRole('button', { name: 'Saved workouts', exact: true }).click();
+    const saved = page.getByRole('dialog', { name: 'Choose workout', exact: true });
+    await saved.getByRole('button', { name: `Start ${template.name}`, exact: true }).click();
+    const warmup = page.getByRole('dialog', { name: 'Warm-up', exact: true });
+    await expect(warmup).toBeVisible();
+    expect(await raw(page)).toBe(JSON.stringify(before));
+    await warmup.getByRole('button', { name: 'Start workout', exact: true }).click();
+    const current = page.getByRole('region', { name: 'Current exercise', exact: true });
+    await expect(current.getByRole('textbox', { name: `${exercise.name} set 1 weight in kilograms`, exact: true })).toHaveValue(String(fixture.kg));
+    await expect(current.locator('.focused-exercise__previous')).toContainText(`${fixture.previousKg} kg × ${fixture.reps}`);
+    const after = await read(page);
+    const active = after.sessions.find((record: { session: { status: string } }) => record.session.status === 'active').session;
+    expect(active).toMatchObject({ name: template.name, date: '2026-11-23' });
+    expect(active.exercises[0].logs.every((log: { kg: number; done: boolean; inputSources: { kg: string } }) => log.kg === fixture.kg && !log.done && log.inputSources.kg === 'manual')).toBe(true);
+    expect(after.profile).toEqual(before.profile);
+    expect(after.profileVersion).toBe(before.profileVersion);
+    expect(after.sessions.filter((record: { session: { status: string } }) => record.session.status === 'completed')).toEqual(before.sessions);
+  });
+}
+
 for (const viewport of [{ width: 320, height: 640 }, { width: 390, height: 844 }, { width: 1194, height: 834 }]) {
   test(`direct search Add creates one editable template without a detail screen or duplicate Save at ${viewport.width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize(viewport);
