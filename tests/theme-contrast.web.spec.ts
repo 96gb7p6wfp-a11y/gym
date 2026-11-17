@@ -69,8 +69,7 @@ test('dark controls keep contrast on hover and while movement and rest timers ru
   await calendar.hover();
   await expectReadable(calendar);
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
-  await openDisclosure(page, 'Workout options');
-  const choose = page.getByRole('button', { name: 'Choose workout', exact: true });
+  const choose = page.getByRole('button', { name: 'Saved workouts', exact: true });
   await choose.hover();
   await expectReadable(choose);
 

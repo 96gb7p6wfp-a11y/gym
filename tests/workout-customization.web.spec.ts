@@ -90,7 +90,7 @@ test('creates and edits a reusable workout with decimal defaults without changin
   await builder.locator('.builder-exercise-options > summary').click();
   await builder.getByLabel('Target RPE', { exact: true }).fill('7.5');
   await builder.getByRole('textbox', { name: 'Technique / pairing notes', exact: true }).fill('Keep two clean reps in reserve.');
-  await builder.getByRole('button', { name: 'Save workout', exact: true }).click();
+  await builder.getByRole('button', { name: 'Save template', exact: true }).click();
   await expect(builder).not.toBeVisible();
   const saved = await state(page);
   expect(saved.profile.plan).toEqual(originalPlan);
@@ -106,7 +106,7 @@ test('creates and edits a reusable workout with decimal defaults without changin
   await edit.getByRole('button', { name: 'Edit Goblet Squat', exact: true }).click();
   await expect(edit.getByRole('textbox', { name: 'Goblet Squat starting weight in kilograms', exact: true })).toHaveValue('12.5');
   await edit.getByLabel('Target', { exact: true }).fill('10–12 reps');
-  await edit.getByRole('button', { name: 'Save workout', exact: true }).click();
+  await edit.getByRole('button', { name: 'Save template', exact: true }).click();
   await expect(edit).not.toBeVisible();
   const updated = (await state(page)).profile.customWorkouts[0];
   expect(updated.id).toBe(workout.id);
@@ -119,12 +119,12 @@ test('blocks invalid exercise prescriptions and cancels without changing saved d
   const builder = await createWorkout(page, 'Quick strength');
   const weight = builder.getByRole('textbox', { name: 'Goblet Squat starting weight in kilograms', exact: true });
   await weight.fill('12..5');
-  await builder.getByRole('button', { name: 'Save workout', exact: true }).click();
+  await builder.getByRole('button', { name: 'Save template', exact: true }).click();
   await expect(builder.getByRole('alert')).toContainText('starting weight');
   expect((await state(page)).profile.customWorkouts ?? []).toHaveLength(0);
   await weight.fill('12.5');
   await builder.getByLabel('Sets', { exact: true }).fill('21');
-  await builder.getByRole('button', { name: 'Save workout', exact: true }).click();
+  await builder.getByRole('button', { name: 'Save template', exact: true }).click();
   await expect(builder).toBeVisible();
   expect((await state(page)).profile.customWorkouts ?? []).toHaveLength(0);
   await builder.getByLabel('Sets', { exact: true }).fill('3');
@@ -165,7 +165,7 @@ test('edits a planned day with library replacement, ordering and removal while r
 
 test('swaps planned days, schedules saved workouts and restores recommendations without deleting templates', async ({ page }) => {
   const builder = await createWorkout(page, 'Extra upper');
-  await builder.getByRole('button', { name: 'Save workout', exact: true }).click();
+  await builder.getByRole('button', { name: 'Save template', exact: true }).click();
   await expect(builder).not.toBeVisible();
   const template = (await state(page)).profile.customWorkouts[0];
   await openPlan(page);
@@ -220,9 +220,9 @@ test('starting a custom workout uses its decimal prescription and leaves the rec
   await builder.getByLabel('Planned minutes', { exact: true }).fill('35');
   await builder.getByRole('textbox', { name: 'Goblet Squat starting weight in kilograms', exact: true }).fill('12.5');
   await builder.getByLabel('Sets', { exact: true }).fill('2');
-  await builder.getByRole('button', { name: 'Save workout', exact: true }).click();
+  await builder.getByRole('button', { name: 'Save template', exact: true }).click();
   await expect(builder).not.toBeVisible();
-  await page.getByRole('button', { name: 'Use custom workout Quick legs', exact: true }).click();
+  await page.getByRole('button', { name: 'Start Quick legs', exact: true }).click();
   await finishWarmup(page);
   const current = page.getByRole('region', { name: 'Current exercise', exact: true });
   await expect(current.getByRole('heading', { name: 'Goblet Squat', exact: true })).toBeVisible();
@@ -304,7 +304,7 @@ test('saves readiness and an active session as a reusable workout without copyin
   await options.getByRole('button', { name: 'Save as custom workout', exact: true }).click();
   const builder = page.getByRole('dialog', { name: 'Create workout', exact: true });
   await builder.getByLabel('Workout name', { exact: true }).fill('Upper on the go');
-  await builder.getByRole('button', { name: 'Save workout', exact: true }).click();
+  await builder.getByRole('button', { name: 'Save template', exact: true }).click();
   await expect(builder).not.toBeVisible();
   const template = (await state(page)).profile.customWorkouts[0];
   expect(template.name).toBe('Upper on the go');
