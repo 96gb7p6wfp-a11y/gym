@@ -117,7 +117,7 @@ export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacement
   function row(item: LibraryExercise, tradeoff?: string) {
     const direct = quickAdd && !browseOnly && !replacementFor && !!onSelect;
     return <li className={`exercise-library__item${direct ? ' exercise-library__item--quick-add' : ''}`} key={item.id}>
-      <button className="exercise-library__select" type="button" data-exercise-id={item.id} aria-label={`${browseOnly ? 'View' : 'Select'} ${item.name}`} aria-pressed={wide ? selected?.id === item.id : undefined} onClick={() => showDetails(item)}>
+      <button className="exercise-library__select" type="button" data-exercise-id={item.id} aria-label={`${browseOnly ? 'View' : 'Select'} ${item.name}`} aria-description={direct ? 'Open the optional exercise guide. Use the adjacent Add button to add directly.' : undefined} aria-pressed={wide ? selected?.id === item.id : undefined} onClick={() => showDetails(item)}>
         <ExerciseMedia exercise={item.id} thumbnail />
         <span className="exercise-library__row-copy"><strong>{item.name}</strong><span>{tradeoff ?? item.muscles.join(' · ')}</span></span>
         <ChevronRight size={16} aria-hidden="true" />
@@ -147,7 +147,7 @@ export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacement
         </> : <div className="exercise-library__index">
           <DialogHeader className="exercise-library__header">
             <DialogTitle className="exercise-library__title">{title ?? (browseOnly ? 'Exercises' : replacementFor ? 'Replace exercise' : 'Add exercise')}</DialogTitle>
-            <DialogDescription className="sr-only">{replacementFor ? 'Find a similar movement for your workout.' : 'Search movements and open a technique guide.'}</DialogDescription>
+            <DialogDescription className="sr-only">{replacementFor ? 'Find a similar movement for your workout.' : quickAdd ? 'Search and add a movement directly. Technique guides are optional.' : 'Search movements and open a technique guide.'}</DialogDescription>
           </DialogHeader>
           <div className="exercise-library__search"><Search size={19} aria-hidden="true" />
             <input type="search" aria-label="Search exercises" placeholder="Search exercises" value={query} onChange={event => { setQuery(event.target.value); setLimit(30); }} autoComplete="off" autoCorrect="off" spellCheck={false} />
@@ -171,7 +171,7 @@ export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacement
           {suggested.length > 0 && <section className="exercise-library__section" aria-label="Suggested alternatives"><h3>Closest alternatives</h3><ul>{suggested.map(item => row(item.exercise, item.tradeoff))}</ul></section>}
           {recentSuggestions.length > 0 && <section className="exercise-library__section" aria-label="Recently used exercises"><h3>Recently used</h3><ul>{recentSuggestions.map(item => row(item))}</ul></section>}
           <section className="exercise-library__section" aria-label="Exercise results">
-            {(filtered || suggested.length > 0) && <h3>{filtered ? `${remaining.length} ${remaining.length === 1 ? 'exercise' : 'exercises'}` : 'All movements'}</h3>}
+            {(filtered || suggested.length > 0 || recentSuggestions.length > 0) && <h3>{filtered ? `${remaining.length} ${remaining.length === 1 ? 'exercise' : 'exercises'}` : 'All movements'}</h3>}
             {remaining.length ? <ul>{remaining.slice(0, limit).map(item => row(item))}</ul> : <p className="exercise-library__empty">No matches.<span>Try another name or clear a filter.</span></p>}
             {remaining.length > limit && <button className="exercise-library__more" type="button" onClick={() => setLimit(value => value + 30)}>Show more</button>}
           </section>
