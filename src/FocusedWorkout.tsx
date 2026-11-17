@@ -9,7 +9,8 @@ import type { TimedSetAction } from './timed-sets';
 import { findTrainingPair, firstUnfinishedStep, nextStepAfterCompletion, restAfterCompletedSet, type SupersetLink } from './training-flow';
 import './focused-workout.css';
 import { findLibraryExercise } from './exercise-library';
-import { getProgressionRecommendation, type ProgressionContext } from './performance-insights';
+import type { ProgressionContext } from './performance-insights';
+import { useExerciseProgression } from './useExerciseProgression';
 import { ProgressionCue } from './ProgressionCue';
 import type { ReportSession } from './weekly-report';
 import { completedSetCue, setQualityCue } from './set-encouragement';
@@ -87,9 +88,10 @@ export interface FocusedWorkoutProps {
 
 const amount = (raw: string, maximum: number) => raw.trim() === ''
   ? null : Math.min(maximum, Math.max(0, Number(raw.replace(',', '.')) || 0));
+const EMPTY_HISTORY: readonly ReportSession[] = Object.freeze([]);
 
 /** The existing session mutations remain the only source of workout data. */
-export function FocusedWorkout({ sessionId, editing = false, exercises, now, previous, onSet, onDone, onUndoLast, canUndoLast = false, lastCompletedTarget, onTimer, renderAllSets, sessions = [], date = new Date().toISOString().slice(0, 10), context, onExerciseAction, athleteMode = true, onEquipmentChange, onLoadIncrementChange }: FocusedWorkoutProps) {
+export function FocusedWorkout({ sessionId, editing = false, exercises, now, previous, onSet, onDone, onUndoLast, canUndoLast = false, lastCompletedTarget, onTimer, renderAllSets, sessions = EMPTY_HISTORY, date = new Date().toISOString().slice(0, 10), context, onExerciseAction, athleteMode = true, onEquipmentChange, onLoadIncrementChange }: FocusedWorkoutProps) {
   const initialStep = firstUnfinishedStep(exercises);
   const initialExercise = exercises.find(exercise => exercise.key === initialStep?.exerciseKey) ?? exercises[0];
   const [exerciseKey, setExerciseKey] = useState(initialExercise?.key);
@@ -187,7 +189,8 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
 
   const exerciseIndex = exercises.findIndex((exercise) => exercise.key === exerciseKey);
   const exercise = exercises[exerciseIndex] ?? initialExercise;
-  if (!exercise) return null;
+  const recommendation = useExerciseProgression(exercise, sessions, date, context);
+  if (!exercise || !recommendation) return null;
   const log = exercise.logs.find((entry) => entry.id === setId)
     ?? exercise.logs.find((entry) => !entry.done) ?? exercise.logs[0];
   if (!log) return null;
@@ -201,8 +204,6 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
   const canCopyLast = lastSet && (lastSet.patch.kg !== log.kg || lastSet.patch.reps !== log.reps);
   const hasLastSetSuggestion = !log.done && Object.values(log.inputSources ?? {}).includes('last-set');
   const libraryExercise = findLibraryExercise(exercise);
-  const recommendation = getProgressionRecommendation(exercise, sessions, date,
-    { ...context, loadIncrementKg: exerciseLoadIncrement(exercise), ...(exercise.preparationOnly ? { lowFatigueSession: true } : {}) });
   const qualityCue = setQualityCue({ ...exercise, category: libraryExercise?.category },
     exercise.preparationOnly || recommendation.kind === 'reduce' || context?.lowFatigueSession
       || context?.readiness?.energy === 'low' || context?.readiness?.soreness === 'high');

@@ -14,7 +14,8 @@ import { ReactionCue } from './ReactionCue';
 import { LoadStepControl } from './LoadStepControl';
 import { adjustedWorkoutLoad, exerciseLoadIncrement, plannedRepetitions } from './workout-input-steps';
 import { ProgressionCue } from './ProgressionCue';
-import { getProgressionRecommendation, type ProgressionContext } from './performance-insights';
+import type { ProgressionContext } from './performance-insights';
+import { useExerciseProgression } from './useExerciseProgression';
 import type { ReportSession } from './weekly-report';
 import './quick-workout-log.css';
 
@@ -197,8 +198,8 @@ function QuickExercise(props: QuickWorkoutLogProps & { exercise: FocusedExercise
   const prior = previous(exercise)?.exercise;
   const inMinutes = /\bmin(?:ute)?s?\b/i.test(exercise.target);
   const quantityLabel = timed ? inMinutes ? 'Minutes' : 'Seconds' : exercise.quantityUnit === 'm' ? 'Metres' : 'Reps';
-  const recommendation = getProgressionRecommendation(exercise, props.sessions ?? [], props.date ?? new Date().toISOString().slice(0, 10),
-    { ...props.context, loadIncrementKg: exerciseLoadIncrement(exercise), ...(exercise.preparationOnly ? { lowFatigueSession: true } : {}) });
+  const recommendation = useExerciseProgression(exercise, props.sessions,
+    props.date ?? new Date().toISOString().slice(0, 10), props.context);
 
   function toggleLoad() {
     if (loadOpen && invalidLoads.current.size) {
