@@ -487,18 +487,12 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                 {log.done ? <RotateCcw size={19} aria-hidden="true" /> : <Check size={20} aria-hidden="true" />}
                 {log.done ? 'Undo set' : 'Complete set'}
               </button>
-              {hasLastSetSuggestion && <p className="focused-draft-suggestion" aria-label="Current set suggestion">Last-set suggestion · editable</p>}
+              {hasLastSetSuggestion && <p className="focused-draft-suggestion" aria-label="Current set suggestion">{completionReady ? 'Last-set suggestion · editable' : 'Last-set suggestion · review, then tap Ready'}</p>}
               {!editing && setFeedback && <p className="focused-completion-receipt" role="status" aria-label="Set completion" aria-atomic="true">
                 <Check size={16} aria-hidden="true" /><span>{setFeedback.receipt}</span>
               </p>}
               {optionalLoad && !showWeight && <button type="button" className="focused-load-toggle text-button"
                 aria-label={`Add weight to ${exercise.name}`} onClick={revealAddedLoad}>Add weight · optional</button>}
-              {athleteMode && !log.done && exercise.mode !== 'timed' && inputKind !== 'distance' && <div className="focused-rir" role="group" aria-label="Quick reps in reserve">
-                <span>Reps in reserve · optional <button type="button" className="focused-rir-clear" aria-label="Clear reps in reserve" aria-pressed={log.rir == null} onClick={() => editSet({ rir: null })}>Clear</button></span>
-                <div>{[0, 1, 2, 3, 4, 5].map(rir => <button key={rir} type="button" aria-label={`${rir} reps in reserve`} aria-pressed={log.rir === rir}
-                  onClick={() => editSet({ rir })}>{rir}</button>)}
-                </div>
-              </div>}
               <div className="focused-exercise__set-selector" role="group" aria-label={`Sets for ${exercise.name}`}>
                 {exercise.logs.map((entry, index) => (
                   <button type="button" key={entry.id} className={`${entry.id === log.id ? ' is-current' : ''}${entry.done ? ' is-done' : ''}`}
@@ -532,6 +526,11 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
               {reuse && <p className="small-note">Previous workout · {reuse.date}. Reuse copies a draft for this set; it does not record today's work.</p>}
             </details>
             {inputKind !== 'distance' && (!log.done || !athleteMode) && <details className="focused-effort"><summary>{athleteMode ? 'Effort' : 'Effort & advanced'} <span>{log.rir == null ? 'Optional' : `${log.rir} reps in reserve`}</span></summary>
+              {athleteMode && !log.done && exercise.mode !== 'timed' && <div className="focused-rir" role="group" aria-label="Quick reps in reserve">
+                <span>Reps in reserve · optional <button type="button" className="focused-rir-clear" aria-label="Clear reps in reserve" aria-pressed={log.rir == null} onClick={() => editSet({ rir: null })}>Clear</button></span>
+                <div>{[0, 1, 2, 3, 4, 5].map(rir => <button key={rir} type="button" aria-label={`${rir} reps in reserve`} aria-pressed={log.rir === rir}
+                  onClick={() => editSet({ rir })}>{rir}</button>)}</div>
+              </div>}
               {!log.done && <label className="field-label">Reps in reserve<input type="number" min="0" max="10" step="1" inputMode="numeric" aria-label={`${exercise.name} set ${setIndex + 1} reps in reserve`} value={log.rir ?? ''} onChange={event => editSet({ rir: event.target.value === '' ? null : Math.min(10, Math.max(0, Number(event.target.value))) })} /></label>}
               <p className="small-note">RIR: How many more reps you could complete.</p>
               {!athleteMode && <><p className="small-note">RPE: How hard the effort felt.{exercise.targetRpe ? ` Planned effort: ${exercise.targetRpe}.` : ''}</p>

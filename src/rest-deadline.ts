@@ -3,6 +3,16 @@ export const REST_DEADLINE_KEY = 'setline.rest-deadline.v1';
 const MAX_REST_AGE = 24 * 60 * 60 * 1000;
 type TimerStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
+/** Shift the existing absolute deadline, never restart a full prescribed rest.
+ * Callers must supply their latest authoritative deadline (for example a ref)
+ * so consecutive gestures cannot overwrite an earlier manual adjustment.
+ */
+export function adjustRestDeadline(deadline: number | null, deltaSeconds: number, now = Date.now()): number | null {
+  if (deadline === null || !Number.isSafeInteger(deadline) || !Number.isSafeInteger(now) || deadline < 0 || now < 0) return null;
+  if (!Number.isSafeInteger(deltaSeconds) || Math.abs(deltaSeconds) > MAX_REST_AGE / 1000) return deadline;
+  return Math.min(now + MAX_REST_AGE, Math.max(now, deadline + deltaSeconds * 1000));
+}
+
 export function readRestDeadline(storage: TimerStorage, now = Date.now()): number | null {
   try {
     const raw = storage.getItem(REST_DEADLINE_KEY);
