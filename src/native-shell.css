@@ -79,6 +79,8 @@ html[data-input-modality='pointer'] .native-tabbar .app-nav-item:focus { outline
 .workout-template-actions>summary { display:flex; justify-content:space-between; align-items:center; min-height:48px; color:var(--sub); font-size:13px; list-style:none; }
 .workout-template-actions>summary::after { content:'+'; font-size:18px; } .workout-template-actions[open]>summary::after { content:'−'; }
 .workout-template-options { display:flex; justify-content:space-between; gap:12px; padding:0 0 12px; }
+.workout-template-shortcuts { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 12px; }
+.workout-template-shortcuts .text-button { min-height:44px; padding:8px 12px; display:inline-flex; align-items:center; gap:6px; }
 .planned-section { position:relative; margin-top:8px; border:0; }
 .planned-preview { margin:0; border:0; background:transparent; }
 .planned-section>.planned-edit { position:absolute; top:4px; right:0; font-size:13px; }
