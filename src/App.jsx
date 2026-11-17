@@ -924,7 +924,7 @@ function GymApp({
     if (context.protectedDraft || context.transient) setProtectedPreparation(draft);
     else if (!(await saveDayDraft(plan, { date: context.date, slot: context.slot, override: draft.warmupOverride }))) return false;
     setWarmupContext({ date: context.date, day: context.day, slot: context.slot, protectedDraft: context.protectedDraft,
-      transient: context.transient, guidanceAtPreparation: context.guidanceAtPreparation, customWorkout: context.customWorkout });
+      transient: context.transient, guidanceAtPreparation: context.guidanceAtPreparation, customWorkout: context.customWorkout, templateWorkout: context.templateWorkout });
     return true;
   }
   async function startMainWorkout(options = {}, prepared = null) {
@@ -979,7 +979,7 @@ function GymApp({
         if (exercise.preparationOnly) return { ...exercise, logs: exercise.logs.map(log => ({ ...log, kg: exercise.defaultKg ?? 0,
           inputSources: { ...log.inputSources, kg: 'planned' } })) };
         if (!hasDeliberatePlannedLoad(exercise, standardDay?.exercises.find(row => row.key === exercise.key),
-          draft.customized !== false || plan.customizedForProgram === '9')) return exercise;
+          draft.customized !== false || context.templateWorkout || plan.customizedForProgram === '9')) return exercise;
         return { ...exercise, logs: exercise.logs.map(log => ({ ...log, kg: exercise.defaultKg, inputSources: { ...log.inputSources, kg: 'manual' } })) };
       });
       const savedSession = SessionSchema.parse(session);
@@ -1371,7 +1371,7 @@ function GymApp({
     // Starting a template makes a transient session, never a date edit or a
     // recurring-plan update. Cancelling preparation leaves those sources intact.
     const started = await beginWorkoutPreparation({ date: selectedDate, day: selectedDay, slot: selectedSlot,
-      plan, transient: true, guidanceAtPreparation: guidance,
+      plan, transient: true, templateWorkout: true, guidanceAtPreparation: guidance,
       ...(returnToBuilder ? { customWorkout: structuredClone(workout) } : {}) }, false);
     if (started) { setWorkoutChooserOpen(false); setTab('train'); }
     return started;
