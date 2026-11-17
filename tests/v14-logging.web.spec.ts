@@ -110,7 +110,7 @@ test('effort stays secondary until requested and its value survives closing, swi
   await expect(focus.getByRole('group', { name: 'Quick reps in reserve', exact: true })).toHaveCount(0);
   const effort = await openEffort(page);
   await expect(focus.getByRole('group', { name: 'Quick reps in reserve', exact: true })).toBeVisible();
-  expect(await raw()).toBe(before, 'opening secondary information is read-only');
+  expect(await raw(), 'opening secondary information is read-only').toBe(before);
   await focus.getByRole('button', { name: '3 reps in reserve', exact: true }).click();
   await effort.locator(':scope > summary').click();
   await expect(effort.locator(':scope > summary')).toContainText('3 reps in reserve');
@@ -147,7 +147,7 @@ test('consecutive rest adjustments accumulate on the saved deadline and Skip sur
   await page.reload(); await page.getByRole('tab', { name: 'Train', exact: true }).click();
   expect(await deadline()).toBe(originalDeadline);
   await expect(page.locator('.rest-floating')).toHaveCount(1);
-  expect((await saved(page)).find((row: any) => row.session.id === active.id)).toEqual(before, 'adjusting rest does not mutate a logged set');
+  expect((await saved(page)).find((row: any) => row.session.id === active.id), 'adjusting rest does not mutate a logged set').toEqual(before);
   await page.getByRole('button', { name: 'Skip rest', exact: true }).click();
   await expect(page.locator('.rest-floating')).toHaveCount(0);
   expect(await deadline()).toBe(null);
