@@ -15,7 +15,7 @@ Feature branch: `codex/trustworthy-training`.
 - [x] Commit workout completion before reporting success; retain retry on failure.
 - [x] Provide explicitly claimed, validated rest/Undo continuation in a new window.
 - [x] Tighten existing deterministic progression instead of adding a second coach.
-- [ ] Finish complete validation and record exact results in VALIDATION.md.
+- [x] Finish complete validation and record exact full-run / rerun results in VALIDATION.md.
 
 ## Architecture and lifecycle
 
@@ -170,3 +170,27 @@ thumb reach and locked-screen audio cannot be established by Chromium emulation.
 Browser process/storage behavior still has platform limits. Export remains a
 local action, not proof of external safekeeping. Cloud sync, Apple Watch, social,
 gamification, generative coaching and unrelated feature expansions are deferred.
+Fresh-window tests use independent sessionStorage, not a browser's Duplicate tab
+command that may clone it. Duplicated-tab alarm ownership needs separate browser
+validation; these tests do not establish that behavior.
+
+## Measured large-history limit and safe persistence follow-up
+
+The final Chromium run includes 1,000/5,000/10,000 completed sets. In its single
+10,000-set observation, the primary input write took about 135 ms and the input
+paint about 276 ms (390×844, Chromium 151, two concurrent workers). Those are
+cloud measurements, not phone results or a controlled before/after comparison.
+The existing whole-store localStorage write has a real scaling cost; immediate
+persistence prioritizes the recorded edit over the old debounce-only window.
+Do not claim sustained native-speed input at this size or unlimited device storage.
+
+An incremental IndexedDB follow-up should keep the existing workout/profile
+models and portable backup format. First export and validate a recoverable v1
+snapshot, copy records into versioned object stores without deleting the source,
+validate IDs/counts/content and the restore generation, and only then enable a
+transactional read/write bridge. Existing installations need an explicit reviewed
+activation and a retained recovery copy. Validate interrupted copies, quota and
+transaction failures, cross-window writes, restart/resume, rollback and identical
+export/restore before retiring any compatibility path. Do not erase history to
+make performance charts or benchmarks appear faster. This architecture is a
+proposal; no IndexedDB migration or cloud synchronization is implemented here.

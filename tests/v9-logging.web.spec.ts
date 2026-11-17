@@ -170,13 +170,17 @@ test('V9 rapid repeated completion records one real strength set and Undo retain
   const weight = current(page).getByRole('textbox', { name: 'Romanian Deadlift set 1 weight in kilograms', exact: true });
   await expect(weight).toHaveValue('55');
   await weight.fill('60');
+  // Reuse and the explicit edit are now immediately durable, independently of
+  // completion. The burst must add exactly one version to that saved draft.
+  await expect.poll(async () => (await active(page)).session.exercises.find((exercise: { name: string }) => exercise.name === 'Romanian Deadlift').logs[0].kg).toBe(60);
+  const beforeCompletion = await active(page);
   const target = current(page).getByRole('button', { name: 'Complete Romanian Deadlift set 1', exact: true });
   await target.evaluate(button => { for (let index = 0; index < 10; index++) button.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
   let record = await active(page);
   const rdl = record.session.exercises.find((exercise: { name: string }) => exercise.name === 'Romanian Deadlift');
   expect(rdl.logs.map((log: { done: boolean }) => log.done)).toEqual([true, false, false]);
   expect(rdl.logs[1]).toMatchObject({ kg: 60, reps: 6, done: false, inputSources: { kg: 'last-set', reps: 'last-set' } });
-  expect(record.version).toBe(2);
+  expect(record.version).toBe(beforeCompletion.version + 1);
   await expect(page.locator('.rest-floating')).toHaveCount(1);
   await page.getByRole('button', { name: 'Undo last set', exact: true }).click();
   record = await active(page);
