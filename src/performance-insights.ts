@@ -155,8 +155,8 @@ export function getProgressionRecommendation(exercise: ProgressionExercise, sess
   };
   if (/trap.?bar.*deadlift/i.test(exercise.name) && history.length < 2) return {
     ...base, kind: 'quality', title: 'Technique first',
-    cue: 'Practice the unloaded hinge, then the 20 kg empty bar. Build consistent, pain-free reps before adding load.',
-    reason: 'This is an unfamiliar lift. Replace the leg press rather than adding another heavy movement.',
+    cue: 'Follow your planned load and warm-up. If the lift is unfamiliar, rehearse the hinge and check the actual empty bar weight with a coach before loading it.',
+    reason: 'Fewer than two comparable sessions are recorded. Missing logs do not establish your experience or justify changing your exercise selection.',
   };
   if (exercise.mode === 'timed') return { ...base, kind: 'quality', title: 'Own the full interval', cue: 'Keep the planned time with a steady position.', reason: 'Add time only when every interval stays controlled.' };
   const range = repRange(exercise.target);
@@ -179,7 +179,9 @@ export function getProgressionRecommendation(exercise: ProgressionExercise, sess
     kg: best.kg ?? undefined, reps: Math.max(range[0], Math.min(range[1], best.reps!)), reason: 'Volleyball is within 24 hours; avoid chasing lower-body fatigue.',
   };
   const recent = history.slice(-2);
-  const requiredRir = Math.max(1, Math.floor(exercise.targetRir ?? 2));
+  // Honor an explicitly prescribed fractional reserve. An RPE prescription
+  // supplies an equivalent target only; it never invents the athlete's effort.
+  const requiredRir = Math.max(1, exercise.targetRir ?? (exercise.targetRpe != null ? 10 - exercise.targetRpe : 2));
   const fullUpperRange = recent.length === 2 && recent[0].sessionId !== recent[1].sessionId && recent.every(item => item.exercise.logs.length >= (exercise.sets ?? 1) && item.exercise.logs.every(log => log.done && log.kg === best.kg && positive(log.reps) && log.reps >= range[1] && validRir(log.rir) && log.rir >= requiredRir));
   if (fullUpperRange && exercise.mode === 'weight' && positive(best.kg)) {
     const increment = validLoadIncrement(context.loadIncrementKg) ? context.loadIncrementKg : exerciseLoadIncrement(exercise);
@@ -193,6 +195,7 @@ export function getProgressionRecommendation(exercise: ProgressionExercise, sess
     }
   }
   const easy = latest!.logs.length >= (exercise.sets ?? 1) && latest!.logs.every(log => log.done && positive(log.reps)
+    && log.reps >= range[0] && log.reps <= range[1] && log.kg === best.kg
     && (exercise.mode === 'bodyweight' || positive(log.kg)) && validRir(log.rir) && log.rir >= requiredRir);
   if (easy && best.reps! < range[1]) return {
     ...base, previous: previousLabel, kind: 'reps', title: `${best.kg == null ? '' : `${number(best.kg)} kg × `}${best.reps! + 1} reps`,
