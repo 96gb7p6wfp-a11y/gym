@@ -196,3 +196,16 @@ summary::-webkit-details-marker { display:none; }
  .page-heading h1 { font-size:30px; }
 }
 @media(prefers-reduced-motion:no-preference) { .btn,.icon-button { transition:transform 100ms ease; } }
+
+/* On touch phones, an opaque iOS-style tab capsule avoids repainting a
+   full-screen backdrop blur on every scroll frame. No layout or tab changes. */
+@media (max-width:767px) and (pointer:coarse) {
+  .app-shell .native-tabbar {
+    background:var(--surface);
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
+}
+@media (hover:none) and (pointer:coarse) {
+  .btn:hover,.btn.lime:hover { filter:none; }
+}
