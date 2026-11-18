@@ -85,6 +85,24 @@ test('offline cold launch supports all tabs, logging, Undo, refresh, finish and 
     await current.getByRole('region', { name: 'Your day', exact: true }).getByRole('button', { name: 'Start workout', exact: true }).click();
     await startAlreadyWarmed(current);
     await expect(focus(current)).toContainText('55 kg × 8');
+    // This is the first guide visit in a new page after going offline. Its
+    // optional UI chunk must come from the installed shell, not a warm module.
+    const beforeGuide = await current.evaluate(key => localStorage.getItem(key), STORE);
+    const guideTrigger = focus(current).getByRole('button', { name: `Exercise details for ${NAME}`, exact: true });
+    await expect(guideTrigger).toHaveAttribute('aria-expanded', 'false');
+    await guideTrigger.click();
+    const guide = current.getByRole('dialog', { name: NAME, exact: true });
+    await expect(guide.getByRole('heading', { name: 'Equipment', exact: true })).toBeVisible();
+    await expect(guide.locator('.exercise-guide__technique')).toContainText('rack safeties');
+    await expect(guide.locator('.exercise-guide__technique')).toContainText('wrists over forearms');
+    await expect(guide.getByRole('link', { name: 'Search Google', exact: true })).toHaveAttribute('href', /google\.com\/search/);
+    await expect(guide.getByRole('link', { name: 'YouTube Demonstration', exact: true })).toHaveAttribute('href', /youtube\.com\/(?:results|watch)/);
+    await guide.getByRole('button', { name: 'Close', exact: true }).click();
+    await expect(guide).toHaveCount(0);
+    await expect(guideTrigger).toBeFocused();
+    await expect(guideTrigger).toHaveAttribute('aria-expanded', 'false');
+    expect(await current.evaluate(key => localStorage.getItem(key), STORE)).toBe(beforeGuide);
+    await expect(focus(current).getByRole('button', { name: `Complete ${NAME} set 1`, exact: true })).toBeEnabled();
     await focus(current).getByRole('textbox', { name: `${NAME} set 1 weight in kilograms`, exact: true }).fill('60');
     await focus(current).getByRole('button', { name: `Complete ${NAME} set 1`, exact: true }).click();
     await expect(focus(current).getByRole('textbox', { name: `${NAME} set 2 weight in kilograms`, exact: true })).toHaveValue('60');
