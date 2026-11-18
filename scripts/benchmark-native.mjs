@@ -5,6 +5,7 @@ import { gzipSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
+import os from 'node:os';
 import { performanceFixture } from '../tests/v16-performance-fixture.ts';
 
 // This is an isolated localhost-only measurement driver, never a production
@@ -94,7 +95,7 @@ async function instrumentation(page) {
     Storage.prototype.setItem = function(key, value) {
       const start=performance.now(); const result=nativeSet.call(this,key,value);
       if (this === localStorage && key === 'setline.gym.v1' && metrics.phase) {
-        metrics.json.nativeWriteMs += performance.now()-start;
+        if (metrics.phase === 'input') metrics.json.nativeWriteMs += performance.now()-start;
         metrics.values[`${metrics.phase}Save`] ??= performance.now()-metrics.started;
       }
       return result;
@@ -112,7 +113,6 @@ async function instrumentation(page) {
   },NOW);
 }
 const metricMap = result => Object.fromEntries(result.metrics.map(item => [item.name,item.value]));
-function delta(after, before, name) { return after[name] >= (before[name] ?? 0) ? after[name]-(before[name] ?? 0) : after[name]; }
 async function startup(page, cdp, mode) {
   await cdp.send('Tracing.start',{categories:'devtools.timeline,v8,disabled-by-default-v8.compile',transferMode:'ReturnAsStream'});
   const before=metricMap(await cdp.send('Performance.getMetrics'));
@@ -126,6 +126,10 @@ async function startup(page, cdp, mode) {
     resources:performance.getEntriesByType('resource').filter(item => /\.js(?:\?|$)/.test(item.name)).map(item => ({ name:new URL(item.name).pathname,
       initiator:item.initiatorType, transferBytes:item.transferSize, encodedBodyBytes:item.encodedBodySize, decodedBodyBytes:item.decodedBodySize })) }));
   const after=metricMap(await cdp.send('Performance.getMetrics'));
+  // Chromium resets these duration counters at a new top-level navigation.
+  // A before/after subtraction can silently undercount the new document.
+  const counterEpochChanged=after.NavigationStart!==before.NavigationStart;
+  if(!counterEpochChanged || !Number.isFinite(after.ScriptDuration) || !Number.isFinite(after.TaskDuration)) throw new Error('Startup metrics did not establish a new document counter epoch.');
   const wire=serverEvents.slice(eventStart);
   const requestCount=serverRequests.length-requestStart;
   const traceReady=new Promise(resolve=>cdp.once('Tracing.tracingComplete',resolve));
@@ -141,10 +145,12 @@ async function startup(page, cdp, mode) {
   let compiled=0,lastEnd=-Infinity;for(const [start,end] of ranges){compiled+=Math.max(0,end-Math.max(start,lastEnd));lastEnd=Math.max(lastEnd,end);}
   const compileEvents=[...new Set(compile.map(item=>item.name))];
   return { ...observed, driverWallMs:performance.now()-begin,
-    pageScriptExecutionMs:delta(after,before,'ScriptDuration')*1000,
+    pageScriptExecutionMs:after.ScriptDuration*1000,
+    startupCounterEpoch:{changed:counterEpochChanged,beforeNavigationStart:before.NavigationStart,afterNavigationStart:after.NavigationStart,
+      beforeScriptSeconds:before.ScriptDuration,afterScriptSeconds:after.ScriptDuration,beforeTaskSeconds:before.TaskDuration,afterTaskSeconds:after.TaskDuration},
     observedV8CompileMs:compile.length?compiled/1000:null, compileTraceEventNames:compileEvents,
     pureJavaScriptParsingMs:null,
-    pageMainThreadTaskMs:delta(after,before,'TaskDuration')*1000,
+    pageMainThreadTaskMs:after.TaskDuration*1000,
     jsHeapUsedBytes:after.JSHeapUsedSize, jsHeapTotalBytes:after.JSHeapTotalSize,
     documentCount:after.Documents, domNodes:after.Nodes,
     observedServerJsBytes:wire.filter(item=>item.js).reduce((sum,item)=>sum+item.bytes,0),
@@ -152,19 +158,22 @@ async function startup(page, cdp, mode) {
     completedServerResponses:wire.length };
 }
 
-async function action(page, control, key, selector, input = false) {
-  await control.evaluate((element,{key,selector,input}) => {
+async function action(page, control, key, selector, input = false, expected = {}) {
+  await control.evaluate((element,{key,selector,input,expected}) => {
     // Radix tabs select on pointer-down, before click. Starting at click would
     // incorrectly report an already-rendered tab as a near-zero transition.
     const eventName=input ? 'input' : ['train','progress','you','today'].includes(key) ? 'pointerdown' : 'click';
     element.addEventListener(eventName, () => {
       const bench=window.__nativeBench; bench.phase=key; bench.started=performance.now();
+      if(key==='input') bench.json={parseMs:0,stringifyMs:0,parseCalls:0,stringifyCalls:0,nativeWriteMs:0};
       const painted=() => {
-        if (document.querySelector(selector)) bench.values[`${key}Paint`]=performance.now()-bench.started;
+        const node=document.querySelector(selector);
+        if (node && (expected.value===undefined || node.value===expected.value)
+          && (!expected.chart || node.querySelector('svg[role="img"]'))) bench.values[`${key}Paint`]=performance.now()-bench.started;
         else requestAnimationFrame(painted);
       }; requestAnimationFrame(painted);
     },{once:true,capture:true});
-  },{key,selector,input});
+  },{key,selector,input,expected});
   if (!input) await control.click();
 }
 async function waitValue(page,key) {
@@ -173,7 +182,7 @@ async function waitValue(page,key) {
 }
 async function readActive(page) { return page.evaluate(() => JSON.parse(localStorage.getItem('setline.gym.v1')).sessions.find(row=>row.session.status === 'active')); }
 
-async function workflow(page, cdp, filename) {
+async function workflow(page, cdp, filename, requireChart) {
   const result={};
   await action(page,page.getByRole('tab',{name:'Train',exact:true}),'train','[aria-label="Current exercise"]');
   result.trainPaintMs=await waitValue(page,'trainPaint');
@@ -181,7 +190,7 @@ async function workflow(page, cdp, filename) {
   const weight=page.getByRole('textbox',{name:`${name} set 1 weight in kilograms`,exact:true});
   await weight.waitFor();
   await cdp.send('Profiler.enable'); await cdp.send('Profiler.setSamplingInterval',{interval:1000}); await cdp.send('Profiler.start');
-  await action(page,weight,'input','input[aria-label="Machine Chest Press set 1 weight in kilograms"]',true);
+  await action(page,weight,'input','input[aria-label="Machine Chest Press set 1 weight in kilograms"]',true,{value:'57.5'});
   await weight.fill('57.5');
   result.inputPaintMs=await waitValue(page,'inputPaint'); result.inputSaveMs=await waitValue(page,'inputSave');
   await page.waitForFunction(() => JSON.parse(localStorage.getItem('setline.gym.v1')).sessions.find(row=>row.session.status === 'active').session.exercises[0].logs[0].kg === 57.5);
@@ -194,9 +203,10 @@ async function workflow(page, cdp, filename) {
   await action(page,complete,'complete','button[aria-label="View Machine Chest Press set 1, complete"]');
   result.completePaintMs=await waitValue(page,'completePaint'); result.completeSaveMs=await waitValue(page,'completeSave');
   const saved=await readActive(page);
-  if(saved.session.exercises[0].logs.filter(log=>log.done).length!==1) throw new Error('Completion did not target exactly one set.');
+  const completedLogs=saved.session.exercises.flatMap(exercise=>exercise.logs).filter(log=>log.done);
+  if(completedLogs.length!==1 || !saved.session.exercises[0].logs[0].done || saved.session.exercises[0].logs[0].kg!==57.5) throw new Error('Completion did not target exactly one intended set across the workout.');
   result.completedSet=saved.session.exercises[0].logs[0];
-  await action(page,page.getByRole('tab',{name:'Progress',exact:true}),'progress','.progress-overview');
+  await action(page,page.getByRole('tab',{name:'Progress',exact:true}),'progress','.progress-overview',false,{chart:requireChart});
   result.progressPaintMs=await waitValue(page,'progressPaint');
   result.progressChartPresent=await page.locator('.progress-overview svg[role="img"]').count();
   await action(page,page.getByRole('tab',{name:'You',exact:true}),'you','.workspace--menu');
@@ -271,7 +281,7 @@ try {
     const page=await context.newPage();page.setDefaultTimeout(15000);await instrumentation(page);
     const cdp=await context.newCDPSession(page);await cdp.send('Performance.enable');
     const cold=await startup(page,cdp,'cold');await installed(context,page);const warm=await startup(page,cdp,'warm');
-    const filename=path.join(output,`${count}-${sample}`);const interactions=await workflow(page,cdp,filename);
+    const filename=path.join(output,`${count}-${sample}`);const interactions=await workflow(page,cdp,filename,count>0);
     await page.close();await context.setOffline(true);const offline=await isolatedLaunch(context,'offline-cold');await context.setOffline(false);
     hangNavigation=true;const hanging=await isolatedLaunch(context,'hanging-network');
     const record={completedSets:count,completedWorkouts:current.data.completedWorkouts,sample,fixtureSha256:current.hash,cold,warm,interactions,offline,hanging};observations.push(record);
@@ -279,6 +289,6 @@ try {
     await context.close();
   }}
   const frames=await screenshots();
-  const report={label,revision,cacheId,distHtmlSha256:createHash('sha256').update(html).digest('hex'),browser:browser.version(),observedAt:new Date().toISOString(),conditions:{viewport:{width:390,height:844},deviceScaleFactor:1,locale:'en-GB',timezone:'Europe/Berlin',workers:1,cpuThrottling:false,networkCompression:false,fixtureProvisioningExcluded:true,server:'isolated localhost static server with optional document-request hang'},build:await buildSizes(dist),observations,frames};
+  const report={label,revision,harnessVersion:2,host:{platform:os.platform(),arch:os.arch(),logicalCpuCount:os.cpus().length,cpuModel:os.cpus()[0]?.model,totalMemoryBytes:os.totalmem()},cacheId,distHtmlSha256:createHash('sha256').update(html).digest('hex'),browser:browser.version(),observedAt:new Date().toISOString(),conditions:{viewport:{width:390,height:844},deviceScaleFactor:1,locale:'en-GB',timezone:'Europe/Berlin',workers:1,cpuThrottling:false,networkCompression:false,fixtureProvisioningExcluded:true,server:'isolated localhost static server with optional document-request hang'},build:await buildSizes(dist),observations,frames};
   await writeFile(path.join(output,'results.json'),JSON.stringify(report,null,2));console.log(`Benchmark complete: ${path.join(output,'results.json')}`);
 } finally { releaseHangs();await browser.close();await new Promise(resolve=>server.close(resolve)); }
