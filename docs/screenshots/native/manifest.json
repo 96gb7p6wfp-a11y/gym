@@ -7,10 +7,10 @@
     "browser": "151.0.7922.173"
   },
   "after": {
-    "revision": "73c2a8130bde125ffb649164b282d26a2146f321",
-    "observedAt": "2026-11-18T07:20:18.596Z",
-    "cacheId": "c9f5c8d6a117437c2a88",
-    "distHtmlSha256": "1df419230ac407a18038f83b6a12bfcb3fec043df3a1e59d93837c604aa6625e",
+    "revision": "ae6efff6d23a0df26dfd820d6d0548c442937d4a",
+    "observedAt": "2026-11-18T15:19:15.798Z",
+    "cacheId": "97c7ccee3df79a773bac",
+    "distHtmlSha256": "0bcb20ec8d4f8958329d245a7841ade40fd7c561b4b00faf4faacfac2037c4d6",
     "browser": "151.0.7922.173"
   },
   "frames": [
@@ -89,5 +89,6 @@
       "beforeSha256": "4a5630e921de2aef4987fe53a2ad8fda85f1692e374f4e15f1330ce9e8f5f91d",
       "afterSha256": "4a5630e921de2aef4987fe53a2ad8fda85f1692e374f4e15f1330ce9e8f5f91d"
     }
-  ]
+  ],
+  "afterRuntimeSource": "02ddc63"
 }

@@ -91,20 +91,30 @@ script duration never exceeded the corresponding total task duration. The
 runner exposed three logical CPUs on Linux x64, Chromium `151.0.7922.173`; no
 other build or browser suite ran during these measurement windows.
 
-The final app runtime is `73c2a81`; subsequent evidence-only/test commits do not
-change this build. The baseline/PR12 builds are immutable worktrees. The first
-native candidate's blanket lazy loading caused a 340.2 ms first Train opening
-in a 10,000-set probe; keeping the essential logger eager removed it. The next
-candidate added a roughly 300 ms first-Progress floor for sparse histories;
-keeping the lightweight overview eager removed that floor too. Heavy Recharts,
-optional guide sheets and secondary screens remain deferred. Those earlier
-implementation results are superseded, not mixed into the final medians.
+The final app runtime is `02ddc63`. The raw final report records the observed
+checkout `ae6efff`, whose later commit changes only a browser-test helper. The
+production build was created after the guide-trigger fix: the lightweight guide
+trigger is eager so optional guide loading cannot move the All Sets touch target;
+the heavy guide sheet, Recharts and secondary screens remain deferred. The
+baseline/PR12 builds are immutable worktrees. All earlier native measurements are
+superseded and excluded from these tables.
 
-| Source | Commit | Cache suffix | Captured UTC |
+The corrected baselines were captured around 07:05–07:07 UTC; the final native
+rerun occurred later the same day. Matching recorded host, browser, fixtures and
+settings does not remove elapsed-time or shared-host drift. These sequential
+windows are neither simultaneous nor interleaved comparisons.
+
+| Source | Observed commit | Cache suffix | Captured UTC |
 | --- | --- | --- | --- |
 | Main | 693265cc96c0 | 0c12b755da157bd1ac30 | 2026-11-18T07:05:29.103Z |
 | PR #12 only | 8e5f30d35166 | c178374091852999fd74 | 2026-11-18T07:07:41.106Z |
-| Final native | 73c2a8130bde | c9f5c8d6a117437c2a88 | 2026-11-18T07:20:18.596Z |
+| Final native | ae6efff6d23a | 97c7ccee3df79a773bac | 2026-11-18T15:19:15.798Z |
+
+| Source | Build HTML SHA-256 |
+| --- | --- |
+| Main | 85b899f4d100efa147e850b2be7774ea056ace9b91964161dda3c2a33092e3ef |
+| PR #12 only | cb17ff646aff31ecd70ac18f6e079bc6b81c4231076a2eaba3c5b0a19013e7e2 |
+| Final native | 0bcb20ec8d4f8958329d245a7841ade40fd7c561b4b00faf4faacfac2037c4d6 |
 
 Raw evidence: [main](performance/native/main-baseline.json),
 [PR #12 only](performance/native/pr12-baseline.json),
@@ -122,10 +132,10 @@ Gzip values are local estimates, not measured Vercel compression.
 
 | Bytes | Main | PR #12 only | Final native |
 | --- | --- | --- | --- |
-| Initial HTML-linked JS body | 1,350,752 | 1,361,603 | 1,134,477 |
-| Initial JS gzip estimate | 388,981 | 392,053 | 334,309 |
-| All generated JS bodies | 2,310,366 | 2,321,217 | 2,338,720 |
-| All JS gzip estimate | 610,145 | 613,222 | 629,506 |
+| Initial HTML-linked JS body | 1,350,752 | 1,361,603 | 1,134,304 |
+| Initial JS gzip estimate | 388,981 | 392,053 | 334,259 |
+| All generated JS bodies | 2,310,366 | 2,321,217 | 2,338,522 |
+| All JS gzip estimate | 610,145 | 613,222 | 629,437 |
 
 Initial JavaScript bodies decreased **16.0%**;
 the initial gzip estimate decreased **14.1%**.
@@ -139,31 +149,31 @@ not mislabeled as the page's critical JavaScript transfer.
 
 | Metric (ms) | Main | PR #12 only | Final native |
 | --- | --- | --- | --- |
-| Cold Today ready | 874.8 | 761.0 | 739.0 |
-| Warm Today ready | 356.2 | 432.9 | 262.4 |
-| Cold document JS execution | 567.9 | 489.1 | 389.8 |
-| Warm document JS execution | 288.8 | 291.8 | 131.0 |
-| Cold document main-thread tasks | 783.6 | 783.7 | 584.8 |
-| First Train ready | 98.7 | 109.4 | 85.7 |
-| Input → frame with 57.5 shown | 47.7 | 170.9 | 34.1 |
-| Input → first primary write | 556.5 | 84.2 | 14.6 |
-| Completion → completed-set frame | 173.7 | 180.8 | 56.0 |
-| Completion → first primary write | 61.5 | 52.1 | 14.1 |
-| First Progress overview/SVG | 1,035.3 | 1,099.5 | 966.5 |
-| You ready | 453.2 | 479.3 | 449.7 |
-| Return to Today | 80.1 | 73.8 | 28.6 |
-| Cached offline Today ready | 788.9 | 877.1 | 577.5 |
+| Cold Today ready | 874.8 | 761.0 | 778.6 |
+| Warm Today ready | 356.2 | 432.9 | 286.5 |
+| Cold document JS execution | 567.9 | 489.1 | 493.3 |
+| Warm document JS execution | 288.8 | 291.8 | 152.3 |
+| Cold document main-thread tasks | 783.6 | 783.7 | 707.9 |
+| First Train ready | 98.7 | 109.4 | 92.7 |
+| Input → frame with 57.5 shown | 47.7 | 170.9 | 26.7 |
+| Input → first primary write | 556.5 | 84.2 | 13.5 |
+| Completion → completed-set frame | 173.7 | 180.8 | 52.1 |
+| Completion → first primary write | 61.5 | 52.1 | 13.0 |
+| First Progress overview/SVG | 1,035.3 | 1,099.5 | 1,038.2 |
+| You ready | 453.2 | 479.3 | 473.3 |
+| Return to Today | 80.1 | 73.8 | 29.7 |
+| Cached offline Today ready | 788.9 | 877.1 | 631.0 |
 
-Main's input write includes its approximately 450 ms debounce. Its quicker
-in-memory frame does not offer equivalent immediate persistence. PR #12 already
-removed the debounce; the final comparison to PR #12 isolates the added caching
+Main's input write includes its approximately 450 ms debounce. Its in-memory
+frame can precede storage by that delay, so it does not offer equivalent
+immediate persistence. PR #12 already removed the debounce; the final comparison to PR #12 isolates the added caching
 and historical-computation work more fairly. A successful primary `setItem`
 precedes this branch's completion acknowledgement, but is not a disk-fsync or
 arbitrary OS-crash guarantee.
 
-The Progress overview still takes approximately **967 ms** at 10,000 sets. Its
-main comparison is 1,035 ms, not the superseded lazy candidate's 527 ms. This is
-remaining large-history processing cost, not a dramatic chart-speed claim.
+The Progress overview still takes approximately **1,038 ms** at 10,000 sets,
+compared with 1,035 ms on Main. This remains close to one second of large-history
+processing; the data does not support a dramatic chart-speed claim.
 
 ### Input scaling — all samples retained
 
@@ -171,21 +181,21 @@ Input-to-frame marker, milliseconds:
 
 | Completed sets | Main | PR #12 only | Final native |
 | --- | --- | --- | --- |
-| 0 | 20.2 | 28.9 | 14.7 |
-| 120 | 21.5 | 41.9 | 15.5 |
-| 1,000 | 23.0 | 54.1 | 14.7 |
-| 5,000 | 35.1 | 120.2 | 22.8 |
-| 10,000 | 47.7 | 170.9 | 34.1 |
+| 0 | 20.2 | 28.9 | 22.6 |
+| 120 | 21.5 | 41.9 | 17.0 |
+| 1,000 | 23.0 | 54.1 | 20.7 |
+| 5,000 | 35.1 | 120.2 | 21.5 |
+| 10,000 | 47.7 | 170.9 | 26.7 |
 
 Input-to-first-primary-write marker, milliseconds:
 
 | Completed sets | Main (debounced) | PR #12 only | Final native |
 | --- | --- | --- | --- |
-| 0 | 454.0 | 2.9 | 1.9 |
-| 120 | 456.4 | 5.0 | 1.8 |
-| 1,000 | 461.4 | 12.8 | 2.7 |
-| 5,000 | 503.0 | 60.2 | 9.3 |
-| 10,000 | 556.5 | 84.2 | 14.6 |
+| 0 | 454.0 | 2.9 | 2.8 |
+| 120 | 456.4 | 5.0 | 2.5 |
+| 1,000 | 461.4 | 12.8 | 4.2 |
+| 5,000 | 503.0 | 60.2 | 8.1 |
+| 10,000 | 556.5 | 84.2 | 13.5 |
 
 ### Startup and first Progress — no blanket speed claim
 
@@ -193,25 +203,25 @@ Median milliseconds:
 
 | Completed sets | Main cold | Native cold | Main warm | Native warm | Main Progress | Native Progress |
 | --- | --- | --- | --- | --- | --- | --- |
-| 0 | 522.2 | 653.3 | 202.9 | 171.5 | 36.4 | 39.1 |
-| 120 | 661.0 | 601.4 | 173.7 | 161.4 | 68.4 | 55.2 |
-| 1,000 | 592.0 | 596.2 | 211.2 | 193.4 | 167.3 | 152.6 |
-| 5,000 | 705.0 | 698.7 | 317.7 | 230.6 | 581.4 | 573.0 |
-| 10,000 | 874.8 | 739.0 | 356.2 | 262.4 | 1,035.3 | 966.5 |
+| 0 | 522.2 | 693.9 | 202.9 | 173.1 | 36.4 | 51.7 |
+| 120 | 661.0 | 567.9 | 173.7 | 156.8 | 68.4 | 61.7 |
+| 1,000 | 592.0 | 778.4 | 211.2 | 174.4 | 167.3 | 156.5 |
+| 5,000 | 705.0 | 662.5 | 317.7 | 230.9 | 581.4 | 558.8 |
+| 10,000 | 874.8 | 778.6 | 356.2 | 286.5 | 1,035.3 | 1,038.2 |
 
 Cold launch did **not** improve consistently. With no completed history, the
-observed cold median rose from **522.2 to 653.3 ms**; the cold document's execution
-counter rose from 287.7 to 354.9 ms. At 1,000 sets the cold medians were essentially
-flat (592.0 / 596.2 ms). Do not infer a guaranteed cold-start improvement from
-smaller transfer size. Three unthrottled shared-runner samples do not establish
-statistical significance or a physical-phone population result.
+observed cold median changed from **522.2 to 693.9 ms**; the cold document's
+execution counter changed from 287.7 to 385.0 ms. At 1,000 sets, the cold
+medians were 592.0 / 778.4 ms. Smaller transfer size does not guarantee faster
+cold startup. Three unthrottled shared-runner samples do not establish statistical
+significance or a physical-phone population result; the same-day time gap is an
+additional comparison limit.
 
-First Train remained 57–86 ms in the final scaling cases, after removal of the
-340 ms lazy-logger regression. Sparse-history Progress returned to 39–153 ms
-after removal of the lazy-overview floor. The You surface still costs roughly
-255 ms at 5,000 sets and 450 ms at 10,000; it is not described as instant.
-The 5,000-set You median rose from 236.8 to 254.8 ms. These remaining costs merit
-separate profiling rather than another late architectural change.
+First Train ranged from 60.4 to 92.7 ms across the final scaling cases. Sparse-history
+Progress medians ranged from 51.7 to 156.5 ms for 0 / 120 / 1,000 completed sets.
+The You surface costs 250.6 ms at 5,000 sets and 473.3 ms at 10,000;
+it is not described as instant. Main's corresponding You medians were
+236.8 and 453.2 ms. These remaining costs merit separate profiling.
 
 ### Memory and storage cost
 
@@ -226,7 +236,7 @@ Post-workflow V8 heap after forced collection, decimal MB (1 MB = 1,000,000 byte
 | 10,000 | 12.4 | 12.3 | 15.4 |
 
 At 10,000 sets the retained heap increased from 12.36 to
-15.42 MB (**+3.06 MB**, +24.7%).
+15.44 MB (**+3.07 MB**, +24.9%).
 Keeping validated storage/history views trades memory for less repeated work.
 Uncollected heap readings fluctuate with collection timing and are retained in
 the raw evidence; they are not peak process memory. Browser/worker/GPU/OS memory
@@ -260,11 +270,12 @@ copies of the corrected 18 November outputs; [the manifest](screenshots/native/m
 records each image SHA-256 and build provenance. The browser's fixed training
 date is 17 November for repeatability; capture dates are 18 November.
 
-Focus captures mark core logging ready; optional secondary controls can still be
-loading in the first frame. Stable tablet examples below use the rest phase,
-after secondary controls resolve. Whole-page stability is not substituted for
-or silently mixed into the core-ready timing definition. Large-text, hit-target,
-keyboard and data-preservation assertions belong to the separate browser tests.
+Focus captures mark core logging ready. The lightweight guide trigger is eager
+in this build; its heavy sheet loads on demand. The unchanged screenshot driver
+waits for the planned-exercise pane on wide tablets and otherwise uses the same
+core-ready selectors; those screenshot waits are not substituted for the timing
+markers. Large-text, hit-target, keyboard and data-preservation assertions belong
+to the separate browser tests.
 
 | Frame | Main | Final native |
 | --- | --- | --- |
