@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE } from '../src/domain.js';
 import { REST_DEADLINE_KEY } from '../src/rest-deadline';
 import { settingsGroup, openDisclosure, openSection } from './helpers/navigation';
+import { settleWithFrozenClock } from './helpers/frozen-clock';
 
 const STORE = 'setline.gym.v1';
 
@@ -72,7 +73,10 @@ async function openTimer(page: Page) {
 async function openSoundSettings(page: Page) {
   await openSection(page, 'You');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await settingsGroup(page, 'Appearance & Sound');
+  await settleWithFrozenClock(page, async () => {
+    await settingsGroup(page, 'Appearance & Sound');
+    await expect(page.getByRole('dialog', { name: 'Your preferences', exact: true })).toBeVisible();
+  });
   return page.getByRole('dialog', { name: 'Your preferences', exact: true });
 }
 async function plays(page: Page) { return page.evaluate(() => (window as any).__restAudioProbe.plays as number); }
@@ -255,6 +259,7 @@ test('a denied resume completes the timer and exposes useful sound recovery with
   expect(await plays(page)).toBe(0);
   await page.getByRole('button', { name: 'Check sound', exact: true }).click();
   const settings = page.getByRole('dialog', { name: 'Your preferences', exact: true });
+  await settleWithFrozenClock(page, () => expect(settings.getByRole('button', { name: 'Test sound', exact: true })).toBeVisible());
   await expect(settings).toContainText(/tap|blocked|interrupted|resume/i);
   await settings.getByRole('button', { name: 'Test sound', exact: true }).click();
   await page.clock.runFor(1200);
@@ -278,6 +283,7 @@ test('an unresponsive browser resume cannot leave rest stuck at zero or play a l
   await page.getByRole('button', { name: 'Check sound', exact: true }).click();
   await page.evaluate(() => { (window as any).__restAudioProbe.resumeMode = 'normal'; });
   const settings = page.getByRole('dialog', { name: 'Your preferences', exact: true });
+  await settleWithFrozenClock(page, () => expect(settings.getByRole('button', { name: 'Test sound', exact: true })).toBeVisible());
   await settings.getByRole('button', { name: 'Test sound', exact: true }).click();
   await page.clock.runFor(1200);
   expect(await plays(page)).toBe(1);

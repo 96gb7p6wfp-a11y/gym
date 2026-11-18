@@ -1,6 +1,7 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, ExerciseSchema, ProfileSchema, SessionSchema, createSession } from '../src/domain.js';
 import { WORKOUT_CONTINUITY_KEY } from '../src/workout-continuity';
+import { settleWithFrozenClock } from './helpers/frozen-clock';
 
 const STORE = 'setline.gym.v1';
 const NOW = new Date('2026-11-16T10:00:00Z');
@@ -11,7 +12,7 @@ const state = (page: Page) => page.evaluate(key => JSON.parse(localStorage.getIt
 
 async function train(page: Page) {
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'Current exercise', exact: true })).toBeVisible();
+  await settleWithFrozenClock(page, () => expect(page.getByRole('region', { name: 'Current exercise', exact: true })).toBeVisible());
 }
 
 async function seed(page: Page) {

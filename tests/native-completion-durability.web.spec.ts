@@ -73,8 +73,9 @@ function complete(page: Page, layout: 'Focus' | 'Quick Log') {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.clock.install({ time: NOW });
-  await page.clock.pauseAt(new Date(NOW.getTime() + 1000));
+  // These cases test durable writes, not elapsed time. Fix Date without freezing
+  // React's Suspense retry timers or changing any persistence assertions.
+  await page.clock.setFixedTime(NOW);
   await page.goto('/');
 });
 

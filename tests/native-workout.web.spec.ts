@@ -3,6 +3,7 @@ import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession, stopSessi
 import { findLibraryExercise, toPlanExercise } from '../src/exercise-library';
 import { defaultReminderState } from '../src/reminders';
 import { startAlreadyWarmed } from './helpers/navigation';
+import { settleWithFrozenClock } from './helpers/frozen-clock';
 
 const STORE = 'setline.gym.v1';
 const DATE = '2026-11-16';
@@ -59,8 +60,10 @@ async function seed(page: Page, { history = false, differentEquipmentOnly = fals
 
 async function start(page: Page) {
   await page.getByRole('region', { name: 'Your day', exact: true }).getByRole('button', { name: 'Start workout', exact: true }).click();
-  await startAlreadyWarmed(page);
-  await expect(focus(page)).toBeVisible();
+  await settleWithFrozenClock(page, async () => {
+    await startAlreadyWarmed(page);
+    await expect(focus(page)).toBeVisible();
+  });
 }
 
 test.beforeEach(async ({ page }) => {
@@ -114,6 +117,7 @@ test('bench 3×6–10 preserves 60×8 then 62.5×7, Undo, rest, midnight recover
   await expect(page.locator('.page-header')).toContainText(/Tuesday,? 17 November/);
   await page.reload();
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
+  await settleWithFrozenClock(page, () => expect(focus(page)).toBeVisible());
   expect((await active(page)).id).toBe(original.id);
   expect((await active(page)).date).toBe(DATE);
   expect(Number(await deadline(page))).toBe(savedDeadline);
@@ -142,6 +146,7 @@ test('bench 3×6–10 preserves 60×8 then 62.5×7, Undo, rest, midnight recover
   for (const key of ['nutrition', 'activities', 'reminders', 'performance']) expect(saved[key]).toEqual(before[key as keyof typeof before]);
   await expect(page.locator('.rest-floating')).toHaveCount(0);
   await page.getByRole('tab', { name: 'Progress', exact: true }).click();
+  await settleWithFrozenClock(page, () => expect(page.getByRole('button', { name: 'Strength history', exact: true })).toBeVisible());
   await page.getByRole('button', { name: 'Strength history', exact: true }).click();
   await page.getByRole('combobox', { name: 'Movement', exact: true }).click();
   await page.getByRole('listbox').getByRole('option').filter({ hasText: /^Barbell Bench Press/ }).first().click();

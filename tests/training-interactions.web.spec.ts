@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { DEFAULT_PROFILE, createSession, stopSessionTimers } from '../src/domain.js';
 import { openDisclosure, finishWarmup } from './helpers/navigation';
+import { settleWithFrozenClock } from './helpers/frozen-clock';
 
 const STORE = 'setline.gym.v1';
 
@@ -8,7 +9,10 @@ async function startSunday(page: Page) {
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: /^Sun / }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
-  await finishWarmup(page);
+  await settleWithFrozenClock(page, async () => {
+    await finishWarmup(page);
+    await expect(current(page)).toBeVisible();
+  });
 }
 
 async function movement(page: Page, name: string) {
@@ -47,6 +51,7 @@ async function seedSunday(page: Page, pair = false) {
   })), { key: STORE, session, profile: DEFAULT_PROFILE });
   await page.reload();
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
+  await settleWithFrozenClock(page, () => expect(current(page)).toBeVisible());
 }
 
 async function contrast(button: Locator) {
@@ -142,6 +147,7 @@ test('manual all-set edits and removing a timed set safely clear its running tim
   }).toEqual({ sets: 2, owner: null, running: null });
   await page.reload();
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
+  await settleWithFrozenClock(page, () => expect(current(page)).toBeVisible());
   await expect(current(page).getByRole('spinbutton', { name: 'Pogo Jump set 2 seconds', exact: true })).toHaveValue('10');
 });
 
@@ -173,12 +179,19 @@ test('runs, pauses, resumes and reloads a per-set countdown without automaticall
   await expect.poll(async () => (await readExercise(page, 'Pogo Jump')).elapsedMs).toBe(4000);
   await page.reload();
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
+  await settleWithFrozenClock(page, () => expect(current(page)).toBeVisible());
   await expect(clock).toHaveText('00:06');
   await page.getByRole('button', { name: 'Resume timer for Pogo Jump', exact: true }).tap();
   await page.clock.runFor(6000);
-  await expect(clock).toHaveText('00:00');
+  // The shared clock paints at one-second intervals; the lazy-screen settling
+  // above need not align a resumed movement with that existing tick. Permit its
+  // next paint, then require the stored countdown to clamp to the exact target.
+  await settleWithFrozenClock(page, () => expect(clock).toHaveText('00:00'));
   await expect(page.getByRole('button', { name: 'Restart timer for Pogo Jump', exact: true })).toBeVisible();
-  expect((await readExercise(page, 'Pogo Jump')).logs[0].done).toBe(false);
+  const finishedTimer = await readExercise(page, 'Pogo Jump');
+  expect(finishedTimer.elapsedMs).toBe(10_000);
+  expect(finishedTimer.runningSince).toBeNull();
+  expect(finishedTimer.logs[0]).toMatchObject({ seconds: 10, done: false });
   await complete(page, 'Pogo Jump', 1);
   await expect(current(page).getByRole('spinbutton', { name: 'Pogo Jump set 2 seconds', exact: true })).toHaveValue('');
   await current(page).getByRole('button', { name: 'Ready for Pogo Jump set 2', exact: true }).click();
@@ -222,7 +235,10 @@ test('keeps completion and undo readable after repeated iPhone taps and pointer 
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: /^Mon / }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
-  await finishWarmup(page);
+  await settleWithFrozenClock(page, async () => {
+    await finishWarmup(page);
+    await expect(current(page)).toBeVisible();
+  });
   const name = 'Medicine Ball Spike Slam';
   await current(page).getByRole('textbox', { name: `${name} set 1 weight in kilograms`, exact: true }).fill('6');
   await current(page).getByRole('spinbutton', { name: `${name} set 1 reps`, exact: true }).fill('4');
@@ -261,8 +277,11 @@ test('keeps volleyball minutes manual and permits correcting saved stopwatch dur
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: /^Tue / }).click();
   await page.getByRole('button', { name: 'Start workout', exact: true }).click();
-  await finishWarmup(page);
-  await openDisclosure(page, 'Training log');
+  await settleWithFrozenClock(page, async () => {
+    await finishWarmup(page);
+    await openDisclosure(page, 'Training log');
+    await expect(current(page)).toBeVisible();
+  });
   await expect(current(page).getByRole('spinbutton', { name: 'Volleyball practice set 1 minutes', exact: true })).toHaveValue('120');
   await expect(page.getByRole('timer', { name: 'Elapsed time for Volleyball practice', exact: true })).not.toBeVisible();
   await current(page).locator('.timed-set-stopwatch > summary').click();
