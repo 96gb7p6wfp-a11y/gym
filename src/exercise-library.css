@@ -38,6 +38,12 @@
 .exercise-library__row-copy > strong { color:var(--ink); font-size:16px; font-weight:650; line-height:1.3; letter-spacing:-.02em; }
 .exercise-library__row-copy > span { color:var(--sub); font-size:13px; line-height:1.4; }
 .exercise-library__select > svg { flex-shrink:0; color:var(--sub); }
+.exercise-library__section .exercise-library__item--quick-add { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px; }
+.exercise-library__item--quick-add .exercise-library__select { min-width:0; }
+.exercise-library__quick-add { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:44px; min-height:48px; padding:6px; border:0; border-radius:12px; background:var(--accent-soft); color:var(--accent); font:inherit; cursor:pointer; }
+.exercise-library__quick-add span { font-size:12px; font-weight:600; }
+.exercise-library__quick-add:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+.exercise-library__row-copy > strong { overflow-wrap:anywhere; }
 .exercise-library__empty { margin:24px 0; padding:24px 20px; border-radius:23px; background:var(--surface-soft); color:var(--ink); font-family:var(--font-display,var(--font-body)); font-size:25px; line-height:1.25; font-weight:650; letter-spacing:-.035em; }
 .exercise-library__empty > span { display:block; margin-top:10px; color:var(--sub); font-family:var(--font-body); font-size:14px; font-weight:400; line-height:1.5; letter-spacing:0; }
 .exercise-library__back { display:inline-flex; align-items:center; gap:6px; min-height:44px; margin:-6px 0 18px; padding:8px 13px 8px 10px; border:0; border-radius:99px; background:var(--surface-soft); color:var(--ink); font:inherit; font-size:14px; font-weight:600; }
@@ -67,6 +73,8 @@
  .exercise-library__index .exercise-library__section .exercise-library__item { min-width:0; border:0; }
  .exercise-library__index .exercise-library__select { align-items:flex-start; height:100%; min-height:100px; padding:16px; border:1px solid var(--line); border-radius:18px; background:var(--surface-soft); }
  .exercise-library__index .exercise-library__select > svg { margin-top:3px; }
+ .exercise-library__index .exercise-library__section .exercise-library__item--quick-add { border:1px solid var(--line); border-radius:18px; background:var(--surface-soft); padding-right:8px; }
+ .exercise-library__index .exercise-library__item--quick-add .exercise-library__select { border:0; background:none; padding-right:4px; }
 }
 
 /* An actual window-width workspace: the catalogue and selected guide share one

@@ -5,6 +5,33 @@ hosted Setline app's delivered React code, styles, and visual reference. The app
 runs on its own: no iframe, sign-in service, old website, external workout API,
 or native iPhone signing is required.
 
+## Native experience — review candidate
+
+The native-experience branch combines durable workout logging with cache-first
+installed startup, direct exercise selection, separate template/session actions,
+secondary effort controls and persistent rest adjustments. Unchanged historical
+data is reused while typing, and unopened screens load only when required; the
+complete essential app shell remains available offline after installation.
+See the [implementation and device checklist](docs/NATIVE_EXPERIENCE.md),
+[release audit](docs/NATIVE_RELEASE_AUDIT.md) and
+[measured before/after evidence](docs/NATIVE_BENCHMARKS.md).
+This is an isolated review candidate, not a production-release claim.
+
+## Trustworthy workout logging — November 2026
+
+Previous unloaded bodyweight reps and deliberately added sets retain comparable
+suggestions. Valid set edits use immediate persistence; explicit Undo rearms only
+its own set. Finish confirms the local write before reporting completion and
+keeps retry controls available on failure. A fresh window can explicitly recover
+the saved active workout's validated rest/Undo controls.
+
+**Not quite** now selects nothing by itself: choose original, suggested lighter,
+recovery or rest. Exact changes remain reviewable, original programs remain
+saved, and medical limits are enforced independently. Existing progression advice
+requires comparable completed sets and recorded effort. No primary storage or
+backup migration, cloud synchronization or new workout model was added.
+See the [implementation checklist, screenshots and device checks](docs/TRUSTWORTHY_TRAINING.md).
+
 ## Exercise media, demonstrations and iPad
 
 Exercise guides now have independent **Search Google** and **YouTube

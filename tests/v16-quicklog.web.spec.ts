@@ -78,7 +78,10 @@ test('Focus and Quick Log share inputs, completion, undo and the same durable se
   await expect.poll(async () => (await logs(page))[0].done).toBe(false);
   expect((await logs(page))[0]).toEqual(before.session.exercises[0].logs[0]);
   await expect(page.locator('.rest-floating')).toHaveCount(0);
-  await row.getByRole('button', { name: `Ready for ${PRESS} set 1`, exact: true }).click();
+  // Undo deliberately rearms that exact set. Re-recording must not require the
+  // removed Ready interstitial, while the same immutable-target guard remains.
+  await expect(row.getByRole('button', { name: `Ready for ${PRESS} set 1`, exact: true })).toHaveCount(0);
+  await expect(row.getByRole('button', { name: `Complete ${PRESS} set 1`, exact: true })).toBeEnabled();
   await row.getByRole('button', { name: `Complete ${PRESS} set 1`, exact: true }).click();
   await quickRow(page, PRESS, 2).getByRole('button', { name: `Complete ${PRESS} set 2`, exact: true }).click();
   await expect.poll(async () => (await logs(page)).map((log: { done: boolean }) => log.done)).toEqual([true, true, false]);

@@ -5,7 +5,7 @@ import { DecimalWeightInput } from './DecimalWeightInput';
 import { PlanDaySchema } from './domain.js';
 import { addPlanExercise, movePlanExercise, removePlanExercise, replacePlanExercise, type CustomWorkout, type PlanDay, type PlanExercise, type TrainingGoal } from './workout-customization';
 import { ExerciseLibrarySheet } from './ExerciseLibrarySheet';
-import { toPlanExercise } from './exercise-library';
+import { toPlanExercise, type ExerciseReference } from './exercise-library';
 import './workout-builder.css';
 
 export const WORKOUT_GOALS: { value: TrainingGoal; label: string }[] = [
@@ -22,6 +22,10 @@ type WorkoutBuilderProps = {
   onSave: (workout: PlanDay) => Promise<boolean | void> | boolean | void;
   title?: string;
   submitLabel?: string;
+  recentExercises?: readonly ExerciseReference[];
+  onStart?: (workout: PlanDay) => Promise<boolean | void> | boolean | void;
+  startLabel?: string;
+  startIsPrimary?: boolean;
 };
 
 function blankWorkout(): PlanDay {
@@ -29,15 +33,17 @@ function blankWorkout(): PlanDay {
 }
 
 /** A draft-only editor. Nothing reaches the saved plan until Save succeeds. */
-export function WorkoutBuilder({ open, onOpenChange, initialWorkout, onSave, title = 'Create workout', submitLabel = 'Save workout' }: WorkoutBuilderProps) {
+export function WorkoutBuilder({ open, onOpenChange, initialWorkout, onSave, title = 'Create workout', submitLabel = 'Save workout', recentExercises, onStart, startLabel = 'Start workout now', startIsPrimary = false }: WorkoutBuilderProps) {
   const [draft, setDraft] = useState<PlanDay>(blankWorkout);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [replaceIndex, setReplaceIndex] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'save' | 'start'>('save');
   const [error, setError] = useState('');
   const wasOpen = useRef(false);
   const invalidWeights = useRef(new Set<string>());
+  const savePending = useRef(false);
   const formId = useId();
 
   useEffect(() => {
@@ -73,36 +79,38 @@ export function WorkoutBuilder({ open, onOpenChange, initialWorkout, onSave, tit
     setLibraryOpen(false); setReplaceIndex(null); setError('');
   }
 
-  async function save() {
-    if (busy) return;
+  async function save(action: 'save' | 'start' = 'save') {
+    if (busy || savePending.current) return;
+    if (action === 'start' && !onStart) return;
     setError('');
     if (invalidWeights.current.size) { setEditingIndex(draft.exercises.findIndex(exercise => invalidWeights.current.has(exercise.key))); setError('Check the starting weight. Use 0–2,000 kg.'); return; }
     const checked = PlanDaySchema.safeParse({ ...draft, name: draft.name.trim() });
     if (!checked.success) {
       const issue = checked.error.issues[0];
       const field = issue.path.at(-1);
-      setError(field === 'name' ? 'Give your workout a name.' : field === 'sets' ? 'Use 1–20 sets per exercise.' : field === 'rest' ? 'Use a rest time from 0–600 seconds.' : field === 'targetRpe' ? 'Use a target RPE from 1–10, or leave it empty.' : 'Check the workout details before saving.');
+      setError(field === 'name' ? 'Give your workout a name.' : field === 'sets' ? 'Use 1–20 sets per exercise.' : field === 'rest' ? 'Use a rest time from 0–600 seconds.' : field === 'targetRpe' ? 'Use a target RPE from 1–10, or leave it empty.' : field === 'targetRir' ? 'Use target RIR from 0–10, or leave it empty.' : 'Check the workout details before saving.');
       return;
     }
     if (!draft.exercises.length && draft.kind !== 'recovery') { setError('Add an exercise to your workout.'); return; }
-    setBusy(true);
+    savePending.current = true; setPendingAction(action); setBusy(true);
     try {
       // Preserve valid day metadata such as a separately scheduled primer.
-      const result = await onSave({ ...draft, ...checked.data });
-      if (result === false) throw new Error('Could not save this workout. Try again.');
+      const commit = action === 'start' ? onStart! : onSave;
+      const result = await commit({ ...draft, ...checked.data });
+      if (result === false) throw new Error(action === 'start' ? 'Could not start this workout. Your draft stays here; please try again.' : 'Could not save this workout. Try again.');
       onOpenChange(false);
-    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not save this workout. Try again.'); }
-    finally { setBusy(false); }
+    } catch (cause) { setError(cause instanceof Error ? cause.message : action === 'start' ? 'Could not start this workout. Your draft stays here; please try again.' : 'Could not save this workout. Try again.'); }
+    finally { savePending.current = false; setBusy(false); }
   }
 
   return <>
-    <Dialog open={open} onOpenChange={(next: boolean) => { if (!busy) onOpenChange(next); }}>
+    <Dialog open={open} onOpenChange={(next: boolean) => { if (!busy && !savePending.current) onOpenChange(next); }}>
       <DialogContent className="app-dialog workout-builder-sheet">
         <DialogHeader className="">
           <DialogTitle className="">{title}</DialogTitle>
-          <DialogDescription className="">Make it yours. Saved workout history stays unchanged.</DialogDescription>
+          <DialogDescription className="">{onStart ? 'Start just this session, or save a reusable template. Your weekly plan stays unchanged.' : 'Save your exercise targets. Recorded workout history stays unchanged.'}</DialogDescription>
         </DialogHeader>
-        <form id={formId} onSubmit={event => { event.preventDefault(); void save(); }} className="workout-builder">
+        <form id={formId} onSubmit={event => { event.preventDefault(); void save(startIsPrimary && onStart ? 'start' : 'save'); }} className="workout-builder">
           <fieldset disabled={busy} className="builder-fields">
             <div className="builder-basics">
               <label className="field-label">Workout name<input autoComplete="off" maxLength={80} value={draft.name} placeholder="Extra upper, jump session…" onChange={event => { setDraft(current => ({ ...current, name: event.target.value })); setError(''); }} /></label>
@@ -133,6 +141,7 @@ export function WorkoutBuilder({ open, onOpenChange, initialWorkout, onSave, tit
                         <label className="field-label">Movement<input maxLength={120} value={exercise.name} onChange={event => patchExercise(index, { name: event.target.value })} /></label>
                         <label className="field-label">Equipment label · optional<input maxLength={80} value={exercise.equipmentLabel ?? ''} autoComplete="off" placeholder="e.g. Technogym Chest Press" onChange={event => patchExercise(index, { equipmentLabel: event.target.value || undefined })} /></label>
                         <label className="field-label">Target RPE<input type="number" inputMode="decimal" min={1} max={10} step={0.5} placeholder="Optional" value={exercise.targetRpe ?? ''} onChange={event => patchExercise(index, { targetRpe: event.target.value === '' ? undefined : Number(event.target.value) })} /></label>
+                        <label className="field-label">Target RIR<input type="number" inputMode="decimal" min={0} max={10} step={0.5} placeholder="Optional" value={exercise.targetRir ?? ''} onChange={event => patchExercise(index, { targetRir: event.target.value === '' ? undefined : Number(event.target.value) })} /></label>
                         <label className="field-label">Logging<select value={exercise.mode} onChange={event => patchExercise(index, { mode: event.target.value as PlanExercise['mode'], quantityUnit: undefined })}><option value="weight">Weight + reps</option><option value="bodyweight">Bodyweight + reps</option><option value="timed">Time</option></select></label>
                       </div>
                       <label className="field-label">Technique / pairing notes<textarea maxLength={500} rows={2} value={exercise.cue ?? ''} onChange={event => patchExercise(index, { cue: event.target.value })} /></label>
@@ -152,12 +161,14 @@ export function WorkoutBuilder({ open, onOpenChange, initialWorkout, onSave, tit
           </fieldset>
           <div className="builder-save">
             {error && <p className="builder-error" role="alert">{error}</p>}
-            <button className="btn full" type="submit" disabled={busy}>{busy ? 'Saving…' : submitLabel}</button>
+            <button className="btn full" type="submit" disabled={busy}>{busy ? pendingAction === 'start' ? 'Starting…' : 'Saving…' : startIsPrimary && onStart ? startLabel : submitLabel}</button>
+            {onStart && <button className="text-button builder-secondary-action" type="button" disabled={busy}
+              onClick={() => void save(startIsPrimary ? 'save' : 'start')}>{startIsPrimary ? submitLabel : startLabel}</button>}
           </div>
         </form>
       </DialogContent>
     </Dialog>
-    <ExerciseLibrarySheet open={open && libraryOpen} onOpenChange={setLibraryOpen} onSelect={item => selectExercise(toPlanExercise(item))} replacementFor={replaceIndex === null ? undefined : draft.exercises[replaceIndex]} title={replaceIndex === null ? 'Add exercise' : 'Replace exercise'} />
+    <ExerciseLibrarySheet open={open && libraryOpen} onOpenChange={setLibraryOpen} onSelect={item => selectExercise(toPlanExercise(item))} quickAdd={replaceIndex === null} recentExercises={recentExercises} replacementFor={replaceIndex === null ? undefined : draft.exercises[replaceIndex]} title={replaceIndex === null ? 'Add exercise' : 'Replace exercise'} />
   </>;
 }
 

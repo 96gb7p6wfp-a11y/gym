@@ -1,0 +1,5658 @@
+{
+  "label": "optimized-final-guide-stable",
+  "revision": "ae6efff6d23a0df26dfd820d6d0548c442937d4a",
+  "harnessVersion": 2,
+  "host": {
+    "platform": "linux",
+    "arch": "x64",
+    "logicalCpuCount": 3,
+    "cpuModel": "AMD EPYC 9V74 80-Core Processor",
+    "totalMemoryBytes": 10452459520
+  },
+  "cacheId": "97c7ccee3df79a773bac",
+  "distHtmlSha256": "0bcb20ec8d4f8958329d245a7841ade40fd7c561b4b00faf4faacfac2037c4d6",
+  "browser": "151.0.7922.173",
+  "observedAt": "2026-11-18T15:19:15.798Z",
+  "conditions": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "deviceScaleFactor": 1,
+    "locale": "en-GB",
+    "timezone": "Europe/Berlin",
+    "workers": 1,
+    "cpuThrottling": false,
+    "networkCompression": false,
+    "fixtureProvisioningExcluded": true,
+    "server": "isolated localhost static server with optional document-request hang"
+  },
+  "build": {
+    "files": [
+      {
+        "file": "assets/ActivityImport-C8W-TqVT.js",
+        "bytes": 90167,
+        "gzipEstimateBytes": 30520
+      },
+      {
+        "file": "assets/ExerciseGuide-BTTNUfWN.js",
+        "bytes": 133664,
+        "gzipEstimateBytes": 38207
+      },
+      {
+        "file": "assets/ExerciseLibrarySheet-D0hSqclx.js",
+        "bytes": 9254,
+        "gzipEstimateBytes": 3100
+      },
+      {
+        "file": "assets/NutritionView-CiLKtlgk.js",
+        "bytes": 40768,
+        "gzipEstimateBytes": 11359
+      },
+      {
+        "file": "assets/PerformanceDetails-DDDm0DgU.js",
+        "bytes": 21393,
+        "gzipEstimateBytes": 6021
+      },
+      {
+        "file": "assets/SettingsExperience-glL9ELM2.js",
+        "bytes": 3363,
+        "gzipEstimateBytes": 1314
+      },
+      {
+        "file": "assets/StrengthChart-BA9v7154.js",
+        "bytes": 351655,
+        "gzipEstimateBytes": 101145
+      },
+      {
+        "file": "assets/TrainingJourney-X2Lbp5Jt.js",
+        "bytes": 10771,
+        "gzipEstimateBytes": 4076
+      },
+      {
+        "file": "assets/V9ProgramUpgrade-BDIxNa4D.js",
+        "bytes": 9701,
+        "gzipEstimateBytes": 3395
+      },
+      {
+        "file": "assets/VolleyballMasterProgram-UNImpUp_.js",
+        "bytes": 34403,
+        "gzipEstimateBytes": 10473
+      },
+      {
+        "file": "assets/WarmupFlow-Cnz0-P46.js",
+        "bytes": 4848,
+        "gzipEstimateBytes": 1787
+      },
+      {
+        "file": "assets/WeeklyReport-D2ZCwpdO.js",
+        "bytes": 8181,
+        "gzipEstimateBytes": 2793
+      },
+      {
+        "file": "assets/WorkoutBuilder-DGsdAn_O.js",
+        "bytes": 10800,
+        "gzipEstimateBytes": 3362
+      },
+      {
+        "file": "assets/WorkoutCustomizer-Bt3-5uN8.js",
+        "bytes": 8805,
+        "gzipEstimateBytes": 2835
+      },
+      {
+        "file": "assets/WorkoutPlanPreview-DhG_op5E.js",
+        "bytes": 21609,
+        "gzipEstimateBytes": 6415
+      },
+      {
+        "file": "assets/WorkoutPreview-Dp79JNV-.js",
+        "bytes": 4661,
+        "gzipEstimateBytes": 1616
+      },
+      {
+        "file": "assets/activities-DWDzO61D.js",
+        "bytes": 2522,
+        "gzipEstimateBytes": 1233
+      },
+      {
+        "file": "assets/arrow-up-uNmHT24x.js",
+        "bytes": 339,
+        "gzipEstimateBytes": 240
+      },
+      {
+        "file": "assets/clsx-DRZxKiT_.js",
+        "bytes": 3913,
+        "gzipEstimateBytes": 1484
+      },
+      {
+        "file": "assets/createLucideIcon-BOEjABdp.js",
+        "bytes": 3100,
+        "gzipEstimateBytes": 1490
+      },
+      {
+        "file": "assets/domain-dI78BTav.js",
+        "bytes": 110983,
+        "gzipEstimateBytes": 31833
+      },
+      {
+        "file": "assets/exercise-library-B8UIVJ_o.js",
+        "bytes": 63506,
+        "gzipEstimateBytes": 16656
+      },
+      {
+        "file": "assets/fit-import-BhShFfMi.js",
+        "bytes": 431701,
+        "gzipEstimateBytes": 63394
+      },
+      {
+        "file": "assets/index-mqO1H4qZ.js",
+        "bytes": 881463,
+        "gzipEstimateBytes": 263825
+      },
+      {
+        "file": "assets/jsx-runtime-BqfDQeLH.js",
+        "bytes": 8557,
+        "gzipEstimateBytes": 3264
+      },
+      {
+        "file": "assets/sliders-horizontal-he2lwe3d.js",
+        "bytes": 464,
+        "gzipEstimateBytes": 267
+      },
+      {
+        "file": "assets/training-exposure-CU2LiWam.js",
+        "bytes": 58403,
+        "gzipEstimateBytes": 13635
+      },
+      {
+        "file": "register-sw.js",
+        "bytes": 1857,
+        "gzipEstimateBytes": 839
+      },
+      {
+        "file": "service-worker.js",
+        "bytes": 7671,
+        "gzipEstimateBytes": 2859
+      }
+    ],
+    "totalJavaScriptBytes": 2338522,
+    "totalJavaScriptGzipEstimateBytes": 629437,
+    "initialModulePaths": [
+      "/register-sw.js",
+      "/assets/index-mqO1H4qZ.js",
+      "/assets/jsx-runtime-BqfDQeLH.js",
+      "/assets/clsx-DRZxKiT_.js",
+      "/assets/training-exposure-CU2LiWam.js",
+      "/assets/exercise-library-B8UIVJ_o.js",
+      "/assets/domain-dI78BTav.js",
+      "/assets/createLucideIcon-BOEjABdp.js",
+      "/assets/activities-DWDzO61D.js"
+    ],
+    "initialModuleBytes": 1134304,
+    "initialModuleGzipEstimateBytes": 334259
+  },
+  "observations": [
+    {
+      "completedSets": 0,
+      "completedWorkouts": 0,
+      "sample": 1,
+      "fixtureSha256": "fcd77e1dc1013a4676def8e6eb937dd1dcdbc9594bcfb36674c7707218b316d6",
+      "cold": {
+        "toTodayMs": 836.5999999977648,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 2157,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 881763,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 58703,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 63806,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 111283,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 2822,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 1017.183501,
+        "pageScriptExecutionMs": 385.042,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30915.624343,
+          "afterNavigationStart": 30915.764374,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.385042,
+          "beforeTaskSeconds": 0.000273,
+          "afterTaskSeconds": 0.76016
+        },
+        "observedV8CompileMs": 96.253,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 760.16,
+        "jsHeapUsedBytes": 6984732,
+        "jsHeapTotalBytes": 11857920,
+        "documentCount": 4,
+        "domNodes": 277,
+        "observedServerJsBytes": 3472826,
+        "observedServerTotalBytes": 4281966,
+        "observedServerRequests": 63,
+        "completedServerResponses": 63
+      },
+      "warm": {
+        "toTodayMs": 200.60000000149012,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 305.0511740000002,
+        "pageScriptExecutionMs": 63.028,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30916.784422,
+          "afterNavigationStart": 30917.002847,
+          "beforeScriptSeconds": 0.064008,
+          "afterScriptSeconds": 0.063028,
+          "beforeTaskSeconds": 0.153702,
+          "afterTaskSeconds": 0.14451
+        },
+        "observedV8CompileMs": 9.292,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 144.51,
+        "jsHeapUsedBytes": 16769088,
+        "jsHeapTotalBytes": 22990848,
+        "documentCount": 8,
+        "domNodes": 815,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 0,
+        "observedServerRequests": 0,
+        "completedServerResponses": 0
+      },
+      "interactions": {
+        "trainPaintMs": 67.5,
+        "inputPaintMs": 20,
+        "inputSaveMs": 2.300000000745058,
+        "jsonDuringInput": {
+          "parseMs": 0.10000000149011612,
+          "stringifyMs": 0.5,
+          "parseCalls": 3,
+          "stringifyCalls": 255,
+          "nativeWriteMs": 0.10000000149011612
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 137.353,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 14.907,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(garbage collector)",
+            "selfMs": 5.526,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 3.581,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.553,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "Ys",
+            "selfMs": 1.481,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "uo",
+            "selfMs": 1.425,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          },
+          {
+            "name": "mergeArray",
+            "selfMs": 1.362,
+            "url": "http://127.0.0.1:4174/assets/training-exposure-CU2LiWam.js",
+            "line": 0
+          },
+          {
+            "name": "getExplicitAriaRole",
+            "selfMs": 1.269,
+            "url": "",
+            "line": 3513
+          },
+          {
+            "name": "Qo",
+            "selfMs": 1.104,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.102,
+            "url": "",
+            "line": 0
+          },
+          {
+            "name": "elementSafeTagName",
+            "selfMs": 1.095,
+            "url": "",
+            "line": 3192
+          },
+          {
+            "name": "bT",
+            "selfMs": 1.093,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "Xc",
+            "selfMs": 1.092,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "appendChild",
+            "selfMs": 1.087,
+            "url": "",
+            "line": -1
+          }
+        ],
+        "completePaintMs": 86.80000000074506,
+        "completeSaveMs": 1.0999999977648258,
+        "completedSet": {
+          "id": "2f8be2b0-35df-4168-b265-0673b8c9dd52",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 51.70000000298023,
+        "progressChartPresent": 0,
+        "youPaintMs": 16.900000002235174,
+        "todayPaintMs": 23.5,
+        "afterWorkflowJsHeapUsedBytes": 19879240,
+        "afterWorkflowJsHeapUsedPostGcBytes": 8681124
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 613.4480030000004,
+        "toTodayMs": 580.9000000022352,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": true,
+        "driverWallMs": 456.94251799999984,
+        "toTodayMs": 450.6000000014901,
+        "navigationNetworkRequests": 0,
+        "error": null
+      }
+    },
+    {
+      "completedSets": 0,
+      "completedWorkouts": 0,
+      "sample": 2,
+      "fixtureSha256": "fcd77e1dc1013a4676def8e6eb937dd1dcdbc9594bcfb36674c7707218b316d6",
+      "cold": {
+        "toTodayMs": 693.9000000022352,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 2157,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 881763,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 58703,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 63806,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 111283,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 2822,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 828.719008,
+        "pageScriptExecutionMs": 401.198,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30919.758356,
+          "afterNavigationStart": 30919.844359,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.401198,
+          "beforeTaskSeconds": 0.000048,
+          "afterTaskSeconds": 0.589807
+        },
+        "observedV8CompileMs": 128.899,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 589.807,
+        "jsHeapUsedBytes": 6959444,
+        "jsHeapTotalBytes": 12120064,
+        "documentCount": 4,
+        "domNodes": 277,
+        "observedServerJsBytes": 3472826,
+        "observedServerTotalBytes": 4281966,
+        "observedServerRequests": 63,
+        "completedServerResponses": 63
+      },
+      "warm": {
+        "toTodayMs": 149.20000000298023,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 225.04793599999994,
+        "pageScriptExecutionMs": 49.44,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30920.677828,
+          "afterNavigationStart": 30920.85847,
+          "beforeScriptSeconds": 0.055491,
+          "afterScriptSeconds": 0.04944,
+          "beforeTaskSeconds": 0.130802,
+          "afterTaskSeconds": 0.124696
+        },
+        "observedV8CompileMs": 7.103,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 124.696,
+        "jsHeapUsedBytes": 16749752,
+        "jsHeapTotalBytes": 22990848,
+        "documentCount": 8,
+        "domNodes": 815,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 0,
+        "observedServerRequests": 0,
+        "completedServerResponses": 0
+      },
+      "interactions": {
+        "trainPaintMs": 75.59999999776483,
+        "inputPaintMs": 22.599999997764826,
+        "inputSaveMs": 2.7999999970197678,
+        "jsonDuringInput": {
+          "parseMs": 0.10000000149011612,
+          "stringifyMs": 0.29999999701976776,
+          "parseCalls": 3,
+          "stringifyCalls": 255,
+          "nativeWriteMs": 0.09999999776482582
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 135.908,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 13.931,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(garbage collector)",
+            "selfMs": 4.266,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "query",
+            "selfMs": 3.262,
+            "url": "",
+            "line": 5412
+          },
+          {
+            "name": "_parse",
+            "selfMs": 2.663,
+            "url": "http://127.0.0.1:4174/assets/training-exposure-CU2LiWam.js",
+            "line": 0
+          },
+          {
+            "name": "Rt",
+            "selfMs": 2.168,
+            "url": "http://127.0.0.1:4174/assets/domain-dI78BTav.js",
+            "line": 0
+          },
+          {
+            "name": "sl",
+            "selfMs": 1.508,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.342,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "up",
+            "selfMs": 1.144,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          },
+          {
+            "name": "Qr",
+            "selfMs": 1.111,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "Ys",
+            "selfMs": 1.09,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "eo",
+            "selfMs": 1.083,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.083,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 49
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 1.08,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "Sc",
+            "selfMs": 1.079,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          }
+        ],
+        "completePaintMs": 21.900000002235174,
+        "completeSaveMs": 1.2000000029802322,
+        "completedSet": {
+          "id": "2f8be2b0-35df-4168-b265-0673b8c9dd52",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 71.80000000074506,
+        "progressChartPresent": 0,
+        "youPaintMs": 18.899999998509884,
+        "todayPaintMs": 21.899999998509884,
+        "afterWorkflowJsHeapUsedBytes": 19801924,
+        "afterWorkflowJsHeapUsedPostGcBytes": 8620320
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 466.2312440000005,
+        "toTodayMs": 454.0999999977648,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": true,
+        "driverWallMs": 436.6517270000004,
+        "toTodayMs": 424.6000000014901,
+        "navigationNetworkRequests": 0,
+        "error": null
+      }
+    },
+    {
+      "completedSets": 0,
+      "completedWorkouts": 0,
+      "sample": 3,
+      "fixtureSha256": "fcd77e1dc1013a4676def8e6eb937dd1dcdbc9594bcfb36674c7707218b316d6",
+      "cold": {
+        "toTodayMs": 627.8000000007451,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 2157,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 881763,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 58703,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 63806,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 111283,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 2822,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 791.7998299999999,
+        "pageScriptExecutionMs": 360.78900000000004,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30923.380751,
+          "afterNavigationStart": 30923.483254,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.360789,
+          "beforeTaskSeconds": 0.000573,
+          "afterTaskSeconds": 0.575766
+        },
+        "observedV8CompileMs": 83.877,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 575.766,
+        "jsHeapUsedBytes": 6951744,
+        "jsHeapTotalBytes": 11857920,
+        "documentCount": 4,
+        "domNodes": 277,
+        "observedServerJsBytes": 3472826,
+        "observedServerTotalBytes": 4281966,
+        "observedServerRequests": 63,
+        "completedServerResponses": 63
+      },
+      "warm": {
+        "toTodayMs": 173.10000000149012,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 283.08951999999954,
+        "pageScriptExecutionMs": 58.66,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30924.279608,
+          "afterNavigationStart": 30924.492861,
+          "beforeScriptSeconds": 0.076582,
+          "afterScriptSeconds": 0.05866,
+          "beforeTaskSeconds": 0.15443,
+          "afterTaskSeconds": 0.14806
+        },
+        "observedV8CompileMs": 8.075,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 148.06,
+        "jsHeapUsedBytes": 16837432,
+        "jsHeapTotalBytes": 22466560,
+        "documentCount": 8,
+        "domNodes": 815,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 0,
+        "observedServerRequests": 0,
+        "completedServerResponses": 0
+      },
+      "interactions": {
+        "trainPaintMs": 85.30000000074506,
+        "inputPaintMs": 25.300000000745058,
+        "inputSaveMs": 5.200000002980232,
+        "jsonDuringInput": {
+          "parseMs": 0.19999999925494194,
+          "stringifyMs": 0.29999999701976776,
+          "parseCalls": 3,
+          "stringifyCalls": 255,
+          "nativeWriteMs": 0.10000000149011612
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 141.235,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 28.065,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(garbage collector)",
+            "selfMs": 5.698,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "a",
+            "selfMs": 5.597,
+            "url": "http://127.0.0.1:4174/assets/exercise-library-B8UIVJ_o.js",
+            "line": 0
+          },
+          {
+            "name": "Zt",
+            "selfMs": 5.001,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "onChange",
+            "selfMs": 4.417,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "ul",
+            "selfMs": 3.154,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "computeBox",
+            "selfMs": 1.703,
+            "url": "",
+            "line": 3164
+          },
+          {
+            "name": "select",
+            "selfMs": 1.431,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.287,
+            "url": "http://127.0.0.1:4174/assets/jsx-runtime-BqfDQeLH.js",
+            "line": 0
+          },
+          {
+            "name": "kc",
+            "selfMs": 1.143,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.134,
+            "url": "http://127.0.0.1:4174/assets/jsx-runtime-BqfDQeLH.js",
+            "line": 0
+          },
+          {
+            "name": "h",
+            "selfMs": 1.116,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          },
+          {
+            "name": "Ys",
+            "selfMs": 1.113,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "bT",
+            "selfMs": 1.111,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          }
+        ],
+        "completePaintMs": 20.600000001490116,
+        "completeSaveMs": 1.300000000745058,
+        "completedSet": {
+          "id": "2f8be2b0-35df-4168-b265-0673b8c9dd52",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 39.80000000074506,
+        "progressChartPresent": 0,
+        "youPaintMs": 17.5,
+        "todayPaintMs": 21.100000001490116,
+        "afterWorkflowJsHeapUsedBytes": 20741632,
+        "afterWorkflowJsHeapUsedPostGcBytes": 8628044
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 571.0416830000013,
+        "toTodayMs": 538.2000000029802,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": true,
+        "driverWallMs": 508.86210500000016,
+        "toTodayMs": 473.29999999701977,
+        "navigationNetworkRequests": 0,
+        "error": null
+      }
+    },
+    {
+      "completedSets": 120,
+      "completedWorkouts": 6,
+      "sample": 1,
+      "fixtureSha256": "e9b9f5eb35e8747739762fc9eafa1a2915f59d7a935c79a0cd49b57c8241c67a",
+      "cold": {
+        "toTodayMs": 771.6999999992549,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 2157,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 881763,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 58703,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 111283,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 63806,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 2822,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 948.8042619999997,
+        "pageScriptExecutionMs": 344.721,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30927.380996,
+          "afterNavigationStart": 30927.490094,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.344721,
+          "beforeTaskSeconds": 0.000047,
+          "afterTaskSeconds": 0.698523
+        },
+        "observedV8CompileMs": 87.786,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 698.523,
+        "jsHeapUsedBytes": 9190128,
+        "jsHeapTotalBytes": 12644352,
+        "documentCount": 4,
+        "domNodes": 291,
+        "observedServerJsBytes": 3472826,
+        "observedServerTotalBytes": 4281966,
+        "observedServerRequests": 63,
+        "completedServerResponses": 63
+      },
+      "warm": {
+        "toTodayMs": 156.80000000074506,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 227.3574260000005,
+        "pageScriptExecutionMs": 63.122,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30928.44251,
+          "afterNavigationStart": 30928.629353,
+          "beforeScriptSeconds": 0.0611,
+          "afterScriptSeconds": 0.063122,
+          "beforeTaskSeconds": 0.143086,
+          "afterTaskSeconds": 0.128091
+        },
+        "observedV8CompileMs": 5.314,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 128.091,
+        "jsHeapUsedBytes": 15223004,
+        "jsHeapTotalBytes": 26923008,
+        "documentCount": 8,
+        "domNodes": 857,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 0,
+        "observedServerRequests": 0,
+        "completedServerResponses": 0
+      },
+      "interactions": {
+        "trainPaintMs": 56.80000000074506,
+        "inputPaintMs": 15.300000000745058,
+        "inputSaveMs": 2,
+        "jsonDuringInput": {
+          "parseMs": 0.30000000074505806,
+          "stringifyMs": 0.30000000074505806,
+          "parseCalls": 3,
+          "stringifyCalls": 265,
+          "nativeWriteMs": 0.10000000149011612
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 115.649,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 14.566,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "select",
+            "selfMs": 2.154,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "requestAnimationFrame",
+            "selfMs": 1.386,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.135,
+            "url": "",
+            "line": 0
+          },
+          {
+            "name": "Rt",
+            "selfMs": 1.131,
+            "url": "http://127.0.0.1:4174/assets/domain-dI78BTav.js",
+            "line": 0
+          },
+          {
+            "name": "Nn",
+            "selfMs": 1.128,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "Oa",
+            "selfMs": 1.112,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          },
+          {
+            "name": "r",
+            "selfMs": 1.108,
+            "url": "http://127.0.0.1:4174/assets/training-exposure-CU2LiWam.js",
+            "line": 0
+          },
+          {
+            "name": "readAttribute",
+            "selfMs": 1.1,
+            "url": "",
+            "line": 2129
+          },
+          {
+            "name": "zb",
+            "selfMs": 1.1,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "xT",
+            "selfMs": 1.097,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "INPUT",
+            "selfMs": 1.092,
+            "url": "",
+            "line": 3313
+          },
+          {
+            "name": "Aw",
+            "selfMs": 1.091,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.09,
+            "url": "",
+            "line": -1
+          }
+        ],
+        "completePaintMs": 20.900000002235174,
+        "completeSaveMs": 1.199999999254942,
+        "completedSet": {
+          "id": "24d4fe4d-6ef3-44a4-a8e0-92c534106b32",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 61,
+        "progressChartPresent": 1,
+        "youPaintMs": 25.5,
+        "todayPaintMs": 19.599999997764826,
+        "afterWorkflowJsHeapUsedBytes": 19199516,
+        "afterWorkflowJsHeapUsedPostGcBytes": 8949964
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 449.71080000000075,
+        "toTodayMs": 421.6000000014901,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": true,
+        "driverWallMs": 442.21359400000074,
+        "toTodayMs": 416.79999999701977,
+        "navigationNetworkRequests": 0,
+        "error": null
+      }
+    },
+    {
+      "completedSets": 120,
+      "completedWorkouts": 6,
+      "sample": 2,
+      "fixtureSha256": "e9b9f5eb35e8747739762fc9eafa1a2915f59d7a935c79a0cd49b57c8241c67a",
+      "cold": {
+        "toTodayMs": 567.8999999985099,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 2157,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 881763,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 58703,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 63806,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 111283,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 2822,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 727.0151210000004,
+        "pageScriptExecutionMs": 314.201,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30931.17657,
+          "afterNavigationStart": 30931.283542,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.314201,
+          "beforeTaskSeconds": 0.000056,
+          "afterTaskSeconds": 0.481813
+        },
+        "observedV8CompileMs": 100.383,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 481.813,
+        "jsHeapUsedBytes": 8598280,
+        "jsHeapTotalBytes": 12382208,
+        "documentCount": 4,
+        "domNodes": 291,
+        "observedServerJsBytes": 3472826,
+        "observedServerTotalBytes": 4281966,
+        "observedServerRequests": 63,
+        "completedServerResponses": 63
+      },
+      "warm": {
+        "toTodayMs": 127.30000000074506,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 278.56634699999995,
+        "pageScriptExecutionMs": 54.084,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30932.012913,
+          "afterNavigationStart": 30932.195901,
+          "beforeScriptSeconds": 0.063047,
+          "afterScriptSeconds": 0.054084,
+          "beforeTaskSeconds": 0.142204,
+          "afterTaskSeconds": 0.158815
+        },
+        "observedV8CompileMs": 7.195,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 158.815,
+        "jsHeapUsedBytes": 15201716,
+        "jsHeapTotalBytes": 26660864,
+        "documentCount": 8,
+        "domNodes": 857,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 0,
+        "observedServerRequests": 0,
+        "completedServerResponses": 0
+      },
+      "interactions": {
+        "trainPaintMs": 66.80000000074506,
+        "inputPaintMs": 20.800000000745058,
+        "inputSaveMs": 2.5,
+        "jsonDuringInput": {
+          "parseMs": 0.3999999985098839,
+          "stringifyMs": 0.19999999925494194,
+          "parseCalls": 3,
+          "stringifyCalls": 265,
+          "nativeWriteMs": 0.19999999925494194
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 136.444,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 24.254,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "r",
+            "selfMs": 1.732,
+            "url": "http://127.0.0.1:4174/assets/jsx-runtime-BqfDQeLH.js",
+            "line": 0
+          },
+          {
+            "name": "Ys",
+            "selfMs": 1.203,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "Pu",
+            "selfMs": 1.194,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "DT",
+            "selfMs": 1.126,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "previewNode",
+            "selfMs": 1.109,
+            "url": "",
+            "line": 7804
+          },
+          {
+            "name": "Fe",
+            "selfMs": 1.105,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "h",
+            "selfMs": 1.102,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          },
+          {
+            "name": "queryRole",
+            "selfMs": 1.1,
+            "url": "",
+            "line": 5370
+          },
+          {
+            "name": "fo",
+            "selfMs": 1.099,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "hx",
+            "selfMs": 1.097,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "Oc",
+            "selfMs": 1.093,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "getAriaRole",
+            "selfMs": 1.089,
+            "url": "",
+            "line": 3520
+          },
+          {
+            "name": "select",
+            "selfMs": 1.084,
+            "url": "",
+            "line": -1
+          }
+        ],
+        "completePaintMs": 20.400000002235174,
+        "completeSaveMs": 1.1000000014901161,
+        "completedSet": {
+          "id": "24d4fe4d-6ef3-44a4-a8e0-92c534106b32",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 61.69999999925494,
+        "progressChartPresent": 1,
+        "youPaintMs": 25.600000001490116,
+        "todayPaintMs": 20.699999999254942,
+        "afterWorkflowJsHeapUsedBytes": 19181828,
+        "afterWorkflowJsHeapUsedPostGcBytes": 8897372
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 518.4453499999981,
+        "toTodayMs": 509.0999999977648,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": true,
+        "driverWallMs": 485.6371880000006,
+        "toTodayMs": 452,
+        "navigationNetworkRequests": 0,
+        "error": null
+      }
+    },
+    {
+      "completedSets": 120,
+      "completedWorkouts": 6,
+      "sample": 3,
+      "fixtureSha256": "e9b9f5eb35e8747739762fc9eafa1a2915f59d7a935c79a0cd49b57c8241c67a",
+      "cold": {
+        "toTodayMs": 564,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 2157,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 881763,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 58703,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 63806,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 111283,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 2822,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 720.7774100000024,
+        "pageScriptExecutionMs": 352.918,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30934.870875,
+          "afterNavigationStart": 30934.952082,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.352918,
+          "beforeTaskSeconds": 0.00006,
+          "afterTaskSeconds": 0.541675
+        },
+        "observedV8CompileMs": 107.668,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 541.6750000000001,
+        "jsHeapUsedBytes": 8493940,
+        "jsHeapTotalBytes": 11857920,
+        "documentCount": 4,
+        "domNodes": 291,
+        "observedServerJsBytes": 3472826,
+        "observedServerTotalBytes": 4281966,
+        "observedServerRequests": 63,
+        "completedServerResponses": 63
+      },
+      "warm": {
+        "toTodayMs": 167.10000000149012,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 241.2997179999984,
+        "pageScriptExecutionMs": 63.928,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30935.67716,
+          "afterNavigationStart": 30935.873706,
+          "beforeScriptSeconds": 0.068662,
+          "afterScriptSeconds": 0.063928,
+          "beforeTaskSeconds": 0.155572,
+          "afterTaskSeconds": 0.126056
+        },
+        "observedV8CompileMs": 5.497,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 126.056,
+        "jsHeapUsedBytes": 15174780,
+        "jsHeapTotalBytes": 26923008,
+        "documentCount": 8,
+        "domNodes": 857,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 0,
+        "observedServerRequests": 0,
+        "completedServerResponses": 0
+      },
+      "interactions": {
+        "trainPaintMs": 68.80000000074506,
+        "inputPaintMs": 17,
+        "inputSaveMs": 2.599999997764826,
+        "jsonDuringInput": {
+          "parseMs": 0.30000000074505806,
+          "stringifyMs": 0.3999999985098839,
+          "parseCalls": 3,
+          "stringifyCalls": 265,
+          "nativeWriteMs": 0.10000000149011612
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 141.053,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 18.245,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "select",
+            "selfMs": 2.49,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "Zt",
+            "selfMs": 2.405,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "beginDOMCaches",
+            "selfMs": 1.495,
+            "url": "",
+            "line": 3209
+          },
+          {
+            "name": "h",
+            "selfMs": 1.495,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          },
+          {
+            "name": "Bc",
+            "selfMs": 1.435,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "Ui",
+            "selfMs": 1.394,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "bT",
+            "selfMs": 1.12,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "Eu",
+            "selfMs": 1.112,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "Rt",
+            "selfMs": 1.108,
+            "url": "http://127.0.0.1:4174/assets/domain-dI78BTav.js",
+            "line": 0
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.1,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "Ds",
+            "selfMs": 1.096,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.094,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          },
+          {
+            "name": "INPUT",
+            "selfMs": 1.086,
+            "url": "",
+            "line": 3313
+          }
+        ],
+        "completePaintMs": 21.199999999254942,
+        "completeSaveMs": 1.8999999985098839,
+        "completedSet": {
+          "id": "24d4fe4d-6ef3-44a4-a8e0-92c534106b32",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 69.39999999850988,
+        "progressChartPresent": 1,
+        "youPaintMs": 21.900000002235174,
+        "todayPaintMs": 22.199999999254942,
+        "afterWorkflowJsHeapUsedBytes": 19167856,
+        "afterWorkflowJsHeapUsedPostGcBytes": 8900256
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 520.4337720000003,
+        "toTodayMs": 488.30000000074506,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": true,
+        "driverWallMs": 499.52502000000095,
+        "toTodayMs": 472.70000000298023,
+        "navigationNetworkRequests": 0,
+        "error": null
+      }
+    },
+    {
+      "completedSets": 1000,
+      "completedWorkouts": 50,
+      "sample": 1,
+      "fixtureSha256": "099d63b4a2da4e89192b7ff3056a5cbdc862689d08be1299430aaaa632fe8715",
+      "cold": {
+        "toTodayMs": 740.3999999985099,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 2157,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 881763,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 58703,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 63806,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 111283,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 2822,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 889.2317129999974,
+        "pageScriptExecutionMs": 481.731,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30938.757768,
+          "afterNavigationStart": 30938.899042,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.481731,
+          "beforeTaskSeconds": 0.000235,
+          "afterTaskSeconds": 0.676342
+        },
+        "observedV8CompileMs": 112.816,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 676.342,
+        "jsHeapUsedBytes": 8827468,
+        "jsHeapTotalBytes": 17100800,
+        "documentCount": 4,
+        "domNodes": 291,
+        "observedServerJsBytes": 3472826,
+        "observedServerTotalBytes": 4281966,
+        "observedServerRequests": 63,
+        "completedServerResponses": 63
+      },
+      "warm": {
+        "toTodayMs": 171,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 264.36071699999957,
+        "pageScriptExecutionMs": 74.135,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30939.789343,
+          "afterNavigationStart": 30939.978992,
+          "beforeScriptSeconds": 0.068755,
+          "afterScriptSeconds": 0.074135,
+          "beforeTaskSeconds": 0.150267,
+          "afterTaskSeconds": 0.1347
+        },
+        "observedV8CompileMs": 7.889,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 134.7,
+        "jsHeapUsedBytes": 19026264,
+        "jsHeapTotalBytes": 35049472,
+        "documentCount": 8,
+        "domNodes": 857,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 0,
+        "observedServerRequests": 0,
+        "completedServerResponses": 0
+      },
+      "interactions": {
+        "trainPaintMs": 60.400000002235174,
+        "inputPaintMs": 23,
+        "inputSaveMs": 4.199999999254942,
+        "jsonDuringInput": {
+          "parseMs": 0.6999999992549419,
+          "stringifyMs": 1.0999999977648258,
+          "parseCalls": 3,
+          "stringifyCalls": 265,
+          "nativeWriteMs": 1.4000000022351742
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 113.153,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 16.377,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "bT",
+            "selfMs": 2.023,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "xc",
+            "selfMs": 1.56,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "e.useLayoutEffect",
+            "selfMs": 1.404,
+            "url": "http://127.0.0.1:4174/assets/jsx-runtime-BqfDQeLH.js",
+            "line": 0
+          },
+          {
+            "name": "querySelector",
+            "selfMs": 1.172,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "Ys",
+            "selfMs": 1.153,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.152,
+            "url": "http://127.0.0.1:4174/assets/createLucideIcon-BOEjABdp.js",
+            "line": 0
+          },
+          {
+            "name": "Pd",
+            "selfMs": 1.146,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          },
+          {
+            "name": "Fd",
+            "selfMs": 1.116,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 1.112,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "Ni",
+            "selfMs": 1.092,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "Eu",
+            "selfMs": 1.088,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "$r",
+            "selfMs": 1.087,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "select",
+            "selfMs": 1.086,
+            "url": "",
+            "line": -1
+          }
+        ],
+        "completePaintMs": 24.100000001490116,
+        "completeSaveMs": 2.900000002235174,
+        "completedSet": {
+          "id": "cb872605-9001-439e-a4f9-89130bc1bd6d",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 145.69999999925494,
+        "progressChartPresent": 1,
+        "youPaintMs": 66.69999999925494,
+        "todayPaintMs": 34.5,
+        "afterWorkflowJsHeapUsedBytes": 19363640,
+        "afterWorkflowJsHeapUsedPostGcBytes": 9533840
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 635.2511300000006,
+        "toTodayMs": 616.5,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": true,
+        "driverWallMs": 601.8253450000011,
+        "toTodayMs": 567.8000000007451,
+        "navigationNetworkRequests": 0,
+        "error": null
+      }
+    },
+    {
+      "completedSets": 1000,
+      "completedWorkouts": 50,
+      "sample": 2,
+      "fixtureSha256": "099d63b4a2da4e89192b7ff3056a5cbdc862689d08be1299430aaaa632fe8715",
+      "cold": {
+        "toTodayMs": 778.4000000022352,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 2157,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 881763,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 58703,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 63806,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 111283,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 2822,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 930.6010840000017,
+        "pageScriptExecutionMs": 469.826,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30943.293501,
+          "afterNavigationStart": 30943.425694,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.469826,
+          "beforeTaskSeconds": 0.000217,
+          "afterTaskSeconds": 0.631057
+        },
+        "observedV8CompileMs": 125.062,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 631.057,
+        "jsHeapUsedBytes": 9314608,
+        "jsHeapTotalBytes": 17887232,
+        "documentCount": 4,
+        "domNodes": 291,
+        "observedServerJsBytes": 3472826,
+        "observedServerTotalBytes": 4281966,
+        "observedServerRequests": 63,
+        "completedServerResponses": 63
+      },
+      "warm": {
+        "toTodayMs": 174.39999999850988,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 278.5059430000001,
+        "pageScriptExecutionMs": 75.43900000000001,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30944.358531,
+          "afterNavigationStart": 30944.588572,
+          "beforeScriptSeconds": 0.082969,
+          "afterScriptSeconds": 0.075439,
+          "beforeTaskSeconds": 0.168392,
+          "afterTaskSeconds": 0.154493
+        },
+        "observedV8CompileMs": 6.106,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 154.493,
+        "jsHeapUsedBytes": 19481164,
+        "jsHeapTotalBytes": 35049472,
+        "documentCount": 8,
+        "domNodes": 857,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 0,
+        "observedServerRequests": 0,
+        "completedServerResponses": 0
+      },
+      "interactions": {
+        "trainPaintMs": 60.5,
+        "inputPaintMs": 17.600000001490116,
+        "inputSaveMs": 2.900000002235174,
+        "jsonDuringInput": {
+          "parseMs": 0.6999999992549419,
+          "stringifyMs": 0.8000000007450581,
+          "parseCalls": 3,
+          "stringifyCalls": 265,
+          "nativeWriteMs": 0.7000000029802322
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 107.676,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 26.166,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 3.274,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "Mu",
+            "selfMs": 2.9,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "ni",
+            "selfMs": 2.059,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "Fd",
+            "selfMs": 1.414,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.298,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "query",
+            "selfMs": 1.188,
+            "url": "",
+            "line": 5412
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 1.183,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "uo",
+            "selfMs": 1.131,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "setAttribute",
+            "selfMs": 1.108,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 1.096,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "parse",
+            "selfMs": 1.092,
+            "url": "http://127.0.0.1:4174/assets/training-exposure-CU2LiWam.js",
+            "line": 0
+          },
+          {
+            "name": "e.useMemo",
+            "selfMs": 1.084,
+            "url": "http://127.0.0.1:4174/assets/jsx-runtime-BqfDQeLH.js",
+            "line": 0
+          },
+          {
+            "name": "Go",
+            "selfMs": 1.084,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          }
+        ],
+        "completePaintMs": 24.399999998509884,
+        "completeSaveMs": 3.099999997764826,
+        "completedSet": {
+          "id": "cb872605-9001-439e-a4f9-89130bc1bd6d",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 156.5,
+        "progressChartPresent": 1,
+        "youPaintMs": 80,
+        "todayPaintMs": 32.5,
+        "afterWorkflowJsHeapUsedBytes": 19289204,
+        "afterWorkflowJsHeapUsedPostGcBytes": 9516160
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 642.8748070000001,
+        "toTodayMs": 604.4000000022352,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": true,
+        "driverWallMs": 489.11568400000033,
+        "toTodayMs": 481,
+        "navigationNetworkRequests": 0,
+        "error": null
+      }
+    },
+    {
+      "completedSets": 1000,
+      "completedWorkouts": 50,
+      "sample": 3,
+      "fixtureSha256": "099d63b4a2da4e89192b7ff3056a5cbdc862689d08be1299430aaaa632fe8715",
+      "cold": {
+        "toTodayMs": 801.3000000007451,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 2157,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 881763,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 58703,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 63806,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 111283,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 2822,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 964.6874129999997,
+        "pageScriptExecutionMs": 410.568,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30947.933056,
+          "afterNavigationStart": 30948.037702,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.410568,
+          "beforeTaskSeconds": 0.000094,
+          "afterTaskSeconds": 0.720466
+        },
+        "observedV8CompileMs": 84.959,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 720.466,
+        "jsHeapUsedBytes": 9216836,
+        "jsHeapTotalBytes": 17625088,
+        "documentCount": 4,
+        "domNodes": 291,
+        "observedServerJsBytes": 3472826,
+        "observedServerTotalBytes": 4281966,
+        "observedServerRequests": 63,
+        "completedServerResponses": 63
+      },
+      "warm": {
+        "toTodayMs": 191.90000000223517,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          }
+        ],
+        "driverWallMs": 283.99895699999615,
+        "pageScriptExecutionMs": 78.837,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30949.03698,
+          "afterNavigationStart": 30949.270713,
+          "beforeScriptSeconds": 0.087009,
+          "afterScriptSeconds": 0.078837,
+          "beforeTaskSeconds": 0.1845,
+          "afterTaskSeconds": 0.148134
+        },
+        "observedV8CompileMs": 8.611,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 148.134,
+        "jsHeapUsedBytes": 19365552,
+        "jsHeapTotalBytes": 35311616,
+        "documentCount": 8,
+        "domNodes": 857,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 0,
+        "observedServerRequests": 0,
+        "completedServerResponses": 0
+      },
+      "interactions": {
+        "trainPaintMs": 58,
+        "inputPaintMs": 20.699999999254942,
+        "inputSaveMs": 5.399999998509884,
+        "jsonDuringInput": {
+          "parseMs": 0.8999999947845936,
+          "stringifyMs": 1.199999999254942,
+          "parseCalls": 3,
+          "stringifyCalls": 265,
+          "nativeWriteMs": 0.8999999985098839
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 118.118,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 15.021,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "select",
+            "selfMs": 2.246,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "Ne",
+            "selfMs": 1.641,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "Ex",
+            "selfMs": 1.599,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "evaluate",
+            "selfMs": 1.15,
+            "url": "",
+            "line": 304
+          },
+          {
+            "name": "onChange",
+            "selfMs": 1.121,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "get",
+            "selfMs": 1.118,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          },
+          {
+            "name": "setItem",
+            "selfMs": 1.107,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "ll",
+            "selfMs": 1.106,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.095,
+            "url": "http://127.0.0.1:4174/assets/jsx-runtime-BqfDQeLH.js",
+            "line": 0
+          },
+          {
+            "name": "removeAttribute",
+            "selfMs": 1.095,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "Xc",
+            "selfMs": 1.094,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "belongsToDisplayNoneOrAriaHiddenOrNonSlotted",
+            "selfMs": 1.093,
+            "url": "",
+            "line": 3564
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 1.09,
+            "url": "",
+            "line": 12
+          }
+        ],
+        "completePaintMs": 26.900000002235174,
+        "completeSaveMs": 2.400000002235174,
+        "completedSet": {
+          "id": "cb872605-9001-439e-a4f9-89130bc1bd6d",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 189.10000000149012,
+        "progressChartPresent": 1,
+        "youPaintMs": 80.19999999925494,
+        "todayPaintMs": 28.5,
+        "afterWorkflowJsHeapUsedBytes": 19295344,
+        "afterWorkflowJsHeapUsedPostGcBytes": 9516328
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 546.4131200000047,
+        "toTodayMs": 514.8999999985099,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": true,
+        "driverWallMs": 490.99384300000384,
+        "toTodayMs": 458.69999999925494,
+        "navigationNetworkRequests": 0,
+        "error": null
+      }
+    },
+    {
+      "completedSets": 5000,
+      "completedWorkouts": 250,
+      "sample": 1,
+      "fixtureSha256": "cd1390f368d63c120cd1787badeba29482f7b1e032d0fd9483cabacdf14819d0",
+      "cold": {
+        "toTodayMs": 662.5,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 2157,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 881763,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 58703,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 63806,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 111283,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 2822,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 842.9688800000004,
+        "pageScriptExecutionMs": 425.828,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30953.172643,
+          "afterNavigationStart": 30953.277582,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.425828,
+          "beforeTaskSeconds": 0.000054,
+          "afterTaskSeconds": 0.662172
+        },
+        "observedV8CompileMs": 68.172,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 662.172,
+        "jsHeapUsedBytes": 7974652,
+        "jsHeapTotalBytes": 29945856,
+        "documentCount": 4,
+        "domNodes": 291,
+        "observedServerJsBytes": 3472826,
+        "observedServerTotalBytes": 4281966,
+        "observedServerRequests": 63,
+        "completedServerResponses": 63
+      },
+      "warm": {
+        "toTodayMs": 230.90000000223517,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 358.30447099999583,
+        "pageScriptExecutionMs": 138.28199999999998,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30954.125662,
+          "afterNavigationStart": 30954.439704,
+          "beforeScriptSeconds": 0.120132,
+          "afterScriptSeconds": 0.138282,
+          "beforeTaskSeconds": 0.25378,
+          "afterTaskSeconds": 0.233578
+        },
+        "observedV8CompileMs": 8.178,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 233.578,
+        "jsHeapUsedBytes": 8960976,
+        "jsHeapTotalBytes": 50515968,
+        "documentCount": 3,
+        "domNodes": 549,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 0,
+        "observedServerRequests": 0,
+        "completedServerResponses": 0
+      },
+      "interactions": {
+        "trainPaintMs": 70,
+        "inputPaintMs": 21.5,
+        "inputSaveMs": 8.100000001490116,
+        "jsonDuringInput": {
+          "parseMs": 3.400000002235174,
+          "stringifyMs": 3.800000000745058,
+          "parseCalls": 3,
+          "stringifyCalls": 265,
+          "nativeWriteMs": 3.300000000745058
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 114.101,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 15.607,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 3.365,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 3.254,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "select",
+            "selfMs": 2.316,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "lo",
+            "selfMs": 2.214,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          },
+          {
+            "name": "setItem",
+            "selfMs": 2.175,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.61,
+            "url": "http://127.0.0.1:4174/assets/createLucideIcon-BOEjABdp.js",
+            "line": 0
+          },
+          {
+            "name": "Cd",
+            "selfMs": 1.446,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "p",
+            "selfMs": 1.404,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "Xc",
+            "selfMs": 1.152,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "_u",
+            "selfMs": 1.146,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "DETAILS",
+            "selfMs": 1.115,
+            "url": "",
+            "line": 3294
+          },
+          {
+            "name": "oneLine",
+            "selfMs": 1.097,
+            "url": "",
+            "line": 8244
+          },
+          {
+            "name": "Storage.setItem",
+            "selfMs": 1.093,
+            "url": "",
+            "line": 14
+          }
+        ],
+        "completePaintMs": 35.69999999925494,
+        "completeSaveMs": 7.5,
+        "completedSet": {
+          "id": "6e267fd1-3a5b-4674-b729-7358a72058bf",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 584.8000000007451,
+        "progressChartPresent": 1,
+        "youPaintMs": 250.09999999776483,
+        "todayPaintMs": 32.100000001490116,
+        "afterWorkflowJsHeapUsedBytes": 38669000,
+        "afterWorkflowJsHeapUsedPostGcBytes": 12240184
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 525.0228539999953,
+        "toTodayMs": 497.4000000022352,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": true,
+        "driverWallMs": 669.1746710000007,
+        "toTodayMs": 662,
+        "navigationNetworkRequests": 0,
+        "error": null
+      }
+    },
+    {
+      "completedSets": 5000,
+      "completedWorkouts": 250,
+      "sample": 2,
+      "fixtureSha256": "cd1390f368d63c120cd1787badeba29482f7b1e032d0fd9483cabacdf14819d0",
+      "cold": {
+        "toTodayMs": 680.6000000014901,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 2157,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 881763,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 58703,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 63806,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 111283,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 2822,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 903.7835880000057,
+        "pageScriptExecutionMs": 463.944,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30959.052487,
+          "afterNavigationStart": 30959.134974,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.463944,
+          "beforeTaskSeconds": 0.000744,
+          "afterTaskSeconds": 0.644694
+        },
+        "observedV8CompileMs": 105.491,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 644.694,
+        "jsHeapUsedBytes": 13246156,
+        "jsHeapTotalBytes": 31588352,
+        "documentCount": 4,
+        "domNodes": 291,
+        "observedServerJsBytes": 3480497,
+        "observedServerTotalBytes": 4289637,
+        "observedServerRequests": 64,
+        "completedServerResponses": 64
+      },
+      "warm": {
+        "toTodayMs": 227.69999999925494,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 338.8193969999993,
+        "pageScriptExecutionMs": 95.942,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30960.042795,
+          "afterNavigationStart": 30960.321525,
+          "beforeScriptSeconds": 0.10404,
+          "afterScriptSeconds": 0.095942,
+          "beforeTaskSeconds": 0.211789,
+          "afterTaskSeconds": 0.20694
+        },
+        "observedV8CompileMs": 5.12,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 206.94000000000003,
+        "jsHeapUsedBytes": 8972068,
+        "jsHeapTotalBytes": 49991680,
+        "documentCount": 3,
+        "domNodes": 549,
+        "observedServerJsBytes": 7671,
+        "observedServerTotalBytes": 7671,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 66.90000000223517,
+        "inputPaintMs": 20.300000000745058,
+        "inputSaveMs": 7.5,
+        "jsonDuringInput": {
+          "parseMs": 3.199999999254942,
+          "stringifyMs": 3.2999999970197678,
+          "parseCalls": 3,
+          "stringifyCalls": 265,
+          "nativeWriteMs": 2.800000000745058
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 112.094,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 25.732,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "setItem",
+            "selfMs": 3.227,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 3.211,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "select",
+            "selfMs": 2.164,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "Rt",
+            "selfMs": 1.123,
+            "url": "http://127.0.0.1:4174/assets/domain-dI78BTav.js",
+            "line": 0
+          },
+          {
+            "name": "Fd",
+            "selfMs": 1.089,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.088,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 49
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.088,
+            "url": "",
+            "line": 0
+          },
+          {
+            "name": "Sc",
+            "selfMs": 1.08,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "fb",
+            "selfMs": 1.078,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "u",
+            "selfMs": 1.072,
+            "url": "http://127.0.0.1:4174/assets/createLucideIcon-BOEjABdp.js",
+            "line": 0
+          },
+          {
+            "name": "jv",
+            "selfMs": 1.071,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.062,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "CT",
+            "selfMs": 1.053,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          }
+        ],
+        "completePaintMs": 32.099999997764826,
+        "completeSaveMs": 7,
+        "completedSet": {
+          "id": "6e267fd1-3a5b-4674-b729-7358a72058bf",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 494,
+        "progressChartPresent": 1,
+        "youPaintMs": 251.69999999925494,
+        "todayPaintMs": 27.899999998509884,
+        "afterWorkflowJsHeapUsedBytes": 38070996,
+        "afterWorkflowJsHeapUsedPostGcBytes": 12239044
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 529.8443520000001,
+        "toTodayMs": 512.8000000007451,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": true,
+        "driverWallMs": 607.0863989999998,
+        "toTodayMs": 595.3999999985099,
+        "navigationNetworkRequests": 0,
+        "error": null
+      }
+    },
+    {
+      "completedSets": 5000,
+      "completedWorkouts": 250,
+      "sample": 3,
+      "fixtureSha256": "cd1390f368d63c120cd1787badeba29482f7b1e032d0fd9483cabacdf14819d0",
+      "cold": {
+        "toTodayMs": 655.4000000022352,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 2157,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 881763,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 58703,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 63806,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 111283,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 2822,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 848.3427840000004,
+        "pageScriptExecutionMs": 384.031,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30964.583834,
+          "afterNavigationStart": 30964.75873,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.384031,
+          "beforeTaskSeconds": 0.000153,
+          "afterTaskSeconds": 0.592309
+        },
+        "observedV8CompileMs": 72.379,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 592.309,
+        "jsHeapUsedBytes": 11952076,
+        "jsHeapTotalBytes": 29954048,
+        "documentCount": 4,
+        "domNodes": 291,
+        "observedServerJsBytes": 3480497,
+        "observedServerTotalBytes": 4289637,
+        "observedServerRequests": 64,
+        "completedServerResponses": 64
+      },
+      "warm": {
+        "toTodayMs": 249.30000000074506,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 437.39736000000266,
+        "pageScriptExecutionMs": 149.832,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30965.610901,
+          "afterNavigationStart": 30965.875968,
+          "beforeScriptSeconds": 0.118307,
+          "afterScriptSeconds": 0.149832,
+          "beforeTaskSeconds": 0.230517,
+          "afterTaskSeconds": 0.28412
+        },
+        "observedV8CompileMs": 11.903,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 284.12,
+        "jsHeapUsedBytes": 25663740,
+        "jsHeapTotalBytes": 52883456,
+        "documentCount": 3,
+        "domNodes": 549,
+        "observedServerJsBytes": 7671,
+        "observedServerTotalBytes": 7671,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 77.5,
+        "inputPaintMs": 30.699999999254942,
+        "inputSaveMs": 9.300000000745058,
+        "jsonDuringInput": {
+          "parseMs": 3.2000000029802322,
+          "stringifyMs": 4.49999999627471,
+          "parseCalls": 3,
+          "stringifyCalls": 265,
+          "nativeWriteMs": 3
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 141.37,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 19.736,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 4.372,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 3.231,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "fo",
+            "selfMs": 3.17,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "select",
+            "selfMs": 2.198,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "setItem",
+            "selfMs": 2.169,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "_parse",
+            "selfMs": 1.151,
+            "url": "http://127.0.0.1:4174/assets/training-exposure-CU2LiWam.js",
+            "line": 0
+          },
+          {
+            "name": "queueMicrotask",
+            "selfMs": 1.121,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "Qr",
+            "selfMs": 1.121,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "Pu",
+            "selfMs": 1.118,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "serializeAsCallArgument",
+            "selfMs": 1.114,
+            "url": "",
+            "line": 171
+          },
+          {
+            "name": "_x",
+            "selfMs": 1.101,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "useLayoutEffect",
+            "selfMs": 1.1,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "kc",
+            "selfMs": 1.099,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          }
+        ],
+        "completePaintMs": 45.19999999925494,
+        "completeSaveMs": 7.400000002235174,
+        "completedSet": {
+          "id": "6e267fd1-3a5b-4674-b729-7358a72058bf",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 558.8000000007451,
+        "progressChartPresent": 1,
+        "youPaintMs": 250.59999999776483,
+        "todayPaintMs": 40.399999998509884,
+        "afterWorkflowJsHeapUsedBytes": 38838324,
+        "afterWorkflowJsHeapUsedPostGcBytes": 12209500
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 692.0403769999975,
+        "toTodayMs": 683.1000000014901,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": true,
+        "driverWallMs": 598.886851999996,
+        "toTodayMs": 569.8000000007451,
+        "navigationNetworkRequests": 0,
+        "error": null
+      }
+    },
+    {
+      "completedSets": 10000,
+      "completedWorkouts": 500,
+      "sample": 1,
+      "fixtureSha256": "49cc7ae87b4956a6a13119567b2370c539d055a1335111a7da9f280885666e68",
+      "cold": {
+        "toTodayMs": 796.5999999977648,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 2157,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 881763,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 58703,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 63806,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 111283,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 2822,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 972.3367169999983,
+        "pageScriptExecutionMs": 513.345,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30971.939064,
+          "afterNavigationStart": 30972.040255,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.513345,
+          "beforeTaskSeconds": 0.000119,
+          "afterTaskSeconds": 0.70786
+        },
+        "observedV8CompileMs": 74.558,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 707.86,
+        "jsHeapUsedBytes": 20553948,
+        "jsHeapTotalBytes": 54128640,
+        "documentCount": 4,
+        "domNodes": 291,
+        "observedServerJsBytes": 3480497,
+        "observedServerTotalBytes": 4289637,
+        "observedServerRequests": 64,
+        "completedServerResponses": 64
+      },
+      "warm": {
+        "toTodayMs": 326.8999999985099,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 445.89621899999474,
+        "pageScriptExecutionMs": 155.421,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30973.014941,
+          "afterNavigationStart": 30973.32714,
+          "beforeScriptSeconds": 0.147695,
+          "afterScriptSeconds": 0.155421,
+          "beforeTaskSeconds": 0.275985,
+          "afterTaskSeconds": 0.260156
+        },
+        "observedV8CompileMs": 8.301,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 260.156,
+        "jsHeapUsedBytes": 38423728,
+        "jsHeapTotalBytes": 98816000,
+        "documentCount": 5,
+        "domNodes": 814,
+        "observedServerJsBytes": 7671,
+        "observedServerTotalBytes": 7671,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 109.19999999925494,
+        "inputPaintMs": 62.100000001490116,
+        "inputSaveMs": 49.69999999925494,
+        "jsonDuringInput": {
+          "parseMs": 7.399999998509884,
+          "stringifyMs": 15.600000008940697,
+          "parseCalls": 3,
+          "stringifyCalls": 265,
+          "nativeWriteMs": 32.400000002235174
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 149.21,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "setItem",
+            "selfMs": 30.325,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 27.208,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 15.306,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 7.097,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "tt",
+            "selfMs": 2.471,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          },
+          {
+            "name": "yc",
+            "selfMs": 2.3,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "ul",
+            "selfMs": 1.378,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "createElementNS",
+            "selfMs": 1.209,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "Storage.setItem",
+            "selfMs": 1.103,
+            "url": "",
+            "line": 14
+          },
+          {
+            "name": "uo",
+            "selfMs": 1.099,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "tt",
+            "selfMs": 1.091,
+            "url": "http://127.0.0.1:4174/assets/domain-dI78BTav.js",
+            "line": 0
+          },
+          {
+            "name": "select",
+            "selfMs": 1.086,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.083,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "p",
+            "selfMs": 1.082,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          }
+        ],
+        "completePaintMs": 53.80000000074506,
+        "completeSaveMs": 13,
+        "completedSet": {
+          "id": "dbad4205-5f80-437d-982a-50570db6d07e",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 997.9000000022352,
+        "progressChartPresent": 1,
+        "youPaintMs": 473.30000000074506,
+        "todayPaintMs": 28.800000000745058,
+        "afterWorkflowJsHeapUsedBytes": 35798960,
+        "afterWorkflowJsHeapUsedPostGcBytes": 15410720
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 621.9133799999981,
+        "toTodayMs": 598.4000000022352,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": true,
+        "driverWallMs": 625.5098419999995,
+        "toTodayMs": 591.6999999992549,
+        "navigationNetworkRequests": 0,
+        "error": null
+      }
+    },
+    {
+      "completedSets": 10000,
+      "completedWorkouts": 500,
+      "sample": 2,
+      "fixtureSha256": "49cc7ae87b4956a6a13119567b2370c539d055a1335111a7da9f280885666e68",
+      "cold": {
+        "toTodayMs": 778.5999999977648,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 2157,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 881763,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 58703,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 63806,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 111283,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 2822,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 949.0285319999966,
+        "pageScriptExecutionMs": 493.3,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30980.050875,
+          "afterNavigationStart": 30980.136113,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.4933,
+          "beforeTaskSeconds": 0.000078,
+          "afterTaskSeconds": 0.735978
+        },
+        "observedV8CompileMs": 89.45,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 735.9780000000001,
+        "jsHeapUsedBytes": 10144476,
+        "jsHeapTotalBytes": 51179520,
+        "documentCount": 4,
+        "domNodes": 291,
+        "observedServerJsBytes": 3480497,
+        "observedServerTotalBytes": 4289637,
+        "observedServerRequests": 64,
+        "completedServerResponses": 64
+      },
+      "warm": {
+        "toTodayMs": 286.5,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 410.3283810000139,
+        "pageScriptExecutionMs": 152.321,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30981.090431,
+          "afterNavigationStart": 30981.391365,
+          "beforeScriptSeconds": 0.128974,
+          "afterScriptSeconds": 0.152321,
+          "beforeTaskSeconds": 0.253879,
+          "afterTaskSeconds": 0.281104
+        },
+        "observedV8CompileMs": 10.822,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 281.10400000000004,
+        "jsHeapUsedBytes": 29192992,
+        "jsHeapTotalBytes": 92524544,
+        "documentCount": 3,
+        "domNodes": 549,
+        "observedServerJsBytes": 7671,
+        "observedServerTotalBytes": 7671,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 92.69999999925494,
+        "inputPaintMs": 26.600000001490116,
+        "inputSaveMs": 13.5,
+        "jsonDuringInput": {
+          "parseMs": 7.400000002235174,
+          "stringifyMs": 5.899999998509884,
+          "parseCalls": 3,
+          "stringifyCalls": 265,
+          "nativeWriteMs": 5.899999998509884
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 120.615,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 31.412,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 7.6,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "setItem",
+            "selfMs": 5.462,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 5.401,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "ul",
+            "selfMs": 1.321,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "h",
+            "selfMs": 1.265,
+            "url": "http://127.0.0.1:4174/assets/training-exposure-CU2LiWam.js",
+            "line": 0
+          },
+          {
+            "name": "evaluate",
+            "selfMs": 1.174,
+            "url": "",
+            "line": 304
+          },
+          {
+            "name": "Ys",
+            "selfMs": 1.14,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "Storage.setItem",
+            "selfMs": 1.114,
+            "url": "",
+            "line": 14
+          },
+          {
+            "name": "elementSafeTagName",
+            "selfMs": 1.104,
+            "url": "",
+            "line": 3192
+          },
+          {
+            "name": "c",
+            "selfMs": 1.1,
+            "url": "http://127.0.0.1:4174/assets/exercise-library-B8UIVJ_o.js",
+            "line": 0
+          },
+          {
+            "name": "Rt",
+            "selfMs": 1.098,
+            "url": "http://127.0.0.1:4174/assets/domain-dI78BTav.js",
+            "line": 0
+          },
+          {
+            "name": "bT",
+            "selfMs": 1.091,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "D",
+            "selfMs": 1.09,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 1
+          }
+        ],
+        "completePaintMs": 52.100000001490116,
+        "completeSaveMs": 13,
+        "completedSet": {
+          "id": "dbad4205-5f80-437d-982a-50570db6d07e",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 1038.199999999255,
+        "progressChartPresent": 1,
+        "youPaintMs": 449.80000000074506,
+        "todayPaintMs": 29.699999999254942,
+        "afterWorkflowJsHeapUsedBytes": 23431832,
+        "afterWorkflowJsHeapUsedPostGcBytes": 15470252
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 644.7791950000101,
+        "toTodayMs": 631,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": true,
+        "driverWallMs": 650.0316280000116,
+        "toTodayMs": 640.5,
+        "navigationNetworkRequests": 0,
+        "error": null
+      }
+    },
+    {
+      "completedSets": 10000,
+      "completedWorkouts": 500,
+      "sample": 3,
+      "fixtureSha256": "49cc7ae87b4956a6a13119567b2370c539d055a1335111a7da9f280885666e68",
+      "cold": {
+        "toTodayMs": 738.5,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 2157,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 881763,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 58703,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 63806,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 111283,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 2822,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 895.0385610000085,
+        "pageScriptExecutionMs": 482.265,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30988.525691,
+          "afterNavigationStart": 30988.66636,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.482265,
+          "beforeTaskSeconds": 0.000441,
+          "afterTaskSeconds": 0.669928
+        },
+        "observedV8CompileMs": 89.132,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 669.928,
+        "jsHeapUsedBytes": 17032384,
+        "jsHeapTotalBytes": 52293632,
+        "documentCount": 4,
+        "domNodes": 291,
+        "observedServerJsBytes": 3480497,
+        "observedServerTotalBytes": 4289637,
+        "observedServerRequests": 64,
+        "completedServerResponses": 64
+      },
+      "warm": {
+        "toTodayMs": 263.3999999985099,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1857,
+            "decodedBodyBytes": 1857
+          },
+          {
+            "name": "/assets/index-mqO1H4qZ.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 881463,
+            "decodedBodyBytes": 881463
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/training-exposure-CU2LiWam.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 58403,
+            "decodedBodyBytes": 58403
+          },
+          {
+            "name": "/assets/exercise-library-B8UIVJ_o.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 63506,
+            "decodedBodyBytes": 63506
+          },
+          {
+            "name": "/assets/domain-dI78BTav.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 110983,
+            "decodedBodyBytes": 110983
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/activities-DWDzO61D.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 2522,
+            "decodedBodyBytes": 2522
+          }
+        ],
+        "driverWallMs": 367.13297500000044,
+        "pageScriptExecutionMs": 142.33399999999997,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 30989.565265,
+          "afterNavigationStart": 30989.917087,
+          "beforeScriptSeconds": 0.162422,
+          "afterScriptSeconds": 0.142334,
+          "beforeTaskSeconds": 0.306253,
+          "afterTaskSeconds": 0.247256
+        },
+        "observedV8CompileMs": 8.164,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 247.256,
+        "jsHeapUsedBytes": 31005452,
+        "jsHeapTotalBytes": 93048832,
+        "documentCount": 3,
+        "domNodes": 549,
+        "observedServerJsBytes": 7671,
+        "observedServerTotalBytes": 7671,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 76.19999999925494,
+        "inputPaintMs": 26.699999999254942,
+        "inputSaveMs": 12.5,
+        "jsonDuringInput": {
+          "parseMs": 13.300000000745058,
+          "stringifyMs": 5.699999999254942,
+          "parseCalls": 3,
+          "stringifyCalls": 265,
+          "nativeWriteMs": 4.800000000745058
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 127.112,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 20.899,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 13.68,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 6.236,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "setItem",
+            "selfMs": 4.326,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 3.819,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "Fd",
+            "selfMs": 2.195,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          },
+          {
+            "name": "sy",
+            "selfMs": 1.143,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "ba",
+            "selfMs": 1.11,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 54
+          },
+          {
+            "name": "query",
+            "selfMs": 1.096,
+            "url": "",
+            "line": 5412
+          },
+          {
+            "name": "previewNode",
+            "selfMs": 1.09,
+            "url": "",
+            "line": 7804
+          },
+          {
+            "name": "select",
+            "selfMs": 1.089,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "uu",
+            "selfMs": 1.086,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "Ys",
+            "selfMs": 1.076,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 8
+          },
+          {
+            "name": "cp",
+            "selfMs": 1.066,
+            "url": "http://127.0.0.1:4174/assets/index-mqO1H4qZ.js",
+            "line": 9
+          }
+        ],
+        "completePaintMs": 49.5,
+        "completeSaveMs": 13.800000000745058,
+        "completedSet": {
+          "id": "dbad4205-5f80-437d-982a-50570db6d07e",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 1108.5,
+        "progressChartPresent": 1,
+        "youPaintMs": 670.2999999970198,
+        "todayPaintMs": 37.30000000074506,
+        "afterWorkflowJsHeapUsedBytes": 23274260,
+        "afterWorkflowJsHeapUsedPostGcBytes": 15437904
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 748.1231640000042,
+        "toTodayMs": 713.8999999985099,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": true,
+        "driverWallMs": 710.932936000012,
+        "toTodayMs": 681.3999999985099,
+        "navigationNetworkRequests": 0,
+        "error": null
+      }
+    }
+  ],
+  "frames": [
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "light",
+      "name": "today",
+      "documentWidth": 320
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "light",
+      "name": "focus",
+      "documentWidth": 320
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "light",
+      "name": "quick-log",
+      "documentWidth": 320
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "light",
+      "name": "rest",
+      "documentWidth": 320
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "light",
+      "name": "progress",
+      "documentWidth": 320
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "dark",
+      "name": "today",
+      "documentWidth": 320
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "dark",
+      "name": "focus",
+      "documentWidth": 320
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "dark",
+      "name": "quick-log",
+      "documentWidth": 320
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "dark",
+      "name": "rest",
+      "documentWidth": 320
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "dark",
+      "name": "progress",
+      "documentWidth": 320
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "theme": "light",
+      "name": "today",
+      "documentWidth": 375
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "theme": "light",
+      "name": "focus",
+      "documentWidth": 375
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "theme": "light",
+      "name": "quick-log",
+      "documentWidth": 375
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "theme": "light",
+      "name": "rest",
+      "documentWidth": 375
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "theme": "light",
+      "name": "progress",
+      "documentWidth": 375
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "theme": "dark",
+      "name": "today",
+      "documentWidth": 375
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "theme": "dark",
+      "name": "focus",
+      "documentWidth": 375
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "theme": "dark",
+      "name": "quick-log",
+      "documentWidth": 375
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "theme": "dark",
+      "name": "rest",
+      "documentWidth": 375
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "theme": "dark",
+      "name": "progress",
+      "documentWidth": 375
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "name": "today",
+      "documentWidth": 390
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "name": "focus",
+      "documentWidth": 390
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "name": "quick-log",
+      "documentWidth": 390
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "name": "rest",
+      "documentWidth": 390
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "name": "progress",
+      "documentWidth": 390
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "name": "today",
+      "documentWidth": 390
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "name": "focus",
+      "documentWidth": 390
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "name": "quick-log",
+      "documentWidth": 390
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "name": "rest",
+      "documentWidth": 390
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "name": "progress",
+      "documentWidth": 390
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "name": "today",
+      "documentWidth": 430
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "name": "focus",
+      "documentWidth": 430
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "name": "quick-log",
+      "documentWidth": 430
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "name": "rest",
+      "documentWidth": 430
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "name": "progress",
+      "documentWidth": 430
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "name": "today",
+      "documentWidth": 430
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "name": "focus",
+      "documentWidth": 430
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "name": "quick-log",
+      "documentWidth": 430
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "name": "rest",
+      "documentWidth": 430
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "name": "progress",
+      "documentWidth": 430
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "theme": "light",
+      "name": "today",
+      "documentWidth": 820
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "theme": "light",
+      "name": "focus",
+      "documentWidth": 820
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "theme": "light",
+      "name": "quick-log",
+      "documentWidth": 820
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "theme": "light",
+      "name": "rest",
+      "documentWidth": 820
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "theme": "light",
+      "name": "progress",
+      "documentWidth": 820
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "theme": "dark",
+      "name": "today",
+      "documentWidth": 820
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "theme": "dark",
+      "name": "focus",
+      "documentWidth": 820
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "theme": "dark",
+      "name": "quick-log",
+      "documentWidth": 820
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "theme": "dark",
+      "name": "rest",
+      "documentWidth": 820
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "theme": "dark",
+      "name": "progress",
+      "documentWidth": 820
+    },
+    {
+      "width": 1194,
+      "height": 834,
+      "theme": "light",
+      "name": "today",
+      "documentWidth": 1194
+    },
+    {
+      "width": 1194,
+      "height": 834,
+      "theme": "light",
+      "name": "focus",
+      "documentWidth": 1194
+    },
+    {
+      "width": 1194,
+      "height": 834,
+      "theme": "light",
+      "name": "quick-log",
+      "documentWidth": 1194
+    },
+    {
+      "width": 1194,
+      "height": 834,
+      "theme": "light",
+      "name": "rest",
+      "documentWidth": 1194
+    },
+    {
+      "width": 1194,
+      "height": 834,
+      "theme": "light",
+      "name": "progress",
+      "documentWidth": 1194
+    },
+    {
+      "width": 1194,
+      "height": 834,
+      "theme": "dark",
+      "name": "today",
+      "documentWidth": 1194
+    },
+    {
+      "width": 1194,
+      "height": 834,
+      "theme": "dark",
+      "name": "focus",
+      "documentWidth": 1194
+    },
+    {
+      "width": 1194,
+      "height": 834,
+      "theme": "dark",
+      "name": "quick-log",
+      "documentWidth": 1194
+    },
+    {
+      "width": 1194,
+      "height": 834,
+      "theme": "dark",
+      "name": "rest",
+      "documentWidth": 1194
+    },
+    {
+      "width": 1194,
+      "height": 834,
+      "theme": "dark",
+      "name": "progress",
+      "documentWidth": 1194
+    }
+  ]
+}

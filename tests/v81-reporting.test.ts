@@ -45,11 +45,14 @@ test('match primer records load without becoming a fourth gym obligation or a co
   assert.equal(summary.volleyballSessions, 0, 'planned match and practice never become actual sport load');
 });
 
-test('an unfamiliar trap-bar deadlift gets technique advice before overload suggestions', () => {
+test('sparse trap-bar history gets conditional technique advice without assuming experience or rewriting the plan', () => {
   const exercise = toPlanExercise(findLibraryExercise('Trap Bar Deadlift')!);
   const suggestion = getProgressionRecommendation(exercise, [], '2026-10-25');
   assert.equal(suggestion.kind, 'quality');
   assert.equal(suggestion.title, 'Technique first');
-  assert.match(suggestion.cue, /20 kg empty bar/);
-  assert.match(suggestion.reason, /Replace the leg press/);
+  assert.match(suggestion.cue, /Follow your planned load/);
+  assert.match(suggestion.cue, /If the lift is unfamiliar/);
+  assert.match(suggestion.reason, /Missing logs do not establish your experience/);
+  assert.doesNotMatch(suggestion.cue, /20 kg/);
+  assert.doesNotMatch(suggestion.reason, /Replace the leg press/);
 });

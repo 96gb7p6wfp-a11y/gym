@@ -1171,7 +1171,7 @@ function formatDate(e, t = !1) {
  * This imports only the dependency-free identity helper, not analytics/domain.
  */
 function previousSessionSeed(sessions, exercise, date) {
-  if (exercise.preparationOnly || (exercise.mode === 'bodyweight' && exercise.defaultKg === 0)) return undefined;
+  if (exercise.preparationOnly) return undefined;
   for (const session of sessions.filter(entry => entry.status === 'completed' && entry.deletedAt == null && entry.date <= date)
     .sort((a, b) => b.date.localeCompare(a.date) || b.startedAt - a.startedAt)) {
     const candidates = session.exercises.filter(entry => !entry.preparationOnly && areComparableExercises(entry, exercise));
@@ -1226,14 +1226,18 @@ function createSession(e, t, n, r, i) {
           },
           (_, n) => {
             const previous = t?.logs[n];
-            const r = previous?.done ? previous : undefined;
+            // A prescribed bodyweight-only movement may reuse genuine unloaded
+            // reps, but a loaded performance is not the same configuration.
+            // In particular, never reintroduce added load into limited work.
+            const bodyweightOnly = e.mode === 'bodyweight' && e.defaultKg === 0;
+            const r = previous?.done && !(bodyweightOnly && (previous.kg ?? 0) > 0) ? previous : undefined;
             const targetRep = !e.measurement && !e.quantityUnit && e.mode !== 'timed'
               && !/sec|min|\bhold\b/i.test(e.target) ? Number(e.target.match(/\d+/)?.[0]) : null;
             const plannedReps = Number.isInteger(targetRep) && targetRep > 0 && targetRep <= 1000 ? targetRep : null;
-            const kg = e.preparationOnly ? (e.defaultKg ?? 0) : r ? r.kg : (e.defaultKg ?? null);
+            const kg = e.preparationOnly ? (e.defaultKg ?? 0) : bodyweightOnly ? 0 : r ? r.kg : (e.defaultKg ?? null);
             const reps = e.prescribedDistanceM != null ? e.prescribedDistanceM : r?.reps ?? plannedReps;
             const inputSources = {
-              ...(kg != null ? { kg: r ? 'history' : e.preparationOnly ? 'planned' : 'default' } : {}),
+              ...(kg != null ? { kg: e.preparationOnly || bodyweightOnly ? 'planned' : r ? 'history' : 'default' } : {}),
               ...(reps != null ? { reps: e.prescribedDistanceM != null ? 'planned' : r?.reps != null ? 'history' : e.preparationOnly ? 'planned' : 'default' } : {}),
             };
             return {

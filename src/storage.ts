@@ -175,41 +175,69 @@ export function createLocalClient(storage: StoragePort, initialProfile: unknown 
   let observedExistingStore = false;
   let observedAbsentStore = false;
   let externalInitialization = false;
+  // The synchronous store still owns every edit. Reuse only a validated view
+  // of the exact current bytes; another tab, restore or deletion invalidates it.
+  // Requests replace record arrays/objects rather than mutate cached records.
+  let validatedRaw: string | undefined;
+  let validatedState: LocalState | undefined;
+  const writableState = (state: LocalState): LocalState => ({
+    ...state, reminders: { ...state.reminders },
+  });
+  const invalidate = () => { validatedRaw = undefined; validatedState = undefined; };
   const setupReviews = new Map<string, { scope: SetupRecoveryScope; text: string; profile: string; profileVersion: number; generation: string | null }>();
-  function read(defaultProfile: unknown = initialProfile): LocalState {
+  function readSnapshot(defaultProfile: unknown = initialProfile): { state: LocalState; raw: string | null } {
     let raw: string | null;
     try { raw = storage.getItem(STORAGE_KEY); }
     catch { throw new Error('Device storage is unavailable. Allow site storage in your browser, then retry.'); }
     if (raw === null) {
+      invalidate();
       if (observedExistingStore) throw new Error('Saved data disappeared from this app address while it was open. Reload and review recovery options before saving; existing settings will not be replaced with defaults.');
       observedAbsentStore = true;
       observedGeneration ??= null;
-      return { schemaVersion: 1, profile: clone(ProfileSchema.parse(defaultProfile)), profileVersion: 0, sessions: [], nutrition: [], activities: [], reminders: (defaultProfile as { onboarding?: unknown })?.onboarding ? { items: [], entries: [] } : defaultReminderState() };
+      return { raw, state: { schemaVersion: 1, profile: clone(ProfileSchema.parse(defaultProfile)), profileVersion: 0, sessions: [], nutrition: [], activities: [], reminders: (defaultProfile as { onboarding?: unknown })?.onboarding ? { items: [], entries: [] } : defaultReminderState() } };
     }
     // Presence matters even when validation fails: unreadable personal records
     // must never turn into permission to write a default profile later.
     if (observedAbsentStore && !observedExistingStore) externalInitialization = true;
     observedExistingStore = true;
     try {
+      if (raw === validatedRaw && validatedState) return { raw, state: writableState(validatedState) };
       const state = parseState(JSON.parse(raw));
       if (observedGeneration === undefined) observedGeneration = state.restoreGeneration ?? null;
-      return state;
+      validatedRaw = raw; validatedState = state;
+      return { raw, state: writableState(state) };
     }
-    catch { throw new Error('Saved data could not be read. Restore a valid Setline backup in Settings, or export a recovery copy before resetting.'); }
+    catch { invalidate(); throw new Error('Saved data could not be read. Restore a valid Setline backup in Settings, or export a recovery copy before resetting.'); }
   }
-  function write(state: LocalState) {
+  function read(defaultProfile: unknown = initialProfile): LocalState { return readSnapshot(defaultProfile).state; }
+  function write(state: LocalState, expectedRaw: string | null, cacheValidated = true) {
     const serialized = JSON.stringify(state);
-    try { storage.setItem(STORAGE_KEY, serialized); observedExistingStore = true; }
+    let current: string | null;
+    try { current = storage.getItem(STORAGE_KEY); }
+    catch { throw new Error('Device storage is unavailable. Allow site storage in your browser, then retry.'); }
+    // Check after validation/serialization, as another window can save during
+    // that work. This narrows the race; localStorage has no atomic compare/swap.
+    if (current !== expectedRaw) {
+      invalidate();
+      throw new Error('Your saved data changed in another window before this save. Reload and review the latest records; this change was not saved.');
+    }
+    try {
+      storage.setItem(STORAGE_KEY, serialized); observedExistingStore = true;
+      // Publish only after persistence succeeds. Safety-copy operations can
+      // preserve unknown legacy metadata, so they force fresh validation.
+      if (cacheValidated) { validatedRaw = serialized; validatedState = state; }
+      else invalidate();
+    }
     catch { throw new Error('Your data could not be saved. Device storage may be full or unavailable. Export a backup and free some space, then retry.'); }
   }
   function assertVersion(expected: unknown, actual: number) {
     if (!version(expected) || expected !== actual) throw new Error('This record changed in another tab. Reload the app before editing it again.');
   }
 
-  async function request(path: string, payload?: unknown, defaultProfile: unknown = initialProfile): Promise<RecordValue> {
+  function requestSync(path: string, payload?: unknown, defaultProfile: unknown = initialProfile): RecordValue {
     if (path === '/api/nutrition/analyze') throw new Error('Automatic photo analysis is unavailable in this offline app. Add foods and nutrition amounts manually.');
     if (path !== '/api/tracker' && path !== '/api/nutrition' && path !== '/api/reminders' && path !== '/api/performance') throw new Error('Unknown local data operation.');
-    const state = read(defaultProfile);
+    const { state, raw } = readSnapshot(defaultProfile);
     if (payload === undefined) {
       if (path === '/api/performance') return clone({ ...(state.performance ?? emptyPerformance()), version: state.performanceVersion ?? 0 });
       return path === '/api/reminders' ? clone(state.reminders) as unknown as RecordValue : path === '/api/tracker'
@@ -341,7 +369,7 @@ export function createLocalClient(storage: StoragePort, initialProfile: unknown 
       }
       const records = incoming.map((activity) => ({ activity, version: 1 }));
       state.activities = [...records, ...state.activities];
-      write(state);
+      write(state, raw);
       return { activities: clone(records) };
     } else if (path === '/api/tracker' && payload.action === 'activity') {
       const parsed = ExtraActivitySchema.safeParse(payload.activity);
@@ -362,8 +390,12 @@ export function createLocalClient(storage: StoragePort, initialProfile: unknown 
     } else {
       throw new Error('Unknown workout data operation.');
     }
-    write(state);
+    write(state, raw);
     return { version: nextVersion };
+  }
+  /** Retain promise/rejection behavior for existing screens and integrations. */
+  async function request(path: string, payload?: unknown, defaultProfile: unknown = initialProfile): Promise<RecordValue> {
+    return requestSync(path, payload, defaultProfile);
   }
   function exportBackup() {
     const { restoreGeneration: _localGeneration, ...data } = read();
@@ -377,17 +409,23 @@ export function createLocalClient(storage: StoragePort, initialProfile: unknown 
       throw new Error('Your saved data changed before this operation. Review the change again; no records were replaced.');
     }
     const previousSafetyCopy = storage.getItem(PRE_RESTORE_KEY);
+    let safetyCopyWritten: string | undefined;
     if (previous !== null) {
       try {
-        storage.setItem(PRE_RESTORE_KEY, JSON.stringify({ savedAt: new Date().toISOString(), raw: previous }));
+        safetyCopyWritten = JSON.stringify({ savedAt: new Date().toISOString(), raw: previous });
+        storage.setItem(PRE_RESTORE_KEY, safetyCopyWritten);
       } catch { throw new Error('Your safety copy could not be saved. No records were replaced. Export a recovery copy and free device storage before retrying.'); }
     }
-    try { write(restored); }
+    try { write(restored, previous, false); }
     catch (error) {
       // Roll back the safety-copy slot too when the main state was not replaced.
       try {
-        if (previousSafetyCopy === null) storage.removeItem(PRE_RESTORE_KEY);
-        else storage.setItem(PRE_RESTORE_KEY, previousSafetyCopy);
+        // A later recovery in another window owns its own fallback. Do not
+        // replace that newer copy while rolling back this rejected operation.
+        if (safetyCopyWritten !== undefined && storage.getItem(PRE_RESTORE_KEY) === safetyCopyWritten) {
+          if (previousSafetyCopy === null) storage.removeItem(PRE_RESTORE_KEY);
+          else storage.setItem(PRE_RESTORE_KEY, previousSafetyCopy);
+        }
       } catch { /* The current state remains intact; the fallback holds its bytes. */ }
       throw error;
     }
@@ -465,8 +503,8 @@ export function createLocalClient(storage: StoragePort, initialProfile: unknown 
   function exportRecovery() {
     return JSON.stringify({ app: 'Setline recovery', exportedAt: new Date().toISOString(), raw: storage.getItem(STORAGE_KEY) }, null, 2);
   }
-  function reset() { storage.removeItem(STORAGE_KEY); storage.removeItem(PRE_RESTORE_KEY); observedGeneration = null; observedExistingStore = false; observedAbsentStore = false; externalInitialization = false; setupReviews.clear(); }
-  return { request, exportBackup, importBackup, exportRecovery, previousRestoreCopy, hasPreviousRestoreCopy: () => storage.getItem(PRE_RESTORE_KEY) !== null, previewSetupRecovery, applySetupRecovery, cancelSetupRecovery, reset };
+  function reset() { storage.removeItem(STORAGE_KEY); storage.removeItem(PRE_RESTORE_KEY); invalidate(); observedGeneration = null; observedExistingStore = false; observedAbsentStore = false; externalInitialization = false; setupReviews.clear(); }
+  return { request, requestSync, exportBackup, importBackup, exportRecovery, previousRestoreCopy, hasPreviousRestoreCopy: () => storage.getItem(PRE_RESTORE_KEY) !== null, previewSetupRecovery, applySetupRecovery, cancelSetupRecovery, reset };
 }
 
 let localBrowserClient: ReturnType<typeof createLocalClient> | undefined;
@@ -476,6 +514,10 @@ function browserClient() {
 }
 export function requestLocal(path: string, payload?: unknown, defaultProfile?: unknown) {
   return browserClient().request(path, payload, defaultProfile);
+}
+/** Durable synchronous acknowledgement for workout actions and their UI gates. */
+export function requestLocalSync(path: string, payload?: unknown, defaultProfile?: unknown) {
+  return browserClient().requestSync(path, payload, defaultProfile);
 }
 export function exportBackup() { return browserClient().exportBackup(); }
 export function importBackup(text: string) { return browserClient().importBackup(text); }

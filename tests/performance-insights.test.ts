@@ -34,6 +34,37 @@ test('rep progression stays inside the prescribed range and large equipment incr
   const tooLarge = getProgressionRecommendation(exercise(), [session('2026-10-01', 10), session('2026-10-08', 10)], '2026-10-15', { loadIncrementKg: 2.5 });
   assert.equal(tooLarge.kind, 'hold'); assert.equal(tooLarge.kg, 10);
 });
+test('rep suggestions require the complete comparable dose at one load inside the rep range', () => {
+  for (const mutate of [
+    (sets: ReportSession['exercises'][number]['logs']) => { sets[1].kg = 50; },
+    (sets: ReportSession['exercises'][number]['logs']) => { sets[1].reps = 4; },
+    (sets: ReportSession['exercises'][number]['logs']) => { sets[1].done = false; },
+    (sets: ReportSession['exercises'][number]['logs']) => { sets[1].rir = null; },
+    (sets: ReportSession['exercises'][number]['logs']) => { sets.pop(); },
+  ]) {
+    const previous = session('2026-10-08', 70, 7, 2);
+    mutate(previous.exercises[0].logs);
+    const before = structuredClone(previous);
+    const result = getProgressionRecommendation(exercise(), [previous], '2026-10-15');
+    assert.ok(!['reps', 'load'].includes(result.kind), JSON.stringify(previous.exercises[0].logs));
+    assert.deepEqual(previous, before, 'holding a suggestion does not repair or rewrite incomplete history');
+  }
+});
+test('fractional RIR and prescribed RPE keep their full reserve requirement without fabricating recorded effort', () => {
+  const target = { ...exercise(), targetRir: 2.5 };
+  const history = [session('2026-10-01', 70, 8, 2), session('2026-10-08', 70, 8, 2)];
+  assert.equal(getProgressionRecommendation(target, history, '2026-10-15').kind, 'hold');
+  for (const entry of history) for (const log of entry.exercises[0].logs) log.rir = 2.5;
+  assert.equal(getProgressionRecommendation(target, history, '2026-10-15').kind, 'load');
+  const rpeTarget = { ...exercise(), targetRir: undefined, targetRpe: 7 };
+  assert.equal(getProgressionRecommendation(rpeTarget, history, '2026-10-15').kind, 'hold');
+  for (const entry of history) for (const log of entry.exercises[0].logs) log.rir = 3;
+  assert.equal(getProgressionRecommendation(rpeTarget, history, '2026-10-15').kind, 'load');
+  history[1].exercises[0].logs[1].rir = null;
+  const missing = getProgressionRecommendation(rpeTarget, history, '2026-10-15');
+  assert.equal(missing.kind, 'hold');
+  assert.equal(missing.history?.rir, null, 'a target RPE is not the athlete\'s recorded effort');
+});
 test('an incomplete final set or exhausted set blocks an automatic load increase', () => {
   const history = [session('2026-10-01'), session('2026-10-08')];
   history[1].exercises[0].logs.at(-1)!.done = false;

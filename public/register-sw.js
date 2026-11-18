@@ -1,6 +1,8 @@
 // Cache the complete local app so installed workouts remain available offline.
 if ('serviceWorker' in navigator && window.isSecureContext) {
-  window.addEventListener('load', () => {
+  // Register as soon as the DOM is ready, before delayed images and other
+  // window-load resources. It still installs quietly without reloading sessions.
+  const registerOffline = () => {
     let registration;
     let checking = false;
     let lastChecked = 0;
@@ -25,5 +27,7 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
       document.addEventListener('visibilitychange', () => { void check(); });
       window.addEventListener('pageshow', () => { void check(); });
     }).catch((error) => { console.warn('Setline could not enable offline access.', error); });
-  });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', registerOffline, { once: true });
+  else registerOffline();
 }

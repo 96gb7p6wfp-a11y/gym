@@ -72,7 +72,7 @@ test('registration checks again after foreground return without silently activat
   let configuration: unknown;
   let now = 1_000_000;
   let primed = 0;
-  const document = { visibilityState: 'visible', addEventListener: (name: string, handler: () => void) => events.set(name, handler) };
+  const document = { readyState: 'loading', visibilityState: 'visible', addEventListener: (name: string, handler: () => void) => events.set(name, handler) };
   const registration = {
     waiting: null,
     update: async () => { updateChecks++; },
@@ -84,7 +84,7 @@ test('registration checks again after foreground return without silently activat
     window: { isSecureContext: true, addEventListener: (name: string, handler: () => void) => events.set(name, handler), dispatchEvent: () => { primed++; } },
     Date: { now: () => now }, Event, console,
   });
-  events.get('load')!(); await Promise.resolve(); await Promise.resolve();
+  events.get('DOMContentLoaded')!(); await Promise.resolve(); await Promise.resolve();
   assert.deepEqual(JSON.parse(JSON.stringify(configuration)), { scope: '/', updateViaCache: 'none' });
   events.get('visibilitychange')!(); await Promise.resolve(); await Promise.resolve();
   assert.equal(updateChecks, 1);
@@ -96,4 +96,19 @@ test('registration checks again after foreground return without silently activat
   document.visibilityState = 'visible'; events.get('visibilitychange')!(); await Promise.resolve(); await Promise.resolve();
   assert.equal(updateChecks, 2);
   assert.equal(primed, 0, 'no ready event is invented without a waiting worker');
+});
+
+test('an already-ready document registers without waiting for delayed images or the window load event', async () => {
+  const events: string[] = [], requests: string[] = [];
+  const registration = { waiting: null, addEventListener() {}, update: async () => {} };
+  vm.runInNewContext(readFileSync('public/register-sw.js', 'utf8'), {
+    navigator: { onLine: true, serviceWorker: { register: async (url: string) => { requests.push(url); return registration; } } },
+    document: { readyState: 'interactive', visibilityState: 'visible', addEventListener: (name: string) => events.push(name) },
+    window: { isSecureContext: true, addEventListener: (name: string) => events.push(name), dispatchEvent() {} },
+    Date, Event, console,
+  });
+  await Promise.resolve(); await Promise.resolve();
+  assert.deepEqual(requests, ['/service-worker.js']);
+  assert.equal(events.includes('load'), false);
+  assert.equal(events.includes('DOMContentLoaded'), false);
 });

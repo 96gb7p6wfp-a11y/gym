@@ -5,6 +5,8 @@ import {
 } from './domain.js';
 import type { SupersetLink } from './training-flow';
 import { createStarterPlan, type TrainingPreferences } from './onboarding.ts';
+import { missingSetValuesFromLast } from './set-autofill.ts';
+import { plannedRepetitions } from './workout-input-steps.ts';
 
 export type TrainingGoal = z.infer<typeof TrainingGoalSchema>;
 export type PlanExercise = z.infer<typeof ExerciseSchema>;
@@ -128,7 +130,35 @@ export function adjustSessionSets(session: EditableSession, key: string, count: 
   const exercise = session.exercises[index];
   if (exercise.logs.slice(count).some((log) => log.done)) throw new Error('Keep recorded sets in your workout to preserve your training history.');
   const logs = exercise.logs.slice(0, count);
-  while (logs.length < count) logs.push(newLog(exercise));
+  while (logs.length < count) {
+    const added = newLog(exercise);
+    if (session.status === 'active' && exercise.mode !== 'timed' && !exercise.measurement
+      && !exercise.quantityUnit && !exercise.preparationOnly) {
+      const reps = plannedRepetitions(exercise.target);
+      const draft: EditableSessionExercise['logs'][number] = { ...added, reps, inputSources: {
+        ...(added.kg != null ? { kg: exercise.mode === 'bodyweight' && exercise.defaultKg === 0 ? 'planned' as const : 'default' as const } : {}),
+        ...(reps != null ? { reps: 'default' as const } : {}),
+      } };
+      const suggested = missingSetValuesFromLast({ ...exercise, logs: [...logs, draft] }, draft.id);
+      if (suggested) logs.push({ ...draft, ...suggested });
+      else {
+        // Before any completion, retain the preceding draft's valid entered or
+        // historical values. It remains a suggestion, never a performed set.
+        const previous = logs.at(-1);
+        const next = { ...draft, inputSources: { ...draft.inputSources } };
+        if (previous?.kg != null && Number.isFinite(previous.kg) && previous.kg >= 0 && previous.kg <= 2000
+          && !(exercise.mode === 'bodyweight' && exercise.defaultKg === 0)) {
+          next.kg = previous.kg;
+          next.inputSources.kg = previous.inputSources?.kg === 'history' ? 'history' : 'default';
+        }
+        if (previous?.reps != null && Number.isInteger(previous.reps) && previous.reps > 0 && previous.reps <= 1000) {
+          next.reps = previous.reps;
+          next.inputSources.reps = previous.inputSources?.reps === 'history' ? 'history' : 'default';
+        }
+        logs.push(next);
+      }
+    } else logs.push(added);
+  }
   const timerRemoved = exercise.timerSetId != null && !logs.some((log) => log.id === exercise.timerSetId);
   const updated = {
     ...exercise, sets: count, logs,

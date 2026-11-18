@@ -1,13 +1,16 @@
-import { useMemo } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import { ArrowRight, CalendarDays, Check, ChevronRight, Plus } from 'lucide-react';
 import { dateKey, addDays, sessionDuration, sumNutrients } from './domain';
 import { getSessionPurpose } from './training-purpose';
 import { getTodayConsistency, getTodayProgress } from './today-progress';
 import { currentReportDate, reportWeekStart } from './weekly-report';
 import { workoutTitle } from './presentation';
-import { WorkoutPreview } from './WorkoutPreview';
 import { useWideLayout } from './useAdaptiveLayout';
 import './today.css';
+
+// Phone Today never renders this optional wide-screen exercise pane. Its chunk
+// remains part of the installed app shell for offline tablet navigation.
+const WorkoutPreview = lazy(() => import('./WorkoutPreview').then(module => ({ default: module.WorkoutPreview })));
 
 /** Today's session, real progress, recorded consistency and one useful next step. */
 export function TodayView({ date, plan, session, otherSession, completed, activities, nutrition, now = Date.now(),
@@ -95,7 +98,7 @@ export function TodayView({ date, plan, session, otherSession, completed, activi
     </section>
     {wideLayout && shownPlan.exercises.length > 0 && <section className="today-exercise-preview" aria-label="Today’s exercise list">
       <header><h2>Today’s exercises</h2><p>{active || completed ? 'Saved session' : adjusted ? 'Full plan reference · review the adjusted recommendation before starting' : 'Full plan reference'}</p></header>
-      <WorkoutPreview exercises={shownPlan.exercises} previous={previous} />
+      <Suspense fallback={<p className="small-note" role="status">Loading exercises…</p>}><WorkoutPreview exercises={shownPlan.exercises} previous={previous} /></Suspense>
     </section>}
     </div><div className="today-secondary">
 

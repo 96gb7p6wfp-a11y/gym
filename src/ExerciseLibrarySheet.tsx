@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ChevronRight, Search, SlidersHorizontal } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Plus, Search, SlidersHorizontal } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui';
 import { ExerciseGuideBody, ExerciseGuidePanel } from './ExerciseGuide';
 import { ExerciseMedia } from './ExerciseMedia';
@@ -15,7 +15,12 @@ export interface ExerciseLibrarySheetProps {
   title?: string;
   browseOnly?: boolean;
   confirmationLabel?: string;
+  /** Add directly from search; the row's existing guide stays optional. */
+  quickAdd?: boolean;
+  /** Most recently used references, supplied from actual saved training only. */
+  recentExercises?: readonly ExerciseReference[];
 }
+const NO_RECENT_EXERCISES: readonly ExerciseReference[] = [];
 const facets: { key: keyof LibraryFilters; label: string; values: string[] }[] = [
   { key: 'muscle', label: 'Muscle', values: [...new Set(EXERCISE_CATALOGUE.flatMap(item => item.muscles))].sort() },
   { key: 'goal', label: 'Goal', values: ['Strength', 'Hypertrophy', 'Power', 'Jump', 'Volleyball', 'Speed', 'Mobility', 'Recovery'] },
@@ -34,7 +39,7 @@ function matchesCategory(item: LibraryExercise, category: Category) {
   return item.category === category;
 }
 
-export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacementFor, title, browseOnly = false, confirmationLabel }: ExerciseLibrarySheetProps) {
+export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacementFor, title, browseOnly = false, confirmationLabel, quickAdd = false, recentExercises = NO_RECENT_EXERCISES }: ExerciseLibrarySheetProps) {
   const wide = useWideLayout();
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<LibraryFilters>({});
@@ -71,9 +76,21 @@ export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacement
   const results = useMemo(() => searchExercises(query, filters).filter(item => matchesCategory(item, category)), [query, filters, category]);
   const alternatives = useMemo(() => replacementFor ? rankAlternatives(replacementFor) : [], [replacementIdentity, replacementFor?.name]);
   const currentId = replacementFor ? findLibraryExercise(replacementFor)?.id : undefined;
+  const recent = useMemo(() => {
+    const seen = new Set<string>();
+    return recentExercises.flatMap(reference => {
+      // An unrelated custom name with a retained catalogue ID must not be
+      // presented as a different canonical movement in the picker.
+      const item = findLibraryExercise(reference.name?.trim() ? { name: reference.name } : reference);
+      if (!item || item.legacyChoice || item.id === currentId || seen.has(item.id)) return [];
+      seen.add(item.id);
+      return [item];
+    }).slice(0, 6);
+  }, [recentExercises, currentId]);
   const filtered = Boolean(query.trim() || category !== 'All' || Object.values(filters).some(Boolean));
   const suggested = filtered ? [] : alternatives;
-  const suggestedIds = new Set(suggested.map(item => item.exercise.id));
+  const recentSuggestions = filtered || replacementFor ? [] : recent;
+  const suggestedIds = new Set([...suggested.map(item => item.exercise.id), ...recentSuggestions.map(item => item.id)]);
   const remaining = results.filter(item => !suggestedIds.has(item.id) && item.id !== currentId);
   const filterCount = Object.values(filters).filter(Boolean).length;
   function showDetails(item: LibraryExercise) {
@@ -91,17 +108,33 @@ export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacement
     if (!browseOnly) onSelect?.(selected);
     onOpenChange(false);
   }
+  function addDirectly(item: LibraryExercise) {
+    if (browseOnly || !onSelect || confirming.current) return;
+    confirming.current = true;
+    onSelect(item);
+    onOpenChange(false);
+  }
   function row(item: LibraryExercise, tradeoff?: string) {
-    return <li className="exercise-library__item" key={item.id}>
-      <button className="exercise-library__select" type="button" data-exercise-id={item.id} aria-label={`${browseOnly ? 'View' : 'Select'} ${item.name}`} aria-pressed={wide ? selected?.id === item.id : undefined} onClick={() => showDetails(item)}>
+    const direct = quickAdd && !browseOnly && !replacementFor && !!onSelect;
+    return <li className={`exercise-library__item${direct ? ' exercise-library__item--quick-add' : ''}`} key={item.id}>
+      <button className="exercise-library__select" type="button" data-exercise-id={item.id} aria-label={`${browseOnly ? 'View' : 'Select'} ${item.name}`} aria-description={direct ? 'Open the optional exercise guide. Use the adjacent Add button to add directly.' : undefined} aria-pressed={wide ? selected?.id === item.id : undefined} onClick={() => showDetails(item)}>
         <ExerciseMedia exercise={item.id} thumbnail />
         <span className="exercise-library__row-copy"><strong>{item.name}</strong><span>{tradeoff ?? item.muscles.join(' · ')}</span></span>
         <ChevronRight size={16} aria-hidden="true" />
       </button>
+      {direct && <button type="button" className="exercise-library__quick-add" aria-label={`Add ${item.name}`} title={`Add ${item.name} to this workout`} onClick={() => addDirectly(item)}><Plus size={19} aria-hidden="true" /><span>Add</span></button>}
     </li>;
   }
   return <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className={`app-dialog exercise-library-sheet${wide ? ' exercise-library-sheet--wide' : ''}`}>
+    <DialogContent className={`app-dialog exercise-library-sheet${wide ? ' exercise-library-sheet--wide' : ''}`}
+      onOpenAutoFocus={(event: Event) => {
+        // A physical pointer/keyboard benefits from immediate typing. Touch
+        // windows keep the keyboard closed so recent choices remain reachable.
+        if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+          event.preventDefault();
+          requestAnimationFrame(() => body.current?.querySelector<HTMLInputElement>('input[type="search"]')?.focus({ preventScroll: true }));
+        }
+      }}>
       <div ref={body} className={`exercise-library__body${selected && !wide ? ' exercise-library__body--detail' : ''}${wide ? ' exercise-library__body--workspace' : ''}`}>
         {selected && !wide ? <>
           <button type="button" className="exercise-library__back" onClick={backToList}><ArrowLeft size={19} aria-hidden="true" />Back</button>
@@ -114,7 +147,7 @@ export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacement
         </> : <div className="exercise-library__index">
           <DialogHeader className="exercise-library__header">
             <DialogTitle className="exercise-library__title">{title ?? (browseOnly ? 'Exercises' : replacementFor ? 'Replace exercise' : 'Add exercise')}</DialogTitle>
-            <DialogDescription className="sr-only">{replacementFor ? 'Find a similar movement for your workout.' : 'Search movements and open a technique guide.'}</DialogDescription>
+            <DialogDescription className="sr-only">{replacementFor ? 'Find a similar movement for your workout.' : quickAdd ? 'Search and add a movement directly. Technique guides are optional.' : 'Search movements and open a technique guide.'}</DialogDescription>
           </DialogHeader>
           <div className="exercise-library__search"><Search size={19} aria-hidden="true" />
             <input type="search" aria-label="Search exercises" placeholder="Search exercises" value={query} onChange={event => { setQuery(event.target.value); setLimit(30); }} autoComplete="off" autoCorrect="off" spellCheck={false} />
@@ -136,8 +169,9 @@ export function ExerciseLibrarySheet({ open, onOpenChange, onSelect, replacement
             </div>
           </div>
           {suggested.length > 0 && <section className="exercise-library__section" aria-label="Suggested alternatives"><h3>Closest alternatives</h3><ul>{suggested.map(item => row(item.exercise, item.tradeoff))}</ul></section>}
+          {recentSuggestions.length > 0 && <section className="exercise-library__section" aria-label="Recently used exercises"><h3>Recently used</h3><ul>{recentSuggestions.map(item => row(item))}</ul></section>}
           <section className="exercise-library__section" aria-label="Exercise results">
-            {(filtered || suggested.length > 0) && <h3>{filtered ? `${remaining.length} ${remaining.length === 1 ? 'exercise' : 'exercises'}` : 'All movements'}</h3>}
+            {(filtered || suggested.length > 0 || recentSuggestions.length > 0) && <h3>{filtered ? `${remaining.length} ${remaining.length === 1 ? 'exercise' : 'exercises'}` : 'All movements'}</h3>}
             {remaining.length ? <ul>{remaining.slice(0, limit).map(item => row(item))}</ul> : <p className="exercise-library__empty">No matches.<span>Try another name or clear a filter.</span></p>}
             {remaining.length > limit && <button className="exercise-library__more" type="button" onClick={() => setLimit(value => value + 30)}>Show more</button>}
           </section>

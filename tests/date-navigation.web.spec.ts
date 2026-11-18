@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { settleWithFrozenClock } from './helpers/frozen-clock';
 import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession } from '../src/domain.js';
 import { findLibraryExercise, toPlanExercise } from '../src/exercise-library';
 import { finishWarmup } from './helpers/navigation';
@@ -198,7 +199,7 @@ test.describe('Today and training-calendar dates are independent', () => {
       document.dispatchEvent(new Event('visibilitychange'));
     });
     await expect(page.locator('.page-header')).toContainText(/Sunday,? 1 November/);
-    const sheet = await preview(page);
+    const sheet = await settleWithFrozenClock(page, () => preview(page));
     await expect(sheet).toContainText('Sunday Session');
     await expect(sheet).toContainText('1 Nov');
     await sheet.getByRole('button', { name: 'Close', exact: true }).click();

@@ -14,7 +14,8 @@ import { ReactionCue } from './ReactionCue';
 import { LoadStepControl } from './LoadStepControl';
 import { adjustedWorkoutLoad, exerciseLoadIncrement, plannedRepetitions } from './workout-input-steps';
 import { ProgressionCue } from './ProgressionCue';
-import { getProgressionRecommendation, type ProgressionContext } from './performance-insights';
+import type { ProgressionContext } from './performance-insights';
+import { useExerciseProgression } from './useExerciseProgression';
 import type { ReportSession } from './weekly-report';
 import './quick-workout-log.css';
 
@@ -30,6 +31,7 @@ interface QuickWorkoutLogProps {
   onEquipment?: (exerciseKey: string) => void;
   onUndoLast?: () => boolean;
   canUndoLast?: boolean;
+  undoActivation?: { exerciseKey: string; setId: string; version: number } | null;
   athleteMode: boolean;
   now: number;
   editing: boolean;
@@ -196,8 +198,8 @@ function QuickExercise(props: QuickWorkoutLogProps & { exercise: FocusedExercise
   const prior = previous(exercise)?.exercise;
   const inMinutes = /\bmin(?:ute)?s?\b/i.test(exercise.target);
   const quantityLabel = timed ? inMinutes ? 'Minutes' : 'Seconds' : exercise.quantityUnit === 'm' ? 'Metres' : 'Reps';
-  const recommendation = getProgressionRecommendation(exercise, props.sessions ?? [], props.date ?? new Date().toISOString().slice(0, 10),
-    { ...props.context, loadIncrementKg: exerciseLoadIncrement(exercise), ...(exercise.preparationOnly ? { lowFatigueSession: true } : {}) });
+  const recommendation = useExerciseProgression(exercise, props.sessions,
+    props.date ?? new Date().toISOString().slice(0, 10), props.context);
 
   function toggleLoad() {
     if (loadOpen && invalidLoads.current.size) {
@@ -216,7 +218,7 @@ function QuickExercise(props: QuickWorkoutLogProps & { exercise: FocusedExercise
         : (kind === 'weight' || showLoad) && <span>{optionalLoad ? 'Added' : 'Weight'}<small>kg</small></span>}
       <span>{quantityLabel}</span><span>Done</span>
     </div>
-    {exercise.logs.map((log, index) => <QuickSetRow key={`${sessionId}-${exercise.key}-${log.id}-${appliedVersions[log.id] ?? 0}`} {...props}
+    {exercise.logs.map((log, index) => <QuickSetRow key={`${sessionId}-${exercise.key}-${log.id}-${appliedVersions[log.id] ?? 0}-${props.undoActivation?.exerciseKey === exercise.key && props.undoActivation.setId === log.id ? props.undoActivation.version : 0}`} {...props}
       exercise={exercise} log={log} index={index} previous={prior?.logs[index]} showLoad={showLoad}
       adjusting={adjustingSetId === log.id} onAdjust={() => setAdjustingSetId(log.id)} onAdjustmentFinished={() => setAdjustingSetId(null)}
       onLoadInteraction={() => setLoadOpen(true)} onLoadValidityChange={(id, invalid) => { if (invalid) invalidLoads.current.add(id); else invalidLoads.current.delete(id); }} />)}

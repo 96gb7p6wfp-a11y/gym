@@ -1,15 +1,13 @@
-import { SettingsExperience } from './SettingsExperience';
 import { useWideLayout } from './useAdaptiveLayout';
 import { TrainingPlanWorkspace } from './TrainingPlanWorkspace';
 import { rebaseObjectChanges } from './profile-updates';
 import { markSetInput, carryForwardAfterCompletion } from './set-autofill';
 import { effectiveTrainingGuidance, effectiveMasterProgram } from './training-guidance';
-import { getWorkoutPrescription, isGentleV9MatchPrimer } from './training-prescription';
+import { compareWorkoutPrescriptions, getWorkoutPrescription, isGentleV9MatchPrimer } from './training-prescription';
 import { WorkoutPrescriptionSummary } from './WorkoutPrescriptionSummary';
 import { SetupRecovery } from './SetupRecovery';
 import { TrainingGuidanceForm } from './TrainingGuidanceForm';
 import { DayPrescriptionReset } from './DayPrescriptionReset';
-import { V9ProgramUpgrade } from './V9ProgramUpgrade';
 import { upgradeToV9 } from './master-program-upgrade';
 import { getV9DraftDisposition } from './v9-upcoming-workouts';
 import { SprintPerformance } from './SprintPerformance';
@@ -19,6 +17,7 @@ import { SundayMatchSchedule } from './SundayMatchSchedule';
 import { getCalendarMatch, getCoachRecords, getDailyReadiness, getCoachReadinessStatus, getCoachPhase, migrateLegacyMatchSchedule, saveCalendarMatch, sundayForDate } from './coach-schedule';
 import { resolveV9PlanningBase } from './volleyball-master-plan';
 import { hasDeliberatePlannedLoad } from './workout-input-steps';
+import { CompletedHistoryProjection, PreviousPerformanceIndex } from './history-cache';
 import './personal-coach.css';
 import './v16.css';
 import { createNewProfile, createStarterPlan, DEFAULT_TRAINING_PREFERENCES, presentationMode } from './onboarding';
@@ -28,9 +27,7 @@ import { BackupReminder } from './DataSettings';
 import { SupportPrivacy } from './SupportPrivacy';
 import { berlinDate, calendarDayIndex } from "./calendar-date";
 import { upgradeMasterProgram, restorePreviousMasterProgram, reviewMasterProgramUpgrade } from "./master-program-upgrade";
-import { WorkoutPlanPreview } from "./WorkoutPlanPreview";
 import { TrainingPlanStatus } from "./TrainingPlanStatus";
-import { WarmupFlow } from "./WarmupFlow";
 import { findSessionDraft, getPreparationStatus, putSessionDraft, resetDraftPreparation, resolveSessionDraft } from "./workout-drafts";
 import { useRestAudio } from "./useRestAudio";
 import { useRestDeadline } from "./useRestDeadline";
@@ -38,6 +35,7 @@ import { recordedExerciseChartValue } from "./exercise-chart";
 import { previousSetReuse } from "./workout-reuse";
 import { targetSetTransition } from "./set-completion";
 import { readCompletionReceipt, saveCompletionReceipt, readRestOwner, saveRestOwner } from "./completion-receipt";
+import { WORKOUT_CONTINUITY_KEY, getWorkoutContinuityOwner, readWorkoutContinuity, saveWorkoutContinuity, claimWorkoutContinuity, clearWorkoutContinuity } from './workout-continuity';
 import { DEFAULT_REST_VOLUME } from "./rest-audio";
 import { TimerSoundSettings } from "./TimerSoundSettings";
 import { PwaUpdateControl } from "./PwaUpdateControl";
@@ -50,9 +48,7 @@ import { exercisePerformanceIdentity, areComparableExercises } from "./performan
 import { WorkoutCompletion } from "./WorkoutCompletion";
 import { getQuickWarmup, getSessionPreparation } from "./session-preparation";
 import './session-extras.css';
-import { WorkoutBuilder } from "./WorkoutBuilder";
 import { WeeklyPlanTools } from "./WeeklyPlanTools";
-import { WorkoutCustomizer } from "./WorkoutCustomizer";
 import { AppearanceSettings } from "./ThemeSettings";
 import { useAppearance } from "./theme";
 import { usePerformanceData } from "./usePerformanceData";
@@ -61,12 +57,11 @@ import { findLibraryExercise } from "./exercise-library";
 import { getSessionPurpose } from "./training-purpose";
 import { TodayView } from "./TodayView";
 import { FocusedWorkout } from "./FocusedWorkout";
-import { WorkoutPreview } from "./WorkoutPreview";
 import { ProgressOverview } from "./ProgressOverview";
+import { ExerciseGuide } from './ExerciseGuideTrigger';
 import { RemindersPanel } from "./RemindersPanel";
 import { shortSessionName, workoutTitle } from "./presentation";
 import { formatPreviousSet, previousPerformance } from "./previous-performance";
-import { VolleyballMasterProgram, MasterProgramReadiness } from './VolleyballMasterProgram';
 import { applyMasterReadiness, applyMasterClearance, applyTrainingGuidance, createVolleyballMasterPlan, getMasterProgramWeek, getMasterProgramPhase, masterWeekStart, masterScheduledEvents, masterPlannedMinutes, resolveMasterProgramPlan, createRecommendedMasterPlan, isMasterReadinessRequired, masterJumpContacts } from './volleyball-master-plan';
 import { PageHeader, BottomNavigation, SegmentedControl, MenuRow } from "./components/design";
 import { House, Ellipsis, UserRound, ArrowLeft, Upload, ShieldCheck } from "lucide-react";
@@ -76,14 +71,13 @@ import { ActivityHistory } from "./ActivityHistory";
 import { DailyGuidance } from "./DailyGuidance";
 import { ShortRoutine } from "./ShortRoutine";
 import { TrainingSchedule } from "./TrainingSchedule";
-import { ExerciseGuide } from "./ExerciseGuide";
-import { ExerciseLibrarySheet } from "./ExerciseLibrarySheet";
 import { WeeklyPerformance } from "./WeeklyPerformance";
 import { DecimalWeightInput } from "./DecimalWeightInput";
 import { isValidWorkoutWeight } from "./workout-weight";
 import { applyTimedSetAction, recordedTimedSetSeconds } from "./timed-sets";
 import { estimateActivity } from "./activities";
-import { requestLocal } from "./storage";
+import { requestLocal, requestLocalSync, STORAGE_KEY } from "./storage";
+import { adjustRestDeadline } from './rest-deadline';
 import * as React from "react";
 import { toast, Toaster } from "sonner";
 import { Timer } from "lucide-react";
@@ -179,6 +173,24 @@ function deferredScreen(loader, label) {
     return <React.Suspense fallback={<p className="small-note" role="status">{label}</p>}><Screen {...props} /></React.Suspense>;
   };
 }
+// A lazy component rendered with open={false} would still load its chunk.
+// Keep closed, root-mounted sheets out of startup without creating new state.
+function deferredDialog(loader, label) {
+  const Screen = deferredScreen(loader, label);
+  return function DeferredDialog(props) {
+    return props.open ? <Screen {...props} /> : null;
+  };
+}
+const SettingsExperience = deferredScreen(() => import('./SettingsExperience').then(module => ({ default: module.SettingsExperience })), 'Loading preferences…');
+const V9ProgramUpgrade = deferredDialog(() => import('./V9ProgramUpgrade').then(module => ({ default: module.V9ProgramUpgrade })), 'Loading training plan…');
+const WorkoutPlanPreview = deferredDialog(() => import('./WorkoutPlanPreview').then(module => ({ default: module.WorkoutPlanPreview })), 'Loading workout…');
+const WarmupFlow = deferredDialog(() => import('./WarmupFlow').then(module => ({ default: module.WarmupFlow })), 'Loading preparation…');
+const WorkoutBuilder = deferredDialog(() => import('./WorkoutBuilder').then(module => ({ default: module.WorkoutBuilder })), 'Loading workout builder…');
+const WorkoutCustomizer = deferredScreen(() => import('./WorkoutCustomizer').then(module => ({ default: module.WorkoutCustomizer })), 'Loading session controls…');
+const WorkoutPreview = deferredScreen(() => import('./WorkoutPreview').then(module => ({ default: module.WorkoutPreview })), 'Loading exercises…');
+const ExerciseLibrarySheet = deferredDialog(() => import('./ExerciseLibrarySheet').then(module => ({ default: module.ExerciseLibrarySheet })), 'Loading exercise library…');
+const VolleyballMasterProgram = deferredScreen(() => import('./VolleyballMasterProgram').then(module => ({ default: module.VolleyballMasterProgram })), 'Loading program settings…');
+const MasterProgramReadiness = deferredScreen(() => import('./VolleyballMasterProgram').then(module => ({ default: module.MasterProgramReadiness })), 'Loading training options…');
 const PerformanceDetails = deferredScreen(() => import('./PerformanceDetails').then(module => ({ default: module.PerformanceDetails })), 'Loading performance…');
 const WeeklyReport = deferredScreen(() => import('./WeeklyReport').then(module => ({ default: module.WeeklyReport })), 'Loading report…');
 const ActivityImport = deferredScreen(() => import('./ActivityImport').then(module => ({ default: module.ActivityImport })), 'Loading import…');
@@ -255,13 +267,45 @@ function GymApp({
   let [now, setNow] = React.useState(initialNow);
   const today = berlinDate(now);
   let [restEndsAt, setRestDeadline] = useRestDeadline();
+  const restDeadlineRef = React.useRef(restEndsAt); restDeadlineRef.current = restEndsAt;
+  const continuityOwner = React.useRef(null);
+  if (!continuityOwner.current) { try { continuityOwner.current = getWorkoutContinuityOwner(window.sessionStorage); } catch { /* Optional tab identity. */ } }
+  const [savedWorkoutControls, setSavedWorkoutControls] = React.useState(null);
   const [restFinished, setRestFinished] = React.useState(null);
   const restOwner = React.useRef(readRestOwner());
   const consumedCompletionIntents = React.useRef(new Set());
   const lastSetReceipt = React.useRef(null);
   const receiptLoaded = React.useRef(false);
   if (!receiptLoaded.current) { lastSetReceipt.current = readCompletionReceipt(); receiptLoaded.current = true; }
-  function setRestEndsAt(deadline, owner = restOwner.current) { restOwner.current = deadline === null ? null : owner; saveRestOwner(restOwner.current); setRestFinished(null); setRestDeadline(deadline); }
+  function persistWorkoutControls() {
+    try {
+      if (continuityOwner.current) saveWorkoutContinuity(window.localStorage, {
+        ownerId: continuityOwner.current, deadline: restDeadlineRef.current,
+        restOwner: restOwner.current, receipt: lastSetReceipt.current,
+      });
+    } catch { /* Optional controls never block authoritative workout saving. */ }
+  }
+  function setRestEndsAt(deadline, owner = restOwner.current) {
+    restOwner.current = deadline === null ? null : owner; saveRestOwner(restOwner.current);
+    restDeadlineRef.current = deadline; setRestFinished(null); setRestDeadline(deadline);
+    persistWorkoutControls();
+  }
+  function adjustRestBy(seconds) {
+    void restAudio.unlock();
+    const timestamp = Date.now();
+    setNow(timestamp);
+    setRestEndsAt(adjustRestDeadline(restDeadlineRef.current, seconds, timestamp));
+  }
+  function resumeWorkoutControls() {
+    try {
+      if (!continuityOwner.current) return;
+      const record = claimWorkoutContinuity(window.localStorage, continuityOwner.current);
+      if (!record) { setSavedWorkoutControls(null); return; }
+      lastSetReceipt.current = record.receipt; saveCompletionReceipt(record.receipt);
+      setRestEndsAt(record.deadline, record.restOwner);
+      setSavedWorkoutControls(null);
+    } catch { toast('Your workout remains saved. The previous rest controls could not be restored.'); }
+  }
   let [restSeconds, setRestSeconds] = React.useState(90);
   const restAudio = useRestAudio({ enabled: profile.timerSoundEnabled !== false, volume: profile.timerSoundVolume ?? DEFAULT_REST_VOLUME, endsAt: restEndsAt,
     onComplete: result => {
@@ -272,6 +316,8 @@ function GymApp({
   let [finishMinutes, setFinishMinutes] = React.useState(``);
   let [watchCalories, setWatchCalories] = React.useState(``);
   let [finishSaving, setFinishSaving] = React.useState(!1);
+  const finishingWorkoutRef = React.useRef(false);
+  const [finishError, setFinishError] = React.useState('');
   let [discardOpen, setDiscardOpen] = React.useState(!1);
   let [settingsOpen, setSettingsOpen] = React.useState(!1);
   const [settingsSection, setSettingsSection] = React.useState(null);
@@ -324,65 +370,67 @@ function GymApp({
       sessionsRef.current = n;
       setLoaded(!0);
       let i = n.find((e) => e.status === `active`);
+      const stillCompleted = target => target && i?.id === target.sessionId
+        && i.exercises.some(exercise => exercise.key === target.exerciseKey
+          && exercise.logs.some(log => log.id === target.setId && log.done));
+      if (restOwner.current && !stillCompleted(restOwner.current)) {
+        restOwner.current = null; saveRestOwner(null);
+        restDeadlineRef.current = null; setRestDeadline(null);
+      }
+      if (lastSetReceipt.current && !stillCompleted(lastSetReceipt.current)) {
+        lastSetReceipt.current = null; saveCompletionReceipt(null);
+      }
       i &&
         (setSelectedDay(i.day),
         setWeekStart(startOfWeek(new Date(`${i.date}T12:00:00`))));
       setRestSeconds(t.restSeconds);
+      try {
+        const controls = readWorkoutContinuity(window.localStorage);
+        const raw = JSON.parse(window.localStorage.getItem(WORKOUT_CONTINUITY_KEY) ?? 'null');
+        if (raw?.ownerId === continuityOwner.current && !controls) {
+          // Owned controls from before a restore cannot attach to coincidentally
+          // matching session IDs. Pre-feature tab-only timers have no record.
+          restOwner.current = null; saveRestOwner(null);
+          lastSetReceipt.current = null; saveCompletionReceipt(null);
+          restDeadlineRef.current = null; setRestDeadline(null);
+        }
+        setSavedWorkoutControls(i && controls?.sessionId === i.id && restDeadlineRef.current === null && !lastSetReceipt.current ? controls : null);
+      } catch { /* Saved workouts do not depend on auxiliary timer recovery. */ }
     } catch (e) {
       setLoadError(
         e instanceof Error ? e.message : `Your workouts couldn’t load.`,
       );
     }
   }
-  async function flushPendingWrites() {
-    if (
-      ((saveTimeoutRef.current &&=
-        (clearTimeout(saveTimeoutRef.current), null)),
-      activeWriteRef.current)
-    )
-      return (
-        await activeWriteRef.current,
-        pendingWritesRef.current.size && !writeFailedRef.current
-          ? flushPendingWrites()
-          : !writeFailedRef.current
-      );
-    if (!pendingWritesRef.current.size) return !writeFailedRef.current;
-    setSaving(!0);
-    writeFailedRef.current = !1;
-    let e = (async () => {
+  function flushPendingWritesNow() {
+    if (saveTimeoutRef.current) { clearTimeout(saveTimeoutRef.current); saveTimeoutRef.current = null; }
+    if (activeWriteRef.current) return false;
+    if (!pendingWritesRef.current.size) {
+      if (!writeFailedRef.current && mountedRef.current) setLoadError('');
+      return !writeFailedRef.current;
+    }
+    activeWriteRef.current = true; setSaving(true); writeFailedRef.current = false;
+    try {
       for (; pendingWritesRef.current.size;) {
-        let [e, t] = pendingWritesRef.current.entries().next().value;
-        pendingWritesRef.current.delete(e);
+        const [id, session] = pendingWritesRef.current.entries().next().value;
+        pendingWritesRef.current.delete(id);
         try {
-          let n = await requestTracker({
-            action: `session`,
-            session: t,
-            expectedVersion: sessionVersionsRef.current.get(e) ?? 0,
-          });
-          sessionVersionsRef.current.set(e, n.version);
-        } catch (n) {
-          return (
-            pendingWritesRef.current.has(e) ||
-              pendingWritesRef.current.set(e, t),
-            (writeFailedRef.current = !0),
-            mountedRef.current &&
-              setLoadError(
-                n instanceof Error ? n.message : `Your workout couldn’t save.`,
-              ),
-            !1
-          );
+          const result = requestLocalSync('/api/tracker', { action: 'session', session,
+            expectedVersion: sessionVersionsRef.current.get(id) ?? 0 });
+          sessionVersionsRef.current.set(id, result.version);
+          persistWorkoutControls();
+        } catch (error) {
+          if (!pendingWritesRef.current.has(id)) pendingWritesRef.current.set(id, session);
+          writeFailedRef.current = true;
+          if (mountedRef.current) setLoadError(error instanceof Error ? error.message : 'Your workout could not save.');
+          return false;
         }
       }
-      return (mountedRef.current && setLoadError(``), !0);
-    })();
-    activeWriteRef.current = e;
-    let t = await e;
-    return (
-      (activeWriteRef.current = null),
-      mountedRef.current && setSaving(!1),
-      t
-    );
+      if (mountedRef.current) setLoadError('');
+      return true;
+    } finally { activeWriteRef.current = null; if (mountedRef.current) setSaving(false); }
   }
+  async function flushPendingWrites() { return flushPendingWritesNow(); }
   async function flushAllWrites() { await profileSaveQueue.current; return flushPendingWrites(); }
   async function replaceLocalData(replace, { preserveRest = false } = {}) {
     await profileSaveQueue.current;
@@ -393,6 +441,7 @@ function GymApp({
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     try {
       replace();
+      try { if (continuityOwner.current) clearWorkoutContinuity(window.localStorage, continuityOwner.current); } catch { /* Optional metadata. */ }
       if (!preserveRest) setRestEndsAt(null);
       window.location.reload();
     } catch (error) {
@@ -422,21 +471,24 @@ function GymApp({
     ? sessions.find((e) => e.id === editingHistoryId)
     : activeSession;
   let selectedDate = dateKey(addDays(weekStart, selectedDay));
+  function profileForPlanDate(date, sourceProfile = profile) {
+    const active = sourceProfile.masterProgram;
+    if (active?.revision !== '9' || !active.v9EffectiveDate || date >= active.v9EffectiveDate || !sourceProfile.masterProgramBackup) return sourceProfile;
+    const archived = sourceProfile.masterProgramBackup;
+    return { ...sourceProfile, plan: archived.plan, masterProgram: archived.masterProgram,
+      preMasterPlan: archived.preMasterPlan, masterMatchWeekend: archived.masterMatchWeekend,
+      // A historical prescription is not permission to restore older medical flags.
+      trainingGuidance: effectiveTrainingGuidance(sourceProfile) };
+  }
   function planForDate(date, sourceProfile = profile) {
-    const guidance = effectiveTrainingGuidance(sourceProfile);
-    const settings = effectiveMasterProgram(sourceProfile);
+    const datedProfile = profileForPlanDate(date, sourceProfile);
+    const guidance = effectiveTrainingGuidance(datedProfile);
+    const settings = effectiveMasterProgram(datedProfile);
     const applyGuidance = week => week.map(day => ({ ...applyTrainingGuidance(day, guidance),
       ...(day.extraSession ? { extraSession: applyTrainingGuidance(day.extraSession, guidance) } : {}) }));
-    if (!settings) return applyGuidance(sourceProfile.plan);
-    if (settings.revision === '9' && settings.v9EffectiveDate && date < settings.v9EffectiveDate && sourceProfile.masterProgramBackup) {
-      const previous = sourceProfile.masterProgramBackup;
-      if (!previous.masterProgram) return applyGuidance(previous.plan);
-      const savedSettings = { ...previous.masterProgram, ...(guidance ? { clearance: guidance } : {}) };
-      return date < savedSettings.startDate ? applyGuidance(previous.preMasterPlan ?? previous.plan)
-        : resolveMasterProgramPlan(previous.plan, savedSettings, date, previous.masterMatchWeekend);
-    }
-    if (date < settings.startDate) return applyGuidance(sourceProfile.preMasterPlan ?? sourceProfile.plan);
-    return resolveMasterProgramPlan(sourceProfile.plan, settings, date, sourceProfile.masterMatchWeekend);
+    if (!settings) return applyGuidance(datedProfile.plan);
+    if (date < settings.startDate) return applyGuidance(datedProfile.preMasterPlan ?? datedProfile.plan);
+    return resolveMasterProgramPlan(datedProfile.plan, settings, date, datedProfile.masterMatchWeekend);
   }
   let scheduledPlan = React.useMemo(() => planForDate(selectedDate), [profile.plan, masterSettings, profile.trainingGuidance, profile.preMasterPlan, profile.masterMatchWeekend, selectedDate]);
   let currentWeekPlan = React.useMemo(() => planForDate(today), [profile.plan, masterSettings, profile.trainingGuidance, profile.preMasterPlan, profile.masterMatchWeekend, today]);
@@ -448,29 +500,30 @@ function GymApp({
   // A date and slot travel with every plan action. Neither browsing Train nor
   // midnight can retarget an open preview, preparation, or active session.
   function workoutForDate(date, requestedSlot = 'main', ignoreDraft = false, sourceProfile = profile) {
-    const settings = effectiveMasterProgram(sourceProfile);
-    const guidance = effectiveTrainingGuidance(sourceProfile);
+    const datedProfile = profileForPlanDate(date, sourceProfile);
+    const settings = effectiveMasterProgram(datedProfile);
+    const guidance = effectiveTrainingGuidance(datedProfile);
     const day = calendarDayIndex(date);
     const week = sourceProfile !== profile ? planForDate(date, sourceProfile) : date === selectedDate ? scheduledPlan : date === today ? currentWeekPlan : planForDate(date);
     const slot = requestedSlot === 'extra' && week[day].extraSession ? 'extra' : 'main';
     const recommended = slot === 'extra' ? week[day].extraSession : week[day];
     const savedDraft = ignoreDraft ? undefined : findSessionDraft(sourceProfile.sessionDrafts, date, slot);
-    const masterWeek = sourceProfile.masterProgram && getMasterProgramWeek(sourceProfile.masterProgram.startDate, date);
+    const masterWeek = settings && getMasterProgramWeek(settings.startDate, date);
     // Competition remains the primary Sunday recommendation. A personal gym
     // draft stays stored, but must not displace or duplicate the match.
-    const matchPriority = sourceProfile.masterProgram?.revision === '13.1' && slot === 'main' && day === 6
-      && masterWeek && sourceProfile.masterProgram.matchWeeks.includes(masterWeek);
-    const v9Active = sourceProfile.masterProgram?.revision === '9' && date >= sourceProfile.masterProgram.startDate && date >= (sourceProfile.masterProgram.v9EffectiveDate ?? sourceProfile.masterProgram.startDate);
+    const matchPriority = settings?.revision === '13.1' && slot === 'main' && day === 6
+      && masterWeek && settings.matchWeeks.includes(masterWeek);
+    const v9Active = settings?.revision === '9' && date >= settings.startDate && date >= (settings.v9EffectiveDate ?? settings.startDate);
     const v9Draft = v9Active ? getV9DraftDisposition(savedDraft, recommended, { coach: date >= today }) : undefined;
     const protectedDraft = !!(matchPriority && savedDraft && savedDraft.plan.kind !== 'sport')
       || !!(v9Draft && ['review-needed', 'schedule-conflict'].includes(v9Draft.kind))
-      || !!(savedDraft?.plan.programRevision === '9' && sourceProfile.masterProgram?.revision !== '9');
+      || !!(savedDraft?.plan.programRevision === '9' && settings?.revision !== '9');
     const draft = protectedDraft ? undefined : savedDraft;
     const readiness = v9Active ? getCoachReadinessStatus(settings, date)
-      : masterWeek ? sourceProfile.masterProgram.readiness?.find(row => row.date === date)?.status : undefined;
+      : masterWeek ? settings.readiness?.find(row => row.date === date)?.status : undefined;
     const resolved = resolveSessionDraft(draft, recommended);
-    const currentPrescription = draft && (masterWeek || v9Active) && ['13.1', '9'].includes(sourceProfile.masterProgram?.revision)
-      ? { ...resolved, programRevision: sourceProfile.masterProgram.revision } : resolved;
+    const currentPrescription = draft && (masterWeek || v9Active) && ['13.1', '9'].includes(settings?.revision)
+      ? { ...resolved, programRevision: settings.revision } : resolved;
     const adapted = draft && draft.customized !== false && (draft.readiness !== readiness || draft.plan.programRevision !== currentPrescription.programRevision)
       ? applyMasterReadiness(currentPrescription, readiness) : currentPrescription;
     const plan = draft && draft.customized !== false && (masterWeek || v9Active) && ['13.1', '9'].includes(settings?.revision)
@@ -494,9 +547,13 @@ function GymApp({
     : findSessionDraft(profile.sessionDrafts, warmupContext.date, warmupContext.slot));
   const warmupPlan = preparationDraft?.plan ?? (warmupContext ? workoutForDate(warmupContext.date, warmupContext.slot).plan : selectedPlan);
   const gateWarmupItems = preparationFor(warmupPlan, 'warmup');
-  const completedSessions = React.useMemo(() => sessions
-    .filter((e) => e.status === `completed`)
-    .sort((e, t) => t.date.localeCompare(e.date) || t.startedAt - e.startedAt), [sessions]);
+  const completedHistory = React.useRef(new CompletedHistoryProjection());
+  const completedSessions = completedHistory.current.derive(sessions);
+  // Build the lookup only when an exercise actually requests its history. Today
+  // must not index every recorded set just to show the next training action.
+  const previousLookup = React.useMemo(() => ({ history: completedSessions, index: null }), [completedSessions]);
+  const recentExercises = React.useMemo(() => completedSessions.filter(session => session.deletedAt == null)
+    .slice(0, 8).flatMap(session => session.exercises.filter(exercise => !exercise.preparationOnly)), [completedSessions]);
   const deletedSessions = React.useMemo(() => sessions
     .filter((e) => e.status === `deleted`)
     .sort((e, t) => (t.deletedAt ?? 0) - (e.deletedAt ?? 0)), [sessions]);
@@ -740,7 +797,10 @@ function GymApp({
         );
       }),
     };
-    queueSession({ ...current, exercises: current.exercises.map(entry => entry === exercise ? updated : entry) });
+    // A set edit is training data, not a debounce-only UI draft. The local
+    // client writes synchronously before its promise settles, so a refresh or
+    // process termination immediately after typing retains the last valid edit.
+    queueSession({ ...current, exercises: current.exercises.map(entry => entry === exercise ? updated : entry) }, true);
   }
   async function saveDayDraft(plan, { date = selectedDate, slot = selectedSlot, override = false,
     customized = findSessionDraft(profile.sessionDrafts, date, slot)?.customized ?? !!findSessionDraft(profile.sessionDrafts, date, slot) } = {}) {
@@ -784,39 +844,69 @@ function GymApp({
     setPreviewContext(null);
     setPreWorkoutContext({ date: context.date, slot: context.slot });
   }
-  function preWorkoutChoice(context, feeling, sourceProfile = profileRef.current) {
-    const candidate = withPreWorkoutReadiness(sourceProfile, context.date, feeling);
+  function preWorkoutOriginal(context, sourceProfile = profileRef.current) {
     // Derive a normal eligible base, then apply this explicit answer once. A
     // stale draft's readiness stamp cannot prove its dose was actually reduced.
-    const eligibleProfile = withPreWorkoutReadiness(sourceProfile, context.date, 'normal');
+    const eligibleProfile = withPreWorkoutReadiness(profileForPlanDate(context.date, sourceProfile), context.date, 'normal');
     const resolved = workoutForDate(context.date, context.slot, false, eligibleProfile);
-    let plan = feeling === 'poor' ? preWorkoutRecovery(resolved.plan)
-      : feeling === 'tired' ? ['9', '13.1', '8.1'].includes(resolved.plan.programRevision)
+    const settings = effectiveMasterProgram(eligibleProfile);
+    let reference = resolved.plan;
+    if (resolved.draft && resolved.draft.customized !== false) reference = resolved.draft.plan;
+    else if (resolved.plan.programRevision === '9' && settings?.revision === '9') {
+      const base = resolveV9PlanningBase(eligibleProfile.plan, settings, context.date, eligibleProfile.masterMatchWeekend)[resolved.day];
+      reference = resolved.slot === 'extra' ? base.extraSession ?? base : base;
+    } else if (settings && resolved.masterWeek) {
+      const base = resolveMasterProgramPlan(eligibleProfile.plan, settings, context.date, eligibleProfile.masterMatchWeekend,
+        { originalPrescription: true })[resolved.day];
+      reference = resolved.slot === 'extra' ? base.extraSession ?? base : base;
+    }
+    // Original means the saved prescription before optional readiness/phase
+    // changes. Medical limits remain mandatory, independent of this choice.
+    const plan = ['9', '13.1'].includes(reference.programRevision)
+      ? applyMasterClearance(reference, effectiveTrainingGuidance(sourceProfile))
+      : applyTrainingGuidance(reference, effectiveTrainingGuidance(sourceProfile));
+    return { ...resolved, plan, reference };
+  }
+  function preWorkoutChoice(context, decision, fit = true, sourceProfile = profileRef.current) {
+    const feeling = decision === 'lighter' ? 'tired' : decision === 'recovery' ? 'poor' : fit ? 'normal' : null;
+    const candidate = profileForPlanDate(context.date, sourceProfile) !== sourceProfile ? sourceProfile
+      : withPreWorkoutReadiness(sourceProfile, context.date, feeling);
+    const resolved = preWorkoutOriginal(context, sourceProfile);
+    let plan = decision === 'recovery' ? preWorkoutRecovery(resolved.plan)
+      : decision === 'lighter' ? ['9', '13.1', '8.1'].includes(resolved.plan.programRevision)
         ? applyMasterReadiness(resolved.plan, 'yellow') : reduceUnprogrammedWorkout(resolved.plan) : resolved.plan;
-    if (feeling === 'tired' && plan.kind === 'strength' && !/^(?:modified|lighter)/i.test(plan.name)) {
+    if (decision === 'lighter' && plan.kind === 'strength' && !/^(?:modified|lighter)/i.test(plan.name)) {
       plan = { ...plan, name: `Lighter — ${plan.name}`.slice(0, 80) };
     }
-    return { candidate, context: { ...resolved, plan, readiness: preWorkoutReadinessStatus(feeling),
+    return { candidate, context: { ...resolved, plan, readiness: feeling ? preWorkoutReadinessStatus(feeling) : undefined,
       guidanceAtPreparation: effectiveTrainingGuidance(sourceProfile) } };
   }
-  function preWorkoutRecommendation(feeling) {
-    const { context } = preWorkoutChoice(preWorkoutContext, feeling);
+  function preWorkoutRecommendation(decision) {
+    const { context } = preWorkoutChoice(preWorkoutContext, decision);
     const working = context.plan.exercises.filter(exercise => !exercise.optionalWork);
     return { name: context.plan.name, kind: context.plan.kind, exercises: working.length,
       sets: working.reduce((sum, exercise) => sum + exercise.sets, 0),
-      detail: feeling === 'tired' ? 'Explosive work is reduced or omitted; use the lighter prescription shown here.' : undefined };
+      changes: compareWorkoutPrescriptions(context.reference, context.plan),
+      detail: decision === 'lighter' ? 'Only this session is adjusted. Review the exact changes below; your original workout stays saved.'
+        : decision === 'original' ? 'Saved exercise targets, subject to your current medical guidance. This choice does not report that you feel recovered.' : undefined };
   }
-  async function confirmPreWorkout({ feeling, warmedUp }) {
+  function preWorkoutReference() {
+    const { reference } = preWorkoutOriginal(preWorkoutContext);
+    const working = reference.exercises.filter(exercise => !exercise.optionalWork);
+    return { name: reference.name, exercises: working.length, sets: working.reduce((sum, exercise) => sum + exercise.sets, 0) };
+  }
+  async function confirmPreWorkout({ fit, decision, warmedUp }) {
     if (!preWorkoutContext || checkingWorkoutRef.current || !loaded || loadError || profileSaving
       || sessionsRef.current.some(session => session.status === 'active')) return false;
     checkingWorkoutRef.current = true;
     try {
+      if (decision === 'rest') { setPreWorkoutContext(null); toast('Rest selected. No session was recorded or plan changed.'); return true; }
       if (!(await flushPendingWrites())) return false;
-      const { candidate, context } = preWorkoutChoice(preWorkoutContext, feeling);
+      const { candidate, context } = preWorkoutChoice(preWorkoutContext, decision, fit);
       if (context.date === today && candidate !== profileRef.current
         && !(await saveProfile(candidate, { notify: false }))) return false;
       const result = await beginWorkoutPreparation({ ...context,
-        transient: context.date !== today || !!(context.draft && context.draft.customized !== false) }, warmedUp);
+        transient: decision !== 'original' || context.date !== today || !!(context.draft && context.draft.customized !== false) }, warmedUp);
       if (result) setPreWorkoutContext(null);
       return result;
     } finally { checkingWorkoutRef.current = false; }
@@ -834,7 +924,7 @@ function GymApp({
     if (context.protectedDraft || context.transient) setProtectedPreparation(draft);
     else if (!(await saveDayDraft(plan, { date: context.date, slot: context.slot, override: draft.warmupOverride }))) return false;
     setWarmupContext({ date: context.date, day: context.day, slot: context.slot, protectedDraft: context.protectedDraft,
-      transient: context.transient, guidanceAtPreparation: context.guidanceAtPreparation });
+      transient: context.transient, guidanceAtPreparation: context.guidanceAtPreparation, customWorkout: context.customWorkout, templateWorkout: context.templateWorkout });
     return true;
   }
   async function startMainWorkout(options = {}, prepared = null) {
@@ -850,6 +940,8 @@ function GymApp({
       const latestStore = await requestTracker();
       if (latestStore.sessions.some(row => row.session.status === 'active')) {
         await loadWorkouts();
+        setPreWorkoutContext(null); setWarmupContext(null); setProtectedPreparation(null);
+        setTab('train');
         toast('A workout is already open. Continue that saved session.');
         return false;
       }
@@ -887,11 +979,19 @@ function GymApp({
         if (exercise.preparationOnly) return { ...exercise, logs: exercise.logs.map(log => ({ ...log, kg: exercise.defaultKg ?? 0,
           inputSources: { ...log.inputSources, kg: 'planned' } })) };
         if (!hasDeliberatePlannedLoad(exercise, standardDay?.exercises.find(row => row.key === exercise.key),
-          draft.customized !== false || plan.customizedForProgram === '9')) return exercise;
+          draft.customized !== false || context.templateWorkout || plan.customizedForProgram === '9')) return exercise;
         return { ...exercise, logs: exercise.logs.map(log => ({ ...log, kg: exercise.defaultKg, inputSources: { ...log.inputSources, kg: 'manual' } })) };
       });
-      queueSession(SessionSchema.parse(session), true);
-      if (!(await flushPendingWrites())) return false;
+      const savedSession = SessionSchema.parse(session);
+      // Do not expose an active session until its first write succeeds. An
+      // optimistic queued start can otherwise lock preflight behind a phantom
+      // active workout when storage is full or another window wins the race.
+      const saved = await requestTracker({ action: 'session', session: savedSession, expectedVersion: 0 });
+      sessionVersionsRef.current.set(savedSession.id, saved.version);
+      sessionsRef.current = [savedSession, ...sessionsRef.current.filter(entry => entry.id !== savedSession.id)];
+      setSessions(sessionsRef.current);
+      lastSetReceipt.current = null; saveCompletionReceipt(null);
+      persistWorkoutControls();
       // Keep the date-specific prescription, but do not reuse this warm-up for another session.
       const next = resetDraftPreparation(draft);
       if (context.protectedDraft || context.transient) {
@@ -916,6 +1016,9 @@ function GymApp({
       selectTrainingDate(context.date);
       setWarmupContext(null); setTab('train'); setEditingHistoryId(null);
       return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Your workout could not start saving. Your existing records stay unchanged; please retry.');
+      return false;
     } finally { startingMainRef.current = false; }
   }
   function toggleWorkoutTimer() {
@@ -984,6 +1087,7 @@ function GymApp({
     if (set) toggleMovementTimer(key, { action: exercise.runningSince === null ? `start` : `pause`, setId: set.id }, !0);
   }
   function markSetDone(e, t, n, intent) {
+    if (!flushPendingWritesNow()) return false;
     const selectedId = editingIdRef.current ?? sessionsRef.current.find(session => session.status === 'active')?.id;
     const target = { sessionId: intent?.sessionId ?? selectedId, exerciseKey: e, setId: t };
     if (!selectedId || target.sessionId !== selectedId || (intent?.intentId && consumedCompletionIntents.current.has(intent.intentId))) return false;
@@ -1015,16 +1119,29 @@ function GymApp({
     let s = Date.now();
     const transitioned = targetSetTransition(r, target, n, n ? { seconds: o } : {});
     if (transitioned === r) return false;
-    if (intent?.intentId) consumedCompletionIntents.current.add(intent.intentId);
     const exercises = transitioned.exercises.map(entry => entry.key !== e || !n ? entry : {
       ...entry, elapsedMs: elapsedTime(entry.elapsedMs, entry.runningSince, s), runningSince: null,
     });
+    const candidate = { ...r, exercises };
+    const completed = n ? carryForwardAfterCompletion(candidate, target) : candidate;
+    try {
+      const result = requestLocalSync('/api/tracker', { action: 'session', session: completed,
+        expectedVersion: sessionVersionsRef.current.get(r.id) ?? 0 });
+      sessionVersionsRef.current.set(r.id, result.version);
+    } catch (error) {
+      setLoadError(`${error instanceof Error ? error.message : 'Your set could not save.'} This set has not changed completion status. Try the action again after resolving storage.`);
+      return false;
+    }
+    // A completion receipt, advancement and rest notification are evidence of
+    // a successful primary write, never an optimistic in-memory acknowledgement.
+    if (intent?.intentId) consumedCompletionIntents.current.add(intent.intentId);
+    sessionsRef.current = sessionsRef.current.map(session => session.id === r.id ? completed : session);
+    setSessions(sessionsRef.current); setLoadError('');
     if (n) { lastSetReceipt.current = target; saveCompletionReceipt(target); }
     else if (lastSetReceipt.current?.sessionId === target.sessionId && lastSetReceipt.current?.exerciseKey === e && lastSetReceipt.current?.setId === t) {
       lastSetReceipt.current = null; saveCompletionReceipt(null);
     }
-    const completed = { ...r, exercises };
-    queueSession(n ? carryForwardAfterCompletion(completed, target) : completed, !0);
+    persistWorkoutControls();
     if (!n && restOwner.current?.sessionId === target.sessionId && restOwner.current?.exerciseKey === e && restOwner.current?.setId === t) setRestEndsAt(null);
     if (n && r.status === `active`) {
       void restAudio.unlock();
@@ -1042,7 +1159,7 @@ function GymApp({
     return markSetDone(target.exerciseKey, target.setId, false, { sessionId: target.sessionId });
   }
   async function finishWorkout() {
-    if (!activeSession || finishSaving) return;
+    if (!activeSession || finishSaving || finishingWorkoutRef.current) return;
     let e = Number(finishMinutes);
     if (!Number.isFinite(e) || e <= 0 || e > 10080) {
       toast.error(`Enter a duration greater than zero.`);
@@ -1053,18 +1170,27 @@ function GymApp({
       toast.error(`Check the calorie value.`);
       return;
     }
-    setFinishSaving(!0);
-    let n = {
-      ...stopSessionTimers(activeSession, `completed`),
-      elapsedMs: Math.round(e * 6e4),
-      watchCalories: t,
-    };
-    queueSession(n);
-    let r = await flushPendingWrites();
-    setFinishSaving(!1);
-    setFinishOpen(!1);
-    setRestEndsAt(null);
-    r && (setCompletedCelebrationId(n.id), setSelectedHistory(n));
+    finishingWorkoutRef.current = true; setFinishSaving(true); setFinishError('');
+    try {
+      if (!(await flushPendingWrites())) { setFinishError('Your latest sets could not save. Retry saving them before finishing.'); return; }
+      const current = sessionsRef.current.find(session => session.id === activeSession.id && session.status === 'active');
+      if (!current) return;
+      const completed = SessionSchema.parse({ ...stopSessionTimers(current, 'completed'),
+        elapsedMs: Math.round(e * 6e4), watchCalories: t });
+      // Finishing is committed before the UI leaves the active session. A
+      // rejected write must keep the saved active record and all retry controls.
+      const result = await requestTracker({ action: 'session', session: completed,
+        expectedVersion: sessionVersionsRef.current.get(current.id) ?? 0 });
+      sessionVersionsRef.current.set(current.id, result.version);
+      sessionsRef.current = sessionsRef.current.map(session => session.id === current.id ? completed : session);
+      setSessions(sessionsRef.current);
+      setFinishOpen(false); setRestEndsAt(null);
+      try { if (continuityOwner.current) clearWorkoutContinuity(window.localStorage, continuityOwner.current); } catch { /* Optional metadata. */ }
+      setSavedWorkoutControls(null);
+      setCompletedCelebrationId(completed.id); setSelectedHistory(completed);
+    } catch (error) {
+      setFinishError(error instanceof Error ? error.message : 'Your workout could not finish saving. Your active session is retained; please retry.');
+    } finally { finishingWorkoutRef.current = false; setFinishSaving(false); }
   }
   async function saveProfile(desired, { notify = true, checkpoint = false } = {}) {
     if (!loaded || loadError) {
@@ -1119,11 +1245,12 @@ function GymApp({
         preMasterPlan: undefined, masterMatchWeekend: undefined, sessionDrafts: undefined } : {}) };
     if (!(await saveProfile(next, { notify: false, checkpoint: applyPlan && !isNew }))) return false;
     setPreferencesOpen(false);
-    if (isNew && preferences.goal === `own`) { setTab(`train`); openCustomWorkout(); }
+    if (isNew && preferences.goal === `own`) { setTab(`train`); openCustomWorkout(null, undefined, 'session'); }
     return true;
   }
-  function openCustomWorkout(workout = null, day = undefined) {
-    setCustomBuilder({ workout: workout ? structuredClone(workout) : null, id: workout?.id, day });
+  function openCustomWorkout(workout = null, day = undefined, intent = 'template') {
+    setWorkoutChooserOpen(false);
+    setCustomBuilder({ workout: workout ? structuredClone(workout) : null, id: workout?.id, day, intent });
   }
   function saveCurrentAsWorkout() {
     if (!currentSession) return;
@@ -1148,7 +1275,10 @@ function GymApp({
       ? existing.map(item => item.id === template.id ? template : item) : [...existing, template];
     const plan = customBuilder.day === undefined ? editableWeekPlan : editableWeekPlan.map((item, index) => index === customBuilder.day
       ? { ...workout, ...(item.extraSession ? { extraSession: item.extraSession } : {}) } : item);
-    const saved = await saveBaseWeek(plan, { customWorkouts });
+    // A reusable template is not an instruction to rewrite the weekly plan.
+    const saved = customBuilder.day === undefined
+      ? await saveProfile({ ...profileRef.current, customWorkouts })
+      : await saveBaseWeek(plan, { customWorkouts });
     if (saved) setCustomBuilder(null);
     return saved;
   }
@@ -1228,15 +1358,23 @@ function GymApp({
     if (!profile.masterProgram || !selectedMasterMatch) return saveProfile({ ...profile, ...updates, plan });
     return saveProfile({ ...profile, ...updates, plan: profile.plan.map((day, index) => index < 5 ? plan[index] : day), masterMatchWeekend: plan.slice(5) });
   }
-  async function startCustomWorkout(template) {
+  async function startCustomWorkout(template, returnToBuilder = false) {
     void restAudio.unlock();
-    if (activeSession || editingHistoryId) { toast('Finish your current workout first.'); return; }
-    if (!(await flushPendingWrites())) return;
+    if (!loaded || loadError || profileSaving || startingMainRef.current) return false;
+    if (sessionsRef.current.some(session => session.status === 'active') || editingHistoryId) {
+      toast('Finish your current workout first.'); return false;
+    }
+    if (!(await flushPendingWrites())) return false;
     const { id: _id, ...workout } = template;
-    const plan = { ...workout, warmup: preparationFor(workout, 'warmup').map(step => ({ ...step, done: false })) };
-    if (!(await saveDayDraft(plan, { customized: true }))) return;
-    setWorkoutChooserOpen(false);
-    setWarmupContext({ date: selectedDate, day: selectedDay, slot: selectedSlot });
+    const guidance = effectiveTrainingGuidance(profileRef.current);
+    const plan = applyTrainingGuidance(workout, guidance);
+    // Starting a template makes a transient session, never a date edit or a
+    // recurring-plan update. Cancelling preparation leaves those sources intact.
+    const started = await beginWorkoutPreparation({ date: selectedDate, day: selectedDay, slot: selectedSlot,
+      plan, transient: true, templateWorkout: true, guidanceAtPreparation: guidance,
+      ...(returnToBuilder ? { customWorkout: structuredClone(workout) } : {}) }, false);
+    if (started) { setWorkoutChooserOpen(false); setTab('train'); }
+    return started;
   }
   async function customizeSession(next) {
     queueSession(SessionSchema.parse(next), true);
@@ -1296,20 +1434,58 @@ function GymApp({
       setNow(Date.now());
       document.visibilityState === `hidden` && actionsRef.current.flush();
     };
+    const flushOnPageHide = () => { void actionsRef.current.flush(); };
     return (
       window.addEventListener(`beforeunload`, n),
+      window.addEventListener(`pagehide`, flushOnPageHide),
       document.addEventListener(`visibilitychange`, r),
       window.addEventListener(`pageshow`, r),
       window.addEventListener(`focus`, r),
       () => {
         mountedRef.current = !1;
         window.removeEventListener(`beforeunload`, n);
+        window.removeEventListener(`pagehide`, flushOnPageHide);
         document.removeEventListener(`visibilitychange`, r);
         window.removeEventListener(`pageshow`, r);
         window.removeEventListener(`focus`, r);
         saveTimeoutRef.current && clearTimeout(saveTimeoutRef.current);
       }
     );
+  }, []);
+  React.useEffect(() => {
+    // Explicitly continuing the same saved timer in another window transfers
+    // its alarm. The older window must not notify or Undo on the new owner's
+    // behalf; no training data is changed by this coordination.
+    const transferred = event => {
+      if (![WORKOUT_CONTINUITY_KEY, STORAGE_KEY].includes(event.key)) return;
+      try {
+        if (event.key === STORAGE_KEY) {
+          const next = JSON.parse(event.newValue ?? 'null'), previous = JSON.parse(event.oldValue ?? 'null');
+          const current = sessionsRef.current.find(session => session.status === 'active');
+          if (!current && !restOwner.current && !lastSetReceipt.current) return;
+          const saved = next?.sessions?.find(row => row.session?.id === current?.id)?.session;
+          const stillDone = target => !target || saved?.status === 'active' && saved.startedAt === current?.startedAt
+            && saved.id === target.sessionId && saved.exercises.some(exercise => exercise.key === target.exerciseKey
+              && exercise.logs.some(log => log.id === target.setId && log.done));
+          const sameGeneration = next?.restoreGeneration === previous?.restoreGeneration;
+          if (sameGeneration && saved?.status === 'active' && saved.startedAt === current?.startedAt
+            && stillDone(restOwner.current) && stillDone(lastSetReceipt.current)) return;
+          // A different restore generation invalidates old transient controls,
+          // even when the imported backup retains the same workout identifiers.
+        } else {
+          if (!event.newValue) return;
+          const controls = readWorkoutContinuity(window.localStorage);
+          if (!controls || controls.ownerId === continuityOwner.current
+            || controls.sessionId !== sessionsRef.current.find(session => session.status === 'active')?.id) return;
+        }
+        restOwner.current = null; saveRestOwner(null);
+        lastSetReceipt.current = null; saveCompletionReceipt(null);
+        restDeadlineRef.current = null; setRestDeadline(null); setRestFinished(null);
+        setSavedWorkoutControls(readWorkoutContinuity(window.localStorage));
+      } catch { /* Ignore invalid optional metadata. */ }
+    };
+    window.addEventListener('storage', transferred);
+    return () => window.removeEventListener('storage', transferred);
   }, []);
   // Safari throttles suspended pages. Recalculate from real deadlines on return;
   // avoid repainting the whole phone UI every second when no timer is running.
@@ -1353,7 +1529,9 @@ function GymApp({
     if (loaded && [`today`, `progress`].includes(tab)) void loadReportNutrition();
   }, [tab, loaded, today]);
   void 0;
-  const allExercises = React.useMemo(() => Array.from(
+  // Strength-chart derivations are unrelated to Today and active-set inputs.
+  const showStrengthHistory = tab === 'progress' && progressView === 'strength';
+  const allExercises = React.useMemo(() => showStrengthHistory ? Array.from(
     new Map(
       [
         ...completedSessions.flatMap((e) => e.exercises),
@@ -1363,7 +1541,7 @@ function GymApp({
         ]),
       ].map((e) => [exercisePerformanceIdentity(e), e]),
     ).values(),
-  ), [completedSessions, profile.plan]);
+  ) : [], [showStrengthHistory, completedSessions, profile.plan]);
   let progressExercise =
     allExercises.find((e) => exercisePerformanceIdentity(e) === progressExerciseKey || (e.exerciseId ?? e.key) === progressExerciseKey) ?? allExercises[0];
   const exerciseSessions = React.useMemo(() => completedSessions
@@ -1397,14 +1575,10 @@ function GymApp({
         ? `Total time · sec`
         : `Total reps`;
   function comparablePrevious(exercise, date, excludedId) {
-    for (const session of completedSessions.filter(session => session.id !== excludedId && session.date <= date && session.deletedAt == null).slice().sort((a,b) => b.date.localeCompare(a.date) || b.startedAt-a.startedAt)) {
-      const candidates = session.exercises.filter(entry => !entry.preparationOnly && areComparableExercises(entry, exercise));
-      const matched = candidates.find(entry => entry.key === exercise.key) ?? (candidates.length === 1 ? candidates[0] : null);
-      if (matched) return { session, exercise: matched };
-      if (candidates.length) return null;
-    }
-    return null;
+    previousLookup.index ??= new PreviousPerformanceIndex(previousLookup.history);
+    return previousLookup.index.find(exercise, date, excludedId);
   }
+
   function volleyballIsSoon() {
     if (!volleyballSchedule.days.length) return false;
     const clock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(now));
@@ -1649,6 +1823,10 @@ function GymApp({
             }} />
         </TabsContent>
         <TabsContent value={`train`}>
+          {activeSession && !editingHistoryId && savedWorkoutControls?.sessionId === activeSession.id && restEndsAt === null && <div className="workout-controls-recovery" role="region" aria-label="Saved workout controls">
+            <span>Your workout is saved. Continue its previous {savedWorkoutControls.deadline !== null ? 'rest timer and Undo' : 'Undo control'} here.</span>
+            <button type="button" className="text-button" onClick={resumeWorkoutControls}>{savedWorkoutControls.deadline !== null ? 'Resume saved rest' : 'Restore workout controls'}</button>
+          </div>}
           <TrainingPlanWorkspace active={!!currentSession || !selectedPlan.exercises.length}>
           {!currentSession && weekSelector}
           <div className={`workout-grid`}>
@@ -1791,7 +1969,8 @@ function GymApp({
                   >{`View log`}</button>
                 </div>
               )}
-              {!currentSession && <details className="workout-template-actions"><summary>Workout options</summary><div className="workout-template-options"><button type="button" className="text-button" disabled={!loaded} onClick={() => setWorkoutChooserOpen(true)}>Choose workout</button><button type="button" className="text-button" disabled={!loaded} onClick={() => openCustomWorkout()}>Create workout</button></div>{masterSettings?.revision !== '9' && masterWeek && <MasterProgramReadiness scheduleOnly settings={masterSettings} date={selectedDate} disabled={profileSaving || !loaded} onSave={saveMasterProgram} />}</details>}
+              {!currentSession && <div className="workout-template-shortcuts" aria-label="Workout shortcuts"><button type="button" className="text-button" disabled={!loaded} onClick={() => setWorkoutChooserOpen(true)}>Saved workouts</button><button type="button" className="text-button" disabled={!loaded} onClick={() => openCustomWorkout(null, undefined, 'session')}><Plus size={16} aria-hidden="true" /> Create workout</button></div>}
+              {!currentSession && masterSettings?.revision !== '9' && masterWeek && <details className="workout-template-actions"><summary>Schedule options</summary><MasterProgramReadiness scheduleOnly settings={masterSettings} date={selectedDate} disabled={profileSaving || !loaded} onSave={saveMasterProgram} /></details>}
               {loggedJumpContacts && loggedJumpContacts.planned > 0 && <p className="master-contact-status" role="status" aria-label="Main jump contacts">{loggedJumpContacts.completed} / {loggedJumpContacts.planned} main contacts · from completed reps{loggedJumpContacts.completed >= loggedJumpContacts.planned ? ' · Ceiling reached; stop the jump block.' : ' · Ceiling, not a target to force.'}</p>}
               {currentSession ? (
                 <React.Fragment>
@@ -2064,7 +2243,7 @@ function GymApp({
                     <ReactJSX.Fragment>
                       <button
                         className={`btn secondary`}
-                        onClick={() => { void restAudio.unlock(); setRestEndsAt(restEndsAt + 15e3); }}
+                        onClick={() => adjustRestBy(15)}
                       >{`+15 sec`}</button>
                       <button
                         className={`btn`}
@@ -2369,7 +2548,7 @@ function GymApp({
             <div className="section-line"><h2>Saved sessions</h2><button type="button" className="text-button" onClick={() => openCustomWorkout()}><Plus size={18} /> Create workout</button></div>
             {(profile.customWorkouts ?? []).length === 0 && <div className="empty-state"><Dumbbell /><h3>Your own training</h3><p>Build a session you can use any day.</p></div>}
             <ul className="saved-workouts-list">{(profile.customWorkouts ?? []).map(workout => <li key={workout.id}>
-              <button className="saved-workout-row" onClick={() => void startCustomWorkout(workout)} disabled={saving || !loaded} aria-label={`Use custom workout ${workout.name}`} ><span><strong>{workout.name}</strong><span>{workout.exercises.length} exercises · {workout.minutes} min</span></span><ChevronRight size={18} /></button>
+              <button className="saved-workout-row" onClick={() => void startCustomWorkout(workout)} disabled={saving || !loaded} aria-label={`Start ${workout.name}`} ><span><strong>{workout.name}</strong><span>{workout.exercises.length} exercises · {workout.minutes} min</span></span><ChevronRight size={18} /></button>
               <button className="text-button" aria-label={`Edit custom workout ${workout.name}`} onClick={() => openCustomWorkout(workout)}>Edit</button>
             </li>)}</ul>
           </section>}
@@ -2391,8 +2570,8 @@ function GymApp({
           <Timer size={18} />
           <span>{`Rest`}</span>
           <strong>{formatElapsedTime(restRemaining)}</strong>
-          <button aria-label="Reduce rest by 15 seconds" onClick={() => { void restAudio.unlock(); setNow(Date.now()); setRestEndsAt(Math.max(Date.now(), restEndsAt - 15000)); }}>−15</button>
-          <button aria-label="Add 15 seconds rest" onClick={() => { void restAudio.unlock(); setRestEndsAt(restEndsAt + 15000); }}>+15</button>
+          <button aria-label="Reduce rest by 15 seconds" onClick={() => adjustRestBy(-15)}>−15</button>
+          <button aria-label="Add 15 seconds rest" onClick={() => adjustRestBy(15)}>+15</button>
           <button onClick={() => setRestEndsAt(null)} aria-label="Skip rest">Skip</button>
         </div>
       )}
@@ -2426,15 +2605,20 @@ function GymApp({
         guidanceLimited={!!trainingGuidance && (trainingGuidance.impact !== 'cleared' || trainingGuidance.heavyLifting !== 'cleared')}
         onOpenChange={open => { if (!open) setPreWorkoutContext(null); }}
         onReviewGuidance={() => { setPreWorkoutContext(null); reviewTrainingGuidance(); }}
+        originalReference={preWorkoutReference()}
         recommendation={preWorkoutRecommendation} onContinue={confirmPreWorkout} />}
-      <WarmupFlow open={warmupContext !== null} onOpenChange={open => { if (!open) { setWarmupContext(null); setProtectedPreparation(null); } }}
+      <WarmupFlow open={warmupContext !== null} onOpenChange={open => { if (!open) {
+        const unsavedWorkout = warmupContext?.customWorkout;
+        setWarmupContext(null); setProtectedPreparation(null);
+        if (unsavedWorkout) openCustomWorkout(unsavedWorkout, undefined, 'session');
+      } }}
         plan={warmupPlan} items={gateWarmupItems} override={preparationDraft?.warmupOverride === true}
         disabled={profileSaving || saving || !!loadError}
         onChange={items => saveDayDraft({ ...warmupPlan, warmup: items }, { date: warmupContext.date, slot: warmupContext.slot, override: preparationDraft?.warmupOverride ?? false })}
         onOverride={() => saveDayDraft(warmupPlan, { date: warmupContext.date, slot: warmupContext.slot, override: true })}
         onStart={startMainWorkout} onSkip={() => startMainWorkout({ skipWarmup: true })} />
       <Dialog open={stretchContext !== null} onOpenChange={open => { if (!open) setStretchContext(null); }}><DialogContent className="app-dialog stretch-sheet"><DialogHeader><DialogTitle>Stretch routine</DialogTitle><DialogDescription>{stretchDescription}</DialogDescription></DialogHeader><PreparationChecklist items={stretchItems} phase="cooldown" kind={stretchSession?.kind ?? 'strength'} defaultOpen onToggle={stretchSession && !loadError ? (key, done) => { const source = sessionsRef.current.find(session => session.id === stretchSession.id); if (source) queueSession({ ...source, cooldown: preparationFor(source, 'cooldown').map(step => step.key === key ? { ...step, done } : step) }); } : undefined} /><button type="button" className="btn full" onClick={() => setStretchContext(null)}>Done</button></DialogContent></Dialog>
-      <Dialog open={finishOpen} onOpenChange={setFinishOpen}>
+      <Dialog open={finishOpen} onOpenChange={open => { if (!finishingWorkoutRef.current) { setFinishOpen(open); if (!open) setFinishError(''); } }}>
         <DialogContent className={`app-dialog`}>
           <DialogHeader>
             <DialogTitle>{`Finish your workout`}</DialogTitle>
@@ -2442,6 +2626,7 @@ function GymApp({
               {activeSession?.kind === 'recovery' ? 'Save your recovery time and checked movements.' : activeSession?.kind === 'sport' ? 'Confirm your actual training time and save your reflection.' : `${activeSession?.name ?? ''} · ${activeSession ? completedSets(activeSession) : 0} completed sets. Unchecked sets won’t count.`}
             </DialogDescription>
           </DialogHeader>
+          {finishError && <p className="error-text" role="alert">{finishError}</p>}
           <label className={`field-label`}>
             {`Workout duration · minutes`}
             <input
@@ -2810,7 +2995,7 @@ function GymApp({
         </DialogContent>
       </Dialog>
       <WorkoutBuilder open={editingDay !== null} onOpenChange={open => { if (!open) { setEditingDay(null); setPlanDraft(null); } }}
-        initialWorkout={planDraft} title={`Edit ${editingExtraSession ? 'primer' : WEEKDAYS[editingDay] ?? 'day'}`} submitLabel="Save day"
+        recentExercises={recentExercises} initialWorkout={planDraft} title={`Edit ${editingExtraSession ? 'primer' : WEEKDAYS[editingDay] ?? 'day'}`} submitLabel="Save day"
         onSave={async workout => {
           if (editingDay === null) return false;
           const saved = await saveBaseWeek(editableWeekPlan.map((day, index) => index === editingDay
@@ -2819,13 +3004,15 @@ function GymApp({
           return saved;
         }} />
       <WorkoutBuilder open={customBuilder !== null} onOpenChange={open => { if (!open) setCustomBuilder(null); }}
-        initialWorkout={customBuilder?.workout} title={customBuilder?.id ? 'Edit workout' : 'Create workout'} onSave={saveCustomWorkout} />
+        initialWorkout={customBuilder?.workout} title={customBuilder?.id ? 'Edit workout' : 'Create workout'} submitLabel="Save template"
+        recentExercises={recentExercises} startIsPrimary={customBuilder?.intent === 'session'}
+        onStart={workout => startCustomWorkout(workout, true)} onSave={saveCustomWorkout} />
       <Dialog open={workoutChooserOpen} onOpenChange={setWorkoutChooserOpen}><DialogContent className="app-dialog workout-chooser">
         <DialogHeader><DialogTitle>Choose workout</DialogTitle><DialogDescription>Use a saved session for {formatDate(selectedDate)}.</DialogDescription></DialogHeader>
         {(profile.customWorkouts ?? []).map(workout => <button key={workout.id} className="saved-workout-row" disabled={saving || !!activeSession || !!editingHistoryId} aria-label={`Start ${workout.name}`} onClick={() => void startCustomWorkout(workout)}><span><strong>{workout.name}</strong><span>{workout.exercises.length} exercises · {workout.minutes} min</span></span><Play size={18} /></button>)}
         {!(profile.customWorkouts ?? []).length && <p className="muted">Create a workout to use it here.</p>}
         {(activeSession || editingHistoryId) && <p className="muted">Finish your current workout first.</p>}
-        <button className="btn secondary full" onClick={() => { setWorkoutChooserOpen(false); openCustomWorkout(); }}><Plus size={18} /> Create workout</button>
+        <button className="btn secondary full" onClick={() => { openCustomWorkout(null, undefined, 'session'); }}><Plus size={18} /> Create workout</button>
       </DialogContent></Dialog>
       <AlertDialog open={resetPlanOpen} onOpenChange={setResetPlanOpen}><AlertDialogContent className="app-dialog"><AlertDialogHeader><AlertDialogTitle>Restore recommended plan?</AlertDialogTitle><AlertDialogDescription>Your saved workouts, history and preferences stay. The weekly plan returns to its recommended schedule.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep my plan</AlertDialogCancel><AlertDialogAction disabled={profileSaving} onClick={async event => { event.preventDefault(); if (await saveProfile(profile.masterProgram ? { ...profile, plan: createRecommendedMasterPlan(profile.masterProgram), masterMatchWeekend: createRecommendedMasterPlan(profile.masterProgram, true).slice(5) } : resetRecommendedPlan(profile), { checkpoint: true })) setResetPlanOpen(false); }}>Restore plan</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </Tabs>

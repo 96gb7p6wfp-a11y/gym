@@ -2,14 +2,15 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Check, ChevronRight, Ellipsis, Minus, Plus, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { DecimalWeightInput } from './DecimalWeightInput';
-import { ExerciseGuide } from './ExerciseGuide';
+import { ExerciseGuide } from './ExerciseGuideTrigger';
 import { measurementLabel } from './domain';
 import { TimedSetControls } from './TimedSetControls';
 import type { TimedSetAction } from './timed-sets';
 import { findTrainingPair, firstUnfinishedStep, nextStepAfterCompletion, restAfterCompletedSet, type SupersetLink } from './training-flow';
 import './focused-workout.css';
 import { findLibraryExercise } from './exercise-library';
-import { getProgressionRecommendation, type ProgressionContext } from './performance-insights';
+import type { ProgressionContext } from './performance-insights';
+import { useExerciseProgression } from './useExerciseProgression';
 import { ProgressionCue } from './ProgressionCue';
 import type { ReportSession } from './weekly-report';
 import { completedSetCue, setQualityCue } from './set-encouragement';
@@ -87,9 +88,10 @@ export interface FocusedWorkoutProps {
 
 const amount = (raw: string, maximum: number) => raw.trim() === ''
   ? null : Math.min(maximum, Math.max(0, Number(raw.replace(',', '.')) || 0));
+const EMPTY_HISTORY: readonly ReportSession[] = Object.freeze([]);
 
 /** The existing session mutations remain the only source of workout data. */
-export function FocusedWorkout({ sessionId, editing = false, exercises, now, previous, onSet, onDone, onUndoLast, canUndoLast = false, lastCompletedTarget, onTimer, renderAllSets, sessions = [], date = new Date().toISOString().slice(0, 10), context, onExerciseAction, athleteMode = true, onEquipmentChange, onLoadIncrementChange }: FocusedWorkoutProps) {
+export function FocusedWorkout({ sessionId, editing = false, exercises, now, previous, onSet, onDone, onUndoLast, canUndoLast = false, lastCompletedTarget, onTimer, renderAllSets, sessions = EMPTY_HISTORY, date = new Date().toISOString().slice(0, 10), context, onExerciseAction, athleteMode = true, onEquipmentChange, onLoadIncrementChange }: FocusedWorkoutProps) {
   const initialStep = firstUnfinishedStep(exercises);
   const initialExercise = exercises.find(exercise => exercise.key === initialStep?.exerciseKey) ?? exercises[0];
   const [exerciseKey, setExerciseKey] = useState(initialExercise?.key);
@@ -97,6 +99,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
   const [allSetsOpen, setAllSetsOpen] = useState(false);
   const [movementsOpen, setMovementsOpen] = useState(false);
   const [reuseRevision, setReuseRevision] = useState(0);
+  const [undoActivation, setUndoActivation] = useState<{ exerciseKey: string; setId: string; version: number } | null>(null);
   const [layout, setLayout] = useState<'focus' | 'quick'>('focus');
   const [equipmentTarget, setEquipmentTarget] = useState<string | null>(null);
   const [bodyweightLoadShown, setBodyweightLoadShown] = useState(() => new Set<string>());
@@ -129,6 +132,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
     setSetId(first?.setId ?? null);
     setAllSetsOpen(false);
     setSetFeedback(null);
+    setUndoActivation(null);
     pendingCompletion.current = null;
     const exercise = exercises.find(entry => entry.key === first?.exerciseKey) ?? exercises[0];
     const targetId = first?.setId ?? exercise?.logs[0]?.id;
@@ -185,7 +189,8 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
 
   const exerciseIndex = exercises.findIndex((exercise) => exercise.key === exerciseKey);
   const exercise = exercises[exerciseIndex] ?? initialExercise;
-  if (!exercise) return null;
+  const recommendation = useExerciseProgression(exercise, sessions, date, context);
+  if (!exercise || !recommendation) return null;
   const log = exercise.logs.find((entry) => entry.id === setId)
     ?? exercise.logs.find((entry) => !entry.done) ?? exercise.logs[0];
   if (!log) return null;
@@ -199,8 +204,6 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
   const canCopyLast = lastSet && (lastSet.patch.kg !== log.kg || lastSet.patch.reps !== log.reps);
   const hasLastSetSuggestion = !log.done && Object.values(log.inputSources ?? {}).includes('last-set');
   const libraryExercise = findLibraryExercise(exercise);
-  const recommendation = getProgressionRecommendation(exercise, sessions, date,
-    { ...context, loadIncrementKg: exerciseLoadIncrement(exercise), ...(exercise.preparationOnly ? { lowFatigueSession: true } : {}) });
   const qualityCue = setQualityCue({ ...exercise, category: libraryExercise?.category },
     exercise.preparationOnly || recommendation.kind === 'reduce' || context?.lowFatigueSession
       || context?.readiness?.energy === 'low' || context?.readiness?.soreness === 'high');
@@ -308,12 +311,15 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
     const undoTarget = lastCompletedTarget;
     if (!onUndoLast?.()) return false;
     pendingCompletion.current = null;
-    completionGate.reset();
+    // Undo is an explicit new intent for that exact set. Re-recording it should
+    // not need an extra Ready tap; auto-advance still never arms the next set.
+    completionGate.reset(undoTarget ? { sessionId, ...undoTarget } : undefined);
     updateCompletionState(value => value + 1);
     setSetFeedback(null);
     if (undoTarget) {
       setExerciseKey(undoTarget.exerciseKey);
       setSetId(undoTarget.setId);
+      setUndoActivation(previous => ({ exerciseKey: undoTarget.exerciseKey, setId: undoTarget.setId, version: (previous?.version ?? 0) + 1 }));
     }
     return true;
   }
@@ -374,7 +380,7 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
       {layout === 'quick' ? <QuickWorkoutLog sessionId={sessionId} exercises={exercises} previous={previous} onSet={onSet} onDone={onDone}
         onTimer={onTimer} onSelect={selectQuickSet} onInvalidChange={(id, invalid) => { if (invalid) invalidWeightInputs.current.add(id); else invalidWeightInputs.current.delete(id); }}
         onEquipment={onEquipmentChange ? key => setEquipmentTarget(key) : undefined} onUndoLast={onUndoLast ? undoLastSet : undefined}
-        canUndoLast={canUndoLast} athleteMode={athleteMode} now={now} editing={editing}
+        canUndoLast={canUndoLast} undoActivation={undoActivation} athleteMode={athleteMode} now={now} editing={editing}
         onLoadIncrementChange={onLoadIncrementChange} sessions={sessions} date={date} context={context} /> : <>
       <section className="focused-exercise" aria-label="Current exercise" ref={exerciseCard}>
         <div className="focused-stage-topline">
@@ -482,18 +488,12 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
                 {log.done ? <RotateCcw size={19} aria-hidden="true" /> : <Check size={20} aria-hidden="true" />}
                 {log.done ? 'Undo set' : 'Complete set'}
               </button>
-              {hasLastSetSuggestion && <p className="focused-draft-suggestion" aria-label="Current set suggestion">Last-set suggestion · editable</p>}
+              {hasLastSetSuggestion && <p className="focused-draft-suggestion" aria-label="Current set suggestion">{completionReady ? 'Last-set suggestion · editable' : 'Last-set suggestion · review, then tap Ready'}</p>}
               {!editing && setFeedback && <p className="focused-completion-receipt" role="status" aria-label="Set completion" aria-atomic="true">
                 <Check size={16} aria-hidden="true" /><span>{setFeedback.receipt}</span>
               </p>}
               {optionalLoad && !showWeight && <button type="button" className="focused-load-toggle text-button"
                 aria-label={`Add weight to ${exercise.name}`} onClick={revealAddedLoad}>Add weight · optional</button>}
-              {athleteMode && !log.done && exercise.mode !== 'timed' && inputKind !== 'distance' && <div className="focused-rir" role="group" aria-label="Quick reps in reserve">
-                <span>Reps in reserve · optional <button type="button" className="focused-rir-clear" aria-label="Clear reps in reserve" aria-pressed={log.rir == null} onClick={() => editSet({ rir: null })}>Clear</button></span>
-                <div>{[0, 1, 2, 3, 4, 5].map(rir => <button key={rir} type="button" aria-label={`${rir} reps in reserve`} aria-pressed={log.rir === rir}
-                  onClick={() => editSet({ rir })}>{rir}</button>)}
-                </div>
-              </div>}
               <div className="focused-exercise__set-selector" role="group" aria-label={`Sets for ${exercise.name}`}>
                 {exercise.logs.map((entry, index) => (
                   <button type="button" key={entry.id} className={`${entry.id === log.id ? ' is-current' : ''}${entry.done ? ' is-done' : ''}`}
@@ -527,6 +527,11 @@ export function FocusedWorkout({ sessionId, editing = false, exercises, now, pre
               {reuse && <p className="small-note">Previous workout · {reuse.date}. Reuse copies a draft for this set; it does not record today's work.</p>}
             </details>
             {inputKind !== 'distance' && (!log.done || !athleteMode) && <details className="focused-effort"><summary>{athleteMode ? 'Effort' : 'Effort & advanced'} <span>{log.rir == null ? 'Optional' : `${log.rir} reps in reserve`}</span></summary>
+              {athleteMode && !log.done && exercise.mode !== 'timed' && <div className="focused-rir" role="group" aria-label="Quick reps in reserve">
+                <span>Reps in reserve · optional <button type="button" className="focused-rir-clear" aria-label="Clear reps in reserve" aria-pressed={log.rir == null} onClick={() => editSet({ rir: null })}>Clear</button></span>
+                <div>{[0, 1, 2, 3, 4, 5].map(rir => <button key={rir} type="button" aria-label={`${rir} reps in reserve`} aria-pressed={log.rir === rir}
+                  onClick={() => editSet({ rir })}>{rir}</button>)}</div>
+              </div>}
               {!log.done && <label className="field-label">Reps in reserve<input type="number" min="0" max="10" step="1" inputMode="numeric" aria-label={`${exercise.name} set ${setIndex + 1} reps in reserve`} value={log.rir ?? ''} onChange={event => editSet({ rir: event.target.value === '' ? null : Math.min(10, Math.max(0, Number(event.target.value))) })} /></label>}
               <p className="small-note">RIR: How many more reps you could complete.</p>
               {!athleteMode && <><p className="small-note">RPE: How hard the effort felt.{exercise.targetRpe ? ` Planned effort: ${exercise.targetRpe}.` : ''}</p>

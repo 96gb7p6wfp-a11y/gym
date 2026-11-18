@@ -28,7 +28,7 @@ test('a personal weekend draft prevents an automatic duplicate when moving Lower
   const before = await read(page);
   await page.getByRole('tab', { name: 'Train', exact: true }).click();
   await page.getByRole('button', { name: /^Sat / }).click();
-  await openDisclosure(page, 'Workout options');
+  await openDisclosure(page, 'Schedule options');
   await openDisclosure(page, 'Weekend schedule');
   await page.getByRole('button', { name: 'Move Lower B to Sunday', exact: true }).click();
   const confirmation = page.getByRole('alertdialog', { name: 'Move Lower B to Sunday?', exact: true });

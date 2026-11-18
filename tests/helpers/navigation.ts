@@ -64,10 +64,14 @@ export async function finishWarmup(page: Page) {
 export async function settingsGroup(page: Page, name: 'Training' | 'Appearance & Sound' | 'Data & Backup') {
   const sheet = page.getByRole('dialog', { name: 'Your preferences', exact: true });
   const group = sheet.getByRole('region', { name, exact: true });
+  const choices = sheet.getByRole('navigation', { name: 'Settings groups', exact: true });
+  const all = sheet.getByRole('button', { name: 'All settings', exact: true });
+  // Deep links can load directly into a detail group. Wait for real content
+  // before deciding whether its back action or the group list is available.
+  await expect.poll(async () => await group.isVisible() || await all.isVisible() || await choices.isVisible()).toBe(true);
   if (!await group.isVisible()) {
-    const all = sheet.getByRole('button', { name: 'All settings', exact: true });
     if (await all.isVisible()) await all.click();
-    await sheet.getByRole('navigation', { name: 'Settings groups', exact: true }).getByRole('button', { name, exact: true }).click();
+    await choices.getByRole('button', { name, exact: true }).click();
   }
   return group;
 }

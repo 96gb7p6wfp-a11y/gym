@@ -1,0 +1,4313 @@
+{
+  "label": "pr12-corrected",
+  "revision": "8e5f30d3516667644d9303735cebd0265c0d7eed",
+  "harnessVersion": 2,
+  "host": {
+    "platform": "linux",
+    "arch": "x64",
+    "logicalCpuCount": 3,
+    "cpuModel": "AMD EPYC 9V74 80-Core Processor",
+    "totalMemoryBytes": 10452459520
+  },
+  "cacheId": "c178374091852999fd74",
+  "distHtmlSha256": "cb17ff646aff31ecd70ac18f6e079bc6b81c4231076a2eaba3c5b0a19013e7e2",
+  "browser": "151.0.7922.173",
+  "observedAt": "2026-11-18T07:07:41.106Z",
+  "conditions": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "deviceScaleFactor": 1,
+    "locale": "en-GB",
+    "timezone": "Europe/Berlin",
+    "workers": 1,
+    "cpuThrottling": false,
+    "networkCompression": false,
+    "fixtureProvisioningExcluded": true,
+    "server": "isolated localhost static server with optional document-request hang"
+  },
+  "build": {
+    "files": [
+      {
+        "file": "assets/ActivityImport-BgPM2t4R.js",
+        "bytes": 90128,
+        "gzipEstimateBytes": 30499
+      },
+      {
+        "file": "assets/NutritionView-CTBzwc7H.js",
+        "bytes": 40737,
+        "gzipEstimateBytes": 11349
+      },
+      {
+        "file": "assets/PerformanceDetails-CUSKJsFj.js",
+        "bytes": 21341,
+        "gzipEstimateBytes": 5990
+      },
+      {
+        "file": "assets/StrengthChart-BA9v7154.js",
+        "bytes": 351655,
+        "gzipEstimateBytes": 101145
+      },
+      {
+        "file": "assets/TrainingJourney-1Jcm0i9d.js",
+        "bytes": 10731,
+        "gzipEstimateBytes": 4054
+      },
+      {
+        "file": "assets/WeeklyReport-BwU6AZ1P.js",
+        "bytes": 8178,
+        "gzipEstimateBytes": 2792
+      },
+      {
+        "file": "assets/clsx-DRZxKiT_.js",
+        "bytes": 3913,
+        "gzipEstimateBytes": 1484
+      },
+      {
+        "file": "assets/createLucideIcon-BOEjABdp.js",
+        "bytes": 3100,
+        "gzipEstimateBytes": 1490
+      },
+      {
+        "file": "assets/fit-import-KBXHkvqx.js",
+        "bytes": 431701,
+        "gzipEstimateBytes": 63393
+      },
+      {
+        "file": "assets/index-DTTJZeoO.js",
+        "bytes": 1344471,
+        "gzipEstimateBytes": 385111
+      },
+      {
+        "file": "assets/jsx-runtime-BqfDQeLH.js",
+        "bytes": 8557,
+        "gzipEstimateBytes": 3264
+      },
+      {
+        "file": "register-sw.js",
+        "bytes": 1562,
+        "gzipEstimateBytes": 704
+      },
+      {
+        "file": "service-worker.js",
+        "bytes": 5143,
+        "gzipEstimateBytes": 1947
+      }
+    ],
+    "totalJavaScriptBytes": 2321217,
+    "totalJavaScriptGzipEstimateBytes": 613222,
+    "initialModulePaths": [
+      "/register-sw.js",
+      "/assets/index-DTTJZeoO.js",
+      "/assets/jsx-runtime-BqfDQeLH.js",
+      "/assets/clsx-DRZxKiT_.js",
+      "/assets/createLucideIcon-BOEjABdp.js"
+    ],
+    "initialModuleBytes": 1361603,
+    "initialModuleGzipEstimateBytes": 392053
+  },
+  "observations": [
+    {
+      "completedSets": 0,
+      "completedWorkouts": 0,
+      "sample": 1,
+      "fixtureSha256": "fcd77e1dc1013a4676def8e6eb937dd1dcdbc9594bcfb36674c7707218b316d6",
+      "cold": {
+        "toTodayMs": 520.6000000000931,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 1862,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 1344771,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 697.5522250000001,
+        "pageScriptExecutionMs": 310.85,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1392.971946,
+          "afterNavigationStart": 1393.141695,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.31085,
+          "beforeTaskSeconds": 0.000209,
+          "afterTaskSeconds": 0.463267
+        },
+        "observedV8CompileMs": 85.864,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 463.267,
+        "jsHeapUsedBytes": 8340524,
+        "jsHeapTotalBytes": 16576512,
+        "documentCount": 4,
+        "domNodes": 269,
+        "observedServerJsBytes": 3682820,
+        "observedServerTotalBytes": 4535300,
+        "observedServerRequests": 34,
+        "completedServerResponses": 34
+      },
+      "warm": {
+        "toTodayMs": 199.80000000004657,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 307.9365750000002,
+        "pageScriptExecutionMs": 94.712,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1393.841614,
+          "afterNavigationStart": 1394.195948,
+          "beforeScriptSeconds": 0.154764,
+          "afterScriptSeconds": 0.094712,
+          "beforeTaskSeconds": 0.284394,
+          "afterTaskSeconds": 0.175951
+        },
+        "observedV8CompileMs": 10.743,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 175.951,
+        "jsHeapUsedBytes": 20045696,
+        "jsHeapTotalBytes": 35049472,
+        "documentCount": 8,
+        "domNodes": 791,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 1400,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 75.60000000009313,
+        "inputPaintMs": 28.899999999906868,
+        "inputSaveMs": 2.8999999999068677,
+        "jsonDuringInput": {
+          "parseMs": 0.10000000009313226,
+          "stringifyMs": 1.0000000002328306,
+          "parseCalls": 5,
+          "stringifyCalls": 570,
+          "nativeWriteMs": 0
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 142.768,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 14.739,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 2.319,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "KD",
+            "selfMs": 2.075,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          },
+          {
+            "name": "Be",
+            "selfMs": 1.245,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "vd",
+            "selfMs": 1.153,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "select",
+            "selfMs": 1.132,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "Zc",
+            "selfMs": 1.113,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.098,
+            "url": "",
+            "line": 0
+          },
+          {
+            "name": "tk",
+            "selfMs": 1.095,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          },
+          {
+            "name": "INPUT",
+            "selfMs": 1.092,
+            "url": "",
+            "line": 3313
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.092,
+            "url": "",
+            "line": 0
+          },
+          {
+            "name": "Xo",
+            "selfMs": 1.092,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.091,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 49
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 1.09,
+            "url": "",
+            "line": 12
+          }
+        ],
+        "completePaintMs": 117.60000000009313,
+        "completeSaveMs": 2.4000000001396984,
+        "completedSet": {
+          "id": "2f8be2b0-35df-4168-b265-0673b8c9dd52",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 39.10000000009313,
+        "progressChartPresent": 0,
+        "youPaintMs": 17.299999999813735,
+        "todayPaintMs": 22.0999999998603,
+        "afterWorkflowJsHeapUsedBytes": 20356892,
+        "afterWorkflowJsHeapUsedPostGcBytes": 9959520
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 521.9700809999999,
+        "toTodayMs": 490,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": false,
+        "driverWallMs": 3501.088294,
+        "toTodayMs": null,
+        "navigationNetworkRequests": 1,
+        "error": "page.goto: Timeout 3500ms exceeded."
+      }
+    },
+    {
+      "completedSets": 0,
+      "completedWorkouts": 0,
+      "sample": 2,
+      "fixtureSha256": "fcd77e1dc1013a4676def8e6eb937dd1dcdbc9594bcfb36674c7707218b316d6",
+      "cold": {
+        "toTodayMs": 594.0999999998603,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 1862,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 1344771,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 773.1631299999999,
+        "pageScriptExecutionMs": 312.82,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1399.969533,
+          "afterNavigationStart": 1400.145851,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.31282,
+          "beforeTaskSeconds": 0.000059,
+          "afterTaskSeconds": 0.501169
+        },
+        "observedV8CompileMs": 108.152,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 501.169,
+        "jsHeapUsedBytes": 8271264,
+        "jsHeapTotalBytes": 16838656,
+        "documentCount": 4,
+        "domNodes": 269,
+        "observedServerJsBytes": 3682820,
+        "observedServerTotalBytes": 4535300,
+        "observedServerRequests": 34,
+        "completedServerResponses": 34
+      },
+      "warm": {
+        "toTodayMs": 197.30000000004657,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 277.95334,
+        "pageScriptExecutionMs": 86.217,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1400.92293,
+          "afterNavigationStart": 1401.136899,
+          "beforeScriptSeconds": 0.081572,
+          "afterScriptSeconds": 0.086217,
+          "beforeTaskSeconds": 0.153421,
+          "afterTaskSeconds": 0.150987
+        },
+        "observedV8CompileMs": 5.39,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 150.98700000000002,
+        "jsHeapUsedBytes": 20091136,
+        "jsHeapTotalBytes": 34787328,
+        "documentCount": 8,
+        "domNodes": 791,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 1400,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 60.300000000046566,
+        "inputPaintMs": 31.399999999906868,
+        "inputSaveMs": 2.8999999999068677,
+        "jsonDuringInput": {
+          "parseMs": 0.19999999995343387,
+          "stringifyMs": 0.8000000000465661,
+          "parseCalls": 5,
+          "stringifyCalls": 570,
+          "nativeWriteMs": 0.19999999995343387
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 123.499,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 11.625,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "_parse",
+            "selfMs": 2.135,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "Nt",
+            "selfMs": 1.251,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 1.209,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "serializeAsCallArgument",
+            "selfMs": 1.147,
+            "url": "",
+            "line": 171
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.132,
+            "url": "http://127.0.0.1:4174/assets/jsx-runtime-BqfDQeLH.js",
+            "line": 0
+          },
+          {
+            "name": "di",
+            "selfMs": 1.13,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          },
+          {
+            "name": "KD",
+            "selfMs": 1.116,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.116,
+            "url": "http://127.0.0.1:4174/assets/createLucideIcon-BOEjABdp.js",
+            "line": 0
+          },
+          {
+            "name": "Yu",
+            "selfMs": 1.116,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "Ft",
+            "selfMs": 1.113,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "uo",
+            "selfMs": 1.108,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "Cc",
+            "selfMs": 1.105,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "vO",
+            "selfMs": 1.105,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          }
+        ],
+        "completePaintMs": 47.300000000046566,
+        "completeSaveMs": 2.300000000046566,
+        "completedSet": {
+          "id": "2f8be2b0-35df-4168-b265-0673b8c9dd52",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 36.199999999953434,
+        "progressChartPresent": 0,
+        "youPaintMs": 20.299999999813735,
+        "todayPaintMs": 20.600000000093132,
+        "afterWorkflowJsHeapUsedBytes": 19780740,
+        "afterWorkflowJsHeapUsedPostGcBytes": 9916288
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 519.7671559999999,
+        "toTodayMs": 517.3999999999069,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": false,
+        "driverWallMs": 3500.9238719999994,
+        "toTodayMs": null,
+        "navigationNetworkRequests": 1,
+        "error": "page.goto: Timeout 3500ms exceeded."
+      }
+    },
+    {
+      "completedSets": 0,
+      "completedWorkouts": 0,
+      "sample": 3,
+      "fixtureSha256": "fcd77e1dc1013a4676def8e6eb937dd1dcdbc9594bcfb36674c7707218b316d6",
+      "cold": {
+        "toTodayMs": 638.6999999999534,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 1862,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 1344771,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          }
+        ],
+        "driverWallMs": 794.1451619999989,
+        "pageScriptExecutionMs": 269.899,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1406.858078,
+          "afterNavigationStart": 1406.98599,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.269899,
+          "beforeTaskSeconds": 0.000359,
+          "afterTaskSeconds": 0.541258
+        },
+        "observedV8CompileMs": 82.698,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 541.258,
+        "jsHeapUsedBytes": 8297792,
+        "jsHeapTotalBytes": 16838656,
+        "documentCount": 4,
+        "domNodes": 269,
+        "observedServerJsBytes": 3682820,
+        "observedServerTotalBytes": 4535300,
+        "observedServerRequests": 34,
+        "completedServerResponses": 34
+      },
+      "warm": {
+        "toTodayMs": 196.20000000018626,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 287.8716460000014,
+        "pageScriptExecutionMs": 86.93900000000001,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1407.783745,
+          "afterNavigationStart": 1407.986938,
+          "beforeScriptSeconds": 0.070467,
+          "afterScriptSeconds": 0.086939,
+          "beforeTaskSeconds": 0.149549,
+          "afterTaskSeconds": 0.155189
+        },
+        "observedV8CompileMs": 9.412,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 155.189,
+        "jsHeapUsedBytes": 20080004,
+        "jsHeapTotalBytes": 34525184,
+        "documentCount": 8,
+        "domNodes": 791,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 1400,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 62.299999999813735,
+        "inputPaintMs": 26.5,
+        "inputSaveMs": 2.5999999998603016,
+        "jsonDuringInput": {
+          "parseMs": 0.30000000004656613,
+          "stringifyMs": 1.0999999998603016,
+          "parseCalls": 5,
+          "stringifyCalls": 570,
+          "nativeWriteMs": 0.09999999986030161
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 119.561,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 13.231,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 2.18,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "select",
+            "selfMs": 2.154,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "Iw",
+            "selfMs": 1.768,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          },
+          {
+            "name": "NC",
+            "selfMs": 1.37,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          },
+          {
+            "name": "element.addEventListener.once",
+            "selfMs": 1.23,
+            "url": "",
+            "line": 4
+          },
+          {
+            "name": "mergeObjectSync",
+            "selfMs": 1.146,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "u",
+            "selfMs": 1.142,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 1.136,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.127,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.127,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "Xl",
+            "selfMs": 1.124,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "getAriaRole",
+            "selfMs": 1.11,
+            "url": "",
+            "line": 3520
+          },
+          {
+            "name": "va",
+            "selfMs": 1.105,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          }
+        ],
+        "completePaintMs": 97.19999999995343,
+        "completeSaveMs": 2.199999999953434,
+        "completedSet": {
+          "id": "2f8be2b0-35df-4168-b265-0673b8c9dd52",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 36,
+        "progressChartPresent": 0,
+        "youPaintMs": 17.300000000046566,
+        "todayPaintMs": 21.9000000001397,
+        "afterWorkflowJsHeapUsedBytes": 20411516,
+        "afterWorkflowJsHeapUsedPostGcBytes": 9917612
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 426.52993199999764,
+        "toTodayMs": 397.69999999995343,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": false,
+        "driverWallMs": 3501.709652999998,
+        "toTodayMs": null,
+        "navigationNetworkRequests": 1,
+        "error": "page.goto: Timeout 3500ms exceeded."
+      }
+    },
+    {
+      "completedSets": 120,
+      "completedWorkouts": 6,
+      "sample": 1,
+      "fixtureSha256": "e9b9f5eb35e8747739762fc9eafa1a2915f59d7a935c79a0cd49b57c8241c67a",
+      "cold": {
+        "toTodayMs": 575.5999999998603,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 1862,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 1344771,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 728.8632389999984,
+        "pageScriptExecutionMs": 343.206,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1413.642883,
+          "afterNavigationStart": 1413.746762,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.343206,
+          "beforeTaskSeconds": 0.000045,
+          "afterTaskSeconds": 0.523907
+        },
+        "observedV8CompileMs": 99.807,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 523.907,
+        "jsHeapUsedBytes": 11408872,
+        "jsHeapTotalBytes": 17100800,
+        "documentCount": 4,
+        "domNodes": 283,
+        "observedServerJsBytes": 3682820,
+        "observedServerTotalBytes": 4535300,
+        "observedServerRequests": 34,
+        "completedServerResponses": 34
+      },
+      "warm": {
+        "toTodayMs": 198.19999999995343,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 304.71579499999643,
+        "pageScriptExecutionMs": 117.548,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1414.50589,
+          "afterNavigationStart": 1414.731942,
+          "beforeScriptSeconds": 0.081722,
+          "afterScriptSeconds": 0.117548,
+          "beforeTaskSeconds": 0.170077,
+          "afterTaskSeconds": 0.16269
+        },
+        "observedV8CompileMs": 5.244,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 162.69,
+        "jsHeapUsedBytes": 13732480,
+        "jsHeapTotalBytes": 31903744,
+        "documentCount": 3,
+        "domNodes": 533,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 1400,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 71,
+        "inputPaintMs": 36.199999999953434,
+        "inputSaveMs": 5.399999999906868,
+        "jsonDuringInput": {
+          "parseMs": 0.2999999998137355,
+          "stringifyMs": 1.1000000005587935,
+          "parseCalls": 5,
+          "stringifyCalls": 884,
+          "nativeWriteMs": 0.09999999986030161
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 125.927,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 13.99,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "select",
+            "selfMs": 2.188,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "p",
+            "selfMs": 1.616,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "Xl",
+            "selfMs": 1.482,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "getAriaRole",
+            "selfMs": 1.231,
+            "url": "",
+            "line": 3520
+          },
+          {
+            "name": "Qc",
+            "selfMs": 1.15,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "oc",
+            "selfMs": 1.15,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.116,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 1.11,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.104,
+            "url": "http://127.0.0.1:4174/assets/createLucideIcon-BOEjABdp.js",
+            "line": 0
+          },
+          {
+            "name": "_i",
+            "selfMs": 1.101,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "q",
+            "selfMs": 1.101,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "_parse",
+            "selfMs": 1.094,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "query",
+            "selfMs": 1.092,
+            "url": "",
+            "line": 5412
+          }
+        ],
+        "completePaintMs": 60.300000000046566,
+        "completeSaveMs": 4.199999999953434,
+        "completedSet": {
+          "id": "24d4fe4d-6ef3-44a4-a8e0-92c534106b32",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 64.30000000004657,
+        "progressChartPresent": 1,
+        "youPaintMs": 26.600000000093132,
+        "todayPaintMs": 24.800000000046566,
+        "afterWorkflowJsHeapUsedBytes": 23320564,
+        "afterWorkflowJsHeapUsedPostGcBytes": 10193920
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 555.8537719999986,
+        "toTodayMs": 522.8000000000466,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": false,
+        "driverWallMs": 3502.416299999997,
+        "toTodayMs": null,
+        "navigationNetworkRequests": 1,
+        "error": "page.goto: Timeout 3500ms exceeded."
+      }
+    },
+    {
+      "completedSets": 120,
+      "completedWorkouts": 6,
+      "sample": 2,
+      "fixtureSha256": "e9b9f5eb35e8747739762fc9eafa1a2915f59d7a935c79a0cd49b57c8241c67a",
+      "cold": {
+        "toTodayMs": 742.1000000000931,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 1862,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 1344771,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          }
+        ],
+        "driverWallMs": 913.1165919999985,
+        "pageScriptExecutionMs": 390.042,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1420.532751,
+          "afterNavigationStart": 1420.646974,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.390042,
+          "beforeTaskSeconds": 0.000072,
+          "afterTaskSeconds": 0.62243
+        },
+        "observedV8CompileMs": 78.524,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 622.4300000000001,
+        "jsHeapUsedBytes": 8813976,
+        "jsHeapTotalBytes": 18149376,
+        "documentCount": 4,
+        "domNodes": 283,
+        "observedServerJsBytes": 3682820,
+        "observedServerTotalBytes": 4535300,
+        "observedServerRequests": 34,
+        "completedServerResponses": 34
+      },
+      "warm": {
+        "toTodayMs": 196.19999999995343,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 330.0460490000005,
+        "pageScriptExecutionMs": 102.46,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1421.594468,
+          "afterNavigationStart": 1421.853306,
+          "beforeScriptSeconds": 0.103322,
+          "afterScriptSeconds": 0.10246,
+          "beforeTaskSeconds": 0.179725,
+          "afterTaskSeconds": 0.17336
+        },
+        "observedV8CompileMs": 11.456,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 173.35999999999999,
+        "jsHeapUsedBytes": 20666272,
+        "jsHeapTotalBytes": 35573760,
+        "documentCount": 8,
+        "domNodes": 833,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 1400,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 74.0999999998603,
+        "inputPaintMs": 49.60000000009313,
+        "inputSaveMs": 5,
+        "jsonDuringInput": {
+          "parseMs": 0.5000000002328306,
+          "stringifyMs": 1.600000000325963,
+          "parseCalls": 5,
+          "stringifyCalls": 884,
+          "nativeWriteMs": 0.19999999995343387
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 142.454,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 20.052,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "u",
+            "selfMs": 3.743,
+            "url": "http://127.0.0.1:4174/assets/createLucideIcon-BOEjABdp.js",
+            "line": 0
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 2.234,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "getItem",
+            "selfMs": 1.661,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "r",
+            "selfMs": 1.605,
+            "url": "http://127.0.0.1:4174/assets/jsx-runtime-BqfDQeLH.js",
+            "line": 0
+          },
+          {
+            "name": "_parse",
+            "selfMs": 1.577,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "YS",
+            "selfMs": 1.354,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.158,
+            "url": "",
+            "line": 0
+          },
+          {
+            "name": "so",
+            "selfMs": 1.153,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.141,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "Ow",
+            "selfMs": 1.136,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          },
+          {
+            "name": "select",
+            "selfMs": 1.135,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "uo",
+            "selfMs": 1.13,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "querySelectorAll",
+            "selfMs": 1.129,
+            "url": "",
+            "line": 7009
+          }
+        ],
+        "completePaintMs": 88.29999999981374,
+        "completeSaveMs": 3.7999999998137355,
+        "completedSet": {
+          "id": "24d4fe4d-6ef3-44a4-a8e0-92c534106b32",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 62.10000000009313,
+        "progressChartPresent": 1,
+        "youPaintMs": 27.199999999953434,
+        "todayPaintMs": 25.5,
+        "afterWorkflowJsHeapUsedBytes": 23855596,
+        "afterWorkflowJsHeapUsedPostGcBytes": 10199296
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 650.1495890000006,
+        "toTodayMs": 615.3999999999069,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": false,
+        "driverWallMs": 3505.6742490000033,
+        "toTodayMs": null,
+        "navigationNetworkRequests": 1,
+        "error": "page.goto: Timeout 3500ms exceeded."
+      }
+    },
+    {
+      "completedSets": 120,
+      "completedWorkouts": 6,
+      "sample": 3,
+      "fixtureSha256": "e9b9f5eb35e8747739762fc9eafa1a2915f59d7a935c79a0cd49b57c8241c67a",
+      "cold": {
+        "toTodayMs": 631.1000000000931,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 1862,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 1344771,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          }
+        ],
+        "driverWallMs": 806.0131910000055,
+        "pageScriptExecutionMs": 359.885,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1427.947673,
+          "afterNavigationStart": 1428.153823,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.359885,
+          "beforeTaskSeconds": 0.000145,
+          "afterTaskSeconds": 0.516858
+        },
+        "observedV8CompileMs": 88.81,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 516.8580000000001,
+        "jsHeapUsedBytes": 11003292,
+        "jsHeapTotalBytes": 17362944,
+        "documentCount": 4,
+        "domNodes": 283,
+        "observedServerJsBytes": 3682820,
+        "observedServerTotalBytes": 4535300,
+        "observedServerRequests": 34,
+        "completedServerResponses": 34
+      },
+      "warm": {
+        "toTodayMs": 217,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 344.1374230000001,
+        "pageScriptExecutionMs": 98.333,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1428.990609,
+          "afterNavigationStart": 1429.307386,
+          "beforeScriptSeconds": 0.118361,
+          "afterScriptSeconds": 0.098333,
+          "beforeTaskSeconds": 0.258534,
+          "afterTaskSeconds": 0.191104
+        },
+        "observedV8CompileMs": 12.43,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 191.10399999999998,
+        "jsHeapUsedBytes": 18665332,
+        "jsHeapTotalBytes": 36098048,
+        "documentCount": 8,
+        "domNodes": 833,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 1400,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 70.5,
+        "inputPaintMs": 41.9000000001397,
+        "inputSaveMs": 4.900000000139698,
+        "jsonDuringInput": {
+          "parseMs": 0.6999999999534339,
+          "stringifyMs": 0.8999999996740371,
+          "parseCalls": 5,
+          "stringifyCalls": 884,
+          "nativeWriteMs": 0.39999999990686774
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 131.384,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 18.737,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "iO",
+            "selfMs": 2.919,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          },
+          {
+            "name": "Xs",
+            "selfMs": 2.895,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "setAttribute",
+            "selfMs": 2.702,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "Qc",
+            "selfMs": 2.544,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 2.16,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "Zt",
+            "selfMs": 1.899,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "mT",
+            "selfMs": 1.85,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          },
+          {
+            "name": "u",
+            "selfMs": 1.721,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "r",
+            "selfMs": 1.327,
+            "url": "http://127.0.0.1:4174/assets/jsx-runtime-BqfDQeLH.js",
+            "line": 0
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 1.227,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "elementState",
+            "selfMs": 1.209,
+            "url": "",
+            "line": 7370
+          },
+          {
+            "name": "SELECT",
+            "selfMs": 1.191,
+            "url": "",
+            "line": 3343
+          },
+          {
+            "name": "Yl",
+            "selfMs": 1.174,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          }
+        ],
+        "completePaintMs": 61.39999999990687,
+        "completeSaveMs": 4.300000000046566,
+        "completedSet": {
+          "id": "24d4fe4d-6ef3-44a4-a8e0-92c534106b32",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 109.30000000004657,
+        "progressChartPresent": 1,
+        "youPaintMs": 29.399999999906868,
+        "todayPaintMs": 30.9000000001397,
+        "afterWorkflowJsHeapUsedBytes": 23912680,
+        "afterWorkflowJsHeapUsedPostGcBytes": 10151528
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 619.3025990000024,
+        "toTodayMs": 536.6999999999534,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": false,
+        "driverWallMs": 3500.5905249999996,
+        "toTodayMs": null,
+        "navigationNetworkRequests": 1,
+        "error": "page.goto: Timeout 3500ms exceeded."
+      }
+    },
+    {
+      "completedSets": 1000,
+      "completedWorkouts": 50,
+      "sample": 1,
+      "fixtureSha256": "099d63b4a2da4e89192b7ff3056a5cbdc862689d08be1299430aaaa632fe8715",
+      "cold": {
+        "toTodayMs": 759.9000000001397,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 1862,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 1344771,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          }
+        ],
+        "driverWallMs": 1190.9318920000005,
+        "pageScriptExecutionMs": 406.103,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1435.62828,
+          "afterNavigationStart": 1435.751218,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.406103,
+          "beforeTaskSeconds": 0.000443,
+          "afterTaskSeconds": 0.65753
+        },
+        "observedV8CompileMs": 178.564,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 657.53,
+        "jsHeapUsedBytes": 7219300,
+        "jsHeapTotalBytes": 22605824,
+        "documentCount": 1,
+        "domNodes": 258,
+        "observedServerJsBytes": 3682820,
+        "observedServerTotalBytes": 4535300,
+        "observedServerRequests": 34,
+        "completedServerResponses": 34
+      },
+      "warm": {
+        "toTodayMs": 320.89999999990687,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 479.05700400000205,
+        "pageScriptExecutionMs": 166.366,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1436.942472,
+          "afterNavigationStart": 1437.329651,
+          "beforeScriptSeconds": 0.172896,
+          "afterScriptSeconds": 0.166366,
+          "beforeTaskSeconds": 0.299997,
+          "afterTaskSeconds": 0.253778
+        },
+        "observedV8CompileMs": 6.018,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 253.778,
+        "jsHeapUsedBytes": 8111124,
+        "jsHeapTotalBytes": 44224512,
+        "documentCount": 3,
+        "domNodes": 533,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 1400,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 65.20000000018626,
+        "inputPaintMs": 41.89999999990687,
+        "inputSaveMs": 10.800000000046566,
+        "jsonDuringInput": {
+          "parseMs": 1.7000000001862645,
+          "stringifyMs": 2.5999999993946403,
+          "parseCalls": 5,
+          "stringifyCalls": 2084,
+          "nativeWriteMs": 0.6000000000931323
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 116.136,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 13.035,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 3.536,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "_parse",
+            "selfMs": 2.547,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 2.382,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          },
+          {
+            "name": "zk",
+            "selfMs": 2.378,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          },
+          {
+            "name": "va",
+            "selfMs": 2.25,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 2.177,
+            "url": "",
+            "line": 0
+          },
+          {
+            "name": "va",
+            "selfMs": 2.144,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "now",
+            "selfMs": 1.762,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "uo",
+            "selfMs": 1.366,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 1.331,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "po",
+            "selfMs": 1.192,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "mo",
+            "selfMs": 1.152,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 1.1,
+            "url": "",
+            "line": 12
+          }
+        ],
+        "completePaintMs": 70.89999999990687,
+        "completeSaveMs": 9.199999999953434,
+        "completedSet": {
+          "id": "cb872605-9001-439e-a4f9-89130bc1bd6d",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 193.89999999990687,
+        "progressChartPresent": 1,
+        "youPaintMs": 107.30000000004657,
+        "todayPaintMs": 30.0999999998603,
+        "afterWorkflowJsHeapUsedBytes": 27543280,
+        "afterWorkflowJsHeapUsedPostGcBytes": 10421024
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 640.6404079999993,
+        "toTodayMs": 610,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": false,
+        "driverWallMs": 3502.978679,
+        "toTodayMs": null,
+        "navigationNetworkRequests": 1,
+        "error": "page.goto: Timeout 3500ms exceeded."
+      }
+    },
+    {
+      "completedSets": 1000,
+      "completedWorkouts": 50,
+      "sample": 2,
+      "fixtureSha256": "099d63b4a2da4e89192b7ff3056a5cbdc862689d08be1299430aaaa632fe8715",
+      "cold": {
+        "toTodayMs": 598.6000000000931,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 1862,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 1344771,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          }
+        ],
+        "driverWallMs": 807.3916749999989,
+        "pageScriptExecutionMs": 353.767,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1443.786012,
+          "afterNavigationStart": 1443.871544,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.353767,
+          "beforeTaskSeconds": 0.000184,
+          "afterTaskSeconds": 0.580759
+        },
+        "observedV8CompileMs": 76.764,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 580.759,
+        "jsHeapUsedBytes": 12992152,
+        "jsHeapTotalBytes": 23625728,
+        "documentCount": 4,
+        "domNodes": 283,
+        "observedServerJsBytes": 3682820,
+        "observedServerTotalBytes": 4535300,
+        "observedServerRequests": 34,
+        "completedServerResponses": 34
+      },
+      "warm": {
+        "toTodayMs": 244.79999999981374,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 434.9965940000038,
+        "pageScriptExecutionMs": 143.108,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1444.682843,
+          "afterNavigationStart": 1445.02718,
+          "beforeScriptSeconds": 0.142648,
+          "afterScriptSeconds": 0.143108,
+          "beforeTaskSeconds": 0.268537,
+          "afterTaskSeconds": 0.239573
+        },
+        "observedV8CompileMs": 8.45,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 239.573,
+        "jsHeapUsedBytes": 17649288,
+        "jsHeapTotalBytes": 47894528,
+        "documentCount": 3,
+        "domNodes": 533,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 1400,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 62.60000000009313,
+        "inputPaintMs": 54.10000000009313,
+        "inputSaveMs": 15.200000000186265,
+        "jsonDuringInput": {
+          "parseMs": 1.6999999999534339,
+          "stringifyMs": 2.400000000372529,
+          "parseCalls": 5,
+          "stringifyCalls": 2084,
+          "nativeWriteMs": 3.9000000001396984
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 117.714,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 10.3,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "va",
+            "selfMs": 6.071,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "(garbage collector)",
+            "selfMs": 4.407,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "setItem",
+            "selfMs": 3.24,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "_parse",
+            "selfMs": 3.007,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "Xt",
+            "selfMs": 2.533,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "zk",
+            "selfMs": 1.798,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.469,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "Xs",
+            "selfMs": 1.254,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.232,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "Cc",
+            "selfMs": 1.201,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "get path",
+            "selfMs": 1.157,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "uo",
+            "selfMs": 1.151,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "select",
+            "selfMs": 1.128,
+            "url": "",
+            "line": -1
+          }
+        ],
+        "completePaintMs": 70.10000000009313,
+        "completeSaveMs": 8.700000000186265,
+        "completedSet": {
+          "id": "cb872605-9001-439e-a4f9-89130bc1bd6d",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 183.30000000004657,
+        "progressChartPresent": 1,
+        "youPaintMs": 73.19999999995343,
+        "todayPaintMs": 39.89999999990687,
+        "afterWorkflowJsHeapUsedBytes": 19922552,
+        "afterWorkflowJsHeapUsedPostGcBytes": 10401812
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 595.8580330000041,
+        "toTodayMs": 555.3000000000466,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": false,
+        "driverWallMs": 3501.6517049999966,
+        "toTodayMs": null,
+        "navigationNetworkRequests": 1,
+        "error": "page.goto: Timeout 3500ms exceeded."
+      }
+    },
+    {
+      "completedSets": 1000,
+      "completedWorkouts": 50,
+      "sample": 3,
+      "fixtureSha256": "099d63b4a2da4e89192b7ff3056a5cbdc862689d08be1299430aaaa632fe8715",
+      "cold": {
+        "toTodayMs": 595.9000000001397,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 1862,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 1344771,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 835.1371819999986,
+        "pageScriptExecutionMs": 370.15,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1451.485958,
+          "afterNavigationStart": 1451.591381,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.37015,
+          "beforeTaskSeconds": 0.000057,
+          "afterTaskSeconds": 0.549761
+        },
+        "observedV8CompileMs": 93.236,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 549.7610000000001,
+        "jsHeapUsedBytes": 13254232,
+        "jsHeapTotalBytes": 25460736,
+        "documentCount": 4,
+        "domNodes": 283,
+        "observedServerJsBytes": 3682820,
+        "observedServerTotalBytes": 4535300,
+        "observedServerRequests": 34,
+        "completedServerResponses": 34
+      },
+      "warm": {
+        "toTodayMs": 293.30000000004657,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 427.65610500000184,
+        "pageScriptExecutionMs": 162.894,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1452.455537,
+          "afterNavigationStart": 1452.797905,
+          "beforeScriptSeconds": 0.134081,
+          "afterScriptSeconds": 0.162894,
+          "beforeTaskSeconds": 0.255839,
+          "afterTaskSeconds": 0.2768
+        },
+        "observedV8CompileMs": 6.753,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 276.8,
+        "jsHeapUsedBytes": 8094336,
+        "jsHeapTotalBytes": 48156672,
+        "documentCount": 3,
+        "domNodes": 533,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 1400,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 67.30000000004657,
+        "inputPaintMs": 54.699999999953434,
+        "inputSaveMs": 12.800000000046566,
+        "jsonDuringInput": {
+          "parseMs": 1.5999999998603016,
+          "stringifyMs": 2.1999999994877726,
+          "parseCalls": 5,
+          "stringifyCalls": 2084,
+          "nativeWriteMs": 0.7000000001862645
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 129.774,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 13.777,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "xo",
+            "selfMs": 2.947,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "_parseSync",
+            "selfMs": 2.185,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 2.052,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 2.015,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "_parse",
+            "selfMs": 1.994,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "dw",
+            "selfMs": 1.551,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          },
+          {
+            "name": "zk",
+            "selfMs": 1.429,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.371,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "$o",
+            "selfMs": 1.276,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 8
+          },
+          {
+            "name": "Kk",
+            "selfMs": 1.26,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          },
+          {
+            "name": "va",
+            "selfMs": 1.148,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 1.12,
+            "url": "http://127.0.0.1:4174/assets/createLucideIcon-BOEjABdp.js",
+            "line": 0
+          },
+          {
+            "name": "va",
+            "selfMs": 1.108,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          }
+        ],
+        "completePaintMs": 76.4000000001397,
+        "completeSaveMs": 12.200000000186265,
+        "completedSet": {
+          "id": "cb872605-9001-439e-a4f9-89130bc1bd6d",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 167.5,
+        "progressChartPresent": 1,
+        "youPaintMs": 74.5999999998603,
+        "todayPaintMs": 34.199999999953434,
+        "afterWorkflowJsHeapUsedBytes": 27481404,
+        "afterWorkflowJsHeapUsedPostGcBytes": 10416556
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 579.0469260000027,
+        "toTodayMs": 531.8999999999069,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": false,
+        "driverWallMs": 3502.3833390000073,
+        "toTodayMs": null,
+        "navigationNetworkRequests": 1,
+        "error": "page.goto: Timeout 3500ms exceeded."
+      }
+    },
+    {
+      "completedSets": 5000,
+      "completedWorkouts": 250,
+      "sample": 1,
+      "fixtureSha256": "cd1390f368d63c120cd1787badeba29482f7b1e032d0fd9483cabacdf14819d0",
+      "cold": {
+        "toTodayMs": 775.1000000000931,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 1862,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 1344771,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 1053.5267860000022,
+        "pageScriptExecutionMs": 474.509,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1459.799865,
+          "afterNavigationStart": 1459.885629,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.474509,
+          "beforeTaskSeconds": 0.00012,
+          "afterTaskSeconds": 0.748829
+        },
+        "observedV8CompileMs": 78.065,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 748.829,
+        "jsHeapUsedBytes": 9019136,
+        "jsHeapTotalBytes": 50130944,
+        "documentCount": 1,
+        "domNodes": 258,
+        "observedServerJsBytes": 3682820,
+        "observedServerTotalBytes": 4535300,
+        "observedServerRequests": 34,
+        "completedServerResponses": 34
+      },
+      "warm": {
+        "toTodayMs": 368.80000000004657,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 510.73389599999064,
+        "pageScriptExecutionMs": 227.54,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1460.942021,
+          "afterNavigationStart": 1461.39441,
+          "beforeScriptSeconds": 0.26612,
+          "afterScriptSeconds": 0.22754,
+          "beforeTaskSeconds": 0.3909,
+          "afterTaskSeconds": 0.349252
+        },
+        "observedV8CompileMs": 8.497,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 349.252,
+        "jsHeapUsedBytes": 8945144,
+        "jsHeapTotalBytes": 87216128,
+        "documentCount": 3,
+        "domNodes": 533,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 1400,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 78.60000000009313,
+        "inputPaintMs": 120.19999999995343,
+        "inputSaveMs": 60.199999999953434,
+        "jsonDuringInput": {
+          "parseMs": 6.600000000093132,
+          "stringifyMs": 9.50000000023283,
+          "parseCalls": 5,
+          "stringifyCalls": 7484,
+          "nativeWriteMs": 17.5
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 127.035,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "setItem",
+            "selfMs": 16.132,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 15.133,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "va",
+            "selfMs": 6.631,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "_parseSync",
+            "selfMs": 5.443,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 5.416,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "_parse",
+            "selfMs": 4.395,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "va",
+            "selfMs": 4.331,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 4.14,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "_parse",
+            "selfMs": 4.058,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 3.292,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 3.227,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "(garbage collector)",
+            "selfMs": 2.916,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 2.187,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "select",
+            "selfMs": 2.177,
+            "url": "",
+            "line": -1
+          }
+        ],
+        "completePaintMs": 117.39999999990687,
+        "completeSaveMs": 27.5,
+        "completedSet": {
+          "id": "6e267fd1-3a5b-4674-b729-7358a72058bf",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 581.3000000000466,
+        "progressChartPresent": 1,
+        "youPaintMs": 275,
+        "todayPaintMs": 65.9000000001397,
+        "afterWorkflowJsHeapUsedBytes": 33856096,
+        "afterWorkflowJsHeapUsedPostGcBytes": 11317540
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 673.5840700000117,
+        "toTodayMs": 644.8000000000466,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": false,
+        "driverWallMs": 3506.644569000011,
+        "toTodayMs": null,
+        "navigationNetworkRequests": 1,
+        "error": "page.goto: Timeout 3500ms exceeded."
+      }
+    },
+    {
+      "completedSets": 5000,
+      "completedWorkouts": 250,
+      "sample": 2,
+      "fixtureSha256": "cd1390f368d63c120cd1787badeba29482f7b1e032d0fd9483cabacdf14819d0",
+      "cold": {
+        "toTodayMs": 757.3999999999069,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 1862,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 1344771,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 924.8423499999917,
+        "pageScriptExecutionMs": 501.436,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1469.315158,
+          "afterNavigationStart": 1469.399053,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.501436,
+          "beforeTaskSeconds": 0.000107,
+          "afterTaskSeconds": 0.667042
+        },
+        "observedV8CompileMs": 108.214,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 667.042,
+        "jsHeapUsedBytes": 13132944,
+        "jsHeapTotalBytes": 40693760,
+        "documentCount": 1,
+        "domNodes": 268,
+        "observedServerJsBytes": 3682820,
+        "observedServerTotalBytes": 4535300,
+        "observedServerRequests": 34,
+        "completedServerResponses": 34
+      },
+      "warm": {
+        "toTodayMs": 295.19999999995343,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 430.9434869999968,
+        "pageScriptExecutionMs": 195.299,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1470.326322,
+          "afterNavigationStart": 1470.733776,
+          "beforeScriptSeconds": 0.249601,
+          "afterScriptSeconds": 0.195299,
+          "beforeTaskSeconds": 0.361592,
+          "afterTaskSeconds": 0.280442
+        },
+        "observedV8CompileMs": 12.078,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 280.442,
+        "jsHeapUsedBytes": 8922448,
+        "jsHeapTotalBytes": 86429696,
+        "documentCount": 3,
+        "domNodes": 533,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 1400,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 85.29999999981374,
+        "inputPaintMs": 112.4000000001397,
+        "inputSaveMs": 56.699999999953434,
+        "jsonDuringInput": {
+          "parseMs": 7.099999999860302,
+          "stringifyMs": 16.199999999487773,
+          "parseCalls": 5,
+          "stringifyCalls": 7484,
+          "nativeWriteMs": 11.299999999813735
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 129.636,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "setItem",
+            "selfMs": 10.82,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 9.717,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "_parse",
+            "selfMs": 9.562,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 7.646,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "va",
+            "selfMs": 6.451,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "va",
+            "selfMs": 5.394,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 4.321,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 3.639,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "_parse",
+            "selfMs": 3.227,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "(garbage collector)",
+            "selfMs": 2.83,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "yr",
+            "selfMs": 2.419,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 2.206,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "_parseSync",
+            "selfMs": 2.172,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "uo",
+            "selfMs": 2.165,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          }
+        ],
+        "completePaintMs": 123.9000000001397,
+        "completeSaveMs": 26.800000000046566,
+        "completedSet": {
+          "id": "6e267fd1-3a5b-4674-b729-7358a72058bf",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 577.1999999999534,
+        "progressChartPresent": 1,
+        "youPaintMs": 248.39999999990687,
+        "todayPaintMs": 58,
+        "afterWorkflowJsHeapUsedBytes": 33823284,
+        "afterWorkflowJsHeapUsedPostGcBytes": 11318292
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 661.3420890000125,
+        "toTodayMs": 625.1000000000931,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": false,
+        "driverWallMs": 3501.0781829999905,
+        "toTodayMs": null,
+        "navigationNetworkRequests": 1,
+        "error": "page.goto: Timeout 3500ms exceeded."
+      }
+    },
+    {
+      "completedSets": 5000,
+      "completedWorkouts": 250,
+      "sample": 3,
+      "fixtureSha256": "cd1390f368d63c120cd1787badeba29482f7b1e032d0fd9483cabacdf14819d0",
+      "cold": {
+        "toTodayMs": 716.1999999999534,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 1862,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 1344771,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          }
+        ],
+        "driverWallMs": 938.0355050000071,
+        "pageScriptExecutionMs": 459.597,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1478.526578,
+          "afterNavigationStart": 1478.598696,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.459597,
+          "beforeTaskSeconds": 0.000135,
+          "afterTaskSeconds": 0.66688
+        },
+        "observedV8CompileMs": 65.709,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 666.88,
+        "jsHeapUsedBytes": 13950932,
+        "jsHeapTotalBytes": 40693760,
+        "documentCount": 1,
+        "domNodes": 258,
+        "observedServerJsBytes": 3682820,
+        "observedServerTotalBytes": 4535300,
+        "observedServerRequests": 34,
+        "completedServerResponses": 34
+      },
+      "warm": {
+        "toTodayMs": 283.69999999995343,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 403.04602100000193,
+        "pageScriptExecutionMs": 181.60899999999998,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1479.542444,
+          "afterNavigationStart": 1479.988166,
+          "beforeScriptSeconds": 0.286526,
+          "afterScriptSeconds": 0.181609,
+          "beforeTaskSeconds": 0.387064,
+          "afterTaskSeconds": 0.271919
+        },
+        "observedV8CompileMs": 11.479,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 271.91900000000004,
+        "jsHeapUsedBytes": 8940432,
+        "jsHeapTotalBytes": 87478272,
+        "documentCount": 1,
+        "domNodes": 258,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 1400,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 89.5,
+        "inputPaintMs": 120.79999999981374,
+        "inputSaveMs": 62.39999999990687,
+        "jsonDuringInput": {
+          "parseMs": 7.199999999953434,
+          "stringifyMs": 11.40000000083819,
+          "parseCalls": 5,
+          "stringifyCalls": 7484,
+          "nativeWriteMs": 17.100000000093132
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 135.62,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "setItem",
+            "selfMs": 16.31,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 10.166,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 10.075,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "_parse",
+            "selfMs": 5.537,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "(garbage collector)",
+            "selfMs": 5.411,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "va",
+            "selfMs": 5.381,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "_parseSync",
+            "selfMs": 5.301,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "va",
+            "selfMs": 4.314,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 4.301,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 4.301,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "_parse",
+            "selfMs": 4.07,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "select",
+            "selfMs": 3.267,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 3.19,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "va",
+            "selfMs": 2.165,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          }
+        ],
+        "completePaintMs": 127.5,
+        "completeSaveMs": 25.899999999906868,
+        "completedSet": {
+          "id": "6e267fd1-3a5b-4674-b729-7358a72058bf",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 532.3999999999069,
+        "progressChartPresent": 1,
+        "youPaintMs": 261.5999999998603,
+        "todayPaintMs": 58.5,
+        "afterWorkflowJsHeapUsedBytes": 33820336,
+        "afterWorkflowJsHeapUsedPostGcBytes": 11316540
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 698.1145099999994,
+        "toTodayMs": 606.1999999999534,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": false,
+        "driverWallMs": 3504.224614000006,
+        "toTodayMs": null,
+        "navigationNetworkRequests": 1,
+        "error": "page.goto: Timeout 3500ms exceeded."
+      }
+    },
+    {
+      "completedSets": 10000,
+      "completedWorkouts": 500,
+      "sample": 1,
+      "fixtureSha256": "49cc7ae87b4956a6a13119567b2370c539d055a1335111a7da9f280885666e68",
+      "cold": {
+        "toTodayMs": 894.6000000000931,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 1862,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 1344771,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 1062.3403059999982,
+        "pageScriptExecutionMs": 537.218,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1488.661125,
+          "afterNavigationStart": 1488.747011,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.537218,
+          "beforeTaskSeconds": 0.000424,
+          "afterTaskSeconds": 0.783991
+        },
+        "observedV8CompileMs": 57.245,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 783.991,
+        "jsHeapUsedBytes": 20527768,
+        "jsHeapTotalBytes": 69529600,
+        "documentCount": 1,
+        "domNodes": 268,
+        "observedServerJsBytes": 3682820,
+        "observedServerTotalBytes": 4535300,
+        "observedServerRequests": 34,
+        "completedServerResponses": 34
+      },
+      "warm": {
+        "toTodayMs": 333.5999999998603,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 561.6004649999959,
+        "pageScriptExecutionMs": 284.094,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1489.813558,
+          "afterNavigationStart": 1490.334529,
+          "beforeScriptSeconds": 0.322484,
+          "afterScriptSeconds": 0.284094,
+          "beforeTaskSeconds": 0.449299,
+          "afterTaskSeconds": 0.399183
+        },
+        "observedV8CompileMs": 7.28,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 399.183,
+        "jsHeapUsedBytes": 48786976,
+        "jsHeapTotalBytes": 99274752,
+        "documentCount": 1,
+        "domNodes": 258,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 1400,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 97.5,
+        "inputPaintMs": 171.10000000009313,
+        "inputSaveMs": 85.19999999995343,
+        "jsonDuringInput": {
+          "parseMs": 13.50000000023283,
+          "stringifyMs": 14.20000000228174,
+          "parseCalls": 5,
+          "stringifyCalls": 14234,
+          "nativeWriteMs": 17.4000000001397
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 170.218,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "setItem",
+            "selfMs": 16.26,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "va",
+            "selfMs": 11.984,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "(garbage collector)",
+            "selfMs": 11.789,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 10.908,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "va",
+            "selfMs": 8.681,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 8.653,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 7.5,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 6.519,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "_parse",
+            "selfMs": 5.815,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "va",
+            "selfMs": 5.597,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "_parse",
+            "selfMs": 5.395,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "_parse",
+            "selfMs": 4.329,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "_parse",
+            "selfMs": 3.373,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 3.264,
+            "url": "",
+            "line": 12
+          }
+        ],
+        "completePaintMs": 180.80000000004657,
+        "completeSaveMs": 52.0999999998603,
+        "completedSet": {
+          "id": "dbad4205-5f80-437d-982a-50570db6d07e",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 1185.1999999999534,
+        "progressChartPresent": 1,
+        "youPaintMs": 455.5,
+        "todayPaintMs": 73.79999999981374,
+        "afterWorkflowJsHeapUsedBytes": 59890636,
+        "afterWorkflowJsHeapUsedPostGcBytes": 12345004
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 909.4700889999949,
+        "toTodayMs": 877.1000000000931,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": false,
+        "driverWallMs": 3501.321041000003,
+        "toTodayMs": null,
+        "navigationNetworkRequests": 1,
+        "error": "page.goto: Timeout 3500ms exceeded."
+      }
+    },
+    {
+      "completedSets": 10000,
+      "completedWorkouts": 500,
+      "sample": 2,
+      "fixtureSha256": "49cc7ae87b4956a6a13119567b2370c539d055a1335111a7da9f280885666e68",
+      "cold": {
+        "toTodayMs": 761,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 1862,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 1344771,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 964.5557079999999,
+        "pageScriptExecutionMs": 471.20099999999996,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1501.055389,
+          "afterNavigationStart": 1501.251233,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.471201,
+          "beforeTaskSeconds": 0.002003,
+          "afterTaskSeconds": 0.677555
+        },
+        "observedV8CompileMs": 67.05,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 677.5550000000001,
+        "jsHeapUsedBytes": 23012812,
+        "jsHeapTotalBytes": 67432448,
+        "documentCount": 1,
+        "domNodes": 268,
+        "observedServerJsBytes": 3682820,
+        "observedServerTotalBytes": 4535300,
+        "observedServerRequests": 34,
+        "completedServerResponses": 34
+      },
+      "warm": {
+        "toTodayMs": 432.89999999990687,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 572.2567489999929,
+        "pageScriptExecutionMs": 291.81600000000003,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1502.214701,
+          "afterNavigationStart": 1502.758842,
+          "beforeScriptSeconds": 0.325529,
+          "afterScriptSeconds": 0.291816,
+          "beforeTaskSeconds": 0.49017,
+          "afterTaskSeconds": 0.406368
+        },
+        "observedV8CompileMs": 8.505,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 406.368,
+        "jsHeapUsedBytes": 17840224,
+        "jsHeapTotalBytes": 96915456,
+        "documentCount": 1,
+        "domNodes": 268,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 1400,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 109.4000000001397,
+        "inputPaintMs": 170.9000000001397,
+        "inputSaveMs": 84.20000000018626,
+        "jsonDuringInput": {
+          "parseMs": 15.900000000139698,
+          "stringifyMs": 14.899999999441206,
+          "parseCalls": 5,
+          "stringifyCalls": 14234,
+          "nativeWriteMs": 15.700000000186265
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 168.193,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "va",
+            "selfMs": 15.275,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "setItem",
+            "selfMs": 13.971,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 13.074,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "va",
+            "selfMs": 12.081,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "(garbage collector)",
+            "selfMs": 11.175,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 9.551,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 8.851,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 6.464,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "va",
+            "selfMs": 5.321,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "_parse",
+            "selfMs": 4.855,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 4.845,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          },
+          {
+            "name": "select",
+            "selfMs": 3.336,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "va",
+            "selfMs": 3.251,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "Id",
+            "selfMs": 2.543,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          }
+        ],
+        "completePaintMs": 218.5,
+        "completeSaveMs": 60.39999999990687,
+        "completedSet": {
+          "id": "dbad4205-5f80-437d-982a-50570db6d07e",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 1099.5,
+        "progressChartPresent": 1,
+        "youPaintMs": 484.0999999998603,
+        "todayPaintMs": 88.60000000009313,
+        "afterWorkflowJsHeapUsedBytes": 59373600,
+        "afterWorkflowJsHeapUsedPostGcBytes": 12390332
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 998.5369610000052,
+        "toTodayMs": 963.7999999998137,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": false,
+        "driverWallMs": 3503.4006989999907,
+        "toTodayMs": null,
+        "navigationNetworkRequests": 1,
+        "error": "page.goto: Timeout 3500ms exceeded."
+      }
+    },
+    {
+      "completedSets": 10000,
+      "completedWorkouts": 500,
+      "sample": 3,
+      "fixtureSha256": "49cc7ae87b4956a6a13119567b2370c539d055a1335111a7da9f280885666e68",
+      "cold": {
+        "toTodayMs": 729.6999999999534,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 1862,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 8857,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 4213,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 1344771,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 3400,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 1016.6107700000139,
+        "pageScriptExecutionMs": 489.137,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1513.656065,
+          "afterNavigationStart": 1513.765561,
+          "beforeScriptSeconds": 0,
+          "afterScriptSeconds": 0.489137,
+          "beforeTaskSeconds": 0.003746,
+          "afterTaskSeconds": 0.783665
+        },
+        "observedV8CompileMs": 65.817,
+        "compileTraceEventNames": [
+          "V8.CompileCode",
+          "v8.compile",
+          "V8.CompileScript"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 783.665,
+        "jsHeapUsedBytes": 39397112,
+        "jsHeapTotalBytes": 57733120,
+        "documentCount": 2,
+        "domNodes": 272,
+        "observedServerJsBytes": 3682820,
+        "observedServerTotalBytes": 4535300,
+        "observedServerRequests": 34,
+        "completedServerResponses": 34
+      },
+      "warm": {
+        "toTodayMs": 450.39999999990687,
+        "resources": [
+          {
+            "name": "/register-sw.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1562,
+            "decodedBodyBytes": 1562
+          },
+          {
+            "name": "/assets/index-DTTJZeoO.js",
+            "initiator": "script",
+            "transferBytes": 0,
+            "encodedBodyBytes": 1344471,
+            "decodedBodyBytes": 1344471
+          },
+          {
+            "name": "/assets/jsx-runtime-BqfDQeLH.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 8557,
+            "decodedBodyBytes": 8557
+          },
+          {
+            "name": "/assets/clsx-DRZxKiT_.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3913,
+            "decodedBodyBytes": 3913
+          },
+          {
+            "name": "/assets/createLucideIcon-BOEjABdp.js",
+            "initiator": "other",
+            "transferBytes": 0,
+            "encodedBodyBytes": 3100,
+            "decodedBodyBytes": 3100
+          }
+        ],
+        "driverWallMs": 575.0545730000013,
+        "pageScriptExecutionMs": 301.96,
+        "startupCounterEpoch": {
+          "changed": true,
+          "beforeNavigationStart": 1514.783702,
+          "afterNavigationStart": 1515.304847,
+          "beforeScriptSeconds": 0.312156,
+          "afterScriptSeconds": 0.30196,
+          "beforeTaskSeconds": 0.461978,
+          "afterTaskSeconds": 0.396391
+        },
+        "observedV8CompileMs": 8.628,
+        "compileTraceEventNames": [
+          "v8.compile",
+          "V8.CompileScript",
+          "V8.CompileCode"
+        ],
+        "pureJavaScriptParsingMs": null,
+        "pageMainThreadTaskMs": 396.391,
+        "jsHeapUsedBytes": 35526984,
+        "jsHeapTotalBytes": 97701888,
+        "documentCount": 1,
+        "domNodes": 268,
+        "observedServerJsBytes": 0,
+        "observedServerTotalBytes": 1400,
+        "observedServerRequests": 1,
+        "completedServerResponses": 1
+      },
+      "interactions": {
+        "trainPaintMs": 122.80000000004657,
+        "inputPaintMs": 156.39999999990687,
+        "inputSaveMs": 70.5999999998603,
+        "jsonDuringInput": {
+          "parseMs": 14.199999999953434,
+          "stringifyMs": 13.699999999254942,
+          "parseCalls": 5,
+          "stringifyCalls": 14234,
+          "nativeWriteMs": 11.099999999860302
+        },
+        "inputCpuTopSelf": [
+          {
+            "name": "(program)",
+            "selfMs": 169.167,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(garbage collector)",
+            "selfMs": 18.201,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "setItem",
+            "selfMs": 10.786,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "(idle)",
+            "selfMs": 10.628,
+            "url": "",
+            "line": -1
+          },
+          {
+            "name": "va",
+            "selfMs": 9.772,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "va",
+            "selfMs": 8.5,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "va",
+            "selfMs": 8.354,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 7.601,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 6.531,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "JSON.parse",
+            "selfMs": 6.524,
+            "url": "",
+            "line": 10
+          },
+          {
+            "name": "mergeObjectSync",
+            "selfMs": 5.471,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "_parse",
+            "selfMs": 5.458,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "JSON.stringify",
+            "selfMs": 5.42,
+            "url": "",
+            "line": 12
+          },
+          {
+            "name": "_parseSync",
+            "selfMs": 4.778,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 9
+          },
+          {
+            "name": "(anonymous)",
+            "selfMs": 3.44,
+            "url": "http://127.0.0.1:4174/assets/index-DTTJZeoO.js",
+            "line": 54
+          }
+        ],
+        "completePaintMs": 168.9000000001397,
+        "completeSaveMs": 49.10000000009313,
+        "completedSet": {
+          "id": "dbad4205-5f80-437d-982a-50570db6d07e",
+          "kg": 57.5,
+          "reps": 8,
+          "seconds": null,
+          "rir": null,
+          "done": true,
+          "inputSources": {
+            "kg": "manual",
+            "reps": "default"
+          }
+        },
+        "progressPaintMs": 1045.8000000000466,
+        "progressChartPresent": 1,
+        "youPaintMs": 479.30000000004657,
+        "todayPaintMs": 71.80000000004657,
+        "afterWorkflowJsHeapUsedBytes": 57890248,
+        "afterWorkflowJsHeapUsedPostGcBytes": 12346768
+      },
+      "offline": {
+        "mode": "offline-cold",
+        "ready": true,
+        "driverWallMs": 813.6505079999915,
+        "toTodayMs": 776,
+        "navigationNetworkRequests": 0,
+        "error": null
+      },
+      "hanging": {
+        "mode": "hanging-network",
+        "ready": false,
+        "driverWallMs": 3508.2581449999852,
+        "toTodayMs": null,
+        "navigationNetworkRequests": 1,
+        "error": "page.goto: Timeout 3500ms exceeded."
+      }
+    }
+  ],
+  "frames": []
+}

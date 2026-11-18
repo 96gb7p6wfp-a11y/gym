@@ -1,0 +1,57 @@
+{
+  "startedAt": "2026-11-18T15:20:15.543677+00:00",
+  "revision": "ae6efff6d23a0df26dfd820d6d0548c442937d4a",
+  "runtimeCommit": "02ddc63",
+  "commands": [
+    {
+      "name": "typecheck",
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "elapsedSeconds": 12.024276733398438
+    },
+    {
+      "name": "unit",
+      "command": "npm test",
+      "exitCode": 0,
+      "elapsedSeconds": 20.10441279411316
+    },
+    {
+      "name": "build",
+      "command": "npm run build",
+      "exitCode": 0,
+      "elapsedSeconds": 12.097837686538696
+    },
+    {
+      "name": "browser",
+      "command": "npm run test:web",
+      "exitCode": 0,
+      "elapsedSeconds": 1648.8502728939056
+    }
+  ],
+  "builtIndexSha256": "0bcb20ec8d4f8958329d245a7841ade40fd7c561b4b00faf4faacfac2037c4d6",
+  "pwaCache": "97c7ccee3df79a773bac",
+  "finishedAt": "2026-11-18T15:48:28.624732+00:00",
+  "unitCounts": {
+    "tests": 900,
+    "pass": 900,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "browserCounts": {
+    "passed": 516,
+    "failed": 0,
+    "interrupted": 0,
+    "skipped": 0,
+    "retries": 0,
+    "workers": 2
+  },
+  "runtimeUnchangedSince": "02ddc63",
+  "environment": {
+    "browser": "Chromium 151.0.7922.173 built on Debian GNU/Linux 13 (trixie)",
+    "platform": "Linux browser automation, iPhone/iPad emulation",
+    "physicalIphoneTested": false,
+    "data": "Isolated synthetic localhost fixtures only",
+    "productionDeploymentPerformed": false
+  }
+}

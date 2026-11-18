@@ -1,4 +1,121 @@
+## Native Experience — 18 November 2026
+
+**One clean full execution on the final runtime:** all four required commands
+passed. This is not a union of partial runs or selected retries.
+
+| Check | Actual result |
+| --- | --- |
+| `npm run typecheck` | Passed, exit 0 |
+| `npm test` | **900 passed, 0 failed/cancelled/skipped**; 20.1 s command wall time |
+| `npm run build` | Passed, exit 0; existing large-chunk advisory remains |
+| `npm run test:web` | **516 passed, 0 failed/interrupted/skipped**, 27.5 min; two workers, no retries |
+
+Runtime: `02ddc63`; tested tree: `ae6efff6d23a0df26dfd820d6d0548c442937d4a`.
+Later commits contain documentation/evidence only. The built index SHA-256 is
+`0bcb20ec8d4f8958329d245a7841ade40fd7c561b4b00faf4faacfac2037c4d6`,
+matching the final controlled measurements; cache suffix `97c7ccee3df79a773bac`.
+[Machine-readable command/results evidence](docs/NATIVE_VALIDATION.json).
+
+Coverage includes durable completion/Undo failures, immutable ten-tap actions in
+mouse/touch/pointer/keyboard modes, manual and previous-value precedence, exact
+Bench records across midnight/refresh, template/date/weekly isolation, old program
+archives with current medical guidance, backup validation/restore, preferences,
+actual hanging-network startup, offline navigation/edit/Undo/finish/first-use guide,
+explicit PWA updates, small screens, iPad resizing, both themes and keyboard focus.
+Only isolated synthetic localhost data was used. No private iPhone storage was read.
+
+Prior executions are not called clean: one was stopped at 89 passes for a measured
+primary-tab regression; an environment-interrupted diagnostic reached case 461;
+the first completed native 515-case run had **513 passed / 2 failed**. Trace review
+identified an actual ~40px All Sets guide-trigger shift and a test settings
+navigation race on backup restore. The UI shift was fixed, the original rapid
+touch test retained, and an unavailable-guide regression added. The navigation
+helper now waits for actual loaded controls; no data assertions were removed.
+All 516 cases then passed together in the fresh run above.
+
+Controlled performance: 45 observations over 0/120/1,000/5,000/10,000 completed
+sets, three samples each/version, plus 120 captured frames and 15 curated pairs.
+[Methods, raw results, regressions and screenshots](docs/NATIVE_BENCHMARKS.md).
+Do not infer physical iPhone performance, locked-screen sound or guaranteed OS
+crash persistence from Chromium automation. No merge or production deployment.
+
+---
+
 # Standalone app validation
+
+## Workout trust, explicit choices and durable logging — 17 November 2026
+
+Baseline: main `693265c` (Setline V18 / Volleyball Performance Plan V9).
+Runtime source is frozen at `c2cc8c8`, bundle cache
+`setline-pwa-c178374091852999fd74`. Later changes only update documentation,
+screenshots and two old test contracts; no runtime/build source changed during
+or after the final complete browser execution. PR #12 targets main. PR #11 was
+reviewed as an unmerged draft; its explicit-choice intent is incorporated here.
+PRs #1/#5/#11 were not separately merged.
+
+| Check | Actual result |
+| --- | --- |
+| `npm run typecheck` | Passed, including the final changed browser tests |
+| `npm test` | **862 passed**, zero failures/cancellations/skips; 19.1 seconds |
+| `npm run build` | Passed; 26 shell files, seven optional on-demand media files; existing chunk-size advisory |
+| Complete `npm run test:web -- --workers=2` | **481 passed, 2 failed, 25.6 minutes**; both failures were old contracts described below |
+| Final two affected browser files | **8 passed, 36.7 seconds**, zero failures/skips; includes both formerly failing cases and six overlapping cases |
+| Distinct browser coverage | **All 483 distinct scenarios have passing evidence** across the complete run and whole-file rerun; this is not a claim of one clean 483-case execution |
+| New full lifecycle/error/race file | Seven passed: prior values, manual edits, Undo, refresh, completion/history, quota retry, immediate input reload, failed start/finish retry and concurrent-start recovery |
+| Long-history workflows | 1,000 / 5,000 / 10,000 completed sets passed startup, input, history search, chart, export and validated restore checks |
+| `git diff --check` | Passed |
+| Lint | No repository lint script/configuration; not run |
+
+The complete command's two failures were in tests, not unresolved runtime
+failures. `v16-quicklog.web.spec.ts` waited for the deliberately removed Ready
+interstitial after Undo. Its replacement asserts Ready is absent and immediate
+recompletion is enabled while retaining input, history, duplicate-tap, rest and
+shared-state checks. `v9-logging.web.spec.ts` expected reuse, a manual edit and
+completion to share the old single debounced write. It now verifies the edit is
+already durable, then that ten rapid completions add exactly one version. Both
+whole files passed on the unchanged bundle. No source behavior or safety assertion
+was loosened to make these tests pass.
+
+Earlier integration also corrected test-only fixture/accessible-label mistakes.
+It reproduced actual Undo rearming friction and a rejected initial save trapping
+preflight, which were fixed in production code and covered by the final browser
+run. One earlier full attempt was interrupted by environment reconnection; another
+was intentionally stopped for the initial-start fix. Neither incomplete attempt
+is counted as a complete successful suite.
+
+The lifecycle fixture is a five-set saved upper workout with an entered simulated
+75-minute duration, not a physical 75-minute workout. Full V9 prescriptions,
+exact 11-item Saturday branching, linked Hack/CMJ rounds, timed/sprint/jump units,
+medical safeguards and custom-date workflows pass in the wider regression suite.
+Only isolated localhost fixtures were used; no personal device records were read
+or altered. Five representative before/after/Focus/Quick Log screenshots are
+linked in [the implementation report](docs/TRUSTWORTHY_TRAINING.md).
+
+### Long-history observations
+
+Single cloud observations, Chromium 151.0.7922.173, 390×844, two concurrent
+workers; not physical-iPhone measurements or a controlled before/after trial.
+Times are milliseconds. Export measures the download request rather than external
+safekeeping; restore measures confirmed write, excluding review and reload.
+
+| Completed sets | Startup | Input paint | Input save | Search | Chart | Export request | Restore | UTF-8 primary-store bytes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1,000 | 1,158.7 | 59.2 | 12.3 | 10.9 | 27.6 | 15.3 | 16.5 | 234,361 |
+| 5,000 | 907.5 | 138.9 | 48.2 | 9.0 | 144.1 | 119.7 | 103.8 | 1,118,361 |
+| 10,000 | 888.8 | 276.1 | 135.4 | 46.2 | 137.7 | 150.8 | 80.6 | 2,223,361 |
+
+Immediate primary writes eliminate the old debounce-only edit window but retain
+the existing whole-store serialization cost. The 10,000-set input observation is
+a documented limitation. A compatible, validated, recoverable incremental
+IndexedDB architecture is proposed in the report; no destructive migration or
+history deletion was introduced.
+
+Primary schema/storage key and portable backups remain version 1. Two small
+optional continuity keys refer to the existing active session; they are not a
+second session model or cloud sync. Physical Safari keyboard, VoiceOver, Dynamic
+Type, app termination/storage eviction, browser-duplicated tab storage and
+locked-screen audio remain unverified. Production status is separate from local
+validation and preview checks.
 
 ## Exercise media, demonstrations and adaptive iPad — 11 November 2026
 

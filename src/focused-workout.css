@@ -161,6 +161,22 @@ html[data-keyboard-open='true'] .focused-set-encouragement { display: none; }
   .focused-exercise .timed-set-controls--short .timed-set-timer { gap: 5px 7px; }
   .focused-exercise .timed-set-controls--short .timed-set-timer__toggle { flex-basis: 76px; width: 76px; }
 }
+/* A short phone window needs less vertical chrome, not smaller tap targets or
+   a floating completion button covering the set being edited. Tall phones and
+   tablet panes keep their established spacing. Long content still scrolls. */
+@media (max-width: 767px) and (max-height: 650px) {
+  .app-shell .workspace--training { padding-top: calc(var(--app-safe-area-top, 0px) + 8px); }
+  .workspace--training .native-session.session-card--active { gap: 4px 8px; margin-bottom: 8px; padding: 8px 12px; }
+  .focused-workout .workout-layout-switch { margin-bottom: 4px; padding: 2px; }
+  .focused-workout .focused-stage-topline { margin-bottom: 4px; }
+  .focused-exercise .focused-exercise__name { font-size: 26px; }
+  .focused-workout .focused-working-set { margin-top: 4px; padding: 8px 12px; }
+  .focused-exercise .focused-exercise__set-heading { margin-bottom: 8px; }
+  .focused-workout .focused-set-controls { gap: 4px; }
+  .focused-workout .focused-set-field { min-height: 44px; }
+  .focused-exercise .focused-set-controls .set-input { height: 44px; min-height: 44px; font-size: 30px; }
+  .focused-exercise .btn.focused-complete-set { min-height: 48px; margin-top: 8px; padding-block: 10px; }
+}
 @media (prefers-reduced-motion: reduce) { .focused-workout button { transition: none !important; } .focused-set-encouragement > span { animation: none; } }
 /* A set receipt occupies the existing cue line, never a blocking overlay. */
 .focused-set-receipt { display:inline-block; vertical-align:-3px; color:var(--accent); }
@@ -177,7 +193,7 @@ html[data-keyboard-open='true'] .focused-set-encouragement { display: none; }
 .focused-reuse { display:flex; align-items:center; justify-content:center; width:auto; max-width:100%; min-height:44px; gap:6px; margin:0; padding:8px; border:0; border-radius:12px; background:transparent; color:var(--accent); font-size:13px; font-weight:600; text-align:right; line-height:1.35; }
 .focused-reuse > span { display:grid; gap:3px; }
 .focused-reuse small { color:var(--sub); font-size:10px; font-weight:400; }
-.focused-rir { margin-top:12px; }
+.focused-rir { margin:0 0 12px; }
 .focused-rir > span { display:flex; align-items:baseline; justify-content:space-between; gap:8px; color:var(--sub); font-size:12px; }
 .focused-rir > div { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:2px; margin-top:4px; }
 .focused-rir button { min-width:0; min-height:44px; padding:4px 0; border:1px solid transparent; border-radius:12px; background:transparent; color:var(--ink); font-size:13px; }

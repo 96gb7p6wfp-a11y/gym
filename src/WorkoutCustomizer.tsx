@@ -1,7 +1,6 @@
-import { useRef, useState } from 'react';
+import { lazy, Suspense, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ArrowRight, ChevronRight, Dumbbell, Ellipsis, Plus, RefreshCw, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui';
-import { ExerciseLibrarySheet } from './ExerciseLibrarySheet';
 import { findLibraryExercise, toPlanExercise, type LibraryExercise } from './exercise-library';
 import { addSessionExercise, adjustSessionSets, moveSessionExercise, removeSessionExercise, replaceSessionExercise, type EditableSession } from './workout-customization';
 import type { ReadinessEntry } from './performance-data';
@@ -18,6 +17,8 @@ interface Props {
   disabled?: boolean;
 }
 type LibraryAction = { kind: 'add' | 'replace' | 'alternative'; key?: string };
+
+const ExerciseLibrarySheet = lazy(() => import('./ExerciseLibrarySheet').then(module => ({ default: module.ExerciseLibrarySheet })));
 
 /** Session tools change a snapshot; saving a template is always explicit. */
 export function WorkoutCustomizer({ session, selectedKey, onSelectedKeyChange, onChange, onSaveAs, readiness, onReadiness, disabled = false }: Props) {
@@ -110,17 +111,19 @@ export function WorkoutCustomizer({ session, selectedKey, onSelectedKeyChange, o
         {error && <p className="builder-error" role="alert">{error}</p>}
       </DialogContent>
     </Dialog>
-    <ExerciseLibrarySheet open={!!library} onOpenChange={open => {
-      if (!open) {
-        setLibrary(null);
-        // Selecting auto-closes the library. Keep the original action sheet and
-        // any save/validation error until the mutation actually succeeds.
-        if (!selecting.current) close();
-        selecting.current = false;
-      }
-    }} onSelect={choose} title={library?.kind === 'alternative' ? 'Add an alternative' : undefined}
-      confirmationLabel={library?.kind === 'alternative' ? 'Add an alternative' : undefined}
-      replacementFor={library?.kind === 'replace' || library?.kind === 'alternative' ? session.exercises.find(row => row.key === library.key) : undefined} />
+    {library !== null && <Suspense fallback={<p className="small-note" role="status">Loading exercises…</p>}>
+      <ExerciseLibrarySheet open={!!library} onOpenChange={open => {
+        if (!open) {
+          setLibrary(null);
+          // Selecting auto-closes the library. Keep the original action sheet and
+          // any save/validation error until the mutation actually succeeds.
+          if (!selecting.current) close();
+          selecting.current = false;
+        }
+      }} onSelect={choose} title={library?.kind === 'alternative' ? 'Add an alternative' : undefined}
+        confirmationLabel={library?.kind === 'alternative' ? 'Add an alternative' : undefined}
+        replacementFor={library?.kind === 'replace' || library?.kind === 'alternative' ? session.exercises.find(row => row.key === library.key) : undefined} />
+    </Suspense>}
     <Dialog open={sessionOpen} onOpenChange={(open: boolean) => { if (!busy) setSessionOpen(open); }}>
       <DialogContent className="app-dialog workout-options-sheet"><DialogHeader className=""><DialogTitle className="">Your session</DialogTitle><DialogDescription className="">Adjust to how you feel. Consistency beats extra fatigue.</DialogDescription></DialogHeader>
         <div className="readiness-check"><h3>How do you feel?</h3><div>{(['low', 'normal', 'high'] as const).map(value => <button type="button" key={value} aria-pressed={energy === value} disabled={locked} onClick={() => setEnergy(value)}>{value === 'low' ? 'Low energy' : value === 'high' ? 'Feeling strong' : 'Ready'}</button>)}</div>

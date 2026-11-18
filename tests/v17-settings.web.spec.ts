@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { settingsGroup } from './helpers/navigation';
 import { readFile } from 'node:fs/promises';
 import { DEFAULT_PROFILE, ProfileSchema, SessionSchema, createSession, stopSessionTimers } from '../src/domain.js';
 
@@ -7,15 +8,13 @@ const STORE = 'setline.gym.v1';
 async function openSettings(page: Page) {
   await page.getByRole('tab', { name: 'You', exact: true }).click();
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  return page.getByRole('dialog', { name: 'Your preferences', exact: true });
+  const sheet = page.getByRole('dialog', { name: 'Your preferences', exact: true });
+  await expect(sheet.getByRole('navigation', { name: 'Settings groups', exact: true })).toBeVisible();
+  return sheet;
 }
 
 async function group(page: Page, name: 'Training' | 'Appearance & Sound' | 'Data & Backup') {
-  const sheet = page.getByRole('dialog', { name: 'Your preferences', exact: true });
-  const choices = sheet.getByRole('navigation', { name: 'Settings groups', exact: true });
-  if (!await choices.isVisible()) await sheet.getByRole('button', { name: 'All settings', exact: true }).click();
-  await choices.getByRole('button', { name, exact: true }).click();
-  return sheet.getByRole('region', { name, exact: true });
+  return settingsGroup(page, name);
 }
 
 async function state(page: Page) {

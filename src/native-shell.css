@@ -79,6 +79,8 @@ html[data-input-modality='pointer'] .native-tabbar .app-nav-item:focus { outline
 .workout-template-actions>summary { display:flex; justify-content:space-between; align-items:center; min-height:48px; color:var(--sub); font-size:13px; list-style:none; }
 .workout-template-actions>summary::after { content:'+'; font-size:18px; } .workout-template-actions[open]>summary::after { content:'−'; }
 .workout-template-options { display:flex; justify-content:space-between; gap:12px; padding:0 0 12px; }
+.workout-template-shortcuts { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 12px; }
+.workout-template-shortcuts .text-button { min-height:44px; padding:8px 12px; display:inline-flex; align-items:center; gap:6px; }
 .planned-section { position:relative; margin-top:8px; border:0; }
 .planned-preview { margin:0; border:0; background:transparent; }
 .planned-section>.planned-edit { position:absolute; top:4px; right:0; font-size:13px; }
@@ -196,3 +198,16 @@ summary::-webkit-details-marker { display:none; }
  .page-heading h1 { font-size:30px; }
 }
 @media(prefers-reduced-motion:no-preference) { .btn,.icon-button { transition:transform 100ms ease; } }
+
+/* On touch phones, an opaque iOS-style tab capsule avoids repainting a
+   full-screen backdrop blur on every scroll frame. No layout or tab changes. */
+@media (max-width:767px) and (pointer:coarse) {
+  .app-shell .native-tabbar {
+    background:var(--surface);
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
+}
+@media (hover:none) and (pointer:coarse) {
+  .btn:hover,.btn.lime:hover { filter:none; }
+}

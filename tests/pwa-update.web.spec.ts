@@ -1,13 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
+import { settingsGroup } from './helpers/navigation';
 import { DEFAULT_PROFILE, createSession } from '../src/domain.js';
 
 const STORE = 'setline.gym.v1';
 
 async function section(page: Page, name: 'Training' | 'Data & Backup') {
   const sheet = page.getByRole('dialog', { name: 'Your preferences', exact: true });
-  const groups = sheet.getByRole('navigation', { name: 'Settings groups', exact: true });
-  if (!await groups.isVisible()) await sheet.getByRole('button', { name: 'All settings', exact: true }).click();
-  await groups.getByRole('button', { name, exact: true }).click();
+  await settingsGroup(page, name);
   return sheet;
 }
 
