@@ -57,6 +57,7 @@ import { findLibraryExercise } from "./exercise-library";
 import { getSessionPurpose } from "./training-purpose";
 import { TodayView } from "./TodayView";
 import { FocusedWorkout } from "./FocusedWorkout";
+import { ProgressOverview } from "./ProgressOverview";
 import { RemindersPanel } from "./RemindersPanel";
 import { shortSessionName, workoutTitle } from "./presentation";
 import { formatPreviousSet, previousPerformance } from "./previous-performance";
@@ -186,7 +187,6 @@ const WarmupFlow = deferredDialog(() => import('./WarmupFlow').then(module => ({
 const WorkoutBuilder = deferredDialog(() => import('./WorkoutBuilder').then(module => ({ default: module.WorkoutBuilder })), 'Loading workout builder…');
 const WorkoutCustomizer = deferredScreen(() => import('./WorkoutCustomizer').then(module => ({ default: module.WorkoutCustomizer })), 'Loading session controls…');
 const WorkoutPreview = deferredScreen(() => import('./WorkoutPreview').then(module => ({ default: module.WorkoutPreview })), 'Loading exercises…');
-const ProgressOverview = deferredScreen(() => import('./ProgressOverview').then(module => ({ default: module.ProgressOverview })), 'Loading progress…');
 const ExerciseGuide = deferredScreen(() => import('./ExerciseGuide').then(module => ({ default: module.ExerciseGuide })), 'Loading exercise guide…');
 const ExerciseLibrarySheet = deferredDialog(() => import('./ExerciseLibrarySheet').then(module => ({ default: module.ExerciseLibrarySheet })), 'Loading exercise library…');
 const VolleyballMasterProgram = deferredScreen(() => import('./VolleyballMasterProgram').then(module => ({ default: module.VolleyballMasterProgram })), 'Loading program settings…');

@@ -70,10 +70,11 @@ An immutable completed-history projection stabilizes historical inputs when only
 an active workout changes. A bounded comparable-performance index and memoized
 existing progression engine avoid scanning all recorded sets while typing.
 Strength-chart-only derivations run when Strength history opens. Unopened sheets,
-program configuration, guide bodies and Progress are separate chunks. Essential
-Focus/Quick Log controls remain ready with the app; a measured first-Train
-Suspense delay was a reason to keep primary logging eager. Guide content and
-exercise picking load only when requested.
+program configuration, guide bodies and advanced charts are separate chunks.
+Essential Focus/Quick Log controls and the lightweight Progress overview remain
+ready with the app: measured Suspense delays on primary tabs were a reason to
+keep those surfaces eager. Guide content and exercise picking load only when
+requested.
 Every essential chunk remains in the atomic installed shell, so code splitting
 does not make offline routes depend on the network.
 
