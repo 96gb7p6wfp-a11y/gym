@@ -1,5 +1,5 @@
-import { useRef, useState, type ReactNode } from 'react';
-import { ArrowUpRight, ChevronRight, X } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { ArrowUpRight, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui';
 import { getExerciseDemonstrationLinks, getExerciseGuide, type GuideExercise } from './exercise-guides';
 import { findLibraryExercise, rankAlternatives } from './exercise-library';
@@ -8,10 +8,10 @@ import { ExerciseTechniqueDiagram } from './ExerciseTechniqueDiagram';
 import { AdditionalExerciseMedia, ExerciseMedia } from './ExerciseMedia';
 import './exercise-guides.css';
 
-export interface ExerciseGuideProps {
-  exercise: GuideExercise;
-  compact?: boolean;
-}
+// Keep the existing public API while the lightweight workout trigger can be
+// imported without loading guide text, media or alternative-exercise content.
+export { ExerciseGuide, type ExerciseGuideProps } from './ExerciseGuideTrigger';
+export { ExerciseGuide as default } from './ExerciseGuideTrigger';
 
 /** The same guide in an adjacent iPad pane; it owns no training records. */
 export function ExerciseGuidePanel({ exercise, children, onClose }: {
@@ -135,14 +135,3 @@ export function ExerciseGuideBody({ exercise }: { exercise: GuideExercise }) {
         : 'General demonstration searches · results have not been reviewed. Match the exact variation and direction shown above.'}</p>
   </div>;
 }
-
-export function ExerciseGuide({ exercise, compact = false }: ExerciseGuideProps) {
-  const [open, setOpen] = useState(false);
-  const trigger = useRef<HTMLButtonElement>(null);
-  return <div className={`exercise-guide${compact ? ' exercise-guide--compact' : ''}`}>
-    <button ref={trigger} type="button" className="exercise-guide__trigger" aria-label={`Exercise details for ${exercise.name}`} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>Exercise details<ChevronRight size={17} aria-hidden="true" /></button>
-    <ExerciseGuideSheet exercise={exercise} open={open} onOpenChange={setOpen} onCloseAutoFocus={(event: Event) => { event.preventDefault(); trigger.current?.focus({ preventScroll: true }); }} />
-  </div>;
-}
-
-export default ExerciseGuide;

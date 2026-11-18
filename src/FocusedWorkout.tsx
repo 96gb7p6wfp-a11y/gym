@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Check, ChevronRight, Ellipsis, Minus, Plus, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { DecimalWeightInput } from './DecimalWeightInput';
-import { ExerciseGuide } from './ExerciseGuide';
+import { ExerciseGuide } from './ExerciseGuideTrigger';
 import { measurementLabel } from './domain';
 import { TimedSetControls } from './TimedSetControls';
 import type { TimedSetAction } from './timed-sets';
