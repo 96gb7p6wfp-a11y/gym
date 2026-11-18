@@ -20,8 +20,8 @@ branch or merging main. PR #11's earlier readiness intent is superseded by
 - [x] Cache-first installed launch, bounded missing-shell fallback, atomic essential chunks.
 - [x] Avoid repeated historical/progression calculations while editing active inputs.
 - [x] Defer unopened screens, including optional tablet-only Today preview on phones.
-- [ ] Complete final clean validation and controlled before/after measurements.
-- [ ] Inspect final representative screenshots and publish the isolated review PR.
+- [x] Complete final clean validation and controlled before/after measurements.
+- [x] Inspect final representative phone/tablet screenshots.
 
 ## What changed
 
@@ -105,7 +105,7 @@ can read or restore the user's private iPhone local storage.
 
 - [File-by-file release and storage audit](NATIVE_RELEASE_AUDIT.md)
 - [Controlled benchmark methods and results](NATIVE_BENCHMARKS.md)
-- Final check counts and screenshot index are appended after the frozen run.
+- [Final validation](NATIVE_VALIDATION.json): typecheck/build passed; 900 unit tests and one clean 516-case browser run passed, without retries.
 
 Known architectural limits: whole-store JSON serialization and synchronous
 localStorage remain; keeping a validated view trades memory for less validation.
@@ -159,3 +159,63 @@ above; then a separate explicit merge/deployment authorization.
 
 Only interaction principles and publicly documented behavior inform this change;
 no third-party code, screenshots, photographs or branding are included as app assets.
+
+## Main files changed
+
+- `src/App.jsx`: durable action acknowledgement, date-aware archived plan selection,
+  transient custom-session preparation, template-only saves and primary-tab loading.
+- `src/storage.ts`: same-client synchronous acknowledgement, exact-byte validated
+  cache, intervening-write checks and safe recovery-copy rollback.
+- `src/history-cache.ts`, `src/useExerciseProgression.ts`: stable completed-history
+  inputs, comparable-performance indexing and reuse of existing progression rules.
+- `src/FocusedWorkout.tsx`, `src/QuickWorkoutLog.tsx`, `src/rest-deadline.ts`:
+  secondary effort input, preserved shared set state and cumulative rest adjustment.
+- `src/WorkoutBuilder.tsx`, `src/ExerciseLibrarySheet.tsx`, `src/WorkoutCustomizer.tsx`:
+  direct Add, recorded recent choices and clear template/session actions.
+- `src/ExerciseGuideTrigger.tsx`, `src/ExerciseGuide.tsx`, `src/TodayView.jsx`:
+  optional guide content without delaying core logging or compact Today.
+- `scripts/finalize-web.mjs`, `public/register-sw.js`: atomic cache-first shell,
+  independent optional media and safe explicit update handling.
+- `src/native-shell.css`, `src/focused-workout.css`, builder/library styles:
+  stable phone tab surfaces, visible shortcuts and short-screen control clearance.
+- Native regression files, existing compatibility suites and shared navigation
+  helpers: storage failures, full training lifecycle, offline chunks, data isolation,
+  duplicate actions, truthful suggestions and waiting for actual settings controls.
+
+## In-app walkthrough after a future approved release
+
+1. **Train → Saved workouts** opens saved templates directly. **Create workout**
+   opens the builder; search and tap **Add** without opening instructions first.
+2. Choose **Save template** to retain a reusable workout, or **Start workout now**
+   for this session. Medical guidance and preparation remain in force. Cancelling
+   one-off preparation returns its unsaved builder; weekly/date edits remain saved.
+3. During training, review suggested values, adjust load/reps, then complete the
+   targeted set. **Quick Log** keeps all working sets visible. **Undo last set**
+   retains entered values; **Effort** holds optional RIR. Rest has −15 / +15 / Skip.
+4. After one successful online shell installation, the same four tabs and local
+   workouts remain usable offline. First-use guide content is cached with the shell;
+   external Google/YouTube research still requires an internet connection.
+5. Use **You → Data & Backup** to export and verify an external copy. An app update
+   or mode switch does not select a different training program or reset history.
+
+This walkthrough describes the review branch. It does not mean these changes are
+already available on the production domain.
+
+All Sets also uses the lightweight guide trigger immediately. During hardening,
+a deferred loading paragraph had grown into the guide button and moved a live
+checkbox approximately 40px between touch targeting and activation. The direct
+trigger removes that shift while keeping its heavy contents deferred. The original
+rapid-touch scenario remains intact, with an additional unavailable-guide regression.
+
+
+## Final verification and review status
+
+Final runtime `02ddc63`, tested tree `ae6efff`: typecheck and build passed;
+**900 unit tests and 516 browser tests passed** in one complete browser execution
+(27.5 minutes, two workers, no retries, no failures or skips). Build/cache hashes
+match the final benchmark. [Exact results](NATIVE_VALIDATION.json).
+
+**READY for code review**, with the measured startup/memory/large-history limits
+listed in the benchmark report. This is not a commercial-readiness certification
+or physical iPhone verification. Main and production are unchanged; the user
+requested a review PR rather than an automatic merge or production deployment.

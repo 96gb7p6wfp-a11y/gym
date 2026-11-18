@@ -1,3 +1,46 @@
+## Native Experience — 18 November 2026
+
+**One clean full execution on the final runtime:** all four required commands
+passed. This is not a union of partial runs or selected retries.
+
+| Check | Actual result |
+| --- | --- |
+| `npm run typecheck` | Passed, exit 0 |
+| `npm test` | **900 passed, 0 failed/cancelled/skipped**; 20.1 s command wall time |
+| `npm run build` | Passed, exit 0; existing large-chunk advisory remains |
+| `npm run test:web` | **516 passed, 0 failed/interrupted/skipped**, 27.5 min; two workers, no retries |
+
+Runtime: `02ddc63`; tested tree: `ae6efff6d23a0df26dfd820d6d0548c442937d4a`.
+Later commits contain documentation/evidence only. The built index SHA-256 is
+`0bcb20ec8d4f8958329d245a7841ade40fd7c561b4b00faf4faacfac2037c4d6`,
+matching the final controlled measurements; cache suffix `97c7ccee3df79a773bac`.
+[Machine-readable command/results evidence](docs/NATIVE_VALIDATION.json).
+
+Coverage includes durable completion/Undo failures, immutable ten-tap actions in
+mouse/touch/pointer/keyboard modes, manual and previous-value precedence, exact
+Bench records across midnight/refresh, template/date/weekly isolation, old program
+archives with current medical guidance, backup validation/restore, preferences,
+actual hanging-network startup, offline navigation/edit/Undo/finish/first-use guide,
+explicit PWA updates, small screens, iPad resizing, both themes and keyboard focus.
+Only isolated synthetic localhost data was used. No private iPhone storage was read.
+
+Prior executions are not called clean: one was stopped at 89 passes for a measured
+primary-tab regression; an environment-interrupted diagnostic reached case 461;
+the first completed native 515-case run had **513 passed / 2 failed**. Trace review
+identified an actual ~40px All Sets guide-trigger shift and a test settings
+navigation race on backup restore. The UI shift was fixed, the original rapid
+touch test retained, and an unavailable-guide regression added. The navigation
+helper now waits for actual loaded controls; no data assertions were removed.
+All 516 cases then passed together in the fresh run above.
+
+Controlled performance: 45 observations over 0/120/1,000/5,000/10,000 completed
+sets, three samples each/version, plus 120 captured frames and 15 curated pairs.
+[Methods, raw results, regressions and screenshots](docs/NATIVE_BENCHMARKS.md).
+Do not infer physical iPhone performance, locked-screen sound or guaranteed OS
+crash persistence from Chromium automation. No merge or production deployment.
+
+---
+
 # Standalone app validation
 
 ## Workout trust, explicit choices and durable logging — 17 November 2026

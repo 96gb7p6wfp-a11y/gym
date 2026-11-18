@@ -165,7 +165,7 @@ Existing async callers still receive rejected promises. Version fences and
 restore generations remain checked before saving. No code in this change resets
 storage, changes exercise IDs, substitutes a training plan or fabricates history.
 
-## Actual targeted validation so far
+## Earlier targeted validation checkpoint
 
 | Command/check | Result |
 | --- | --- |
@@ -194,11 +194,9 @@ that cosmetic repetition does not authorize additional load or impact.
 
 ## Release decision and remaining limits
 
-**BLOCKED pending the final frozen build and one clean full browser-suite run.**
-The source fixes and targeted storage tests are not enough to approve a release.
-The final report must record exact current results and remaining failures rather
-than substitute PR #12's earlier mixed-run evidence. This document does not
-authorize a main merge or production deployment.
+**READY for code review after the clean final run recorded below.**
+This does not authorize a main merge or production deployment. Physical-device
+checks and measured limitations remain explicit release considerations.
 
 - Browser localStorage version checks and the exact-byte precommit fence reject
   observed stale changes. The final comparison and write are still not an atomic
@@ -220,3 +218,66 @@ authorize a main merge or production deployment.
 - No private iPhone storage has been accessed, recovered or verified. Local
   settings/history preservation is verified with isolated fixtures and backup
   compatibility tests. Users still need an external backup they actually retain.
+
+## Final validation findings after the first complete native run
+
+The first completed 515-case native execution had **513 passed / 2 failed**.
+It is not counted as a clean release run. Both failures were investigated before
+another full execution:
+
+- **Real All Sets layout shift:** App's deferred guide rendered a roughly 20px
+  loading paragraph before replacing it with a 48px button plus 12px margin.
+  The trace shows all ten real touch taps remained at the original checkbox
+  coordinates while the checkbox moved down about 40px. No set completed; this
+  was a real missed-touch defect. App now uses the existing lightweight guide
+  trigger immediately; only the guide body loads on request. The original rapid
+  touch test is unchanged. A new controlled regression makes the heavy guide
+  module unavailable, then requires the visible stable trigger, exactly one set
+  from ten fixed-coordinate real touches, unchanged entered values/profile and
+  one owned rest timer.
+- **Backup deep-link test navigation:** the shared settings helper checked for
+  an All settings button before deferred settings content existed. The backup
+  entry loads directly into Data & Backup, so waiting for a group list alone
+  could miss its later back action. The helper now waits for an actual requested
+  group, back action or list before choosing its navigation. The complete export,
+  invalid import, confirmed synthetic reset and restore assertions remain.
+
+All three targeted cases (original touch, controlled unavailable guide, complete
+backup roundtrip) then passed. The new case increases the full suite to 516.
+The subsequent single clean full run below supplies final validation evidence.
+
+Earlier interrupted executions are retained separately: one was intentionally
+stopped after 89 passes to remove a measured primary-Progress loading regression;
+an environment interruption later stopped a diagnostic execution after the log
+reached case 461. Neither is represented as a complete pass. That diagnostic run
+also exposed stale private settings helpers and suggestion text. Private helpers
+now use the same real settings navigation; no update/data assertions were removed.
+The suggestion regression now checks the actual review/Ready state, disabled
+Complete, and that Ready itself leaves the saved record unchanged, before retaining
+all manual-edit, offline, layout and history checks. No retries or larger timeouts
+were used to mask these failures.
+
+
+## Final frozen verification — 18 November 2026
+
+The final runtime is `02ddc63`, tested tree `ae6efff`; subsequent changes are
+documentation/evidence only. **All required commands passed:** typecheck,
+**900/900 unit tests**, production build, and **516/516 browser tests in one clean
+27.5-minute run**, zero failures, interruptions, skips or retries. This includes
+the exact touch scenario and complete backup roundtrip that failed in the earlier
+515-case run. [Machine-readable command/result/hash evidence](NATIVE_VALIDATION.json).
+The build index SHA-256 and cache suffix match the final benchmark report.
+
+PRs #11/#12/#13 were reconfirmed open and unmerged; #12/#13 heads remain
+`8e5f30d` / `98824e2`. Their compatible work is incorporated only on the isolated
+Native branch. Main remains `693265c`; no merge or production deployment occurred.
+No primary storage schema/key, backup format, exercise ID, domain or dependency
+changed. Existing-user data safety is verified with fixtures, not access to a
+private iPhone installation.
+
+Recommendation: **READY for review**. Safe production release still needs the
+manual iPhone checklist and separate authorization. Remaining limits include
+whole-store serialization, the non-atomic cross-renderer compare/set gap, measured
+cold-start/heap tradeoffs and approximately one-second large-history Progress.
+Locked-screen audio, physical Safari/VoiceOver, OS eviction and native haptics
+remain unverified. No cloud sync, native wrapper or unsafe storage migration was added.
