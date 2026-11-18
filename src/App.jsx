@@ -56,6 +56,7 @@ import { resetRecommendedPlan } from "./workout-customization";
 import { findLibraryExercise } from "./exercise-library";
 import { getSessionPurpose } from "./training-purpose";
 import { TodayView } from "./TodayView";
+import { FocusedWorkout } from "./FocusedWorkout";
 import { RemindersPanel } from "./RemindersPanel";
 import { shortSessionName, workoutTitle } from "./presentation";
 import { formatPreviousSet, previousPerformance } from "./previous-performance";
@@ -184,7 +185,6 @@ const WorkoutPlanPreview = deferredDialog(() => import('./WorkoutPlanPreview').t
 const WarmupFlow = deferredDialog(() => import('./WarmupFlow').then(module => ({ default: module.WarmupFlow })), 'Loading preparation…');
 const WorkoutBuilder = deferredDialog(() => import('./WorkoutBuilder').then(module => ({ default: module.WorkoutBuilder })), 'Loading workout builder…');
 const WorkoutCustomizer = deferredScreen(() => import('./WorkoutCustomizer').then(module => ({ default: module.WorkoutCustomizer })), 'Loading session controls…');
-const FocusedWorkout = deferredScreen(() => import('./FocusedWorkout').then(module => ({ default: module.FocusedWorkout })), 'Loading workout logging…');
 const WorkoutPreview = deferredScreen(() => import('./WorkoutPreview').then(module => ({ default: module.WorkoutPreview })), 'Loading exercises…');
 const ProgressOverview = deferredScreen(() => import('./ProgressOverview').then(module => ({ default: module.ProgressOverview })), 'Loading progress…');
 const ExerciseGuide = deferredScreen(() => import('./ExerciseGuide').then(module => ({ default: module.ExerciseGuide })), 'Loading exercise guide…');

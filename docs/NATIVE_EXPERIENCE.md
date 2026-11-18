@@ -34,6 +34,11 @@ start another rest timer. Edited drafts remain retryable. PR #12's verified star
 and finish, interrupted-session restoration, explicit recovery decisions and
 manual-input precedence are retained.
 
+Quick Log keeps a stable one-action completion control for each valid pending
+row. Focus retains deliberate Ready/selection after automatic advancement (or
+arming by a manual edit). This protection against repeated taps is not replaced
+by an arbitrary debounce; the extra selection remains an explicit UX tradeoff.
+
 Repeated rest adjustments use the current deadline ref, so ten separate +15-second
 requests add 150 seconds instead of competing with a captured render value.
 Skip clears the owned timer. Absolute deadlines and current sound settings remain.
@@ -65,7 +70,10 @@ An immutable completed-history projection stabilizes historical inputs when only
 an active workout changes. A bounded comparable-performance index and memoized
 existing progression engine avoid scanning all recorded sets while typing.
 Strength-chart-only derivations run when Strength history opens. Unopened sheets,
-program configuration, guides and logging/progress screens are separate chunks.
+program configuration, guide bodies and Progress are separate chunks. Essential
+Focus/Quick Log controls remain ready with the app; a measured first-Train
+Suspense delay was a reason to keep primary logging eager. Guide content and
+exercise picking load only when requested.
 Every essential chunk remains in the atomic installed shell, so code splitting
 does not make offline routes depend on the network.
 
