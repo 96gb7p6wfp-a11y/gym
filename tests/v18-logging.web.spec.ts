@@ -147,10 +147,21 @@ test('suggestions stay editable and share the same durable session across Focus,
   await completion(page, 'Focus').click();
   await expect(weight(page, 2)).toHaveValue('60');
   await expect(reps(page, 2)).toHaveValue('8');
-  await expect(page.getByLabel('Current set suggestion', { exact: true })).toHaveText('Last-set suggestion · editable');
+  await expect(page.getByLabel('Current set suggestion', { exact: true })).toHaveText('Last-set suggestion · review, then tap Ready');
   const afterBounds = (await completion(page, 'Focus', 2).boundingBox())!;
   expect(Math.abs(afterBounds.y - beforeBounds.y)).toBeLessThanOrEqual(2);
   await expect(completion(page, 'Focus', 2)).toBeDisabled();
+  const ready = page.getByRole('button', { name: `Ready for ${PRESS} set 2`, exact: true });
+  await expect(ready).toBeEnabled();
+  const pending = await activeRecord(page);
+  expect(pending.version).toBe(2);
+  expect(pending.session.exercises[0].logs.map(log => log.done)).toEqual([true, false, false]);
+  expect(pending.session.exercises[0].logs[1]).toEqual({ ...initial.active.exercises[0].logs[1], kg: 60, reps: 8,
+    inputSources: { kg: 'last-set', reps: 'last-set' } });
+  await ready.click();
+  await expect(completion(page, 'Focus', 2)).toBeEnabled();
+  await expect(page.getByLabel('Current set suggestion', { exact: true })).toHaveText('Last-set suggestion · editable');
+  expect(await activeRecord(page)).toEqual(pending);
   await weight(page, 2).fill('62,5');
   await reps(page, 2).fill('7');
   await completion(page, 'Focus', 2).click();
