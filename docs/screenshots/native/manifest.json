@@ -1,0 +1,93 @@
+{
+  "before": {
+    "revision": "693265cc96c00f198700c43634bdba8e001d3366",
+    "observedAt": "2026-11-18T07:05:29.103Z",
+    "cacheId": "0c12b755da157bd1ac30",
+    "distHtmlSha256": "85b899f4d100efa147e850b2be7774ea056ace9b91964161dda3c2a33092e3ef",
+    "browser": "151.0.7922.173"
+  },
+  "after": {
+    "revision": "73c2a8130bde125ffb649164b282d26a2146f321",
+    "observedAt": "2026-11-18T07:20:18.596Z",
+    "cacheId": "c9f5c8d6a117437c2a88",
+    "distHtmlSha256": "1df419230ac407a18038f83b6a12bfcb3fec043df3a1e59d93837c604aa6625e",
+    "browser": "151.0.7922.173"
+  },
+  "frames": [
+    {
+      "file": "320x568-light-focus.png",
+      "beforeSha256": "151a584e92d14c9ea04f1443d5390b8d31ccfaac821935f28082a892bc1bd10d",
+      "afterSha256": "1c0dd650ee24a1689141adb2eb6b7e4b7f3ad017da9ce5f816c786d7529c86c5"
+    },
+    {
+      "file": "320x568-light-rest.png",
+      "beforeSha256": "8d831271d4c728bfac0107935a1a047443c7c8e0243e1b4e93c645a65e25b3c9",
+      "afterSha256": "fdff7569a0fb5e9417c4baa7f5f5a028835445cf9d0234cb83d0622eb712fef4"
+    },
+    {
+      "file": "375x812-light-focus.png",
+      "beforeSha256": "3b38e7498d03f2ce13dfcd6aaefc1dec42ed9de87c76958368c3436a1d8a9288",
+      "afterSha256": "8480f00961470bb2e1818555daed57a4d38692c8b54b3d86575ba888cc160388"
+    },
+    {
+      "file": "390x844-light-today.png",
+      "beforeSha256": "d50befed7b6a22a205a2640c4aa3ad5f7042cbcc58e4d678c96ab37949ed609e",
+      "afterSha256": "52bf5fd71526f2e07d0e8af437c476f7f028ca3d1a6d7732686653ecbc404e43"
+    },
+    {
+      "file": "390x844-light-focus.png",
+      "beforeSha256": "8d86c01350249e92f53fe936dc33c8f1eac4523b0c58e5b456a61043b986516d",
+      "afterSha256": "fda107b05fa729f496e5e4db325394b749216235787b0f5059a89e69345ab944"
+    },
+    {
+      "file": "390x844-dark-focus.png",
+      "beforeSha256": "834933ae48316e76f87e36f7c22aacdf008d0f319ecd69fa90816c52baf37ea5",
+      "afterSha256": "a0f51a9e6bc7c04e39c2d627c4bca06b5d44aa6b36a715ed904d39be2e087faf"
+    },
+    {
+      "file": "390x844-light-quick-log.png",
+      "beforeSha256": "852844bb61e395179c4d30bcb9b533522bb6273eb16c6813d6ce22a10f0f0fd0",
+      "afterSha256": "6ebfb4845900521d93f4f767ca3ea015cf83309baf038cd6e742cff5ac5657c1"
+    },
+    {
+      "file": "390x844-light-rest.png",
+      "beforeSha256": "6481d42602e769542aeb247e81f23ea1ea2af1e21f4267bb74d52c0dc80f40d4",
+      "afterSha256": "3b44f3bd8a39836da1db6f0edb0e48cd292db84e30bf1da522cdcf1b86e566aa"
+    },
+    {
+      "file": "390x844-light-progress.png",
+      "beforeSha256": "dc260093d23665284b8f4b741061d71ebc392b9de5e05a7ccf6ed39edf3a3e5c",
+      "afterSha256": "b39243f799abda3194102d1240e62648eecb97980a0d20cedaf6c8543cf0e3d2"
+    },
+    {
+      "file": "430x932-light-focus.png",
+      "beforeSha256": "c5d78ee420fed96c3aa275475c35e8e2fa2566a51c32033f2b43fe54960a88d4",
+      "afterSha256": "c155f05f172387a56d78793e59da5d7dbd5388178104c2ccad2efdc716e3ecd4"
+    },
+    {
+      "file": "820x1180-light-rest.png",
+      "beforeSha256": "307a951de38bebbf1d9d6108680d39388a7c10280b128e2b41377b433c9762ae",
+      "afterSha256": "5ea942cbf17133876afb38901ba1a3a94edbce43f71de93c475cd5864600d115"
+    },
+    {
+      "file": "820x1180-light-quick-log.png",
+      "beforeSha256": "c6be3f0fcd76d911b1161958d038d0091e4e4873953868f2afaaaaa3758de90e",
+      "afterSha256": "9b78535f554946b573aeb03adb24a63270228545e8192acaf13b06f4a3576002"
+    },
+    {
+      "file": "1194x834-light-today.png",
+      "beforeSha256": "07523146d73b91fe1cc117c832dea05d074aa310cc0e7990c192f4dac3d74716",
+      "afterSha256": "07523146d73b91fe1cc117c832dea05d074aa310cc0e7990c192f4dac3d74716"
+    },
+    {
+      "file": "1194x834-light-rest.png",
+      "beforeSha256": "b70f9592d121576823659dad21c724b912b742ea6a5e6d9a37ec8dc5d4ef6ea9",
+      "afterSha256": "dc068cf4ba1a5afc74a9c1cf578aa3b0a0dc47f907a00ce1430cd1e0ebfdebbf"
+    },
+    {
+      "file": "1194x834-light-progress.png",
+      "beforeSha256": "4a5630e921de2aef4987fe53a2ad8fda85f1692e374f4e15f1330ce9e8f5f91d",
+      "afterSha256": "4a5630e921de2aef4987fe53a2ad8fda85f1692e374f4e15f1330ce9e8f5f91d"
+    }
+  ]
+}
