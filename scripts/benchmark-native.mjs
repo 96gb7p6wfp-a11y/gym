@@ -264,6 +264,8 @@ async function screenshots() {
     const {data}=await fixture(120); const state=structuredClone(data.state);state.profile.appearance=theme;
     const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:true,hasTouch:true,locale:'en-GB',timezoneId:'Europe/Berlin',reducedMotion:'reduce'});
     const page=await context.newPage();await page.goto(origin+'/__fixture__');await page.evaluate(state=>localStorage.setItem('setline.gym.v1',JSON.stringify(state)),state);await instrumentation(page);await page.goto(origin);await page.waitForFunction(()=>window.__nativeBench?.ready!=null);
+    // Capture the stable tablet pane, not its optional first-open loading fallback.
+    if(width>=1024) await page.locator('.today-exercise-preview').getByRole('list',{name:'Planned exercises',exact:true}).waitFor();
     const capture=async name=>{await page.screenshot({path:path.join(outputDirectory,`${width}x${height}-${theme}-${name}.png`),animations:'disabled'});const layout=await page.evaluate(()=>({width:innerWidth,height:innerHeight,documentWidth:document.documentElement.scrollWidth}));frames.push({width,height,theme,name,...layout});};
     await capture('today');await page.getByRole('tab',{name:'Train',exact:true}).click();await page.getByRole('region',{name:'Current exercise',exact:true}).waitFor();await capture('focus');
     await page.getByRole('button',{name:'Quick Log',exact:true}).click();await capture('quick-log');
